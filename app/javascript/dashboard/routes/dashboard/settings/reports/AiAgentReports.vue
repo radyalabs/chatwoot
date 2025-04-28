@@ -6,6 +6,8 @@ import { GROUP_BY_FILTER } from './constants';
 import ReportContainer from './ReportContainer.vue';
 import { REPORTS_EVENTS } from '../../../../helper/AnalyticsHelper/events';
 import ReportHeader from './components/ReportHeader.vue';
+import LineChart from '../../../../../shared/components/charts/LineChart.vue';
+import ReportLineContainer from './ReportLineContainer.vue';
 
 export default {
   name: 'AIAgentReports',
@@ -14,6 +16,8 @@ export default {
     ReportHeader,
     ReportFilterSelector,
     ReportContainer,
+    LineChart,
+    ReportLineContainer,
   },
   data() {
     return {
@@ -21,8 +25,10 @@ export default {
       to: 0,
       groupBy: GROUP_BY_FILTER[1],
       reportKeys: {
-          AI_MESSAGE_USAGE: 'bot_handoffs_count',
-          AGENT_HANDOFF_RATE: 'bot_resolutions_count',
+          AI_MESSAGE_USAGE: 'ai_agent_credit_usage',
+          AI_MESSAGE_SEND_COUNT: 'ai_agent_message_send_count',
+          AI_AGENT_HANDOFF_RATE: 'ai_agent_handoff_count',
+          AGENT_HANDOFF_RATE: 'agent_handoff_count',
       },
       businessHours: false,
     };
@@ -96,10 +102,6 @@ export default {
     />
 
     <AiAgentMetrics :filters="requestPayload" />
-    <ReportContainer
-      account-summary-key="getBotSummary"
-      :group-by="groupBy"
-      :report-keys="reportKeys"
-    />
+    <ReportLineContainer />
   </div>
 </template>

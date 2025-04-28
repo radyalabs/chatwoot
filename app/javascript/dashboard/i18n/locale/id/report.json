@@ -47,6 +47,18 @@
         "NAME": "Penggunaan Pesan AI",
         "DESC": "( Total )"
       },
+      "AI_CREDIT_USE": {
+        "NAME": "Penggunaan Kredit AI"
+      },
+      "AI_MESSAGE_SEND": {
+        "NAME": "Pengiriman Pesan AI"
+      },
+      "HANDOFF_AI_AGENT": {
+        "NAME": "Agen AI"
+      },
+      "HANDOFF_HUMAN_AGENT": {
+        "NAME": "Agen"
+      },
       "AGENT_HANDOFF_RATE": {
         "NAME": "Tingkat Serah Terima Agen",
         "DESC": "( Total )"

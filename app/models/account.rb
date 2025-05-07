@@ -85,6 +85,7 @@ class Account < ApplicationRecord
   has_many :working_hours, dependent: :destroy_async
   has_many :ai_agents, dependent: :destroy_async
   has_many :subscriptions
+  has_many :quick_replies
 
   has_one_attached :contacts_export
 
@@ -134,6 +135,13 @@ class Account < ApplicationRecord
       agents: ChatwootApp.max_limit.to_i,
       inboxes: ChatwootApp.max_limit.to_i
     }
+  end
+
+  def current_max_ai_agents
+    subscriptions
+      .active
+      .order(starts_at: :desc)
+      .pick(:max_ai_agents) || 0
   end
 
   private

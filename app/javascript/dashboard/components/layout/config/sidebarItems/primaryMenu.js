@@ -2,16 +2,15 @@ import { FEATURE_FLAGS } from '../../../../featureFlags';
 import { frontendURL } from '../../../../helper/URLHelper';
 
 const primaryMenuItems = accountId => [
-
   {
-    icon: 'chat',
+    icon: 'chat-new',
     key: 'conversations',
     label: 'CONVERSATIONS',
     toState: frontendURL(`accounts/${accountId}/dashboard`),
     toStateName: 'home',
   },
   {
-    icon: 'mail-inbox',
+    icon: 'mail-inbox-new',
     key: 'inbox',
     label: 'INBOX',
     toState: frontendURL(`accounts/${accountId}/settings/inboxes/list`),
@@ -26,7 +25,7 @@ const primaryMenuItems = accountId => [
     toStateName: 'captain',
   },
   {
-    icon: 'book-contacts',
+    icon: 'book-contacts-new',
     key: 'contacts',
     label: 'CONTACTS',
     featureFlag: FEATURE_FLAGS.CRM,
@@ -34,7 +33,7 @@ const primaryMenuItems = accountId => [
     toStateName: 'contacts_dashboard_index',
   },
   {
-    icon: 'arrow-trending-lines',
+    icon: 'arrow-trending-lines-new',
     key: 'reports',
     label: 'REPORTS',
     featureFlag: FEATURE_FLAGS.REPORTS,
@@ -42,7 +41,7 @@ const primaryMenuItems = accountId => [
     toStateName: 'account_overview_reports',
   },
   {
-    icon: 'bot',
+    icon: 'bot-new',
     label: 'AI_AGENTS',
     hasSubMenu: false,
     meta: {
@@ -52,7 +51,7 @@ const primaryMenuItems = accountId => [
     toStateName: 'ai_agents_index',
   },
   {
-    icon: 'people',
+    icon: 'people-new',
     label: 'AGENTS',
     hasSubMenu: true,
     meta: {
@@ -63,7 +62,7 @@ const primaryMenuItems = accountId => [
     featureFlag: FEATURE_FLAGS.AGENT_MANAGEMENT,
   },
   {
-    icon: 'tag',
+    icon: 'tag-new',
     label: 'LABELS',
     meta: {
       permissions: ['administrator'],
@@ -72,7 +71,7 @@ const primaryMenuItems = accountId => [
     toStateName: 'labels_list',
   },
   {
-    icon: 'megaphone',
+    icon: 'megaphone-new',
     key: 'campaigns',
     label: 'CAMPAIGNS',
     featureFlag: FEATURE_FLAGS.CAMPAIGNS,
@@ -90,14 +89,13 @@ const primaryMenuItems = accountId => [
   // },
   {
     icon: 'flash-on',
-    label: 'INTEGRATIONS',
+    label: 'QUICK_REPLY',
     hasSubMenu: false,
     meta: {
       permissions: ['administrator'],
     },
-    toState: frontendURL(`accounts/${accountId}/settings/integrations`),
-    toStateName: 'settings_applications',
-    featureFlag: FEATURE_FLAGS.INTEGRATIONS,
+    toState: frontendURL(`accounts/${accountId}/quick-replies`),
+    toStateName: 'quick_reply_manage',
   },
   {
     icon: 'key',
@@ -112,7 +110,7 @@ const primaryMenuItems = accountId => [
     featureFlag: FEATURE_FLAGS.AUDIT_LOGS,
   },
   {
-    icon: 'briefcase',
+    icon: 'briefcase-new',
     label: 'ACCOUNT_SETTINGS',
     hasSubMenu: false,
     meta: {
@@ -122,7 +120,7 @@ const primaryMenuItems = accountId => [
     toStateName: 'general_settings_index',
   },
   {
-    icon: 'credit-card-person',
+    icon: 'credit-card-person-new',
     label: 'BILLING',
     hasSubMenu: false,
     meta: {
@@ -130,7 +128,7 @@ const primaryMenuItems = accountId => [
     },
     toState: frontendURL(`accounts/${accountId}/settings/billing`),
     toStateName: 'billing_settings_index',
-  }
+  },
 ];
 
 export default primaryMenuItems;

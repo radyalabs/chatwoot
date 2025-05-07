@@ -1032,6 +1032,15 @@ ActiveRecord::Schema[7.0].define(version: 2025_05_07_163848) do
     t.integer "sequence_number"
   end
 
+  create_table "quick_replies", force: :cascade do |t|
+    t.string "name"
+    t.text "content"
+    t.bigint "account_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_quick_replies_on_account_id"
+  end
+
   create_table "related_categories", force: :cascade do |t|
     t.bigint "category_id"
     t.bigint "related_category_id"
@@ -1360,6 +1369,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_05_07_163848) do
   add_foreign_key "knowledge_source_texts", "knowledge_sources"
   add_foreign_key "knowledge_source_websites", "knowledge_sources"
   add_foreign_key "knowledge_sources", "ai_agents"
+  add_foreign_key "quick_replies", "accounts"
   add_foreign_key "subscription_payments", "subscriptions"
   add_foreign_key "subscription_topups", "subscriptions"
   add_foreign_key "subscription_usage", "subscriptions"

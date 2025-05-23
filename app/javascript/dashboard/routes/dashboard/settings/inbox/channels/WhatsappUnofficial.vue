@@ -1,3 +1,4 @@
+
 <script>
 import { mapGetters } from 'vuex';
 import { useVuelidate } from '@vuelidate/core';
@@ -5,6 +6,8 @@ import { useAlert } from 'dashboard/composables';
 import { required, helpers } from '@vuelidate/validators';
 import router from '../../../../index';
 import PageHeader from '../../SettingsSubPageHeader.vue';
+import FonnteQrModal from '../components/FonnteQrModal.vue'
+
 
 const isValidIndoPhone = helpers.withMessage(
   'Phone number must start with 62 and contain only digits',
@@ -14,12 +17,16 @@ const isValidIndoPhone = helpers.withMessage(
 export default {
   components: {
     PageHeader,
+    FonnteQrModal
   },
   setup() {
     return { v$: useVuelidate() };
   },
   data() {
     return {
+      showQrModal: false,
+      qrCode: '',
+      onActivated: null,
       inboxName: '',
       phoneNumber: '',
       isLoading: false,
@@ -39,22 +46,36 @@ export default {
       this.v$.$touch();
       if (this.v$.$invalid) return;
 
-      this.isLoading = true; 
+      this.isLoading = true;
       try {
+        // 1. Create WhatsApp unofficial channel (Chatwoot)
         const channel = await this.$store.dispatch('inboxes/createWhatsAppUnofficialChannel', {
           phoneNumber: this.phoneNumber,
           inboxName: this.inboxName,
         });
-        router.replace({
-          name: 'settings_inboxes_add_agents',
-          params: {
-            page: 'new',
-            inbox_id: channel.inbox_id,
-          },
-          query: {
-            webhook_url: channel.webhook_url,
-          },
-        });
+
+        // Expect QR in response now
+        const qrCode = channel.qr_code;
+        if (!qrCode) {
+          throw new Error('Fonnte QR not received from backend');
+        }
+
+        // Show modal
+        this.qrCode = qrCode;
+        this.onActivated = () => {
+          router.replace({
+            name: 'settings_inboxes_add_agents',
+            params: {
+              page: 'new',
+              inbox_id: channel.inbox_id,
+            },
+            query: {
+              webhook_url: channel.webhook_url,
+            },
+          });
+        };
+        this.showQrModal = true;
+
       } catch (error) {
         console.error(error);
         useAlert(this.$t('INBOX_MGMT.ADD.WHATSAPP_UNOFFICIAL_CHANNEL.ERROR_MESSAGE'));
@@ -62,7 +83,7 @@ export default {
         this.isLoading = false;
       }
     },
-  },
+  }
 };
 </script>
 
@@ -116,4 +137,12 @@ export default {
       </div>
     </form>
   </div>
+  <FonnteQrModal
+  v-if="showQrModal"
+  :qr-code="qrCode"
+  @activated="onActivated"
+/>
+
 </template>
+
+

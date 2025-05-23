@@ -21,7 +21,7 @@ class WhatsappUnofficial::CreateWhatsappUnofficialInboxService
 
     channel.update!(webhook_url: webhook_url)
 
-    { inbox: inbox, webhook_url: webhook_url }
+    { inbox: inbox, webhook_url: webhook_url, channel: channel }
   end
 
   def self.build_webhook_url(account_id, inbox_id, token)

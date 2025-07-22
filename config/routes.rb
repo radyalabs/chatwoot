@@ -450,6 +450,14 @@ Rails.application.routes.draw do
               get :ai_agent_metrics
             end
           end
+          resources :google_sheets_export, only: [] do
+            collection do
+              post :create
+              get :authorize
+              get :callback
+              get :status
+            end
+          end
         end
       end
     end

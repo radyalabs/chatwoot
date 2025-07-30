@@ -105,7 +105,7 @@ class AiAgentsLanggraph {
   }
 
   update(id, data) {
-    return axios.patch(`${this.url}/${id}`, data, {
+    return axios.put(`${this.url}/${id}`, data, {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -114,6 +114,10 @@ class AiAgentsLanggraph {
 
   delete(id) {
     return axios.delete(`${this.url}/${id}`);
+  }
+
+  chat(data) {
+    return axios.post(`${this.baseUrl()}/chat/`, data);
   }
 }
 

@@ -97,10 +97,13 @@ onMounted(() => {
         v-if="route.query.source !== 'langgraph'"
         :data="data"
       />
-      <AiAgentLanggraphGeneralSettingsView v-else :data="data" />
+      <AiAgentLanggraphGeneralSettingsView v-else :data="data"/>
     </div>
     <div v-show="activeIndex === 1">
-      <AiAgentKnowledgeSources :data="data" />
+      <AiAgentKnowledgeSources  
+        v-if="route.query.source !== 'langgraph'"
+        :data="data"
+      />
     </div>
     <div v-show="activeIndex === 3">
       <FollowupsSettingsView :data="data" />

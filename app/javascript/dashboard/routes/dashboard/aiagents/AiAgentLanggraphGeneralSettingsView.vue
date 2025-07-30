@@ -15,7 +15,9 @@ import useVuelidate from '@vuelidate/core';
 import { useAlert } from 'dashboard/composables';
 import { useI18n } from 'vue-i18n';
 import aiAgents from '../../../api/aiAgents';
+import aiAgentsLanggraph from '../../../api/aiAgentsLanggraph';
 import MarkdownIt from 'markdown-it';
+import account from '../../../api/account';
 
 const md = new MarkdownIt();
 
@@ -50,22 +52,20 @@ const state = reactive({
   description: '',
   type: '',
   agents: [],
-  agents_config: {},
   flow_data: {},
-  // system_prompts: '',
+  is_public: false,
+  deployed: false,
+  api_config: {},
   // welcoming_message: '',
   // routing_condition: '',
 });
 
 const rules = {
   name: { required },
-  system_prompts: { required },
+  // system_prompts: { required },
 };
 
 const v$ = useVuelidate(rules, state);
-
-// agent list
-const selectedAgent = ref();
 
 watch(
   () => props.data,
@@ -76,9 +76,10 @@ watch(
         description: v.description || '',
         type: v.flow_data?.type || '',
         agents: v.flow_data?.type === 'single-agent' ? [{agent:v.flow_data?.agent_type}] : v.flow_data?.enabled_agents.map(agent => ({ agent: agent })) || [],
-        agents_config: v.flow_data?.agents_config || {},
         flow_data: v.flow_data || {},
-        // system_prompts: v.flow_data?.agents_config?.bot_prompt || '',
+        is_public: v.is_public || false,
+        deployed: v.deployed || false,
+        api_config: v.api_config || {},
         // welcoming_message: v.welcoming_message || '',
         // routing_conditions: v.routing_conditions || '',
       });
@@ -101,18 +102,19 @@ async function submit() {
 
   try {
     loadingSave.value = true;
-    const request = {
-      ...state,
-    };
-    await aiAgents.updateAgent(props.data.id, request);
-    const detailAgent = await aiAgents
-      .detailAgent(props.data.id)
+    const { agents, type, ...request } = state;
+    await aiAgentsLanggraph.update(props.data.chat_flow_id, request);
+    const detailAgent = await aiAgentsLanggraph
+      .show(props.data.chat_flow_id)
       .then(v => v?.data);
     chatflowId.value = undefined;
     nextTick(() => {
       chatflowId.value = detailAgent?.chat_flow_id;
     });
     useAlert('Berhasil disimpan');
+  } catch (error) {
+    const errorMessage = error?.response?.data?.error || error.message;
+    useAlert(errorMessage, { type: 'error' });
   } finally {
     loadingSave.value = false;
   }
@@ -144,15 +146,27 @@ async function chat() {
 
   try {
     loadingChat.value = true;
-    const res = await aiAgents.chat(props.data.id, {
-      question,
+    const res = await aiAgentsLanggraph.chat({
+      question: question,
       session_id: sessionId.value,
+      chat_flow_id: props.data.chat_flow_id,
+      account_id: String(props.data.account_id),
     });
-    
-    messages.value.push({
-      role: 'assistant',
-      content: res.data.response,
-    });
+
+    res.data.split('\n').forEach(line => {
+        if (line.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            messages.value.push({
+              role: 'assistant',
+              content: data.response || '',
+            });
+          } catch (e) {
+            console.error('JSON parsing error', e);
+          }
+        }
+      })
+
     scrollToBottom();
   } catch (error) {
     messages.value.push({
@@ -169,30 +183,148 @@ function resetChat() {
   messages.value = [];
   sessionId.value = crypto.randomUUID();
 }
+
+// agent list
+const selectedAgent = ref();
+watchEffect(() => {
+  if (state.agents.length && !selectedAgent.value) {
+    selectedAgent.value = state.agents[0];
+  }
+});
+
+// bot name model
+const botNameModel = computed({
+  get() {
+    if (state.type === 'single-agent') {
+      return state.flow_data.agents_config.bot_name;
+    } else if (state.type === 'multi-agent') {
+      return state.flow_data.agents_config?.[selectedAgent.value.agent]?.bot_name || '';
+    }
+    return '';
+  },
+  set(val) {
+    if (state.type === 'single-agent') {
+      state.flow_data.agents_config.bot_name = val;
+    } else if (state.type === 'multi-agent') {
+      const key = selectedAgent.value?.agent;
+      if (key && state.flow_data.agents_config[key]) {
+        state.flow_data.agents_config[key].bot_name = val;
+      }
+    }
+  }
+});
+
+// get description model
+const botDescriptionModel = computed({
+  get() {
+    if (state.type === 'single-agent') {
+      return state.flow_data.agents_config.bot_description;
+    } else if (state.type === 'multi-agent') {
+      return state.flow_data.agents_config?.[selectedAgent.value.agent]?.bot_description || '';
+    }
+    return '';
+  },
+  set(val) {
+    if (state.type === 'single-agent') {
+      state.flow_data.agents_config.bot_description = val;
+    } else if (state.type === 'multi-agent') {
+      const key = selectedAgent.value?.agent;
+      if (key && state.flow_data.agents_config[key]) {
+        state.flow_data.agents_config[key].bot_description = val;
+      }
+    }
+  }
+});
+
+// get system prompts model
+const botSystemPromptsModel = computed({
+  get() {
+    if (state.type === 'single-agent') {
+      return state.flow_data.agents_config.bot_prompt;
+    } else if (state.type === 'multi-agent') {
+      return state.flow_data.agents_config?.[selectedAgent.value.agent]?.bot_prompt || '';
+    }
+    return '';
+  },
+  set(val) {
+    if (state.type === 'single-agent') {
+      state.flow_data.agents_config.bot_prompt = val;
+    } else if (state.type === 'multi-agent') {
+      const key = selectedAgent.value?.agent;
+      if (key && state.flow_data.agents_config[key]) {
+        state.flow_data.agents_config[key].bot_prompt = val;
+      }
+    }
+  }
+});
+
+// get configuration model
+const botConfigurationModel = computed({
+  get() {
+    if (state.type === 'single-agent') {
+      return state.flow_data.agents_config.configuration;
+    } else if (state.type === 'multi-agent') {
+      return state.flow_data.agents_config?.[selectedAgent.value.agent]?.configuration || '';
+    }
+    return '';
+  },
+  set(val) {
+    if (state.type === 'single-agent') {
+      state.flow_data.agents_config.configuration = val;
+    } else if (state.type === 'multi-agent') {
+      const key = selectedAgent.value?.agent;
+      if (key && state.flow_data.agents_config[key]) {
+        state.flow_data.agents_config[key].configuration = val;
+      }
+    }
+  }
+});
+
+// get knowledge sources model
+const botKnowledgeSourcesModel = computed({
+  get() {
+    if (state.type === 'single-agent') {
+      return state.flow_data.agents_config.knowledge_sources || [];
+    } else if (state.type === 'multi-agent') {
+      return state.flow_data.agents_config?.[selectedAgent.value.agent]?.knowledge_sources || [];
+    }
+    return [];
+  },
+  set(val) {
+    if (state.type === 'single-agent') {
+      state.flow_data.agents_config.knowledge_sources = val;
+    } else if (state.type === 'multi-agent') {
+      const key = selectedAgent.value?.agent;
+      if (key && state.flow_data.agents_config[key]) {
+        state.flow_data.agents_config[key].knowledge_sources = val;
+      }
+    }
+  }
+});
+
 </script>
 
 <template>
   <div class="flex flex-col lg:flex-row justify-stretch gap-4">
     <form class="lg:flex-1 lg:min-w-0" @submit.prevent="() => submit()">
-      <div class="flex flex-col space-y-3">
+      <div class="flex flex-col space-y-3 gap-4">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div>
-            {{ state }}
             <!-- <label for="name">{{ t('AGENT_MGMT.FORM_CREATE.AI_AGENT_NAME') }}</label> -->
             <label for="name">Nama</label>
-            <Input id="name" v-model="state.name" :placeholder="t('AGENT_MGMT.FORM_CREATE.AI_AGENT_NAME')" />
+            <Input id="name" v-model="state.name" placeholder="Nama" />
           </div>
           <div>
             <label for="description">Deskripsi</label>
             <Input
               id="description"
               v-model="state.description"
-              :placeholder="t('AGENT_MGMT.FORM_CREATE.AI_AGENT_DESC')"
+              placeholder="Deskripsi"
             />
           </div>
         </div>
-        <div>
-          <label for="agent">{{ t('AGENT_MGMT.FORM_CREATE.AI_AGENT_AGENT') }}</label>
+        <div mt-6 mb-0>
+          <label for="agent">{{ t('AGENT_MGMT.FORM_CREATE.AI_AGENT_TYPE') }}</label>
           <multiselect
             id="agent"
             v-model="selectedAgent"
@@ -206,16 +338,19 @@ function resetChat() {
           />
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          HIII {{ selectedAgent }}
           <div>
-            <label for="name">{{ t('AGENT_MGMT.FORM_CREATE.AI_AGENT_NAME') }}</label>
-            <Input id="name" v-model="state.flow_data.agents_config" :placeholder="t('AGENT_MGMT.FORM_CREATE.AI_AGENT_NAME')" />
+            <label>{{ t('AGENT_MGMT.FORM_CREATE.AI_AGENT_NAME') }}</label>
+            <!-- <Input v-model="state.flow_data.agents_config" :placeholder="t('AGENT_MGMT.FORM_CREATE.AI_AGENT_NAME')" /> -->
+            <Input
+              v-model="botNameModel"
+              :placeholder="t('AGENT_MGMT.FORM_CREATE.AI_AGENT_NAME')"
+            />
           </div>
           <div>
             <label for="description">{{ t('AGENT_MGMT.FORM_CREATE.AI_AGENT_DESC') }}</label>
             <Input
               id="description"
-              v-model="state.description"
+              v-model="botDescriptionModel"
               :placeholder="t('AGENT_MGMT.FORM_CREATE.AI_AGENT_DESC')"
             />
           </div>
@@ -224,13 +359,13 @@ function resetChat() {
           <label for="system_prompts">{{ t('AGENT_MGMT.FORM_CREATE.AI_AGENT_SYSTEM_PROMPT') }}</label>
           <TextArea
             id="system_prompts"
-            v-model="state.system_prompts"
+            v-model="botSystemPromptsModel"
             custom-text-area-wrapper-class=""
             custom-text-area-class="!outline-none"
             auto-height
           />
         </div>
-        <div>
+        <!-- <div>
           <label for="welcome_message">{{ t('AGENT_MGMT.FORM_CREATE.WELCOME_MESSAGE') }}</label>
           <TextArea
             id="welcome_message"
@@ -250,7 +385,7 @@ function resetChat() {
             :placeholder="t('AGENT_MGMT.FORM_CREATE.ROUTING_CONDITION_PLACEHOLDER')"
             auto-height
           />
-        </div>
+        </div> -->
         <button class="button self-start" type="submit" :disabled="loadingSave">
           <span v-if="loadingSave" class="mt-4 mb-4 spinner" />
           <span v-else>Simpan</span>

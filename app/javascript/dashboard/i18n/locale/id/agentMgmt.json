@@ -120,6 +120,10 @@
     "FORM_CREATE": {
       "AI_AGENT_NAME": "Nama Bot AI",
       "AI_AGENT_TEMPLATE": "Template Bot AI",
+      "AI_AGENT_WEBHOOK": "Webhook Bot AI",
+      "AI_AGENT_WEBHOOK_PLACEHOLDER": "Masukkan URL webhook untuk Bot AI",
+      "DEFAULT_AI_AGENTS": "Bot AI Flowise",
+      "LANGGRAPH_AI_AGENTS": "Bot AI LangGraph",
       "EMPTY_AI_AGENT": "Kamu belum menambahkan Bot AI",
       "FAILED_ADD": "Gagal menambahkan Bot AI",
       "AI_AGENT_DESC": "Deskripsi Bot AI",

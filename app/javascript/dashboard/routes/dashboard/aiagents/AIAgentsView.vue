@@ -10,9 +10,12 @@ import { minLength, required } from '@vuelidate/validators';
 import useVuelidate from '@vuelidate/core';
 import { useI18n } from 'vue-i18n';
 
+const { accountId } = useAccount();
+const { t } = useI18n();
+
+// Fetch AI Agents from Langgraph
 const aiAgentsLanggraphRef = ref();
 const aiAgentsLoadingLanggraph = ref(false);
-
 async function fetchAgentsLanggraph() {
   try {
     aiAgentsLoadingLanggraph.value = true;
@@ -25,20 +28,7 @@ async function fetchAgentsLanggraph() {
   }
 }
 
-const aiTemplates = ref();
-async function fetchAiAgentTemplates() {
-  aiTemplates.value = await aiAgents.listAiTemplate().then(v => v?.data);
-}
-
-const { accountId } = useAccount();
-const { t } = useI18n()
-
-onMounted(() => {
-  fetchAiAgents();
-  fetchAiAgentTemplates();
-  fetchAgentsLanggraph();
-});
-
+// Fetch AI Agents from Flowise
 const aiAgentsRef = ref();
 const aiAgentsLoading = ref();
 async function fetchAiAgents() {
@@ -51,6 +41,19 @@ async function fetchAiAgents() {
     aiAgentsLoading.value = false;
   }
 }
+
+// Fetch List of AI Agents flowise
+const aiTemplates = ref();
+async function fetchAiAgentTemplates() {
+  aiTemplates.value = await aiAgents.listAiTemplate().then(v => v?.data);
+}
+
+onMounted(() => {
+  fetchAiAgents();
+  fetchAiAgentTemplates();
+  fetchAgentsLanggraph();
+});
+
 
 // Delete AI Agent modal from Flowise
 const loadingCards = ref({});
@@ -134,6 +137,8 @@ async function createAiAgent() {
     loadingCreate.value = false;
   }
 }
+
+// Check if the selected template is for Langgraph
 const isMultiAgent = computed(() => selectedType.value?.id === 'multi-agent');
 
 function buildFlowData() {
@@ -202,6 +207,7 @@ async function createAiAgentLanggraph() {
   }
 }
 
+// List of AI Agent templates
 const templates = computed(() =>
   aiTemplates.value?.map(e => ({
     label: e.name,
@@ -215,15 +221,7 @@ watchEffect(() => {
   }
 });
 
-// watchEffect(() => {
-//   if (templates.value && templates.value.length && !selectedTemplate.value) {
-//     selectedTemplate.value = isMultiAgent.value
-//       ? [templates.value[0]]
-//       : templates.value[0];
-//   }
-// });
-
-// type for the agent (single-agent, multi(max 3), webhook)
+// List for type for the agent (single-agent, multi(max 3))
 const typeAgent = computed(() => {
   return [
     { id: 'single-agent', name: t('AGENT_MGMT.FORM_CREATE.SINGLE_AGENT') },
@@ -233,7 +231,7 @@ const typeAgent = computed(() => {
 
 const selectedType = ref(typeAgent.value[0]);
 
-// Jenis agent yang dipilih
+// List of sources for the agent
 const sourceAgent = computed(() => {
   return [
     { id: 'flowise', name: t('AGENT_MGMT.FORM_CREATE.SOURCES.FLOWISE') },
@@ -254,6 +252,7 @@ watch(selectedSource, () => {
   selectedTemplateLanggraph.value = null; // Reset ke default
 });
 
+// List of Langgraph templates
 const templateLanggraph = computed(() => {
   return [
     { id: 'sales', label: 'Sales Agent' },
@@ -270,6 +269,38 @@ watchEffect(() => {
       : templateLanggraph.value[0];
   }
 });
+
+// Input for webhook URL
+const inputWebhookUrl = ref('');
+async function createAiAgentWebhook() {
+  const valid = await v$.value.$validate();
+  if (!valid) return;
+
+  if (loadingCreate.value) return;
+  const name = state.agentName?.trim();
+  const webhookUrl = inputWebhookUrl.value?.trim();
+
+  if (!name || !webhookUrl) return;
+
+  try {
+    loadingCreate.value = true;
+    // implement the API call to create the AI agent with webhook
+    // ....
+
+    showCreateAgentModal.value = false;
+    // useAlert(t('AGENT_MGMT.FORM_CREATE.SUCCESS_ADD'));
+    console.log('Webhook AI Agent created:', {
+      name,
+      webhookUrl,
+    });
+    useAlert('TODO: Implement createAiAgentWebhook, Temporary implementation');
+  } catch (e) {
+    const errorMessage = e?.response?.data?.error || e.message;
+    useAlert(errorMessage || t('AGENT_MGMT.FORM_CREATE.FAILED_ADD'));
+  } finally {
+    loadingCreate.value = false;
+  }
+}
 
 </script>
 
@@ -290,7 +321,10 @@ watchEffect(() => {
       </template>
     </BaseSettingsHeader>
     <div>
-      <h3 class="text-lg font-medium mt-4">Default AI Agents</h3>
+      <!-- <h3 class="text-lg font-medium mt-4">Default AI Agents</h3> -->
+      <h3 class="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2 border-b pb-2 border-slate-200 dark:border-slate-700 mt-8">
+        {{ $t('AGENT_MGMT.FORM_CREATE.DEFAULT_AI_AGENTS') }}
+      </h3>
       <div v-if="aiAgentsLoading" class="text-center">
         <span class="mt-4 mb-4 spinner" />
       </div>
@@ -357,7 +391,9 @@ watchEffect(() => {
       </div>
 
       <!-- From Langgraph -->
-      <h3 class="text-lg font-medium mt-4">Langgraph AI Agents</h3>
+      <h3 class="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2 border-b pb-2 border-slate-200 dark:border-slate-700 mt-4">
+        {{ $t('AGENT_MGMT.FORM_CREATE.LANGGRAPH_AI_AGENTS') }}
+      </h3>
       <div v-if="aiAgentsLoadingLanggraph" class="text-center">
         <span class="mt-4 mb-4 spinner" />
       </div>
@@ -552,12 +588,7 @@ watchEffect(() => {
             <div class="text-red-500">{{ error.$message }}</div>
           </div>
         </div>
-        <!-- SINGLE AGENT -->
-        <!-- <div v-if="selectedTemplate && selectedTemplate.label">
-          <span class="text-sm text-slate-500 mb-2">
-            {{ $t('AGENT_MGMT.FORM_CREATE.SELECTED_TEMPLATE') }}: {{ showSelectedTemplate }}
-          </span>
-        </div> -->
+
         <label>
           {{ $t('AGENT_MGMT.FORM_CREATE.AI_AGENT_TEMPLATE') }}
         </label>
@@ -593,6 +624,50 @@ watchEffect(() => {
           </multiselect>
         </div>
       </div>
+      <div class="flex items-center justify-start gap-2 pt-2">
+        <WootSubmitButton
+          :disabled="loadingCreate || v$.$invalid"
+          :button-text="$t('AI_AGENTS.CREATE_NEW')"
+          :loading="loadingCreate"
+          type="submit"
+        />
+      </div>
+    </form>
+
+    <form v-if="selectedSource.id === 'webhook'" @submit.prevent="() => createAiAgentWebhook()">
+      <div class="flex flex-col">
+        <div class="w-full mb-2">
+          <label>
+            {{ $t('AGENT_MGMT.FORM_CREATE.AI_AGENT_NAME') }}
+            <input
+              v-model="state.agentName"
+              type="text"
+              :placeholder="$t('AGENT_MGMT.FORM_CREATE.AI_AGENT_NAME')"
+              style="margin-bottom: 0px"
+            />
+          </label>
+          <div
+            v-for="error of v$.agentName.$errors"
+            :key="error.$uid"
+            class="input-errors"
+          >
+            <div class="text-red-500">{{ error.$message }}</div>
+          </div>
+        </div>
+
+        <div class="w-full">
+          <label>
+            {{ $t('AGENT_MGMT.FORM_CREATE.AI_AGENT_WEBHOOK') }}
+            <input
+              v-model="inputWebhookUrl"
+              type="text"
+              :placeholder="$t('AGENT_MGMT.FORM_CREATE.AI_AGENT_WEBHOOK_PLACEHOLDER')"
+              style="margin-bottom: 0px"
+            />
+          </label>
+        </div>
+      </div>
+
       <div class="flex items-center justify-start gap-2 pt-2">
         <WootSubmitButton
           :disabled="loadingCreate || v$.$invalid"

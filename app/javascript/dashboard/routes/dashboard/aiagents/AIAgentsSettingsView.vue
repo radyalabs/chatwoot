@@ -1,9 +1,11 @@
 <script setup>
 import { useRoute } from 'vue-router';
 import AiAgentGeneralSettingsView from './AiAgentGeneralSettingsView.vue';
+import AiAgentLanggraphGeneralSettingsView from './AiAgentLanggraphGeneralSettingsView.vue';
 import AiAgentKnowledgeSources from './AiAgentKnowledgeSources.vue';
 import { onMounted, ref } from 'vue';
 import aiAgents from '../../../api/aiAgents';
+import aiAgentsLanggraph from '../../../api/aiAgentsLanggraph';
 import FollowupsSettingsView from './FollowupsSettingsView.vue';
 
 const tabs = [
@@ -36,9 +38,26 @@ async function showData() {
   }
 }
 
+async function showDataLanggraph() {
+  try {
+    loadingData.value = true;
+
+    data.value = await aiAgentsLanggraph
+      .show(route.params.aiAgentId)
+      .then(v => v?.data);
+  } finally {
+    loadingData.value = false;
+  }
+}
+
 onMounted(() => {
-  showData();
+  if (route.query.source !== 'langgraph') {
+    showData();
+  } else {
+    showDataLanggraph();
+  }
 });
+
 </script>
 
 <template>
@@ -73,7 +92,12 @@ onMounted(() => {
       />
     </woot-tabs>
     <div v-show="activeIndex === 0">
-      <AiAgentGeneralSettingsView :data="data" />
+      <!-- if query.source is langgraph -->
+      <AiAgentGeneralSettingsView
+        v-if="route.query.source !== 'langgraph'"
+        :data="data"
+      />
+      <AiAgentLanggraphGeneralSettingsView v-else :data="data" />
     </div>
     <div v-show="activeIndex === 1">
       <AiAgentKnowledgeSources :data="data" />

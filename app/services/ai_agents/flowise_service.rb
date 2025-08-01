@@ -112,11 +112,17 @@ class AiAgents::FlowiseService
     def add_document_loader(store_id:, loader_id:, splitter_id:, name:, content:)
       body = document_loader_body(store_id, loader_id, splitter_id: splitter_id, name: name, content: content)
 
+      # Rails.logger.info("🤖 Adding document loader - Store ID: #{store_id}, Loader ID: #{loader_id}, Name: #{name}")
+      # Rails.logger.debug { "🤖 Request body: #{body}" }
+
       save_loader = post(
         '/document-store/loader/save',
         body: body,
         headers: headers
       )
+
+      # Rails.logger.info("🤖 Save loader response: #{save_loader.code} - #{save_loader.message}")
+      # Rails.logger.debug { "🤖 Save loader body: #{save_loader.body}" }
 
       raise "Error adding document loader: #{save_loader.code} #{save_loader.message}" unless save_loader.success?
 
@@ -126,7 +132,14 @@ class AiAgents::FlowiseService
         headers: headers
       )
 
-      raise "Error adding document loader: #{process_loader.code} #{process_loader.message}" unless process_loader.success?
+      # Rails.logger.info("🤖 Process loader response: #{process_loader.code} - #{process_loader.message}")
+      # Rails.logger.debug { "🤖 Process loader body: #{process_loader.body}" }
+
+      unless process_loader.success?
+        # Rails.logger.error("🤖 Process loader failed with status #{process_loader.code}")
+        # Rails.logger.error("🤖 Error response body: #{process_loader.body}")
+        raise "Error processing document loader: #{process_loader.code} #{process_loader.message} - #{process_loader.body}"
+      end
 
       process_loader.parsed_response
     rescue StandardError => e
@@ -186,6 +199,11 @@ class AiAgents::FlowiseService
           'pdfFile' => content,
           'usage' => 'perPage',
           'legacyBuild' => ''
+        }
+      when 'microsoftExcel'
+        {
+          'excelFile' => content,
+          'sheetsToExtract' => 'All Sheets'
         }
       when 'htmlFile'
         { 'htmlFile' => content }

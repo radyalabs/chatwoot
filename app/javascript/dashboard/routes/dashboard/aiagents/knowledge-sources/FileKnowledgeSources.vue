@@ -83,9 +83,14 @@ function onInputChanged(files) {
 }
 
 function addFile(file) {
-  if (!file.name.endsWith('.pdf')) {
-    return
+  const allowedExtensions = ['.pdf', '.xlsx', '.xls'];
+  const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+  
+  if (!allowedExtensions.includes(fileExtension)) {
+    useAlert('Only PDF and Excel files are allowed');
+    return;
   }
+  
   if (file.size > 5242880) {
     useAlert(t('CONVERSATION.UPLOAD_MAX_REACHED'))
     return
@@ -152,7 +157,7 @@ const handleDrop = (event) => {
           id="inputfile"
           type="file"
           class="hidden"
-          accept=".pdf"
+          accept=".pdf,.xlsx,.xls"
           @change="v => onInputChanged(v)"
         />
         <span class="text-center">

@@ -63,15 +63,27 @@ class Api::V1::Accounts::KnowledgeSourceFilesController < Api::V1::Accounts::Bas
     file_name = formatted_file_name(file.original_filename)
     base64_content = convert_file_to_base64(file, file_name)
 
+    loader_id = determine_loader_id(file.original_filename)
+
+    # Rails.logger.info('📁 Creating document loader:')
+    # Rails.logger.info("   - Original filename: #{file.original_filename}")
+    # Rails.logger.info("   - Formatted filename: #{file_name}")
+    # Rails.logger.info("   - File size: #{file.size} bytes")
+    # Rails.logger.info("   - Content type: #{file.content_type}")
+    # Rails.logger.info("   - Loader ID: #{loader_id}")
+    # Rails.logger.info("   - Store ID: #{store_id}")
+    # Rails.logger.info("   - Base64 content length: #{base64_content&.length || 'nil'}")
+
     AiAgents::FlowiseService.add_document_loader(
       store_id: store_id,
-      loader_id: 'pdfFile',
+      loader_id: loader_id,
       splitter_id: 'recursiveCharacterTextSplitter',
       name: file_name,
       content: base64_content
     )
   rescue StandardError => e
     Rails.logger.error("Failed to add document loader: #{e.message}")
+    # Rails.logger.error("Error backtrace: #{e.backtrace&.first(5)&.join("\n")}")
     nil
   end
 
@@ -95,6 +107,20 @@ class Api::V1::Accounts::KnowledgeSourceFilesController < Api::V1::Accounts::Bas
     random_string = SecureRandom.alphanumeric(5)
 
     "#{sanitized_name}_#{random_string}#{extension}"
+  end
+
+  def determine_loader_id(filename)
+    extension = File.extname(filename).downcase
+    case extension
+    when '.pdf'
+      'pdfFile'
+    when '.xlsx', '.xls'
+      'microsoftExcel'
+    when '.html', '.htm'
+      'htmlFile'
+    else
+      raise ArgumentError, "Unsupported file type: #{extension}"
+    end
   end
 
   def convert_file_to_base64(file, file_name)

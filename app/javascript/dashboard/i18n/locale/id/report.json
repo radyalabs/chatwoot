@@ -519,6 +519,18 @@
         "STATUS": "Status"
       }
     },
+    "CHAT_SUMMARY": {
+      "HEADER": "Ringkasan Chat",
+      "CHAT_IN": "Total percakapan masuk",
+      "CHAT_ANSWERED_BY_AI": "Total percakapan yang dijawab oleh agen AI",
+      "CHAT_HANDOVERED": "Total percakapan dialihkan ke agen"
+    },
+    "CONVERSATION_TRENDS_LINE_CHART": {
+      "HEADER": "Tren Percakapan",
+      "TOTAL_CHATS": "Total percakapan masuk",
+      "BOT_CHATS": "Total percakapan yang dijawab oleh agen AI",
+      "AGENT_CHATS": "Total percakapan dialihkan ke agen"
+    },
     "AGENT_STATUS": {
       "HEADER": "Status Agen",
       "ONLINE": "Online",

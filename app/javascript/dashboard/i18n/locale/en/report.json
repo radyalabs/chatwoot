@@ -491,7 +491,7 @@
   "OVERVIEW_REPORTS": {
     "HEADER": "Overview",
     "LIVE": "Live",
-    "DOWNLOAD": "Ekspor",
+    "DOWNLOAD": "Export",
     "EXPORT_TO_CSV": "Export to CSV",
     "EXPORT_TO_PDF": "Export to PDF",
     "EXPORT_TO_EXCEL": "Export to Excel",
@@ -520,6 +520,18 @@
         "UNATTENDED": "Unattended",
         "STATUS": "Status"
       }
+    },
+    "CHAT_SUMMARY": {
+      "HEADER": "Chat Summary",
+      "CHAT_IN": "Total incoming chats",
+      "CHAT_ANSWERED_BY_AI": "Total chats answered by AI agent",
+      "CHAT_HANDOVERED": "Total chats handovered to agent"
+    },
+    "CONVERSATION_TRENDS_LINE_CHART": {
+      "HEADER": "Conversation Trends",
+      "TOTAL_CHATS": "Total incoming chats",
+      "BOT_CHATS": "Total chats answered by AI agent",
+      "AGENT_CHATS": "Total chats handovered to agent"
     },
     "AGENT_STATUS": {
       "HEADER": "Agent status",

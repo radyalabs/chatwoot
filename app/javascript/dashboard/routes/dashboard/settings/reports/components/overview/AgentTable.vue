@@ -71,12 +71,11 @@ const defaulSpanRender = cellProps =>
   );
 
 const columnHelper = createColumnHelper();
-const columns = [
+const columns = computed(() => [
   columnHelper.accessor('agent', {
     header: t('OVERVIEW_REPORTS.AGENT_CONVERSATIONS.TABLE_HEADER.AGENT'),
     cell: cellProps => h(AgentCell, cellProps),
     size: 250,
-    // Add sorting function for agent names
     sortingFn: (rowA, rowB) => {
       const a = rowA.getValue('agent');
       const b = rowB.getValue('agent');
@@ -87,7 +86,6 @@ const columns = [
     header: t('OVERVIEW_REPORTS.AGENT_CONVERSATIONS.TABLE_HEADER.OPEN'),
     cell: defaulSpanRender,
     size: 100,
-    // Numeric sorting
     sortingFn: (rowA, rowB) => {
       const a = rowA.getValue('open');
       const b = rowB.getValue('open');
@@ -98,14 +96,13 @@ const columns = [
     header: t('OVERVIEW_REPORTS.AGENT_CONVERSATIONS.TABLE_HEADER.UNATTENDED'),
     cell: defaulSpanRender,
     size: 100,
-    // Numeric sorting
     sortingFn: (rowA, rowB) => {
       const a = rowA.getValue('unattended');
       const b = rowB.getValue('unattended');
       return a - b;
     },
   }),
-];
+]);
 
 const paginationParams = computed(() => {
   return {
@@ -118,11 +115,13 @@ const table = useVueTable({
   get data() {
     return tableData.value;
   },
-  columns,
+  get columns() {
+    return columns.value;
+  },
   manualPagination: true,
   enableSorting: true,
   getCoreRowModel: getCoreRowModel(),
-  getSortedRowModel: getSortedRowModel(), // Add this
+  getSortedRowModel: getSortedRowModel(),
   get rowCount() {
     return totalCount.value;
   },

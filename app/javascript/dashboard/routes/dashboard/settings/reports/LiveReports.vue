@@ -119,21 +119,21 @@ export default {
       
       return {
         data1: {
-          label: 'CONVERSATION_TRENDS.TOTAL_CHATS',
+          label: 'OVERVIEW_REPORTS.CONVERSATION_TRENDS_LINE_CHART.TOTAL_CHATS',
           data: totalChats.map((value, index) => ({
             timestamp: dummyTimestamps[index],
             value: value
           }))
         },
         data2: {
-          label: 'CONVERSATION_TRENDS.BOT_CHATS', 
+          label: 'OVERVIEW_REPORTS.CONVERSATION_TRENDS_LINE_CHART.BOT_CHATS', 
           data: botChats.map((value, index) => ({
             timestamp: dummyTimestamps[index],
             value: value
           }))
         },
         data3: {
-          label: 'CONVERSATION_TRENDS.AGENT_CHATS',
+          label: 'OVERVIEW_REPORTS.CONVERSATION_TRENDS_LINE_CHART.AGENT_CHATS',
           data: agentChats.map((value, index) => ({
             timestamp: dummyTimestamps[index], 
             value: value
@@ -320,7 +320,7 @@ export default {
         class="flex-1 w-full max-w-full md:w-[65%] md:max-w-[65%] conversation-metric"
       >
         <MetricCard
-          header="Ringkasan Chat"
+          :header="$t('OVERVIEW_REPORTS.CHAT_SUMMARY.HEADER')"
           :is-loading="uiFlags.isFetchingAccountConversationMetric"
           :loading-message="
             $t('OVERVIEW_REPORTS.ACCOUNT_CONVERSATIONS.LOADING_MESSAGE')
@@ -328,7 +328,7 @@ export default {
         >
           <div class="flex-1 min-w-0 pb-2">
             <h3 class="text-base text-n-slate-11">
-              Total chat masuk
+              {{ $t('OVERVIEW_REPORTS.CHAT_SUMMARY.CHAT_IN') }}
             </h3>
             <p class="text-n-slate-12 text-3xl mb-0 mt-1">
               {{ accountConversationMetric?.open || 0 }}
@@ -336,7 +336,7 @@ export default {
           </div>
           <div class="flex-1 min-w-0 pb-2">
             <h3 class="text-base text-n-slate-11">
-              Total chat dijawab AI
+              {{ $t('OVERVIEW_REPORTS.CHAT_SUMMARY.CHAT_ANSWERED_BY_AI') }}
             </h3>
             <p class="text-n-slate-12 text-3xl mb-0 mt-1">
               {{ creditUsageMetric?.ai_responses || 0 }}
@@ -344,7 +344,7 @@ export default {
           </div>
           <div class="flex-1 min-w-0 pb-2">
             <h3 class="text-base text-n-slate-11">
-              Total chat dialihkan ke agen
+              {{ $t('OVERVIEW_REPORTS.CHAT_SUMMARY.CHAT_HANDOVERED') }}
             </h3>
             <p class="text-n-slate-12 text-3xl mb-0 mt-1">
               {{ accountConversationMetric?.unassigned || 0 }}
@@ -377,7 +377,7 @@ export default {
           <div class="flex flex-col gap-4 w-full">
             <div class="flex items-center gap-2 flex-row">
               <h5 class="mb-0 text-n-slate-12 font-medium text-lg">
-                Tren Percakapan
+                {{ $t('OVERVIEW_REPORTS.CONVERSATION_TRENDS_LINE_CHART.HEADER') }}
               </h5>
               <span
                 class="flex flex-row items-center py-0.5 px-2 rounded bg-n-teal-3 dark:bg-yellow-500/50 text-xs"

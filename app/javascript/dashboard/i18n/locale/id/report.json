@@ -467,6 +467,18 @@
 
   "AI_AGENT_REPORTS": {
     "HEADER": "Laporan AI Agen",
+    "CHARTS": {
+      "HEADER": "Laporan AI Agen",
+      "RESOLUTION_PROPORTION": "Proporsi Penyelesaian",
+      "DAILY_RESOLUTION_TREND": "Tren Penyelesaian Harian",
+      "RESOLVED_BY_AI": "Direspon oleh AI",
+      "HANDOVERED_TO_AGENT": "Dialihkan ke Agen"
+    },
+    "KPI": {
+      "HEADER": "Key Performance Indicators",
+      "TOTAL_AI_CONVERSATIONS":"Total conversations handled by AI agent",
+      "RESOLVED_BY_AI":"Total chats answered by AI agent"
+    },
     "METRIC": {
       "TOTAL_CONVERSATIONS": {
         "LABEL": "No. of Conversations",

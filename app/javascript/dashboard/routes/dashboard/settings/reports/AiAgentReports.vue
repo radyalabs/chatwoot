@@ -7,8 +7,12 @@ import ReportContainer from './ReportContainer.vue';
 import { REPORTS_EVENTS } from '../../../../helper/AnalyticsHelper/events';
 import ReportHeader from './components/ReportHeader.vue';
 import LineChart from '../../../../../shared/components/charts/LineChart.vue';
+import BarChart from '../../../../../shared/components/charts/BarChart.vue';
+import DonutChart from '../../../../../shared/components/charts/DonutChart.vue';
 import ReportLineContainer from './ReportLineContainer.vue';
 import ReportsAPI from 'dashboard/api/reports';
+import MetricCard from './components/overview/MetricCard.vue';
+import MetricCardFull from './components/overview/MetricCardFull.vue';
 
 export default {
   name: 'AIAgentReports',
@@ -18,7 +22,11 @@ export default {
     ReportFilterSelector,
     ReportContainer,
     LineChart,
+    BarChart,
+    DonutChart,
     ReportLineContainer,
+    MetricCard,
+    MetricCardFull,
   },
   data() {
     return {
@@ -36,8 +44,11 @@ export default {
         aiAgentMessageSendCount: 0,
         aiAgentHandoffCount: 0,
         handoffRate: 0,
+        resolvedByAI: 0,
+        totalConversations: 0,
       },
       businessHours: false,
+      dropdownOpen: false,
     };
   },
   computed: {
@@ -45,6 +56,72 @@ export default {
       return {
         from: this.from,
         to: this.to,
+      };
+    },
+    donutChartData() {
+      const resolved = this.metrics.resolvedByAI || 0;
+      const handovered = this.metrics.aiAgentHandoffCount || 0;
+      const total = resolved + handovered;
+      
+      if (total === 0) {
+        return {
+          data: [],
+          labels: []
+        };
+      }
+      
+      return {
+        data: [resolved, handovered],
+        labels: ['Resolved by AI', 'Handovered to Agent']
+      };
+    },
+    barChartData() {
+      // Dummy data for demonstration - replace with real data from store
+      const labels = [];
+      const resolvedData = [];
+      const handoveredData = [];
+      
+      // Use filter dates if available, otherwise default to last 7 days
+      const endDate = this.to ? new Date(this.to * 1000) : new Date();
+      const startDate = this.from ? new Date(this.from * 1000) : new Date(Date.now() - 6 * 24 * 60 * 60 * 1000);
+      
+      // Calculate number of days between start and end date
+      const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+      const numDays = Math.max(1, Math.min(daysDiff, 30)); // Limit to 30 days max
+      
+      // Generate dummy data for the date range
+      for (let i = numDays - 1; i >= 0; i--) {
+        const date = new Date(endDate);
+        date.setDate(date.getDate() - i);
+        // Format date for display (MM/DD)
+        const label = `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
+        labels.push(label);
+        
+        const resolved = Math.floor(Math.random() * 50) + 20;
+        const handovered = Math.floor(Math.random() * 20) + 5;
+        
+        resolvedData.push(resolved);
+        handoveredData.push(handovered);
+      }
+      
+      return {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Resolved by AI',
+            data: resolvedData,
+            backgroundColor: '#10B981',
+            borderColor: '#059669',
+            borderWidth: 1,
+          },
+          {
+            label: 'Handovered to Agent',
+            data: handoveredData,
+            backgroundColor: '#F59E0B',
+            borderColor: '#D97706',
+            borderWidth: 1,
+          }
+        ]
       };
     },
   },
@@ -75,6 +152,8 @@ export default {
           aiAgentMessageSendCount: response.data.ai_agent_message_send_count,
           aiAgentHandoffCount: response.data.ai_agent_handoff_count,
           handoffRate: response.data.handoff_rate,
+          resolvedByAI: response.data.resolved_by_ai || Math.floor(Math.random() * 100) + 50, // Dummy data
+          totalConversations: response.data.total_conversations || Math.floor(Math.random() * 200) + 100, // Dummy data
         };
       });
     },
@@ -112,20 +191,195 @@ export default {
         reportType: 'bots',
       });
     },
+    toggleDropdown() {
+      this.dropdownOpen = !this.dropdownOpen;
+    },
+    closeDropdown() {
+      this.dropdownOpen = false;
+    },
+    exportData(format) {
+      console.log(`Exporting data to ${format}`);
+      this.closeDropdown();
+    },
+    closeDropdownOnOutsideClick(event) {
+      if (!this.dropdownOpen) return;
+      const dropdownContainer = this.$refs.dropdownContainer;
+      if (dropdownContainer && !dropdownContainer.contains(event.target)) {
+        this.closeDropdown();
+      }
+    },
+  },
+  mounted() {
+    window.addEventListener('click', this.closeDropdownOnOutsideClick);
+  },
+  beforeUnmount() {
+    window.removeEventListener('click', this.closeDropdownOnOutsideClick);
   },
 };
 </script>
 
 <template>
-  <ReportHeader :header-title="$t('AI_AGENT_REPORTS.HEADER')" />
-  <div class="flex flex-col gap-4">
-    <ReportFilterSelector
-      :show-agents-filter="false"
-      show-group-by-filter
-      :show-business-hours-switch="false"
-      @filter-change="onFilterChange"
-    />
+  <div class="flex flex-col gap-4 pb-6">
+    <ReportHeader :header-title="$t('AI_AGENT_REPORTS.HEADER')" class="sticky">
+      <div class="flex items-center gap-4">
+        <!-- Filter on the left -->
+        <div class="flex-grow">
+          <ReportFilterSelector
+            :show-agents-filter="false"
+            show-group-by-filter
+            :show-business-hours-switch="false"
+            @filter-change="onFilterChange"
+          />
+        </div>
+        
+        <!-- Export dropdown on the right -->
+        <div class="relative inline-block text-left" ref="dropdownContainer">
+          <button
+            @click="toggleDropdown"
+            class="inline-flex justify-center w-full rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 text-white hover:opacity-90 transition-opacity"
+            style="background-color: #389947"
+          >
+            {{ $t('OVERVIEW_REPORTS.DOWNLOAD') }}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="-mr-1 ml-2 h-5 w-5"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+          <div
+            v-if="dropdownOpen"
+            class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg  ring-1 ring-black dark:ring-gray-600 ring-opacity-5 focus:outline-none"
+          >
+            <div class="py-1">
+              <a
+                href="#"
+                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-green-100 dark:hover:bg-gray-700"
+                @click="exportData('csv')"
+              >
+                {{ $t('OVERVIEW_REPORTS.EXPORT_TO_CSV') }}
+              </a>
+              <a
+                href="#"
+                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-green-100 dark:hover:bg-gray-700"
+                @click="exportData('pdf')"
+              >
+                {{ $t('OVERVIEW_REPORTS.EXPORT_TO_PDF') }}
+              </a>
+              <a
+                href="#"
+                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-green-100 dark:hover:bg-gray-700"
+                @click="exportData('excel')"
+              >
+                {{ $t('OVERVIEW_REPORTS.EXPORT_TO_EXCEL') }}
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ReportHeader>
 
-    <ReportLineContainer :metrics="metrics" />
+    <!-- Laporan Bot AI Charts Section -->
+    <div class="flex flex-row flex-wrap max-w-full">
+      <MetricCardFull class="w-full max-w-full">
+        <!-- KPIs and Donut Chart Row -->
+        <div class="flex flex-col lg:flex-row gap-6 p-4">
+          <!-- KPIs Section -->
+          <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Jumlah Percakapan AI KPI -->
+            <div class=" rounded-lg p-6">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    {{ $t('AI_AGENT_REPORTS.KPI.TOTAL_AI_CONVERSATIONS') }}
+                  </p>
+                  <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2">
+                    {{ metrics.totalConversations || 0 }}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Resolved by AI KPI -->
+            <div class=" rounded-lg p-6 ">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    {{ $t('AI_AGENT_REPORTS.KPI.RESOLVED_BY_AI') }}
+                  </p>
+                  <div class="flex flex-row gap-2 items-center">
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2">
+                      {{ metrics.resolvedByAI || 0 }}
+                    </p>
+                    <p class="text-sm text-green-600 items-center my-auto dark:text-green-400 mt-1">
+                      ({{ metrics.totalConversations > 0 ? Math.round((metrics.resolvedByAI / metrics.totalConversations) * 100) : 0 }}%)
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Donut Chart Section -->
+          <div class="flex-1 max-w-sm">
+            <div class=" rounded-lg p-6 h-full">
+              <div class="h-48 flex items-center justify-center">
+                <DonutChart
+                  v-if="donutChartData.data?.length"
+                  :data="donutChartData.data"
+                  :labels="donutChartData.labels"
+                  :class="'text-sm text-gray-600 dark:text-gray-400'"
+                />
+                <div v-else class="text-sm text-gray-600 dark:text-gray-400">
+                  {{ $t('REPORT.NO_ENOUGH_DATA') }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bar Chart Section -->
+        <div class="p-4 pt-0">
+          <div class=" rounded-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h6 class="text-lg font-semibold text-gray-900 dark:text-white">
+                {{ $t('AI_AGENT_REPORTS.CHARTS.DAILY_RESOLUTION_TREND') }}
+              </h6>
+              <div class="flex space-x-4">
+                <div class="flex items-center">
+                  <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                  <span class="text-sm text-gray-600 dark:text-gray-300">
+                    {{ $t('AI_AGENT_REPORTS.CHARTS.RESOLVED_BY_AI') }}
+                  </span>
+                </div>
+                <div class="flex items-center">
+                  <div class="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>
+                  <span class="text-sm text-gray-600 dark:text-gray-300">
+                    {{ $t('AI_AGENT_REPORTS.CHARTS.HANDOVERED_TO_AGENT') }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="h-80">
+              <BarChart
+                v-if="barChartData.labels?.length"
+                :collection="barChartData"
+              />
+              <div v-else class="flex items-center justify-center h-full">
+                <span class="text-sm text-gray-600 dark:text-gray-400">
+                  {{ $t('REPORT.NO_ENOUGH_DATA') }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </MetricCardFull>
+    </div>
   </div>
 </template>

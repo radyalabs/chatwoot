@@ -469,6 +469,18 @@
   },
   "AI_AGENT_REPORTS": {
     "HEADER": "AI Agent Reports",
+    "CHARTS": {
+      "HEADER": "AI Agent Reports",
+      "RESOLUTION_PROPORTION": "Resolution Proportion",
+      "DAILY_RESOLUTION_TREND": "Daily Resolution Trend",
+      "RESOLVED_BY_AI": "Resolved by AI",
+      "HANDOVERED_TO_AGENT": "Handovered to Agent"
+    },
+    "KPI": {
+      "HEADER": "Key Performance Indicators",
+      "TOTAL_AI_CONVERSATIONS":"Total conversations handled by AI agent",
+      "RESOLVED_BY_AI":"Total chats answered by AI agent"
+    },
     "METRIC": {
       "TOTAL_CONVERSATIONS": {
         "LABEL": "No. of Conversations",

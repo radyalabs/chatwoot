@@ -263,7 +263,7 @@ export default {
 </script>
 
 <template>
-  <div class="flex flex-col gap-4 pb-6 px-4">
+  <div class="flex flex-col gap-4 pb-6">
     <ReportHeader :header-title="$t('OVERVIEW_REPORTS.HEADER')" class="sticky" >
       <div class="relative inline-block text-left" ref="dropdownContainer">
         <button

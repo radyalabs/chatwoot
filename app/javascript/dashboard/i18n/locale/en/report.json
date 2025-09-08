@@ -491,6 +491,10 @@
   "OVERVIEW_REPORTS": {
     "HEADER": "Overview",
     "LIVE": "Live",
+    "DOWNLOAD": "Ekspor",
+    "EXPORT_TO_CSV": "Export to CSV",
+    "EXPORT_TO_PDF": "Export to PDF",
+    "EXPORT_TO_EXCEL": "Export to Excel",
     "ACCOUNT_CONVERSATIONS": {
       "HEADER": "Open Conversations",
       "LOADING_MESSAGE": "Loading conversation metrics...",

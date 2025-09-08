@@ -1,9 +1,10 @@
 <script setup>
-import { computed, h } from 'vue';
+import { computed, h, ref } from 'vue';
 import {
   useVueTable,
   createColumnHelper,
   getCoreRowModel,
+  getSortedRowModel,
 } from '@tanstack/vue-table';
 import { useI18n } from 'vue-i18n';
 
@@ -34,6 +35,9 @@ const { agents, agentMetrics, pageIndex } = defineProps({
 
 const emit = defineEmits(['pageChange']);
 const { t } = useI18n();
+
+// Add sorting state
+const sorting = ref([]);
 
 function getAgentInformation(id) {
   return agents?.find(agent => agent.id === Number(id));
@@ -71,18 +75,35 @@ const columns = [
   columnHelper.accessor('agent', {
     header: t('OVERVIEW_REPORTS.AGENT_CONVERSATIONS.TABLE_HEADER.AGENT'),
     cell: cellProps => h(AgentCell, cellProps),
-
     size: 250,
+    // Add sorting function for agent names
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.getValue('agent');
+      const b = rowB.getValue('agent');
+      return a < b ? -1 : a > b ? 1 : 0;
+    },
   }),
   columnHelper.accessor('open', {
     header: t('OVERVIEW_REPORTS.AGENT_CONVERSATIONS.TABLE_HEADER.OPEN'),
     cell: defaulSpanRender,
     size: 100,
+    // Numeric sorting
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.getValue('open');
+      const b = rowB.getValue('open');
+      return a - b;
+    },
   }),
   columnHelper.accessor('unattended', {
     header: t('OVERVIEW_REPORTS.AGENT_CONVERSATIONS.TABLE_HEADER.UNATTENDED'),
     cell: defaulSpanRender,
     size: 100,
+    // Numeric sorting
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.getValue('unattended');
+      const b = rowB.getValue('unattended');
+      return a - b;
+    },
   }),
 ];
 
@@ -99,8 +120,9 @@ const table = useVueTable({
   },
   columns,
   manualPagination: true,
-  enableSorting: false,
+  enableSorting: true,
   getCoreRowModel: getCoreRowModel(),
+  getSortedRowModel: getSortedRowModel(), // Add this
   get rowCount() {
     return totalCount.value;
   },
@@ -108,10 +130,16 @@ const table = useVueTable({
     get pagination() {
       return paginationParams.value;
     },
+    get sorting() {
+      return sorting.value;
+    },
   },
   onPaginationChange: updater => {
     const newPagintaion = updater(paginationParams.value);
     emit('pageChange', newPagintaion.pageIndex);
+  },
+  onSortingChange: updater => {
+    sorting.value = updater(sorting.value);
   },
 });
 </script>
@@ -142,6 +170,7 @@ const table = useVueTable({
       th.ve-table-header-th {
         @apply text-sm rounded-xl;
         padding: var(--space-small) var(--space-two) !important;
+        transition: background-color 0.2s ease;
       }
 
       td.ve-table-body-td {

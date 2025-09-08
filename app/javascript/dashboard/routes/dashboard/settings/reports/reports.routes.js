@@ -32,14 +32,14 @@ const oldReportRoutes = [
     },
     component: AgentReports,
   },
-  {
-    path: 'inboxes',
-    name: 'inbox_reports',
-    meta: {
-      permissions: ['administrator', 'report_manage'],
-    },
-    component: InboxReports,
-  },
+  // {
+  //   path: 'inboxes',
+  //   name: 'inbox_reports',
+  //   meta: {
+  //     permissions: ['administrator', 'report_manage'],
+  //   },
+  //   component: InboxReports,
+  // },
   {
     path: 'label',
     name: 'label_reports',
@@ -48,14 +48,14 @@ const oldReportRoutes = [
     },
     component: LabelReports,
   },
-  {
-    path: 'teams',
-    name: 'team_reports',
-    meta: {
-      permissions: ['administrator', 'report_manage'],
-    },
-    component: TeamReports,
-  },
+  // {
+  //   path: 'teams',
+  //   name: 'team_reports',
+  //   meta: {
+  //     permissions: ['administrator', 'report_manage'],
+  //   },
+  //   component: TeamReports,
+  // },
 ];
 
 const revisedReportRoutes = [

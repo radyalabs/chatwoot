@@ -489,6 +489,10 @@
   "OVERVIEW_REPORTS": {
     "HEADER": "Gambaran",
     "LIVE": "Langsung",
+    "DOWNLOAD": "Ekspor",
+    "EXPORT_TO_CSV": "Ekspor CSV",
+    "EXPORT_TO_PDF": "Ekspor PDF",
+    "EXPORT_TO_EXCEL": "Ekspor Excel",
     "ACCOUNT_CONVERSATIONS": {
       "HEADER": "Percakapan Terbuka",
       "LOADING_MESSAGE": "Memuat metrik percakapan...",

@@ -13,6 +13,7 @@ import ReportLineContainer from './ReportLineContainer.vue';
 import ReportsAPI from 'dashboard/api/reports';
 import MetricCard from './components/overview/MetricCard.vue';
 import MetricCardFull from './components/overview/MetricCardFull.vue';
+import VueWordCloud from "vue3-word-cloud";
 
 export default {
   name: 'AIAgentReports',
@@ -27,6 +28,7 @@ export default {
     ReportLineContainer,
     MetricCard,
     MetricCardFull,
+    VueWordCloud,
   },
   data() {
     return {
@@ -49,6 +51,24 @@ export default {
       },
       businessHours: false,
       dropdownOpen: false,
+      showWordCloud: false,
+      wordCloudData: [
+      { name: "Billing Issues", value: 45 },
+      { name: "Account Access", value: 38 },
+      { name: "Product Support", value: 32 },
+      { name: "Technical Issues", value: 28 },
+      { name: "Order Status", value: 24 },
+      { name: "Refund Requests", value: 18 },
+      { name: "Feature Requests", value: 15 },
+      { name: "Payment Issues", value: 12 },
+      { name: "Login Problems", value: 10 },
+      { name: "API Questions", value: 8 },
+      { name: "Integration Help", value: 7 },
+      { name: "Documentation", value: 6 },
+      { name: "Bug Reports", value: 5 },
+      { name: "Security Concerns", value: 4 },
+      { name: "Performance Issues", value: 3 },
+    ]
     };
   },
   computed: {
@@ -122,6 +142,60 @@ export default {
             borderWidth: 1,
           }
         ]
+      };
+    },
+    topicsBarChartData() {
+      // Dummy data for most popular topics
+      const topics = [
+        { topic: 'Billing Issues', count: 45 },
+        { topic: 'Account Access', count: 38 },
+        { topic: 'Product Support', count: 32 },
+        { topic: 'Technical Issues', count: 28 },
+        { topic: 'Order Status', count: 24 },
+        { topic: 'Refund Requests', count: 18 },
+        { topic: 'Feature Requests', count: 15 },
+        { topic: 'Payment Issues', count: 12 },
+      ];
+
+      return {
+        labels: topics.map(t => t.topic),
+        datasets: [
+          {
+            label: 'Topic Frequency',
+            data: topics.map(t => t.count),
+            backgroundColor: '#3B82F6',
+            borderColor: '#2563EB',
+            borderWidth: 1,
+          }
+        ]
+      };
+    },
+    topicsBarChartOptions() {
+      return {
+        indexAxis: 'y', // This makes it horizontal
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false,
+          },
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 5,
+            },
+            grid: {
+              display: true,
+            },
+          },
+          y: {
+            grid: {
+              display: false,
+            },
+          },
+        },
       };
     },
   },
@@ -201,6 +275,9 @@ export default {
       console.log(`Exporting data to ${format}`);
       this.closeDropdown();
     },
+    toggleWordCloud() {
+      this.showWordCloud = !this.showWordCloud;
+    },
     closeDropdownOnOutsideClick(event) {
       if (!this.dropdownOpen) return;
       const dropdownContainer = this.$refs.dropdownContainer;
@@ -210,6 +287,8 @@ export default {
     },
   },
   mounted() {
+    console.log('Word cloud data:', this.wordCloudData);
+
     window.addEventListener('click', this.closeDropdownOnOutsideClick);
   },
   beforeUnmount() {
@@ -376,6 +455,66 @@ export default {
                   {{ $t('REPORT.NO_ENOUGH_DATA') }}
                 </span>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Topics Analysis Section -->
+        <div class="p-4 pt-0">
+          <div class=" rounded-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h6 class="text-lg font-semibold text-gray-900 dark:text-white">
+                {{ showWordCloud ? 'Most Popular Topics (Word Cloud)' : 'Top 8 Most Popular Topics' }}
+              </h6>
+              <button
+                @click="toggleWordCloud"
+                class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+              >
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  class="h-4 w-4 mr-2" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path 
+                    stroke-linecap="round" 
+                    stroke-linejoin="round" 
+                    stroke-width="2" 
+                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" 
+                  />
+                </svg>
+                {{ showWordCloud ? 'Show Bar Chart' : 'Show Word Cloud' }}
+              </button>
+            </div>
+            
+            <!-- Bar Chart View -->
+            <div v-if="!showWordCloud" class="h-80">
+              <BarChart
+                v-if="topicsBarChartData.labels?.length"
+                :collection="topicsBarChartData"
+                :chart-options="topicsBarChartOptions"
+              />
+              <div v-else class="flex items-center justify-center h-full">
+                <span class="text-sm text-gray-600 dark:text-gray-400">
+                  No topic data available
+                </span>
+              </div>
+            </div>
+
+            <!-- Word Cloud View -->
+            <div v-else class="h-80 flex items-center justify-center">
+              <VueWordCloud
+                  :words="[
+                    { name: 'Hello', value: 100 },
+                    { name: 'World', value: 80 },
+                    { name: 'Vue', value: 60 }
+                  ]"
+                  nameKey="name"
+                  valueKey="value"
+                  :color="() => '#2563eb'"
+                  style="width:100%; height:100%;"
+              />
             </div>
           </div>
         </div>

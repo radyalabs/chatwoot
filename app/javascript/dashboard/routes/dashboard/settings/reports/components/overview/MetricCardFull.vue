@@ -28,23 +28,12 @@ export default {
     class="flex flex-col m-0.5 px-6 py-5 overflow-hidden rounded-xl flex-grow text-n-slate-12 shadow outline-1 outline outline-n-container bg-n-solid-2 min-h-[10rem]"
   >
     <div
-      class="card-header grid w-full mb-6 gap-y-2"
     >
       <slot name="header">
         <div class="flex items-center gap-2 flex-row">
           <h5 class="mb-0 text-n-slate-12 font-medium text-lg">
             {{ header }}
           </h5>
-          <span
-            class="flex flex-row items-center py-0.5 px-2 rounded bg-n-teal-3 dark:bg-yellow-500/50 text-xs"
-          >
-            <span
-              class="bg-n-teal-9 dark:bg-yellow-600 h-1 w-1 rounded-full mr-1 rtl:mr-0 rtl:ml-0"
-            />
-            <span class="text-xs text-n-teal-11 dark:text-yellow-600">
-              {{ $t('OVERVIEW_REPORTS.LIVE') }}
-            </span>
-          </span>
         </div>
         <div
           class="transition-opacity duration-200 ease-in-out opacity-20 hover:opacity-100 flex flex-row items-center justify-end gap-2"

@@ -35,10 +35,10 @@ const defaultChartOptions = {
   plugins: {
     legend: {
       display: true,
-      position: 'bottom',
+      position: 'right',
       labels: {
         fontFamily: fontFamily,
-        fontSize: 12,
+        fontSize:30,
         padding: 20,
         usePointStyle: true,
         pointStyle: 'circle',

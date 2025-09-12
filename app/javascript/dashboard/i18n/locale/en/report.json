@@ -481,6 +481,16 @@
       "TOTAL_AI_CONVERSATIONS":"Total conversations handled by AI agent",
       "RESOLVED_BY_AI":"Total chats answered by AI agent"
     },
+    "BOT_SUMMARY": {
+      "HEADER": "Bot Summary",
+      "LOADING_MESSAGE": "Loading bot metrics...",
+      "NO_BOTS": "There are no bots available",
+      "TABLE_HEADER": {
+        "BOT": "Bot",
+        "HANDOVERS": "Handovers",
+        "CHAT_RESPONDED": "Chat Responded"
+      }
+    },
     "METRIC": {
       "TOTAL_CONVERSATIONS": {
         "LABEL": "No. of Conversations",

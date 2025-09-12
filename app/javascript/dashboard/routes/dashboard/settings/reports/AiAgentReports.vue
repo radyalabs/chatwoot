@@ -13,11 +13,13 @@ import ReportLineContainer from './ReportLineContainer.vue';
 import ReportsAPI from 'dashboard/api/reports';
 import MetricCard from './components/overview/MetricCard.vue';
 import MetricCardFull from './components/overview/MetricCardFull.vue';
-import VueWordCloud from "vue3-word-cloud";
+import BotTable from './components/overview/BotTable.vue';
+import VueWordCloud from 'vuewordcloud';
 
 export default {
   name: 'AIAgentReports',
   components: {
+    [VueWordCloud.name]: VueWordCloud,
     AiAgentMetrics,
     ReportHeader,
     ReportFilterSelector,
@@ -28,6 +30,7 @@ export default {
     ReportLineContainer,
     MetricCard,
     MetricCardFull,
+    BotTable,
     VueWordCloud,
   },
   data() {
@@ -52,22 +55,9 @@ export default {
       businessHours: false,
       dropdownOpen: false,
       showWordCloud: false,
+      botPageIndex: 0,
       wordCloudData: [
-      { name: "Billing Issues", value: 45 },
-      { name: "Account Access", value: 38 },
-      { name: "Product Support", value: 32 },
-      { name: "Technical Issues", value: 28 },
-      { name: "Order Status", value: 24 },
-      { name: "Refund Requests", value: 18 },
-      { name: "Feature Requests", value: 15 },
-      { name: "Payment Issues", value: 12 },
-      { name: "Login Problems", value: 10 },
-      { name: "API Questions", value: 8 },
-      { name: "Integration Help", value: 7 },
-      { name: "Documentation", value: 6 },
-      { name: "Bug Reports", value: 5 },
-      { name: "Security Concerns", value: 4 },
-      { name: "Performance Issues", value: 3 },
+      ['Billing Issues', 45], ['Account Access', 38], ['Product Support', 32], ['Technical Issues', 28], ['Order Status', 24], ['Refund Requests', 18], ['Feature Requests', 15], ['Payment Issues', 12], ['Login Problems', 10], ['API Questions', 8], ['Integration Help', 7], ['Documentation', 6], ['Bug Reports', 5], ['Security Concerns', 4], ['Performance Issues', 3],
     ]
     };
   },
@@ -198,6 +188,85 @@ export default {
         },
       };
     },
+    // Dummy bot data - replace with real data from API
+    botData() {
+      return [
+        {
+          id: 1,
+          name: 'Sales Assistant Bot',
+          type: 'single',
+          template_type: 'sales',
+          status: 'active'
+        },
+        {
+          id: 2,
+          name: 'Customer Service Bot',
+          type: 'multi',
+          template_type: 'cs',
+          status: 'active'
+        },
+        {
+          id: 3,
+          name: 'Restaurant Bot',
+          type: 'single',
+          template_type: 'resto',
+          status: 'active'
+        },
+        {
+          id: 4,
+          name: 'Booking Bot',
+          type: 'single',
+          template_type: 'booking',
+          status: 'active'
+        },
+        {
+          id: 5,
+          name: 'Custom Workflow Bot',
+          type: 'custom',
+          template_type: null,
+          status: 'active'
+        }
+      ];
+    },
+    botMetrics() {
+      return [
+        {
+          id: 1,
+          metric: {
+            handover_count: 25,
+            chat_responded: 150
+          }
+        },
+        {
+          id: 2,
+          metric: {
+            handover_count: 45,
+            chat_responded: 220
+          }
+        },
+        {
+          id: 3,
+          metric: {
+            handover_count: 12,
+            chat_responded: 95
+          }
+        },
+        {
+          id: 4,
+          metric: {
+            handover_count: 8,
+            chat_responded: 75
+          }
+        },
+        {
+          id: 5,
+          metric: {
+            handover_count: 18,
+            chat_responded: 120
+          }
+        }
+      ];
+    },
   },
   watch: {
     requestPayload(value) {
@@ -277,6 +346,11 @@ export default {
     },
     toggleWordCloud() {
       this.showWordCloud = !this.showWordCloud;
+    },
+    onBotPageNumberChange(pageIndex) {
+      this.botPageIndex = pageIndex;
+      // Here you would typically fetch new bot data from API
+      // this.fetchBotMetrics();
     },
     closeDropdownOnOutsideClick(event) {
       if (!this.dropdownOpen) return;
@@ -504,21 +578,32 @@ export default {
 
             <!-- Word Cloud View -->
             <div v-else class="h-80 flex items-center justify-center">
-              <VueWordCloud
-                  :words="[
-                    { name: 'Hello', value: 100 },
-                    { name: 'World', value: 80 },
-                    { name: 'Vue', value: 60 }
-                  ]"
-                  nameKey="name"
-                  valueKey="value"
-                  :color="() => '#2563eb'"
-                  style="width:100%; height:100%;"
+              <vue-word-cloud
+                style="
+                  height: 480px;
+                  width: 640px;
+                "
+                :words="wordCloudData"
+                :color="([, weight]) => weight > 10 ? 'Green' : weight > 5 ? 'RoyalBlue' : 'Indigo'"
+                font-family="Roboto"
               />
             </div>
           </div>
         </div>
       </MetricCardFull>
+    </div>
+
+    <!-- Bot Summary Table -->
+    <div class="flex flex-row flex-wrap max-w-full">
+      <MetricCard :header="$t('AI_AGENT_REPORTS.BOT_SUMMARY.HEADER')">
+        <BotTable
+          :bots="botData"
+          :bot-metrics="botMetrics"
+          :page-index="botPageIndex"
+          :is-loading="false"
+          @page-change="onBotPageNumberChange"
+        />
+      </MetricCard>
     </div>
   </div>
 </template>

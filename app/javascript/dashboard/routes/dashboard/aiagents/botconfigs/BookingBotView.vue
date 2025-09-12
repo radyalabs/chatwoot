@@ -61,6 +61,20 @@ const resourceColumn = ref(['resource', 'resource2', 'resource3']);
 const locationColumn = ref(['location']);
 const syncingColumns = ref(false);
 
+
+// Helper function to get agent ID by type
+function getAgentIdByType(type) {
+  const flowData = props.data?.display_flow_data;
+  if (!flowData?.agents_config) return null;
+  
+  const agent = flowData.agents_config.find(config => config.type === type);
+  return agent?.agent_id || null;
+}
+
+const agentId = computed(() => {
+  return getAgentIdByType('booking');
+});
+
 async function connectGoogle() {
   try {
     loading.value = true;
@@ -79,7 +93,7 @@ async function connectGoogle() {
 }
 
 async function checkAuthStatus() {
-  useAlert(t('IN BOOKING...'));
+  // useAlert(t('IN BOOKING...'));
   console.log('checking auth status...');
   try {
     loading.value = true;
@@ -103,7 +117,7 @@ async function checkAuthStatus() {
         }
         const payload = {
           account_id: parseInt(flowData.account_id, 10),
-          agent_id: String(props.data.id),
+          agent_id: agentId.value,
           type: 'booking',
         };
         console.log(JSON.stringify(payload));
@@ -160,34 +174,46 @@ async function syncScheduleColumns() {
     showNotification('Syncing schedule columns from sheet...', 'info');
 
     // TODO: Replace with your actual API endpoint
-    // const response = await fetch('/api/sheets/sync-schedule-columns', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify({
-    //     sheetUrl: sheets.input
-    //   })
-    // });
-    // const data = await response.json();
+    // prepare payload
+    // retrieve resource_names, location_names, & resource_types
+    // save to flow_data
+    let flowData = props.data.display_flow_data;
+    const payload = {
+      account_id: parseInt(flowData.account_id, 10),
+      agent_id: agentId.value,
+      type: 'booking',
+    }
 
-    // For now, simulate API response
-    setTimeout(() => {
-      const syncedResourceColumns = ['doctor_name', 'nurse_name', 'specialist'];
-      const syncedLocationColumns = [
-        'clinic_location',
-        'room_number',
-        'building',
-      ];
-      resourceColumn.value = syncedResourceColumns;
-      locationColumn.value = syncedLocationColumns;
-      showNotification('Schedule columns synced successfully!', 'success');
-      syncingColumns.value = false;
-    }, 2000);
+    const result = await googleSheetsExportAPI.syncSpreadsheet(payload);
+    console.log('flowData:', flowData);
+    console.log('result:', result);
+    const agentsConfig = flowData.agents_config;
+    // const agent_index = agentsConfig.findIndex(
+    //   agent => agent.type === 'booking'
+    // );
+    const agent_index = flowData.enabled_agents.indexOf('booking');
+    console.log('agent_index:', agent_index);
+    flowData.agents_config[agent_index].configurations.resource_names =
+      result.data.data.unique_resource_names;
+    flowData.agents_config[agent_index].configurations.location_names =
+      result.data.data.unique_location_names;
+    flowData.agents_config[agent_index].configurations.resource_types =
+      result.data.data.unique_resource_types;
+    // console.log(flowData);
+    // console.log(props.config);
+    const updatePayload = {
+      flow_data: flowData,
+    };
+    // eslint-disable-next-line no-console
+    console.log('payload:', updatePayload);
+    // ✅ Properly await the API call
+    await aiAgents.updateAgent(props.data.id, updatePayload);
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Failed to sync schedule columns:', error);
     showNotification('Failed to sync schedule columns', 'error');
+    syncingColumns.value = false;
+  } finally {
     syncingColumns.value = false;
   }
 }
@@ -204,12 +230,14 @@ async function save() {
     isSaving.value = true;
     // Hardcoded payload, exactly as you had it
     let flowData = props.data.display_flow_data;
-    console.log('flowData:', flowData);
-    const agentsConfig = flowData.agents_config;
-    // const agent_index = agentsConfig.findIndex(
-    //   agent => agent.type === 'booking'
-    // );
-    const agent_index = 0;
+    // eslint-disable-next-line no-console
+    const agent_index = flowData.enabled_agents.indexOf('booking');
+
+    if (agent_index === -1) {
+      useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.AGENT_NOT_FOUND'))
+      return;
+    }
+
     flowData.agents_config[agent_index].configurations.minimum_duration =
       configData.minDuration;
     flowData.agents_config[agent_index].configurations.industry =
@@ -287,7 +315,7 @@ async function createSheets() {
     const flowData = props.data.display_flow_data;
     const payload = {
       account_id: parseInt(flowData.account_id, 10),
-      agent_id: String(props.data.id),
+      agent_id: agentId.value,
       type: 'booking',
     };
     // console.log(payload);

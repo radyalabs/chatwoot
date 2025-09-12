@@ -22,6 +22,10 @@ class GoogleSheetsExportAPI extends ApiClient {
   getSpreadsheetUrl(payload) {
     return axios.post(`${this.url}/spreadsheet_url`, payload);
   }
+
+  syncSpreadsheet(payload) {
+    return axios.post(`${this.url}/sync`, payload);
+  }
 }
 
 export default new GoogleSheetsExportAPI()

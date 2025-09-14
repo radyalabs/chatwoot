@@ -215,6 +215,19 @@
     "NO_ENOUGH_DATA": "Kami belum menerima cukup data untuk membuat laporan, Silakan coba lagi nanti.",
     "DOWNLOAD_LABEL_REPORTS": "Unduh laporan label",
     "FILTER_DROPDOWN_LABEL": "Pilih label",
+        "AGENT_PERFORMANCE_TABLE": {
+      "HEADER": "Conversations by agents",
+      "LOADING_MESSAGE": "Memuat metrik agen...",
+      "NO_AGENTS": "Tidak ada percakapan oleh agen",
+      "TABLE_HEADER": {
+        "AGENT": "Agen",
+        "TOTAL_CONVERSATIONS": "Total Percakapan",
+        "AVG_CSAT": "Rata-Rata CSAT",
+        "WORK_DISTRIBUTION": "Status",
+        "RESOLUTION_RATE": "Tingkat Penyelesaian",
+        "AVG_RESPONSE_TIME": "Rata-Rata Waktu Respon"
+      }
+    },
     "METRICS": {
       "CONVERSATIONS": {
         "NAME": "Percakapan",

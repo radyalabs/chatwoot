@@ -149,6 +149,19 @@
     "NO_ENOUGH_DATA": "We've not received enough data points to generate report, Please try again later.",
     "DOWNLOAD_AGENT_REPORTS": "Download agent reports",
     "FILTER_DROPDOWN_LABEL": "Select Agent",
+    "AGENT_PERFORMANCE_TABLE": {
+      "HEADER": "Conversations by agents",
+      "LOADING_MESSAGE": "Loading agent metrics...",
+      "NO_AGENTS": "There are no conversations by agents",
+      "TABLE_HEADER": {
+        "AGENT": "Agent",
+        "TOTAL_CONVERSATIONS": "Total Conversations",
+        "AVG_CSAT": "Avg CSAT",
+        "WORK_DISTRIBUTION": "Status",
+        "RESOLUTION_RATE": "Resolution Rate",
+        "AVG_RESPONSE_TIME": "Avg Response Time"
+      }
+    },
     "METRICS": {
       "CONVERSATIONS": {
         "NAME": "Conversations",
@@ -275,6 +288,11 @@
     "CUSTOM_DATE_RANGE": {
       "CONFIRM": "Apply",
       "PLACEHOLDER": "Select date range"
+    },
+    "TOPICS_ANALYSIS": {
+      "HEADER": "Topics Analysis",
+      "SHOW_CHART": "Show Chart",
+      "SHOW_WORD_CLOUD": "Show Word Cloud"
     }
   },
   "INBOX_REPORTS": {

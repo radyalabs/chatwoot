@@ -7,7 +7,7 @@ import { OVERVIEW_METRICS } from './constants';
 import ReportHeatmap from './components/Heatmap.vue';
 import ReportHeader from './components/ReportHeader.vue';
 import ReportFilterSelector from './components/FilterSelector.vue';
-import LineChart from '../../../../../shared/components/charts/LineChart.vue';
+import LineChart2 from '../../../../../shared/components/charts/LineChart2.vue';
 import { GROUP_BY_FILTER } from './constants';
 import endOfDay from 'date-fns/endOfDay';
 import getUnixTime from 'date-fns/getUnixTime';
@@ -32,7 +32,7 @@ export default {
     Csat,
     AgentReports,
     V4Button,
-    LineChart,
+    LineChart2,
   },
   data() {
     return {
@@ -406,7 +406,7 @@ export default {
         </template>
         <div class="p-4">
           <div class="h-80">
-            <LineChart
+            <LineChart2
               v-if="conversationTrendData.data1.data?.length"
               :data1="conversationTrendData.data1"
               :data2="conversationTrendData.data2"

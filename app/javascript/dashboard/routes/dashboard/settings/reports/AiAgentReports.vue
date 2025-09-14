@@ -532,64 +532,68 @@ export default {
             </div>
           </div>
         </div>
-
-        <!-- Topics Analysis Section -->
-        <div class="p-4 pt-0">
-          <div class=" rounded-lg p-6">
-            <div class="flex justify-between items-center mb-4">
-              <h6 class="text-lg font-semibold text-gray-900 dark:text-white">
-                {{ showWordCloud ? 'Most Popular Topics (Word Cloud)' : 'Top 8 Most Popular Topics' }}
-              </h6>
-              <button
-                @click="toggleWordCloud"
-                class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
-              >
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  class="h-4 w-4 mr-2" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
-                  stroke="currentColor"
+      </MetricCardFull>
+    </div>
+    
+    <!-- Topics Analysis Section -->
+    <div class="flex flex-row flex-wrap max-w-full">
+      <MetricCardFull>
+          <div class="p-4 pt-0">
+            <div class=" rounded-lg p-6">
+              <div class="flex justify-between items-center mb-4">
+                <h6 class="text-lg font-semibold text-gray-900 dark:text-white">
+                  {{ showWordCloud ? 'Most Popular Topics (Word Cloud)' : 'Top 8 Most Popular Topics' }}
+                </h6>
+                <button
+                  @click="toggleWordCloud"
+                  class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
                 >
-                  <path 
-                    stroke-linecap="round" 
-                    stroke-linejoin="round" 
-                    stroke-width="2" 
-                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" 
-                  />
-                </svg>
-                {{ showWordCloud ? 'Show Bar Chart' : 'Show Word Cloud' }}
-              </button>
-            </div>
-            
-            <!-- Bar Chart View -->
-            <div v-if="!showWordCloud" class="h-80">
-              <BarChart
-                v-if="topicsBarChartData.labels?.length"
-                :collection="topicsBarChartData"
-                :chart-options="topicsBarChartOptions"
-              />
-              <div v-else class="flex items-center justify-center h-full">
-                <span class="text-sm text-gray-600 dark:text-gray-400">
-                  No topic data available
-                </span>
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    class="h-4 w-4 mr-2" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path 
+                      stroke-linecap="round" 
+                      stroke-linejoin="round" 
+                      stroke-width="2" 
+                      d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" 
+                    />
+                  </svg>
+                  {{ showWordCloud ? 'Show Bar Chart' : 'Show Word Cloud' }}
+                </button>
+              </div>
+              
+              <!-- Bar Chart View -->
+              <div v-if="!showWordCloud" class="h-80">
+                <BarChart
+                  v-if="topicsBarChartData.labels?.length"
+                  :collection="topicsBarChartData"
+                  :chart-options="topicsBarChartOptions"
+                />
+                <div v-else class="flex items-center justify-center h-full">
+                  <span class="text-sm text-gray-600 dark:text-gray-400">
+                    No topic data available
+                  </span>
+                </div>
+              </div>
+
+              <!-- Word Cloud View -->
+              <div v-else class="h-80 flex items-center justify-center">
+                <vue-word-cloud
+                  style="
+                    height: 480px;
+                    width: 640px;
+                  "
+                  :words="wordCloudData"
+                  :color="([, weight]) => weight > 10 ? 'Green' : weight > 5 ? 'RoyalBlue' : 'Indigo'"
+                  font-family="Roboto"
+                />
               </div>
             </div>
-
-            <!-- Word Cloud View -->
-            <div v-else class="h-80 flex items-center justify-center">
-              <vue-word-cloud
-                style="
-                  height: 480px;
-                  width: 640px;
-                "
-                :words="wordCloudData"
-                :color="([, weight]) => weight > 10 ? 'Green' : weight > 5 ? 'RoyalBlue' : 'Indigo'"
-                font-family="Roboto"
-              />
-            </div>
           </div>
-        </div>
       </MetricCardFull>
     </div>
 

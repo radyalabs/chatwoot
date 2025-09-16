@@ -2,6 +2,8 @@
 import { useAlert, useTrack } from 'dashboard/composables';
 import ReportHeader from './components/ReportHeader.vue';
 import BarChart from '../../../../../shared/components/charts/BarChart.vue';
+import DonutChart from '../../../../../shared/components/charts/DonutChart.vue';
+import MetricCard from './components/overview/MetricCard.vue';
 import MetricCardFull from './components/overview/MetricCardFull.vue';
 import ReportsFiltersLabels from './components/Filters/Labels.vue';
 import ReportsFiltersDateRange from './components/Filters/DateRange.vue';
@@ -18,6 +20,8 @@ export default {
     [VueWordCloud.name]: VueWordCloud,
     ReportHeader,
     BarChart,
+    DonutChart,
+    MetricCard,
     MetricCardFull,
     ReportsFiltersLabels,
     ReportsFiltersDateRange,
@@ -37,6 +41,19 @@ export default {
         totalTopics: 0,
         mostPopularTopic: '',
         averageTopicsPerConversation: 0,
+      },
+      sentimentMetrics: {
+        positive: 0,
+        negative: 0,
+        neutral: 0,
+      },
+      questionCategories: {
+        harga: 0,
+        stok: 0,
+        pengiriman: 0,
+        komplain: 0,
+        informasi: 0,
+        lainnya: 0,
       },
       reportKeys: {
         LABEL_USAGE: 'label_usage_count',
@@ -130,6 +147,38 @@ export default {
         },
       };
     },
+    sentimentChartData() {
+      const data = [
+        this.sentimentMetrics.positive,
+        this.sentimentMetrics.neutral,
+        this.sentimentMetrics.negative
+      ];
+      const labels = [
+        this.$t('LABEL_REPORTS.SENTIMENT.POSITIVE'),
+        this.$t('LABEL_REPORTS.SENTIMENT.NEUTRAL'),
+        this.$t('LABEL_REPORTS.SENTIMENT.NEGATIVE')
+      ];
+      return { data, labels };
+    },
+    questionSegmentationChartData() {
+      const data = [
+        this.questionCategories.harga,
+        this.questionCategories.stok,
+        this.questionCategories.pengiriman,
+        this.questionCategories.komplain,
+        this.questionCategories.informasi,
+        this.questionCategories.lainnya
+      ];
+      const labels = [
+        this.$t('LABEL_REPORTS.QUESTION_CATEGORIES.HARGA'),
+        this.$t('LABEL_REPORTS.QUESTION_CATEGORIES.STOK'),
+        this.$t('LABEL_REPORTS.QUESTION_CATEGORIES.PENGIRIMAN'),
+        this.$t('LABEL_REPORTS.QUESTION_CATEGORIES.KOMPLAIN'),
+        this.$t('LABEL_REPORTS.QUESTION_CATEGORIES.INFORMASI'),
+        this.$t('LABEL_REPORTS.QUESTION_CATEGORIES.LAINNYA')
+      ];
+      return { data, labels };
+    },
   },
   watch: {
     requestPayload(value) {
@@ -140,6 +189,8 @@ export default {
     fetchAllData() {
       this.fetchMetrics(this.requestPayload);
       this.fetchChartData();
+      this.fetchSentimentAnalysis(this.requestPayload);
+      this.fetchQuestionSegmentation(this.requestPayload);
     },
     fetchMetrics(filters) {
       if (!filters.to || !filters.from) {
@@ -176,7 +227,68 @@ export default {
         averageTopicsPerConversation: (Math.random() * 3 + 1).toFixed(1),
       };
       
+      // Dummy sentiment data
+      const totalConversations = this.metrics.totalTopics;
+      this.sentimentMetrics = {
+        positive: Math.floor(totalConversations * (0.4 + Math.random() * 0.2)), // 40-60%
+        neutral: Math.floor(totalConversations * (0.2 + Math.random() * 0.2)),  // 20-40%
+        negative: Math.floor(totalConversations * (0.1 + Math.random() * 0.2)), // 10-30%
+      };
+      
+      // Dummy question categories data
+      this.questionCategories = {
+        harga: Math.floor(totalConversations * (0.15 + Math.random() * 0.1)),      // 15-25%
+        stok: Math.floor(totalConversations * (0.1 + Math.random() * 0.1)),       // 10-20%
+        pengiriman: Math.floor(totalConversations * (0.2 + Math.random() * 0.1)), // 20-30%
+        komplain: Math.floor(totalConversations * (0.15 + Math.random() * 0.1)),  // 15-25%
+        informasi: Math.floor(totalConversations * (0.1 + Math.random() * 0.1)),  // 10-20%
+        lainnya: Math.floor(totalConversations * (0.05 + Math.random() * 0.1)),   // 5-15%
+      };
+      
       console.log('Fetching metrics for labels:', this.selectedLabels);
+    },
+    fetchSentimentAnalysis(filters) {
+      // TODO: Implement real API call for sentiment analysis
+      // 
+      // const labelIds = filters.selectedLabels.map(label => label.id);
+      // ReportsAPI.getSentimentAnalysis({
+      //   ...filters,
+      //   labelIds: labelIds
+      // }).then(response => {
+      //   this.sentimentMetrics = {
+      //     positive: response.data.positive_count,
+      //     negative: response.data.negative_count,
+      //     neutral: response.data.neutral_count,
+      //   };
+      // }).catch(error => {
+      //   console.error('Failed to fetch sentiment analysis:', error);
+      //   useAlert(this.$t('REPORT.DATA_FETCHING_FAILED'));
+      // });
+      
+      console.log('Fetching sentiment analysis for labels:', this.selectedLabels);
+    },
+    fetchQuestionSegmentation(filters) {
+      // TODO: Implement real API call for question segmentation
+      // 
+      // const labelIds = filters.selectedLabels.map(label => label.id);
+      // ReportsAPI.getQuestionSegmentation({
+      //   ...filters,
+      //   labelIds: labelIds
+      // }).then(response => {
+      //   this.questionCategories = {
+      //     harga: response.data.price_questions,
+      //     stok: response.data.stock_questions,
+      //     pengiriman: response.data.shipping_questions,
+      //     komplain: response.data.complaint_questions,
+      //     informasi: response.data.info_questions,
+      //     lainnya: response.data.other_questions,
+      //   };
+      // }).catch(error => {
+      //   console.error('Failed to fetch question segmentation:', error);
+      //   useAlert(this.$t('REPORT.DATA_FETCHING_FAILED'));
+      // });
+      
+      console.log('Fetching question segmentation for labels:', this.selectedLabels);
     },
     fetchChartData() {
       // TODO: Implement real API calls for label-specific chart data
@@ -396,6 +508,87 @@ export default {
                 :color="([, weight]) => weight > 10 ? 'Green' : weight > 5 ? 'RoyalBlue' : 'Indigo'"
                 font-family="Roboto"
               />
+            </div>
+          </div>
+        </div>
+      </MetricCardFull>
+    </div>
+    
+    <!-- Sentiment Analysis Section -->
+    <div class="flex flex-col items-center md:flex-row gap-4">
+      <div class="flex-1 w-full max-w-full md:w-[70%] md:max-w-[70%]">
+        <MetricCardFull>
+          <div class="p-4 pt-0">
+            <div class="rounded-lg p-6">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                {{ $t('LABEL_REPORTS.SENTIMENT.HEADER') }}
+              </h3>
+              <div class="h-80">
+                <DonutChart
+                  v-if="sentimentChartData.data.some(value => value > 0)"
+                  :data="sentimentChartData.data"
+                  :labels="sentimentChartData.labels"
+                />
+                <div v-else class="flex items-center justify-center h-full">
+                  <span class="text-sm text-gray-600 dark:text-gray-400">
+                    {{ $t('REPORT.NO_ENOUGH_DATA') }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </MetricCardFull>
+      </div>
+      
+      <div class="flex-1 w-full max-w-full md:w-[30%] md:max-w-[30%]">
+        <MetricCard :header="$t('LABEL_REPORTS.SENTIMENT.SUMMARY')">
+          <div class="flex-1 min-w-0 pb-2">
+            <h3 class="text-base text-green-600 dark:text-green-400">
+              {{ $t('LABEL_REPORTS.SENTIMENT.POSITIVE') }}
+            </h3>
+            <p class="text-n-slate-12 text-3xl mb-0 mt-1">
+              {{ sentimentMetrics.positive }}
+            </p>
+          </div>
+          <div class="flex-1 min-w-0 pb-2">
+            <h3 class="text-base text-gray-600 dark:text-gray-400">
+              {{ $t('LABEL_REPORTS.SENTIMENT.NEUTRAL') }}
+            </h3>
+            <p class="text-n-slate-12 text-3xl mb-0 mt-1">
+              {{ sentimentMetrics.neutral }}
+            </p>
+          </div>
+          <div class="flex-1 min-w-0 pb-2">
+            <h3 class="text-base text-red-600 dark:text-red-400">
+              {{ $t('LABEL_REPORTS.SENTIMENT.NEGATIVE') }}
+            </h3>
+            <p class="text-n-slate-12 text-3xl mb-0 mt-1">
+              {{ sentimentMetrics.negative }}
+            </p>
+          </div>
+        </MetricCard>
+      </div>
+    </div>
+    
+    <!-- Question Segmentation Section -->
+    <div class="flex flex-row flex-wrap max-w-full">
+      <MetricCardFull>
+        <div class="p-4 pt-0">
+          <div class="rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              {{ $t('LABEL_REPORTS.QUESTION_SEGMENTATION.HEADER') }}
+            </h3>
+            <div class="h-80">
+              <DonutChart
+                v-if="questionSegmentationChartData.data.some(value => value > 0)"
+                :data="questionSegmentationChartData.data"
+                :labels="questionSegmentationChartData.labels"
+              />
+              <div v-else class="flex items-center justify-center h-full">
+                <span class="text-sm text-gray-600 dark:text-gray-400">
+                  {{ $t('REPORT.NO_ENOUGH_DATA') }}
+                </span>
+              </div>
             </div>
           </div>
         </div>

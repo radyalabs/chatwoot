@@ -293,6 +293,24 @@
       "HEADER": "Topics Analysis",
       "SHOW_CHART": "Show Chart",
       "SHOW_WORD_CLOUD": "Show Word Cloud"
+    },
+    "SENTIMENT": {
+      "HEADER": "Sentiment Analysis",
+      "SUMMARY": "Sentiment Summary",
+      "POSITIVE": "Positive",
+      "NEGATIVE": "Negative",
+      "NEUTRAL": "Neutral"
+    },
+    "QUESTION_SEGMENTATION": {
+      "HEADER": "Question Segmentation"
+    },
+    "QUESTION_CATEGORIES": {
+      "HARGA": "Price Inquiries",
+      "STOK": "Stock Availability",
+      "PENGIRIMAN": "Shipping & Delivery",
+      "KOMPLAIN": "Complaints & Issues",
+      "INFORMASI": "General Information",
+      "LAINNYA": "Others"
     }
   },
   "INBOX_REPORTS": {

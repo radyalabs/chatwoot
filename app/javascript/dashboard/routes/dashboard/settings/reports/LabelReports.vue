@@ -457,29 +457,30 @@ export default {
         <div class="p-4 pt-0">
           <div class="rounded-lg p-6">
             <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                {{ $t('LABEL_REPORTS.TOPICS_ANALYSIS.HEADER') }}
-              </h3>
+              <h6 class="text-lg font-semibold text-gray-900 dark:text-white">
+                {{ showWordCloud ? $t('AI_AGENT_REPORTS.TOPICS_ANALYSIS.HEADER_CLOUD') : $t('AI_AGENT_REPORTS.TOPICS_ANALYSIS.HEADER_CHART') }}
+              </h6>
               
               <!-- Toggle button for word cloud -->
               <button
                 @click="toggleWordCloud"
-                class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                class="inline-flex items-center px-3 py-2 border border-green-700 dark:border-gray-600 shadow-sm text-sm leading-4 font-medium rounded-md text-green-700 dark:text-green-200 dark:bg-green-800 hover:bg-green-50 dark:hover:bg-green-700 transition-colors"
               >
-                <svg
-                  class="w-4 h-4 mr-2"
-                  fill="none"
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  class="h-4 w-4 mr-2" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
                   stroke="currentColor"
-                  viewBox="0 0 24 24"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10M7 4v16a1 1 0 001 1h8a1 1 0 001-1V4M7 4H5a1 1 0 00-1 1v16a1 1 0 001 1h2"
+                  <path 
+                    stroke-linecap="round" 
+                    stroke-linejoin="round" 
+                    stroke-width="2" 
+                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" 
                   />
                 </svg>
-                {{ showWordCloud ? $t('LABEL_REPORTS.SHOW_CHART') : $t('LABEL_REPORTS.SHOW_WORD_CLOUD') }}
+                  {{ showWordCloud ? $t('AI_AGENT_REPORTS.TOPICS_ANALYSIS.SHOW_CHART') : $t('AI_AGENT_REPORTS.TOPICS_ANALYSIS.SHOW_WORD_CLOUD') }}
               </button>
             </div>
             
@@ -515,59 +516,71 @@ export default {
     </div>
     
     <!-- Sentiment Analysis Section -->
-    <div class="flex flex-col items-center md:flex-row gap-4">
-      <div class="flex-1 w-full max-w-full md:w-[70%] md:max-w-[70%]">
-        <MetricCardFull>
-          <div class="p-4 pt-0">
-            <div class="rounded-lg p-6">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                {{ $t('LABEL_REPORTS.SENTIMENT.HEADER') }}
-              </h3>
-              <div class="h-80">
-                <DonutChart
-                  v-if="sentimentChartData.data.some(value => value > 0)"
-                  :data="sentimentChartData.data"
-                  :labels="sentimentChartData.labels"
-                />
-                <div v-else class="flex items-center justify-center h-full">
-                  <span class="text-sm text-gray-600 dark:text-gray-400">
-                    {{ $t('REPORT.NO_ENOUGH_DATA') }}
-                  </span>
+    <div class="flex flex-row flex-wrap max-w-full">
+      <MetricCardFull>
+        <div class="p-4 pt-0">
+          <div class="rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              {{ $t('LABEL_REPORTS.SENTIMENT.HEADER') }}
+            </h3>
+            <div class="flex flex-col items-center md:flex-row gap-4">
+              <!-- Chart Section -->
+              <div class="flex-1 w-full max-w-full md:w-[70%] md:max-w-[70%]">
+                <div class="h-80">
+                  <DonutChart
+                    v-if="sentimentChartData.data.some(value => value > 0)"
+                    :data="sentimentChartData.data"
+                    :labels="sentimentChartData.labels"
+                  />
+                  <div v-else class="flex items-center justify-center h-full">
+                    <span class="text-sm text-gray-600 dark:text-gray-400">
+                      {{ $t('REPORT.NO_ENOUGH_DATA') }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Summary Section -->
+              <div class=" ml-3 flex-1 w-full max-w-full md:w-[30%] md:max-w-[30%]">
+                <div class="space-y-4">
+                  <h4 class="text-base font-medium text-gray-900 dark:text-white mb-4">
+                    {{ $t('LABEL_REPORTS.SENTIMENT.SUMMARY') }}
+                  </h4>
+
+                  <div class="flex flex-row space-x-4">
+                    <div class="flex-1 min-w-0 pb-2">
+                      <h3 class="text-base text-green-600 dark:text-green-400">
+                      {{ $t('LABEL_REPORTS.SENTIMENT.POSITIVE') }}
+                    </h3>
+                    <p class="text-n-slate-12 text-3xl mb-0 mt-1">
+                      {{ sentimentMetrics.positive }}
+                    </p>
+                    </div>
+
+                    <div class="flex-1 min-w-0 pb-2">
+                      <h3 class="text-base text-gray-600 dark:text-gray-400">
+                        {{ $t('LABEL_REPORTS.SENTIMENT.NEUTRAL') }}
+                      </h3>
+                      <p class="text-n-slate-12 text-3xl mb-0 mt-1">
+                        {{ sentimentMetrics.neutral }}
+                      </p>
+                    </div>
+
+                    <div class="flex-1 min-w-0 pb-2">
+                      <h3 class="text-base text-red-600 dark:text-red-400">
+                        {{ $t('LABEL_REPORTS.SENTIMENT.NEGATIVE') }}
+                      </h3>
+                      <p class="text-n-slate-12 text-3xl mb-0 mt-1">
+                        {{ sentimentMetrics.negative }}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </MetricCardFull>
-      </div>
-      
-      <div class="flex-1 w-full max-w-full md:w-[30%] md:max-w-[30%]">
-        <MetricCard :header="$t('LABEL_REPORTS.SENTIMENT.SUMMARY')">
-          <div class="flex-1 min-w-0 pb-2">
-            <h3 class="text-base text-green-600 dark:text-green-400">
-              {{ $t('LABEL_REPORTS.SENTIMENT.POSITIVE') }}
-            </h3>
-            <p class="text-n-slate-12 text-3xl mb-0 mt-1">
-              {{ sentimentMetrics.positive }}
-            </p>
-          </div>
-          <div class="flex-1 min-w-0 pb-2">
-            <h3 class="text-base text-gray-600 dark:text-gray-400">
-              {{ $t('LABEL_REPORTS.SENTIMENT.NEUTRAL') }}
-            </h3>
-            <p class="text-n-slate-12 text-3xl mb-0 mt-1">
-              {{ sentimentMetrics.neutral }}
-            </p>
-          </div>
-          <div class="flex-1 min-w-0 pb-2">
-            <h3 class="text-base text-red-600 dark:text-red-400">
-              {{ $t('LABEL_REPORTS.SENTIMENT.NEGATIVE') }}
-            </h3>
-            <p class="text-n-slate-12 text-3xl mb-0 mt-1">
-              {{ sentimentMetrics.negative }}
-            </p>
-          </div>
-        </MetricCard>
-      </div>
+        </div>
+      </MetricCardFull>
     </div>
     
     <!-- Question Segmentation Section -->

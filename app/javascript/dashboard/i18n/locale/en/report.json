@@ -505,6 +505,12 @@
   },
   "AI_AGENT_REPORTS": {
     "HEADER": "AI Agent Reports",
+    "TOPICS_ANALYSIS":{
+      "HEADER_CLOUD": "Most Popular Topics (Word Cloud)",
+      "HEADER_CHART": "Top 8 Most Popular Topics (Bar Chart)",
+      "SHOW_CHART": "Show Bar Chart",
+      "SHOW_WORD_CLOUD": "Show Word Cloud"
+    },
     "CHARTS": {
       "HEADER": "AI Agent Reports",
       "RESOLUTION_PROPORTION": "Resolution Proportion",

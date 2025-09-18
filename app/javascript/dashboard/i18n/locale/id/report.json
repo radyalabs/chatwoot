@@ -228,6 +228,24 @@
         "AVG_RESPONSE_TIME": "Rata-Rata Waktu Respon"
       }
     },
+    "SENTIMENT": {
+      "HEADER": "Analisis Sentimen",
+      "SUMMARY": "Ringkasan Sentimen",
+      "POSITIVE": "Positif",
+      "NEGATIVE": "Negatif",
+      "NEUTRAL": "Netral"
+    },
+    "QUESTION_SEGMENTATION": {
+      "HEADER": "Segmentasi Pertanyaan"
+    },
+    "QUESTION_CATEGORIES": {
+      "HARGA": "Pertanyaan Harga",
+      "STOK": "Ketersediaan Stok",
+      "PENGIRIMAN": "Pengiriman & Pengantaran",
+      "KOMPLAIN": "Keluhan & Masalah",
+      "INFORMASI": "Informasi Umum",
+      "LAINNYA": "Lainnya"
+    },
     "METRICS": {
       "CONVERSATIONS": {
         "NAME": "Percakapan",
@@ -457,29 +475,35 @@
     }
   },
   "BOT_REPORTS": {
-    "HEADER": "Bot Reports",
+    "HEADER": "Laporan Bot",
     "METRIC": {
       "TOTAL_CONVERSATIONS": {
-        "LABEL": "No. of Conversations",
-        "TOOLTIP": "Total number of conversations handled by the bot"
+        "LABEL": "Jumlah Percakapan",
+        "TOOLTIP": "Total percakapan yang ditangani oleh bot"
       },
       "TOTAL_RESPONSES": {
-        "LABEL": "Total Responses",
-        "TOOLTIP": "Total number of responses sent by the bot"
+        "LABEL": "Total Respon",
+        "TOOLTIP": "Total percakapan yang dijawab oleh bot"
       },
       "RESOLUTION_RATE": {
-        "LABEL": "Resolution Rate",
-        "TOOLTIP": "Total number of conversations resolved by the bot / Total number of conversations handled by the bot * 100"
+        "LABEL": "Tingkat Penyelesaian Oleh Bot",
+        "TOOLTIP": "Total percakapan yang diselesaikan oleh bot / Total percakapan yang ditangani oleh bot * 100"
       },
       "HANDOFF_RATE": {
-        "LABEL": "Handoff Rate",
-        "TOOLTIP": "Total number of conversations handed off to agents / Total number of conversations handled by the bot * 100"
+        "LABEL": "Tingkat Handover",
+        "TOOLTIP": "Total percakapan yang dialihkan ke agen / Total percakapan yang ditangani oleh bot * 100"
       }
     }
   },
 
   "AI_AGENT_REPORTS": {
     "HEADER": "Laporan AI Agen",
+    "TOPICS_ANALYSIS":{
+      "HEADER_CLOUD": "Topik Paling Populer (Word Cloud)",
+      "HEADER_CHART": "Top 8 Topik Paling Populer (Bar Chart)",
+      "SHOW_CHART": "Tampilkan Bar Chart",
+      "SHOW_WORD_CLOUD": "Tampilkan Word Cloud"
+    },
     "CHARTS": {
       "HEADER": "Laporan AI Agen",
       "RESOLUTION_PROPORTION": "Proporsi Penyelesaian",
@@ -488,26 +512,26 @@
       "HANDOVERED_TO_AGENT": "Dialihkan ke Agen"
     },
     "KPI": {
-      "HEADER": "Key Performance Indicators",
-      "TOTAL_AI_CONVERSATIONS":"Total conversations handled by AI agent",
-      "RESOLVED_BY_AI":"Total chats answered by AI agent"
+      "HEADER": "Indikator Kinerja Utama",
+      "TOTAL_AI_CONVERSATIONS":"Total percakapan yang ditangani oleh agen AI",
+      "RESOLVED_BY_AI":"Total percakapan yang dijawab oleh agen AI"
     },
     "METRIC": {
       "TOTAL_CONVERSATIONS": {
-        "LABEL": "No. of Conversations",
-        "TOOLTIP": "Total number of conversations handled by the bot"
+        "LABEL": "Jumlah Percakapan",
+        "TOOLTIP": "Total percakapan yang ditangani oleh bot"
       },
       "TOTAL_RESPONSES": {
-        "LABEL": "Total Responses",
-        "TOOLTIP": "Total number of responses sent by the bot"
+        "LABEL": "Total Respon",
+        "TOOLTIP": "Total percakapan yang dijawab oleh bot"
       },
       "RESOLUTION_RATE": {
-        "LABEL": "Resolution Rate",
-        "TOOLTIP": "Total number of conversations resolved by the bot / Total number of conversations handled by the bot * 100"
+        "LABEL": "Tingkat Penyelesaian Oleh Bot",
+        "TOOLTIP": "Total percakapan yang diselesaikan oleh bot / Total percakapan yang ditangani oleh bot * 100"
       },
       "HANDOFF_RATE": {
-        "LABEL": "Handoff Rate",
-        "TOOLTIP": "Total number of conversations handed off to agents / Total number of conversations handled by the bot * 100"
+        "LABEL": "Tingkat Handover",
+        "TOOLTIP": "Total percakapan yang dialihkan ke agen / Total percakapan yang ditangani oleh bot * 100"
       }
     }
   },
@@ -531,7 +555,7 @@
       "NO_CONVERSATIONS": "Tidak ada percakapan",
       "CONVERSATION": "{count} percakapan",
       "CONVERSATIONS": "{count} percakapan",
-      "DOWNLOAD_REPORT": "Download report"
+      "DOWNLOAD_REPORT": "Unduh laporan"
     },
     "AGENT_CONVERSATIONS": {
       "HEADER": "Percakapan oleh Agen",
@@ -545,7 +569,7 @@
       }
     },
     "CHAT_SUMMARY": {
-      "HEADER": "Ringkasan Chat",
+      "HEADER": "Ringkasan Percakapan",
       "CHAT_IN": "Total percakapan masuk",
       "CHAT_ANSWERED_BY_AI": "Total percakapan yang dijawab oleh agen AI",
       "CHAT_HANDOVERED": "Total percakapan dialihkan ke agen"

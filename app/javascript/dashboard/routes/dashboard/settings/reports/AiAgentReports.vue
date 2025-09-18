@@ -542,11 +542,11 @@ export default {
             <div class=" rounded-lg p-6">
               <div class="flex justify-between items-center mb-4">
                 <h6 class="text-lg font-semibold text-gray-900 dark:text-white">
-                  {{ showWordCloud ? 'Most Popular Topics (Word Cloud)' : 'Top 8 Most Popular Topics' }}
+                  {{ showWordCloud ? $t('AI_AGENT_REPORTS.TOPICS_ANALYSIS.HEADER_CLOUD') : $t('AI_AGENT_REPORTS.TOPICS_ANALYSIS.HEADER_CHART') }}
                 </h6>
                 <button
                   @click="toggleWordCloud"
-                  class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                  class="inline-flex items-center px-3 py-2 border border-green-700 dark:border-gray-600 shadow-sm text-sm leading-4 font-medium rounded-md text-green-700 dark:text-green-200 dark:bg-green-800 hover:bg-green-50 dark:hover:bg-green-700 transition-colors"
                 >
                   <svg 
                     xmlns="http://www.w3.org/2000/svg" 
@@ -562,7 +562,7 @@ export default {
                       d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" 
                     />
                   </svg>
-                  {{ showWordCloud ? 'Show Bar Chart' : 'Show Word Cloud' }}
+                  {{ showWordCloud ? $t('AI_AGENT_REPORTS.TOPICS_ANALYSIS.SHOW_CHART') : $t('AI_AGENT_REPORTS.TOPICS_ANALYSIS.SHOW_WORD_CLOUD') }}
                 </button>
               </div>
               
@@ -575,7 +575,7 @@ export default {
                 />
                 <div v-else class="flex items-center justify-center h-full">
                   <span class="text-sm text-gray-600 dark:text-gray-400">
-                    No topic data available
+                  {{ $t('REPORT.NO_ENOUGH_DATA') }}
                   </span>
                 </div>
               </div>

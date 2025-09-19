@@ -459,6 +459,10 @@
         "FEEDBACK_TEXT": "Komentar umpan balik"
       }
     },
+    "TRENDS": {
+      "HEADER": "Tren CSAT",
+      "SUB_HEADER": "Rata-rata skor kepuasan pelanggan dari waktu ke waktu"
+    },
     "METRIC": {
       "TOTAL_RESPONSES": {
         "LABEL": "Total respons",

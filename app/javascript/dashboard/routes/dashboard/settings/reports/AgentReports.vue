@@ -1,4 +1,5 @@
 <script>
+import { mapState } from 'vuex';
 import { useAlert, useTrack } from 'dashboard/composables';
 import ReportFilterSelector from './components/FilterSelector.vue';
 import ReportHeader from './components/ReportHeader.vue';
@@ -50,6 +51,46 @@ export default {
     };
   },
   computed: {
+    ...mapState({
+      activeSubscription: state => state.billing?.billing?.myActiveSubscription || state.billing?.billing?.latestSubscription,
+    }),
+    // User tier based on subscription plan
+    userTier() {
+      const planName = 'pertalite'
+      // const planName = this.activeSubscription?.plan_name?.toLowerCase();
+      if (!planName) return null;
+      if (planName.includes('pertamax turbo') || planName.includes('unlimited')) {
+        console.log('userTier computed property accessed, planName:', planName);
+        return 'pertamax_turbo';
+      } else if (planName.includes('pertamax') || planName.includes('enterprise')) {
+        console.log('userTier computed property accessed, planName:', planName);
+        return 'pertamax';
+      } else if (planName.includes('pertalite') || planName.includes('business')) {
+        console.log('userTier computed property accessed, planName:', planName);
+        return 'pertalite';
+      } else if (planName.includes('premium') || planName.includes('business')) {
+        console.log('userTier computed property accessed, planName:', planName);
+        return 'premium';
+      }
+      console.log('userTier computed property accessed, planName:', planName);
+      return 'free';
+    },
+    // Get available export options based on tier
+    availableExportOptions() {
+      if (this.userTier === 'pertamax_turbo') {
+        return [
+          { key: 'csv', label: 'OVERVIEW_REPORTS.EXPORT_TO_CSV' },
+          { key: 'pdf', label: 'OVERVIEW_REPORTS.EXPORT_TO_PDF' },
+          { key: 'excel', label: 'OVERVIEW_REPORTS.EXPORT_TO_EXCEL' }
+        ];
+      } else if (this.userTier === 'pertamax') {
+        return [
+          { key: 'csv', label: 'OVERVIEW_REPORTS.EXPORT_TO_CSV' }
+        ];
+      }
+      return [];
+    },
+
     isDateRangeSelected() {
       return (
         this.selectedDateRange.id === DATE_RANGE_OPTIONS.CUSTOM_DATE_RANGE.id
@@ -128,7 +169,7 @@ export default {
       };
     },
     firstResponseTimeChartData() {
-      // Generate dummy line chart data for first response time for multiple agents
+      // Generate dynamic line chart data for first response time for any number of agents
       const endDate = this.to ? new Date(this.to * 1000) : new Date();
       const startDate = this.from ? new Date(this.from * 1000) : new Date(Date.now() - 6 * 24 * 60 * 60 * 1000);
       const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
@@ -149,38 +190,19 @@ export default {
         { id: 3, name: 'Agent 3' }
       ];
       
-      const data1 = agentsToShow[0] ? {
-        label: 'AGENT_REPORTS.METRICS.FIRST_RESPONSE_TIME.NAME_AGENT_1',
+      // Generate datasets for all agents
+      const datasets = agentsToShow.map((agent, index) => ({
+        label: `AGENT_REPORTS.METRICS.FIRST_RESPONSE_TIME.NAME_${agent.name?.toUpperCase().replace(/\s+/g, '_') || `AGENT_${agent.id}`}`,
         data: timestamps.map(timestamp => ({
-          value: Math.floor(Math.random() * 120) + 30,
+          value: Math.floor(Math.random() * 120) + 30, // 30-150 seconds
           timestamp: timestamp,
         })),
-      } : null;
+      }));
       
-      const data2 = agentsToShow[1] ? {
-        label: `AGENT_REPORTS.METRICS.FIRST_RESPONSE_TIME.NAME_AGENT_2`,
-        data: timestamps.map(timestamp => ({
-          value: Math.floor(Math.random() * 120) + 30,
-          timestamp: timestamp,
-        })),
-      } : null;
-      
-      const data3 = agentsToShow[2] ? {
-        label: `AGENT_REPORTS.METRICS.FIRST_RESPONSE_TIME.NAME_AGENT_3`,
-        data: timestamps.map(timestamp => ({
-          value: Math.floor(Math.random() * 120) + 30,
-          timestamp: timestamp,
-        })),
-      } : null;
-      
-      return {
-        data1,
-        data2,
-        data3,
-      };
+      return datasets;
     },
     resolutionTimeChartData() {
-      // Generate dummy line chart data for resolution time for multiple agents
+      // Generate dynamic line chart data for resolution time for any number of agents
       const endDate = this.to ? new Date(this.to * 1000) : new Date();
       const startDate = this.from ? new Date(this.from * 1000) : new Date(Date.now() - 6 * 24 * 60 * 60 * 1000);
       const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
@@ -201,35 +223,16 @@ export default {
         { id: 3, name: 'Agent 3' }
       ];
       
-      const data1 = agentsToShow[0] ? {
-        label: 'AGENT_REPORTS.METRICS.RESOLUTION_TIME.NAME_AGENT_1',
+      // Generate datasets for all agents
+      const datasets = agentsToShow.map((agent, index) => ({
+        label: `AGENT_REPORTS.METRICS.RESOLUTION_TIME.NAME_${agent.name?.toUpperCase().replace(/\s+/g, '_') || `AGENT_${agent.id}`}`,
         data: timestamps.map(timestamp => ({
-          value: Math.floor(Math.random() * 300) + 60,
+          value: Math.floor(Math.random() * 300) + 60, // 60-360 minutes
           timestamp: timestamp,
         })),
-      } : null;
+      }));
       
-      const data2 = agentsToShow[1] ? {
-        label: `AGENT_REPORTS.METRICS.RESOLUTION_TIME.NAME_AGENT_2`,
-        data: timestamps.map(timestamp => ({
-          value: Math.floor(Math.random() * 300) + 60,
-          timestamp: timestamp,
-        })),
-      } : null;
-      
-      const data3 = agentsToShow[2] ? {
-        label: `AGENT_REPORTS.METRICS.RESOLUTION_TIME.NAME_AGENT_3`,
-        data: timestamps.map(timestamp => ({
-          value: Math.floor(Math.random() * 300) + 60,
-          timestamp: timestamp,
-        })),
-      } : null;
-      
-      return {
-        data1,
-        data2,
-        data3,
-      };
+      return datasets;
     },
     // Agent performance table data
     agentTableData() {
@@ -406,7 +409,18 @@ export default {
       this.dropdownOpen = false;
     },
     exportData(format) {
-      console.log(`Exporting agent data to ${format}`);
+      const hasPermission = this.availableExportOptions.some(option => option.key === format);
+      if (!hasPermission) {
+        this.$bus.$emit('newToastMessage', {
+          message: this.$t('OVERVIEW_REPORTS.EXPORT_NOT_ALLOWED'),
+          type: 'error'
+        });
+        this.closeDropdown();
+        return;
+      }
+      
+      console.log(`Exporting data to ${format}`);
+      // TODO: Implement actual export functionality
       this.closeDropdown();
     },
     closeDropdownOnOutsideClick(event) {
@@ -418,6 +432,7 @@ export default {
     },
   },
   mounted() {
+    this.$store.dispatch('myActiveSubscription');
     this.calculateDateRange();
     this.fetchAllData();
     window.addEventListener('click', this.closeDropdownOnOutsideClick);
@@ -439,7 +454,7 @@ export default {
         </div>
         
         <!-- Export dropdown on the right -->
-        <div class="relative inline-block text-left" ref="dropdownContainer">
+        <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="relative inline-block text-left" ref="dropdownContainer">
           <button
             @click="toggleDropdown"
             class="inline-flex justify-center w-full rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 text-white hover:opacity-90 transition-opacity"
@@ -461,29 +476,24 @@ export default {
           </button>
           <div
             v-if="dropdownOpen"
-            class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black dark:ring-gray-600 ring-opacity-5 focus:outline-none"
+            class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-n-solid-2 dark:bg-gray-800 ring-1 ring-black dark:ring-gray-600 ring-opacity-5 focus:outline-none"
           >
             <div class="py-1">
-              <button
-                @click="exportData('csv')"
-                class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              <a
+                v-for="option in availableExportOptions"
+                :key="option.key"
+                href="#"
+                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-green-100 dark:hover:bg-gray-700"
+                @click="exportData(option.key)"
               >
-                {{ $t('OVERVIEW_REPORTS.EXPORT_TO_CSV') }}
-              </button>
-              <button
-                @click="exportData('pdf')"
-                class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                {{ $t('OVERVIEW_REPORTS.EXPORT_TO_PDF') }}
-              </button>
-              <button
-                @click="exportData('excel')"
-                class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                {{ $t('OVERVIEW_REPORTS.EXPORT_TO_EXCEL') }}
-              </button>
+                {{ $t(option.label) }}
+              </a>
             </div>
           </div>
+        </div>
+        <div v-else-if="userTier && userTier !== 'pertamax_turbo' && userTier !== 'pertamax'" 
+            class="text-sm text-gray-500 dark:text-gray-400">
+          {{ $t('OVERVIEW_REPORTS.UPGRADE_FOR_EXPORT') }}
         </div>
       </div>
     </ReportHeader>
@@ -549,10 +559,8 @@ export default {
             </div>
             <div class="h-80">
               <LineChart2
-                v-if="firstResponseTimeChartData.data1?.data?.length"
-                :data1="firstResponseTimeChartData.data1"
-                :data2="firstResponseTimeChartData.data2"
-                :data3="firstResponseTimeChartData.data3"
+                v-if="firstResponseTimeChartData.length > 0"
+                :datasets="firstResponseTimeChartData"
               />
               <div v-else class="flex items-center justify-center h-full">
                 <span class="text-sm text-gray-600 dark:text-gray-400">
@@ -577,10 +585,8 @@ export default {
             </div>
             <div class="h-80">
               <LineChart2
-                v-if="resolutionTimeChartData.data1?.data?.length"
-                :data1="resolutionTimeChartData.data1"
-                :data2="resolutionTimeChartData.data2"
-                :data3="resolutionTimeChartData.data3"
+                v-if="resolutionTimeChartData.length > 0"
+                :datasets="resolutionTimeChartData"
               />
               <div v-else class="flex items-center justify-center h-full">
                 <span class="text-sm text-gray-600 dark:text-gray-400">

@@ -467,6 +467,10 @@
         "FEEDBACK_TEXT": "Feedback comment"
       }
     },
+    "TRENDS": {
+      "HEADER": "CSAT Trend",
+      "SUB_HEADER": "Average satisfaction score over time"
+    },
     "METRIC": {
       "TOTAL_RESPONSES": {
         "LABEL": "Total responses",
@@ -521,7 +525,7 @@
     "KPI": {
       "HEADER": "Key Performance Indicators",
       "TOTAL_AI_CONVERSATIONS":"Total conversations handled by AI agent",
-      "RESOLVED_BY_AI":"Total chats answered by AI agent"
+      "RESOLVED_BY_AI":"Chats resolved by AI"
     },
     "BOT_SUMMARY": {
       "HEADER": "Bot Summary",
@@ -559,6 +563,8 @@
     "EXPORT_TO_CSV": "Export to CSV",
     "EXPORT_TO_PDF": "Export to PDF",
     "EXPORT_TO_EXCEL": "Export to Excel",
+    "EXPORT_NOT_ALLOWED": "You don't have permission to export in this format. Please upgrade your plan.",
+    "UPGRADE_FOR_EXPORT": "Upgrade to Pertamax or higher to access export features",
     "ACCOUNT_CONVERSATIONS": {
       "HEADER": "Open Conversations",
       "LOADING_MESSAGE": "Loading conversation metrics...",
@@ -588,14 +594,14 @@
     "CHAT_SUMMARY": {
       "HEADER": "Chat Summary",
       "CHAT_IN": "Total incoming chats",
-      "CHAT_ANSWERED_BY_AI": "Total chats answered by AI agent",
-      "CHAT_HANDOVERED": "Total chats handovered to agent"
+      "CHAT_ANSWERED_BY_AI": "Chats resolved by AI",
+      "CHAT_HANDOVERED": "Chats handovered to agent"
     },
     "CONVERSATION_TRENDS_LINE_CHART": {
       "HEADER": "Conversation Trends",
       "TOTAL_CHATS": "Total incoming chats",
-      "BOT_CHATS": "Total chats answered by AI agent",
-      "AGENT_CHATS": "Total chats handovered to agent"
+      "BOT_CHATS": "Chats resolved by AI",
+      "AGENT_CHATS": "Chats handovered to agent"
     },
     "AGENT_STATUS": {
       "HEADER": "Agent status",

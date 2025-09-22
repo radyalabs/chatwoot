@@ -1,4 +1,5 @@
 <script>
+import { mapState } from 'vuex';
 import { useAlert, useTrack } from 'dashboard/composables';
 import AiAgentMetrics from './components/AiAgentMetrics.vue';
 import ReportFilterSelector from './components/FilterSelector.vue';
@@ -62,6 +63,47 @@ export default {
     };
   },
   computed: {
+    ...mapState({
+      activeSubscription: state => state.billing?.billing?.myActiveSubscription || state.billing?.billing?.latestSubscription,
+    }),
+    // User tier based on subscription plan
+    userTier() {
+      const planName = 'pertalite'
+      // const planName = this.activeSubscription?.plan_name?.toLowerCase();
+      if (!planName) return null;
+      if (planName.includes('pertamax turbo') || planName.includes('unlimited')) {
+        console.log('userTier computed property accessed, planName:', planName);
+        return 'pertamax_turbo';
+      } else if (planName.includes('pertamax') || planName.includes('enterprise')) {
+        console.log('userTier computed property accessed, planName:', planName);
+        return 'pertamax';
+      } else if (planName.includes('pertalite') || planName.includes('business')) {
+        console.log('userTier computed property accessed, planName:', planName);
+        return 'pertalite';
+      } else if (planName.includes('premium') || planName.includes('business')) {
+        console.log('userTier computed property accessed, planName:', planName);
+        return 'premium';
+      }
+      console.log('userTier computed property accessed, planName:', planName);
+      return 'free';
+    },
+    // Get available export options based on tier
+    availableExportOptions() {
+      if (this.userTier === 'pertamax_turbo') {
+        return [
+          { key: 'csv', label: 'OVERVIEW_REPORTS.EXPORT_TO_CSV' },
+          { key: 'pdf', label: 'OVERVIEW_REPORTS.EXPORT_TO_PDF' },
+          { key: 'excel', label: 'OVERVIEW_REPORTS.EXPORT_TO_EXCEL' }
+        ];
+      } else if (this.userTier === 'pertamax') {
+        return [
+          { key: 'csv', label: 'OVERVIEW_REPORTS.EXPORT_TO_CSV' }
+        ];
+      }
+      return [];
+    },
+
+
     requestPayload() {
       return {
         from: this.from,
@@ -341,7 +383,19 @@ export default {
       this.dropdownOpen = false;
     },
     exportData(format) {
+      // Check if user has permission for this export type
+      const hasPermission = this.availableExportOptions.some(option => option.key === format);
+      if (!hasPermission) {
+        this.$bus.$emit('newToastMessage', {
+          message: this.$t('OVERVIEW_REPORTS.EXPORT_NOT_ALLOWED'),
+          type: 'error'
+        });
+        this.closeDropdown();
+        return;
+      }
+      
       console.log(`Exporting data to ${format}`);
+      // TODO: Implement actual export functionality
       this.closeDropdown();
     },
     toggleWordCloud() {
@@ -361,7 +415,7 @@ export default {
     },
   },
   mounted() {
-    console.log('Word cloud data:', this.wordCloudData);
+    this.$store.dispatch('myActiveSubscription');
 
     window.addEventListener('click', this.closeDropdownOnOutsideClick);
   },
@@ -386,7 +440,7 @@ export default {
         </div>
         
         <!-- Export dropdown on the right -->
-        <div class="relative inline-block text-left" ref="dropdownContainer">
+        <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="relative inline-block text-left" ref="dropdownContainer">
           <button
             @click="toggleDropdown"
             class="inline-flex justify-center w-full rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 text-white hover:opacity-90 transition-opacity"
@@ -406,40 +460,33 @@ export default {
               />
             </svg>
           </button>
-          <div
-            v-if="dropdownOpen"
-            class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg  ring-1 ring-black dark:ring-gray-600 ring-opacity-5 focus:outline-none"
-          >
-            <div class="py-1">
+            <div
+              v-if="dropdownOpen"
+              class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-n-solid-2 ring-1 ring-black dark:ring-gray-600 ring-opacity-5 focus:outline-none"
+            >
+              <div class="py-1">
               <a
+                v-for="option in availableExportOptions"
+                :key="option.key"
                 href="#"
                 class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-green-100 dark:hover:bg-gray-700"
-                @click="exportData('csv')"
+                @click="exportData(option.key)"
               >
-                {{ $t('OVERVIEW_REPORTS.EXPORT_TO_CSV') }}
+                {{ $t(option.label) }}
               </a>
-              <a
-                href="#"
-                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-green-100 dark:hover:bg-gray-700"
-                @click="exportData('pdf')"
-              >
-                {{ $t('OVERVIEW_REPORTS.EXPORT_TO_PDF') }}
-              </a>
-              <a
-                href="#"
-                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-green-100 dark:hover:bg-gray-700"
-                @click="exportData('excel')"
-              >
-                {{ $t('OVERVIEW_REPORTS.EXPORT_TO_EXCEL') }}
-              </a>
+              
             </div>
           </div>
+        </div>
+        <div v-else-if="userTier && userTier !== 'pertamax_turbo' && userTier !== 'pertamax'" 
+             class="text-sm text-gray-500 dark:text-gray-400">
+          {{ $t('OVERVIEW_REPORTS.UPGRADE_FOR_EXPORT') }}
         </div>
       </div>
     </ReportHeader>
 
     <!-- Laporan Bot AI Charts Section -->
-    <div class="flex flex-row flex-wrap max-w-full">
+    <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="flex flex-row flex-wrap max-w-full">
       <MetricCardFull class="w-full max-w-full">
         <!-- KPIs and Donut Chart Row -->
         <div class="flex flex-col lg:flex-row gap-6 p-4">
@@ -504,20 +551,6 @@ export default {
               <h6 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ $t('AI_AGENT_REPORTS.CHARTS.DAILY_RESOLUTION_TREND') }}
               </h6>
-              <div class="flex space-x-4">
-                <div class="flex items-center">
-                  <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                  <span class="text-sm text-gray-600 dark:text-gray-300">
-                    {{ $t('AI_AGENT_REPORTS.CHARTS.RESOLVED_BY_AI') }}
-                  </span>
-                </div>
-                <div class="flex items-center">
-                  <div class="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>
-                  <span class="text-sm text-gray-600 dark:text-gray-300">
-                    {{ $t('AI_AGENT_REPORTS.CHARTS.HANDOVERED_TO_AGENT') }}
-                  </span>
-                </div>
-              </div>
             </div>
             <div class="h-80">
               <BarChart

@@ -1,5 +1,5 @@
 <script>
-import { mapGetters } from 'vuex';
+import { mapGetters, mapState } from 'vuex';
 import AgentTable from './components/overview/AgentTable.vue';
 import MetricCard from './components/overview/MetricCard.vue';
 import MetricCardFull from './components/overview/MetricCardFull.vue';
@@ -57,6 +57,45 @@ export default {
       uiFlags: 'getOverviewUIFlags',
       creditUsageMetric: 'getCreditUsageMetric',
     }),
+    ...mapState({
+      activeSubscription: state => state.billing?.billing?.myActiveSubscription || state.billing?.billing?.latestSubscription,
+    }),
+    // User tier based on subscription plan
+    userTier() {
+      const planName = 'pertalite'
+      // const planName = this.activeSubscription?.plan_name?.toLowerCase();
+      if (!planName) return null;
+      if (planName.includes('pertamax turbo') || planName.includes('unlimited')) {
+        console.log('userTier computed property accessed, planName:', planName);
+        return 'pertamax_turbo';
+      } else if (planName.includes('pertamax') || planName.includes('enterprise')) {
+        console.log('userTier computed property accessed, planName:', planName);
+        return 'pertamax';
+      } else if (planName.includes('pertalite') || planName.includes('business')) {
+        console.log('userTier computed property accessed, planName:', planName);
+        return 'pertalite';
+      } else if (planName.includes('premium') || planName.includes('business')) {
+        console.log('userTier computed property accessed, planName:', planName);
+        return 'premium';
+      }
+      console.log('userTier computed property accessed, planName:', planName);
+      return 'free';
+    },
+    // Get available export options based on tier
+    availableExportOptions() {
+      if (this.userTier === 'pertamax_turbo') {
+        return [
+          { key: 'csv', label: 'OVERVIEW_REPORTS.EXPORT_TO_CSV' },
+          { key: 'pdf', label: 'OVERVIEW_REPORTS.EXPORT_TO_PDF' },
+          { key: 'excel', label: 'OVERVIEW_REPORTS.EXPORT_TO_EXCEL' }
+        ];
+      } else if (this.userTier === 'pertamax') {
+        return [
+          { key: 'csv', label: 'OVERVIEW_REPORTS.EXPORT_TO_CSV' }
+        ];
+      }
+      return [];
+    },
     requestPayload() {
       return {
         from: this.from,
@@ -144,6 +183,8 @@ export default {
   },
   mounted() {
     this.$store.dispatch('agents/get');
+    // Fetch active subscription for tier checking
+    this.$store.dispatch('myActiveSubscription');
     this.initalizeReport();
     window.addEventListener('click', this.closeDropdownOnOutsideClick);
   },
@@ -248,7 +289,19 @@ export default {
       this.dropdownOpen = false;
     },
     exportData(format) {
+      // Check if user has permission for this export type
+      const hasPermission = this.availableExportOptions.some(option => option.key === format);
+      if (!hasPermission) {
+        this.$bus.$emit('newToastMessage', {
+          message: this.$t('OVERVIEW_REPORTS.EXPORT_NOT_ALLOWED'),
+          type: 'error'
+        });
+        this.closeDropdown();
+        return;
+      }
+      
       console.log(`Exporting data to ${format}`);
+      // TODO: Implement actual export functionality
       this.closeDropdown();
     },
     closeDropdownOnOutsideClick(event) {
@@ -265,7 +318,7 @@ export default {
 <template>
   <div class="flex flex-col gap-4 pb-6">
     <ReportHeader :header-title="$t('OVERVIEW_REPORTS.HEADER')" class="sticky" >
-      <div class="relative inline-block text-left" ref="dropdownContainer">
+      <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="relative inline-block text-left" ref="dropdownContainer">
         <button
           @click="toggleDropdown"
           class="inline-flex justify-center w-full rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 text-white hover:opacity-90 transition-opacity"
@@ -287,32 +340,25 @@ export default {
         </button>
         <div
           v-if="dropdownOpen"
-          class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black dark:ring-gray-600 ring-opacity-5 focus:outline-none"
+          class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-n-solid-2 dark:bg-gray-800 ring-1 ring-black dark:ring-gray-600 ring-opacity-5 focus:outline-none"
         >
           <div class="py-1">
             <a
+              v-for="option in availableExportOptions"
+              :key="option.key"
               href="#"
               class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-green-100 dark:hover:bg-gray-700"
-              @click="exportData('csv')"
+              @click="exportData(option.key)"
             >
-              {{ $t('OVERVIEW_REPORTS.EXPORT_TO_CSV') }}
-            </a>
-            <a
-              href="#"
-              class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-green-100 dark:hover:bg-gray-700"
-              @click="exportData('pdf')"
-            >
-              {{ $t('OVERVIEW_REPORTS.EXPORT_TO_PDF') }}
-            </a>
-            <a
-              href="#"
-              class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-green-100 dark:hover:bg-gray-700"
-              @click="exportData('excel')"
-            >
-              {{ $t('OVERVIEW_REPORTS.EXPORT_TO_EXCEL') }}
+              {{ $t(option.label) }}
             </a>
           </div>
         </div>
+      </div>
+      <!-- Show upgrade message for users with insufficient tier -->
+      <div v-else-if="userTier && userTier !== 'pertamax_turbo' && userTier !== 'pertamax'" 
+           class="text-sm text-gray-500 dark:text-gray-400">
+        {{ $t('OVERVIEW_REPORTS.UPGRADE_FOR_EXPORT') }}
       </div>
     </ReportHeader>
     <div class="flex flex-col items-center md:flex-row gap-4">
@@ -326,24 +372,24 @@ export default {
             $t('OVERVIEW_REPORTS.ACCOUNT_CONVERSATIONS.LOADING_MESSAGE')
           "
         >
-          <div class="flex-1 min-w-0 pb-2">
-            <h3 class="text-base text-n-slate-11">
+          <div class="flex-1 min-w-0 pb-2 pr-2">
+            <h3 class="text-sm">
               {{ $t('OVERVIEW_REPORTS.CHAT_SUMMARY.CHAT_IN') }}
             </h3>
             <p class="text-n-slate-12 text-3xl mb-0 mt-1">
               {{ accountConversationMetric?.open || 0 }}
             </p>
           </div>
-          <div class="flex-1 min-w-0 pb-2">
-            <h3 class="text-base text-n-slate-11">
+          <div class="flex-1 min-w-0 pb-2 pr-2">
+            <h3 class="text-sm">
               {{ $t('OVERVIEW_REPORTS.CHAT_SUMMARY.CHAT_ANSWERED_BY_AI') }}
             </h3>
             <p class="text-n-slate-12 text-3xl mb-0 mt-1">
               {{ creditUsageMetric?.ai_responses || 0 }}
             </p>
           </div>
-          <div class="flex-1 min-w-0 pb-2">
-            <h3 class="text-base text-n-slate-11">
+          <div class="flex-1 min-w-0 pb-2 pr-2">
+            <h3 class="text-sm">
               {{ $t('OVERVIEW_REPORTS.CHAT_SUMMARY.CHAT_HANDOVERED') }}
             </h3>
             <p class="text-n-slate-12 text-3xl mb-0 mt-1">
@@ -352,14 +398,14 @@ export default {
           </div>
         </MetricCard>
       </div>
-      <div class="flex-1 w-full max-w-full md:w-[35%] md:max-w-[35%]">
+      <div class="max-h-[100%] flex-1 w-full max-w-full md:w-[35%] md:max-w-[35%]">
         <MetricCard :header="$t('OVERVIEW_REPORTS.AGENT_STATUS.HEADER')">
           <div
             v-for="(metric, name, index) in agentStatusMetrics"
             :key="index"
             class="flex-1 min-w-0 pb-2"
           >
-            <h3 class="text-base text-n-slate-11">
+            <h3 class="text-sm">
               {{ name }}
             </h3>
             <p class="text-n-slate-12 text-3xl mb-0 mt-1">
@@ -371,7 +417,7 @@ export default {
     </div>
     
     <!-- Conversation Trends Chart -->
-    <div class="flex flex-row flex-wrap max-w-full">
+    <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo' || userTier === 'pertalite'" class="flex flex-row flex-wrap max-w-full">
       <MetricCardFull class="w-full max-w-full">
         <template #header>
           <div class="flex flex-col gap-4 w-full">
@@ -380,12 +426,12 @@ export default {
                 {{ $t('OVERVIEW_REPORTS.CONVERSATION_TRENDS_LINE_CHART.HEADER') }}
               </h5>
               <span
-                class="flex flex-row items-center py-0.5 px-2 rounded bg-n-teal-3 dark:bg-yellow-500/50 text-xs"
+                  class="flex flex-row items-center py-0.5 px-2 rounded bg-green-700 dark:bg-green-700 text-white text-xs"
               >
                 <span
-                  class="bg-n-teal-9 dark:bg-yellow-600 h-1 w-1 rounded-full mr-1 rtl:mr-0 rtl:ml-0"
+                  class="bg-white dark:bg-white h-1 w-1 rounded-full mr-1 rtl:mr-0 rtl:ml-0"
                 />
-                <span class="text-xs text-n-teal-11 dark:text-yellow-600">
+                <span class="text-xs text-grey-700 dark:text-grey-700">
                   {{ $t('OVERVIEW_REPORTS.LIVE') }}
                 </span>
               </span>
@@ -423,7 +469,7 @@ export default {
     </div>
     
     <!-- Traffic heatmap-->
-    <div class="flex flex-row flex-wrap max-w-full">
+    <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="flex flex-row flex-wrap max-w-full">
       <MetricCard :header="$t('OVERVIEW_REPORTS.CONVERSATION_HEATMAP.HEADER')">
         <template #control>
           <woot-button
@@ -444,7 +490,7 @@ export default {
     </div>
 
     <!-- Agents Summary Table -->
-    <div class="flex flex-row flex-wrap max-w-full">
+    <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo' || userTier === 'pertalite'" class="flex flex-row flex-wrap max-w-full">
       <MetricCard :header="$t('OVERVIEW_REPORTS.AGENT_CONVERSATIONS.HEADER')">
         <AgentTable
           :agents="agents"
@@ -455,8 +501,5 @@ export default {
         />
       </MetricCard>
     </div>
-    <!-- <ConversationAnalytics />
-    <Csat />
-    <AgentReports /> -->
   </div>
 </template>

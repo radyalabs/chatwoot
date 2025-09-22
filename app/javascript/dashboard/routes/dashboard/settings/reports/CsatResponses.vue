@@ -1,5 +1,5 @@
 <script>
-import { mapGetters } from 'vuex';
+import { mapGetters, mapState } from 'vuex';
 import { useAlert, useTrack } from 'dashboard/composables';
 import CsatMetrics from './components/CsatMetrics.vue';
 import CsatTable from './components/CsatTable.vue';
@@ -62,6 +62,46 @@ export default {
       accountId: 'getCurrentAccountId',
       isFeatureEnabledOnAccount: 'accounts/isFeatureEnabledonAccount',
     }),
+    ...mapState({
+      activeSubscription: state => state.billing?.billing?.myActiveSubscription || state.billing?.billing?.latestSubscription,
+    }),
+    // User tier based on subscription plan
+    userTier() {
+      const planName = 'pertalite'
+      // const planName = this.activeSubscription?.plan_name?.toLowerCase();
+      if (!planName) return null;
+      if (planName.includes('pertamax turbo') || planName.includes('unlimited')) {
+        console.log('userTier computed property accessed, planName:', planName);
+        return 'pertamax_turbo';
+      } else if (planName.includes('pertamax') || planName.includes('enterprise')) {
+        console.log('userTier computed property accessed, planName:', planName);
+        return 'pertamax';
+      } else if (planName.includes('pertalite') || planName.includes('business')) {
+        console.log('userTier computed property accessed, planName:', planName);
+        return 'pertalite';
+      } else if (planName.includes('premium') || planName.includes('business')) {
+        console.log('userTier computed property accessed, planName:', planName);
+        return 'premium';
+      }
+      console.log('userTier computed property accessed, planName:', planName);
+      return 'free';
+    },
+    // Get available export options based on tier
+    availableExportOptions() {
+      if (this.userTier === 'pertamax_turbo') {
+        return [
+          { key: 'csv', label: 'OVERVIEW_REPORTS.EXPORT_TO_CSV' },
+          { key: 'pdf', label: 'OVERVIEW_REPORTS.EXPORT_TO_PDF' },
+          { key: 'excel', label: 'OVERVIEW_REPORTS.EXPORT_TO_EXCEL' }
+        ];
+      } else if (this.userTier === 'pertamax') {
+        return [
+          { key: 'csv', label: 'OVERVIEW_REPORTS.EXPORT_TO_CSV' }
+        ];
+      }
+      return [];
+    },
+
     requestPayload() {
       return {
         from: this.from,
@@ -79,12 +119,8 @@ export default {
       );
     },
     csatTrendData() {
-      // Agent-based CSAT trends over time
-      const dummyTimestamps = [];
-      const csatScores = [];
-      const responseRates = [];
-      
-      // Use filter dates if available, otherwise default to last 30 days
+      console.log('Generate CSAT data')
+      // Generate dynamic line chart data for CSAT trends over time
       const endDate = this.to ? new Date(this.to * 1000) : new Date();
       const startDate = this.from ? new Date(this.from * 1000) : new Date(Date.now() - 29 * 24 * 60 * 60 * 1000);
       
@@ -92,42 +128,39 @@ export default {
       const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
       const numDays = Math.max(1, Math.min(daysDiff, 30)); // Limit to 30 days max
       
-      // Generate dummy data for the date range, influenced by selected agents
-      const agentMultiplier = this.selectedAgents.length > 0 ? this.selectedAgents.length : 1;
-      const baseScoreVariation = this.selectedAgents.length > 0 ? 
-        (this.selectedAgents.length * 2) : 0; // Better scores with more agents selected
-      
+      // Generate timestamps
+      const timestamps = [];
       for (let i = numDays - 1; i >= 0; i--) {
         const date = new Date(endDate);
         date.setDate(date.getDate() - i);
-        // Convert to Unix timestamp (seconds)
-        const timestamp = Math.floor(date.getTime() / 1000);
-        dummyTimestamps.push(timestamp);
-        
-        // Scores vary based on selected agents
-        const csatScore = Math.min(100, Math.floor(Math.random() * 35) + 65 + baseScoreVariation); // 65-100%
-        const responseRate = Math.min(100, Math.floor(Math.random() * 25) + 75 + Math.floor(baseScoreVariation/2)); // 75-100%
-        
-        csatScores.push(csatScore);
-        responseRates.push(responseRate);
+        timestamps.push(Math.floor(date.getTime() / 1000));
       }
       
-      return {
-        data1: {
+      // Influence data based on selected agents and filters
+      const agentMultiplier = this.selectedAgents.length > 0 ? this.selectedAgents.length : 1;
+      const baseScoreVariation = this.selectedAgents.length > 0 ? 
+        (this.selectedAgents.length * 2) : 0; // Better scores with more agents selected
+      const ratingInfluence = this.rating ? 5 : 0; // Boost if rating filter applied
+      
+      // Generate datasets for CSAT metrics
+      const datasets = [
+        {
           label: 'CSAT_REPORTS.TRENDS.SATISFACTION_SCORE',
-          data: csatScores.map((value, index) => ({
-            timestamp: dummyTimestamps[index],
-            value: value
-          }))
+          data: timestamps.map(timestamp => ({
+            value: Math.min(100, Math.floor(Math.random() * 35) + 65 + baseScoreVariation + ratingInfluence), // 65-100%
+            timestamp: timestamp,
+          })),
         },
-        data2: {
+        {
           label: 'CSAT_REPORTS.TRENDS.RESPONSE_RATE',
-          data: responseRates.map((value, index) => ({
-            timestamp: dummyTimestamps[index],
-            value: value
-          }))
+          data: timestamps.map(timestamp => ({
+            value: Math.min(100, Math.floor(Math.random() * 25) + 75 + Math.floor(baseScoreVariation/2)), // 75-100%
+            timestamp: timestamp,
+          })),
         }
-      };
+      ];
+      console.log('CSAT Trend Datasets:', datasets);
+      return datasets;
     },
     csatAnalyticsData() {
       // Dummy data for CSAT analytics by topic & agent
@@ -332,7 +365,19 @@ export default {
       this.dropdownOpen = false;
     },
     exportData(format) {
-      console.log(`Exporting CSAT data to ${format}`);
+      // Check if user has permission for this export type
+      const hasPermission = this.availableExportOptions.some(option => option.key === format);
+      if (!hasPermission) {
+        this.$bus.$emit('newToastMessage', {
+          message: this.$t('OVERVIEW_REPORTS.EXPORT_NOT_ALLOWED'),
+          type: 'error'
+        });
+        this.closeDropdown();
+        return;
+      }
+      
+      console.log(`Exporting data to ${format}`);
+      // TODO: Implement actual export functionality
       this.closeDropdown();
     },
     closeDropdownOnOutsideClick(event) {
@@ -345,6 +390,8 @@ export default {
   },
   mounted() {
     window.addEventListener('click', this.closeDropdownOnOutsideClick);
+    this.$store.dispatch('myActiveSubscription');
+
     // Initialize with default data
     this.fetchAllData();
   },
@@ -357,13 +404,13 @@ export default {
 <template>
   <div class="flex flex-col gap-4 pb-6">
     <ReportHeader :header-title="$t('CSAT_REPORTS.HEADER')">
-      <div class="relative inline-block text-left z-40" ref="dropdownContainer">
+      <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="relative inline-block text-left z-40" ref="dropdownContainer">
         <button
           @click="toggleDropdown"
           class="inline-flex justify-center w-full rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 text-white hover:opacity-90 transition-opacity"
           style="background-color: #389947"
         >
-          {{ $t('CSAT_REPORTS.DOWNLOAD') }}
+          {{ $t('OVERVIEW_REPORTS.DOWNLOAD') }}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             class="-mr-1 ml-2 h-5 w-5"
@@ -379,32 +426,25 @@ export default {
         </button>
         <div
           v-if="dropdownOpen"
-          class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black dark:ring-gray-600 ring-opacity-5 focus:outline-none z-50"
+          class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-n-solid-2 dark:bg-gray-800 ring-1 ring-black dark:ring-gray-600 ring-opacity-5 focus:outline-none"
         >
           <div class="py-1">
             <a
+              v-for="option in availableExportOptions"
+              :key="option.key"
               href="#"
               class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-green-100 dark:hover:bg-gray-700"
-              @click="exportData('csv')"
+              @click="exportData(option.key)"
             >
-                {{ $t('OVERVIEW_REPORTS.EXPORT_TO_CSV') }}
+              {{ $t(option.label) }}
             </a>
-            <a
-              href="#"
-              class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-green-100 dark:hover:bg-gray-700"
-              @click="exportData('pdf')"
-            >
-                {{ $t('OVERVIEW_REPORTS.EXPORT_TO_PDF') }}
-            </a>
-            <a
-              href="#"
-              class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-green-100 dark:hover:bg-gray-700"
-              @click="exportData('excel')"
-            >
-                {{ $t('OVERVIEW_REPORTS.EXPORT_TO_EXCEL') }}
-            </a>
+            
           </div>
         </div>
+      </div>
+      <div v-else-if="userTier && userTier !== 'pertamax_turbo' && userTier !== 'pertamax'" 
+           class="text-sm text-gray-500 dark:text-gray-400">
+        {{ $t('OVERVIEW_REPORTS.UPGRADE_FOR_EXPORT') }}
       </div>
     </ReportHeader>
 
@@ -416,10 +456,10 @@ export default {
         @filter-change="onFilterChange"
       />
 
-      <CsatMetrics :filters="requestPayload" />
+      <CsatMetrics v-if="userTier === 'pertalite' || userTier === 'pertamax' || userTier === 'pertamax_turbo'" :filters="requestPayload" />
 
       <!-- CSAT Trends Line Chart -->
-      <div class="flex flex-row flex-wrap max-w-full">
+      <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="flex flex-row flex-wrap max-w-full">
         <MetricCardFull class="w-full max-w-full">
           <template #header>
             <div class="flex items-center gap-2 flex-row">
@@ -439,9 +479,8 @@ export default {
           <div class="p-4">
             <div class="h-80">
               <LineChart2
-                v-if="csatTrendData.data1.data?.length"
-                :data1="csatTrendData.data1"
-                :data2="csatTrendData.data2"
+                v-if="csatTrendData.length > 0"
+                :datasets="csatTrendData"
               />
               <div v-else class="flex items-center justify-center h-full">
                 <span class="text-sm text-gray-600 dark:text-gray-400">
@@ -453,7 +492,7 @@ export default {
         </MetricCardFull>
       </div>
 
-      <CsatTable :page-index="pageIndex" @page-change="onPageNumberChange" />
+      <CsatTable v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo'" :page-index="pageIndex" @page-change="onPageNumberChange" />
     </div>
   </div>
 </template>

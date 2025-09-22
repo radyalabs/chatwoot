@@ -1,4 +1,5 @@
 <script>
+import { mapState } from 'vuex';
 import { useAlert, useTrack } from 'dashboard/composables';
 import ReportHeader from './components/ReportHeader.vue';
 import BarChart from '../../../../../shared/components/charts/BarChart.vue';
@@ -80,6 +81,46 @@ export default {
     };
   },
   computed: {
+    ...mapState({
+      activeSubscription: state => state.billing?.billing?.myActiveSubscription || state.billing?.billing?.latestSubscription,
+    }),
+    // User tier based on subscription plan
+    userTier() {
+      const planName = 'pertamax'
+      // const planName = this.activeSubscription?.plan_name?.toLowerCase();
+      if (!planName) return null;
+      if (planName.includes('pertamax turbo') || planName.includes('unlimited')) {
+        console.log('userTier computed property accessed, planName:', planName);
+        return 'pertamax_turbo';
+      } else if (planName.includes('pertamax') || planName.includes('enterprise')) {
+        console.log('userTier computed property accessed, planName:', planName);
+        return 'pertamax';
+      } else if (planName.includes('pertalite') || planName.includes('business')) {
+        console.log('userTier computed property accessed, planName:', planName);
+        return 'pertalite';
+      } else if (planName.includes('premium') || planName.includes('business')) {
+        console.log('userTier computed property accessed, planName:', planName);
+        return 'premium';
+      }
+      console.log('userTier computed property accessed, planName:', planName);
+      return 'free';
+    },
+    // Get available export options based on tier
+    availableExportOptions() {
+      if (this.userTier === 'pertamax_turbo') {
+        return [
+          { key: 'csv', label: 'OVERVIEW_REPORTS.EXPORT_TO_CSV' },
+          { key: 'pdf', label: 'OVERVIEW_REPORTS.EXPORT_TO_PDF' },
+          { key: 'excel', label: 'OVERVIEW_REPORTS.EXPORT_TO_EXCEL' }
+        ];
+      } else if (this.userTier === 'pertamax') {
+        return [
+          { key: 'csv', label: 'OVERVIEW_REPORTS.EXPORT_TO_CSV' }
+        ];
+      }
+      return [];
+    },
+
     isDateRangeSelected() {
       return (
         this.selectedDateRange.id === DATE_RANGE_OPTIONS.CUSTOM_DATE_RANGE.id
@@ -365,7 +406,18 @@ export default {
       this.dropdownOpen = false;
     },
     exportData(format) {
-      console.log(`Exporting label data to ${format}`);
+      const hasPermission = this.availableExportOptions.some(option => option.key === format);
+      if (!hasPermission) {
+        this.$bus.$emit('newToastMessage', {
+          message: this.$t('OVERVIEW_REPORTS.EXPORT_NOT_ALLOWED'),
+          type: 'error'
+        });
+        this.closeDropdown();
+        return;
+      }
+      
+      console.log(`Exporting data to ${format}`);
+      // TODO: Implement actual export functionality
       this.closeDropdown();
     },
     toggleWordCloud() {
@@ -380,6 +432,7 @@ export default {
     },
   },
   mounted() {
+    this.$store.dispatch('myActiveSubscription');
     this.calculateDateRange();
     this.fetchAllData();
     console.log('Word cloud data:', this.wordCloudData);
@@ -402,7 +455,7 @@ export default {
         </div>
         
         <!-- Export dropdown on the right -->
-        <div class="relative inline-block text-left" ref="dropdownContainer">
+        <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="relative inline-block text-left" ref="dropdownContainer">
           <button
             @click="toggleDropdown"
             class="inline-flex justify-center w-full rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 text-white hover:opacity-90 transition-opacity"
@@ -424,29 +477,24 @@ export default {
           </button>
           <div
             v-if="dropdownOpen"
-            class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black dark:ring-gray-600 ring-opacity-5 focus:outline-none"
+            class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-n-solid-2 dark:bg-gray-800 ring-1 ring-black dark:ring-gray-600 ring-opacity-5 focus:outline-none"
           >
             <div class="py-1">
-              <button
-                @click="exportData('csv')"
-                class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              <a
+                v-for="option in availableExportOptions"
+                :key="option.key"
+                href="#"
+                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-green-100 dark:hover:bg-gray-700"
+                @click="exportData(option.key)"
               >
-                {{ $t('OVERVIEW_REPORTS.EXPORT_TO_CSV') }}
-              </button>
-              <button
-                @click="exportData('pdf')"
-                class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                {{ $t('OVERVIEW_REPORTS.EXPORT_TO_PDF') }}
-              </button>
-              <button
-                @click="exportData('excel')"
-                class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                {{ $t('OVERVIEW_REPORTS.EXPORT_TO_EXCEL') }}
-              </button>
+                {{ $t(option.label) }}
+              </a>
             </div>
           </div>
+        </div>
+        <div v-else-if="userTier && userTier !== 'pertamax_turbo' && userTier !== 'pertamax'" 
+            class="text-sm text-gray-500 dark:text-gray-400">
+          {{ $t('OVERVIEW_REPORTS.UPGRADE_FOR_EXPORT') }}
         </div>
       </div>
     </ReportHeader>
@@ -549,7 +597,7 @@ export default {
 
                   <div class="flex flex-row space-x-4">
                     <div class="flex-1 min-w-0 pb-2">
-                      <h3 class="text-base text-green-600 dark:text-green-400">
+                      <h3 class="text-base text-gray-600 dark:text-gray-400">
                       {{ $t('LABEL_REPORTS.SENTIMENT.POSITIVE') }}
                     </h3>
                     <p class="text-n-slate-12 text-3xl mb-0 mt-1">
@@ -567,7 +615,7 @@ export default {
                     </div>
 
                     <div class="flex-1 min-w-0 pb-2">
-                      <h3 class="text-base text-red-600 dark:text-red-400">
+                      <h3 class="text-base text-gray-600 dark:text-gray-400">
                         {{ $t('LABEL_REPORTS.SENTIMENT.NEGATIVE') }}
                       </h3>
                       <p class="text-n-slate-12 text-3xl mb-0 mt-1">

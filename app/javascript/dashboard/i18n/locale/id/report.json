@@ -487,11 +487,11 @@
       },
       "TOTAL_RESPONSES": {
         "LABEL": "Total Respon",
-        "TOOLTIP": "Total percakapan yang dijawab oleh bot"
+        "TOOLTIP": "Percakapan diselesaikan"
       },
       "RESOLUTION_RATE": {
         "LABEL": "Tingkat Penyelesaian Oleh Bot",
-        "TOOLTIP": "Total percakapan yang diselesaikan oleh bot / Total percakapan yang ditangani oleh bot * 100"
+        "TOOLTIP": "Percakapan diselesaikan oleh bot / Total percakapan yang ditangani oleh bot * 100"
       },
       "HANDOFF_RATE": {
         "LABEL": "Tingkat Handover",
@@ -518,7 +518,17 @@
     "KPI": {
       "HEADER": "Indikator Kinerja Utama",
       "TOTAL_AI_CONVERSATIONS":"Total percakapan yang ditangani oleh agen AI",
-      "RESOLVED_BY_AI":"Total percakapan yang dijawab oleh agen AI"
+      "RESOLVED_BY_AI":"Percakapan diselesaikan AI"
+    },
+    "BOT_SUMMARY": {
+      "HEADER": "Ringkasan Bot",
+      "LOADING_MESSAGE": "Memuat metrik bot...",
+      "NO_BOTS": "Tidak ada bot yang tersedia",
+      "TABLE_HEADER": {
+        "BOT": "Bot",
+        "HANDOVERS": "Handover",
+        "CHAT_RESPONDED": "Percakapan diselesaikan"
+      }
     },
     "METRIC": {
       "TOTAL_CONVERSATIONS": {
@@ -527,11 +537,11 @@
       },
       "TOTAL_RESPONSES": {
         "LABEL": "Total Respon",
-        "TOOLTIP": "Total percakapan yang dijawab oleh bot"
+        "TOOLTIP": "Percakapan diselesaikan"
       },
       "RESOLUTION_RATE": {
         "LABEL": "Tingkat Penyelesaian Oleh Bot",
-        "TOOLTIP": "Total percakapan yang diselesaikan oleh bot / Total percakapan yang ditangani oleh bot * 100"
+        "TOOLTIP": "Percakapan diselesaikan oleh bot / Total percakapan yang ditangani oleh bot * 100"
       },
       "HANDOFF_RATE": {
         "LABEL": "Tingkat Handover",
@@ -546,6 +556,8 @@
     "EXPORT_TO_CSV": "Ekspor CSV",
     "EXPORT_TO_PDF": "Ekspor PDF",
     "EXPORT_TO_EXCEL": "Ekspor Excel",
+    "EXPORT_NOT_ALLOWED": "Anda tidak memiliki izin untuk mengekspor dalam format ini. Silakan upgrade paket Anda.",
+    "UPGRADE_FOR_EXPORT": "Upgrade ke Pertamax atau lebih tinggi untuk mengakses fitur ekspor",
     "ACCOUNT_CONVERSATIONS": {
       "HEADER": "Percakapan Terbuka",
       "LOADING_MESSAGE": "Memuat metrik percakapan...",
@@ -575,14 +587,14 @@
     "CHAT_SUMMARY": {
       "HEADER": "Ringkasan Percakapan",
       "CHAT_IN": "Total percakapan masuk",
-      "CHAT_ANSWERED_BY_AI": "Total percakapan yang dijawab oleh agen AI",
-      "CHAT_HANDOVERED": "Total percakapan dialihkan ke agen"
+      "CHAT_ANSWERED_BY_AI": "Percakapan diselesaikan AI",
+      "CHAT_HANDOVERED": "Percakapan dialihkan ke agen"
     },
     "CONVERSATION_TRENDS_LINE_CHART": {
       "HEADER": "Tren Percakapan",
       "TOTAL_CHATS": "Total percakapan masuk",
-      "BOT_CHATS": "Total percakapan yang dijawab oleh agen AI",
-      "AGENT_CHATS": "Total percakapan dialihkan ke agen"
+      "BOT_CHATS": "Percakapan diselesaikan AI",
+      "AGENT_CHATS": "Percakapan dialihkan ke agen"
     },
     "AGENT_STATUS": {
       "HEADER": "Status Agen",

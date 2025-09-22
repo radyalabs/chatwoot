@@ -214,9 +214,17 @@
     "LOADING_CHART": "Memuat data grafik...",
     "NO_ENOUGH_DATA": "Kami belum menerima cukup data untuk membuat laporan, Silakan coba lagi nanti.",
     "DOWNLOAD_LABEL_REPORTS": "Unduh laporan label",
+    "TOPICS": {
+      "HEADER": "Analisis Tren Topik",
+      "NO_LABELS": "Tidak ada data tersedia"
+    },
+    "SENTIMENT_TREND": {
+      "HEADER": "Analisis Tren Sentimen",
+      "NO_LABELS": "Tidak ada data tersedia"
+    },
     "FILTER_DROPDOWN_LABEL": "Pilih label",
-        "AGENT_PERFORMANCE_TABLE": {
-      "HEADER": "Conversations by agents",
+    "AGENT_PERFORMANCE_TABLE": {
+      "HEADER": "Percakapan oleh agen",
       "LOADING_MESSAGE": "Memuat metrik agen...",
       "NO_AGENTS": "Tidak ada percakapan oleh agen",
       "TABLE_HEADER": {
@@ -501,7 +509,7 @@
   },
 
   "AI_AGENT_REPORTS": {
-    "HEADER": "Laporan AI Agen",
+    "HEADER": "Laporan Bot AI",
     "TOPICS_ANALYSIS":{
       "HEADER_CLOUD": "Topik Paling Populer (Word Cloud)",
       "HEADER_CHART": "Top 8 Topik Paling Populer (Bar Chart)",
@@ -509,7 +517,7 @@
       "SHOW_WORD_CLOUD": "Tampilkan Word Cloud"
     },
     "CHARTS": {
-      "HEADER": "Laporan AI Agen",
+      "HEADER": "Laporan Bot AI",
       "RESOLUTION_PROPORTION": "Proporsi Penyelesaian",
       "DAILY_RESOLUTION_TREND": "Tren Penyelesaian Harian",
       "RESOLVED_BY_AI": "Direspon oleh AI",

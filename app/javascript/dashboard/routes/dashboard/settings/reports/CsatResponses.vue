@@ -442,10 +442,10 @@ export default {
           </div>
         </div>
       </div>
-      <div v-else-if="userTier && userTier !== 'pertamax_turbo' && userTier !== 'pertamax'" 
+      <!-- <div v-else-if="userTier && userTier !== 'pertamax_turbo' && userTier !== 'pertamax'" 
            class="text-sm text-gray-500 dark:text-gray-400">
         {{ $t('OVERVIEW_REPORTS.UPGRADE_FOR_EXPORT') }}
-      </div>
+      </div> -->
     </ReportHeader>
 
     <div class="flex flex-col gap-4">

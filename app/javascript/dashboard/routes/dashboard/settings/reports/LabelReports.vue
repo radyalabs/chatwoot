@@ -4,6 +4,7 @@ import { useAlert, useTrack } from 'dashboard/composables';
 import ReportHeader from './components/ReportHeader.vue';
 import BarChart from '../../../../../shared/components/charts/BarChart.vue';
 import DonutChart from '../../../../../shared/components/charts/DonutChart.vue';
+import LineChart2 from '../../../../../shared/components/charts/LineChart2.vue';
 import MetricCard from './components/overview/MetricCard.vue';
 import MetricCardFull from './components/overview/MetricCardFull.vue';
 import ReportsFiltersLabels from './components/Filters/Labels.vue';
@@ -22,6 +23,7 @@ export default {
     ReportHeader,
     BarChart,
     DonutChart,
+    LineChart2,
     MetricCard,
     MetricCardFull,
     ReportsFiltersLabels,
@@ -56,6 +58,8 @@ export default {
         informasi: 0,
         lainnya: 0,
       },
+      sentimentTrendData: [],
+      topicsTrendData: [],
       reportKeys: {
         LABEL_USAGE: 'label_usage_count',
         POPULAR_TOPICS: 'popular_topics',
@@ -220,6 +224,12 @@ export default {
       ];
       return { data, labels };
     },
+    sentimentTrendChartData() {
+      return this.sentimentTrendData;
+    },
+    topicsTrendChartData() {
+      return this.topicsTrendData;
+    },
   },
   watch: {
     requestPayload(value) {
@@ -232,6 +242,8 @@ export default {
       this.fetchChartData();
       this.fetchSentimentAnalysis(this.requestPayload);
       this.fetchQuestionSegmentation(this.requestPayload);
+      this.fetchSentimentTrend(this.requestPayload);
+      this.fetchTopicsTrend(this.requestPayload);
     },
     fetchMetrics(filters) {
       if (!filters.to || !filters.from) {
@@ -330,6 +342,122 @@ export default {
       // });
       
       console.log('Fetching question segmentation for labels:', this.selectedLabels);
+    },
+    fetchSentimentTrend(filters) {
+      // TODO: Implement real API call for sentiment trend over time
+      // 
+      // const labelIds = filters.selectedLabels.map(label => label.id);
+      // ReportsAPI.getSentimentTrend({
+      //   ...filters,
+      //   labelIds: labelIds
+      // }).then(response => {
+      //   this.sentimentTrendData = [
+      //     {
+      //       label: 'LABEL_REPORTS.SENTIMENT.POSITIVE',
+      //       data: response.data.positive_trend
+      //     },
+      //     {
+      //       label: 'LABEL_REPORTS.SENTIMENT.NEUTRAL', 
+      //       data: response.data.neutral_trend
+      //     },
+      //     {
+      //       label: 'LABEL_REPORTS.SENTIMENT.NEGATIVE',
+      //       data: response.data.negative_trend
+      //     }
+      //   ];
+      // }).catch(error => {
+      //   console.error('Failed to fetch sentiment trend:', error);
+      //   useAlert(this.$t('REPORT.DATA_FETCHING_FAILED'));
+      // });
+      
+      // Generate dummy trend data
+      const days = Math.ceil((filters.to - filters.from) / (24 * 60 * 60));
+      const trendData = [];
+      
+      for (let i = 0; i < days; i++) {
+        const timestamp = filters.from + (i * 24 * 60 * 60);
+        trendData.push({
+          timestamp: timestamp,
+          positive: Math.floor(Math.random() * 20) + 5,
+          neutral: Math.floor(Math.random() * 15) + 3,
+          negative: Math.floor(Math.random() * 10) + 1,
+        });
+      }
+      
+      this.sentimentTrendData = [
+        {
+          label: 'LABEL_REPORTS.SENTIMENT.POSITIVE',
+          data: trendData.map(d => ({ timestamp: d.timestamp, value: d.positive }))
+        },
+        {
+          label: 'LABEL_REPORTS.SENTIMENT.NEUTRAL',
+          data: trendData.map(d => ({ timestamp: d.timestamp, value: d.neutral }))
+        },
+        {
+          label: 'LABEL_REPORTS.SENTIMENT.NEGATIVE',
+          data: trendData.map(d => ({ timestamp: d.timestamp, value: d.negative }))
+        }
+      ];
+      
+      console.log('Fetching sentiment trend for labels:', this.selectedLabels);
+    },
+    fetchTopicsTrend(filters) {
+      // TODO: Implement real API call for topics trend over time
+      // 
+      // const labelIds = filters.selectedLabels.map(label => label.id);
+      // ReportsAPI.getTopicsTrend({
+      //   ...filters,
+      //   labelIds: labelIds
+      // }).then(response => {
+      //   this.topicsTrendData = [
+      //     {
+      //       label: 'LABEL_REPORTS.TOPICS.BILLING',
+      //       data: response.data.billing_trend
+      //     },
+      //     {
+      //       label: 'LABEL_REPORTS.TOPICS.SUPPORT',
+      //       data: response.data.support_trend
+      //     },
+      //     {
+      //       label: 'LABEL_REPORTS.TOPICS.TECHNICAL',
+      //       data: response.data.technical_trend
+      //     }
+      //   ];
+      // }).catch(error => {
+      //   console.error('Failed to fetch topics trend:', error);
+      //   useAlert(this.$t('REPORT.DATA_FETCHING_FAILED'));
+      // });
+      
+      // Generate dummy trend data for top 3 topics
+      const days = Math.ceil((filters.to - filters.from) / (24 * 60 * 60));
+      const trendData = [];
+      
+      for (let i = 0; i < days; i++) {
+        const timestamp = filters.from + (i * 24 * 60 * 60);
+        trendData.push({
+          timestamp: timestamp,
+          billing: Math.floor(Math.random() * 15) + 2,
+          support: Math.floor(Math.random() * 12) + 1,
+          technical: Math.floor(Math.random() * 10) + 1,
+        });
+      }
+      
+      this.topicsTrendData = [
+        {
+          label: 'Billing Issues',
+          data: trendData.map(d => ({ timestamp: d.timestamp, value: d.billing }))
+        },
+        {
+          label: 'Product Support',
+          data: trendData.map(d => ({ timestamp: d.timestamp, value: d.support }))
+        },
+        {
+          label: 'Technical Issues',
+          data: trendData.map(d => ({ timestamp: d.timestamp, value: d.technical }))
+        }
+      ];
+      
+      console.log('Fetching topics trend for labels:', this.selectedLabels);
     },
     fetchChartData() {
       // TODO: Implement real API calls for label-specific chart data
@@ -492,15 +620,15 @@ export default {
             </div>
           </div>
         </div>
-        <div v-else-if="userTier && userTier !== 'pertamax_turbo' && userTier !== 'pertamax'" 
+        <!-- <div v-else-if="userTier && userTier !== 'pertamax_turbo' && userTier !== 'pertamax'" 
             class="text-sm text-gray-500 dark:text-gray-400">
           {{ $t('OVERVIEW_REPORTS.UPGRADE_FOR_EXPORT') }}
-        </div>
+        </div> -->
       </div>
     </ReportHeader>
     
     <!-- Topics Analysis Section -->
-    <div class="flex flex-row flex-wrap max-w-full">
+    <div v-if="userTier === 'pertalite' || userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="flex flex-row flex-wrap max-w-full">
       <MetricCardFull>
         <div class="p-4 pt-0">
           <div class="rounded-lg p-6">
@@ -510,7 +638,7 @@ export default {
               </h6>
               
               <!-- Toggle button for word cloud -->
-              <button
+              <button v-if="userTier === 'pertamax_turbo'"
                 @click="toggleWordCloud"
                 class="inline-flex items-center px-3 py-2 border border-green-700 dark:border-gray-600 shadow-sm text-sm leading-4 font-medium rounded-md text-green-700 dark:text-green-200 dark:bg-green-800 hover:bg-green-50 dark:hover:bg-green-700 transition-colors"
               >
@@ -564,7 +692,7 @@ export default {
     </div>
     
     <!-- Sentiment Analysis Section -->
-    <div class="flex flex-row flex-wrap max-w-full">
+    <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="flex flex-row flex-wrap max-w-full">
       <MetricCardFull>
         <div class="p-4 pt-0">
           <div class="rounded-lg p-6">
@@ -631,8 +759,32 @@ export default {
       </MetricCardFull>
     </div>
     
+    <!-- Sentiment Trend Analysis Section -->
+    <div v-if="userTier === 'pertamax_turbo'" class="flex flex-row flex-wrap max-w-full">
+      <MetricCardFull>
+        <div class="p-4 pt-0">
+          <div class="rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              {{ $t('LABEL_REPORTS.SENTIMENT_TREND.HEADER') }}
+            </h3>
+            <div class="h-80">
+              <LineChart2
+                v-if="sentimentTrendData.length > 0 && sentimentTrendData[0].data.length > 0"
+                :datasets="sentimentTrendData"
+              />
+              <div v-else class="flex items-center justify-center h-full">
+                <span class="text-sm text-gray-600 dark:text-gray-400">
+                  {{ $t('REPORT.NO_ENOUGH_DATA') }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </MetricCardFull>
+    </div>
+    
     <!-- Question Segmentation Section -->
-    <div class="flex flex-row flex-wrap max-w-full">
+    <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="flex flex-row flex-wrap max-w-full">
       <MetricCardFull>
         <div class="p-4 pt-0">
           <div class="rounded-lg p-6">
@@ -648,6 +800,30 @@ export default {
               <div v-else class="flex items-center justify-center h-full">
                 <span class="text-sm text-gray-600 dark:text-gray-400">
                   {{ $t('REPORT.NO_ENOUGH_DATA') }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </MetricCardFull>
+    </div>
+    
+    <!-- Topics Trend Analysis Section -->
+    <div v-if="userTier === 'pertamax_turbo'" class="flex flex-row flex-wrap max-w-full">
+      <MetricCardFull>
+        <div class="p-4 pt-0">
+          <div class="rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              {{ $t('LABEL_REPORTS.TOPICS_TREND.HEADER') }}
+            </h3>
+            <div class="h-80">
+              <LineChart2
+                v-if="topicsTrendData.length > 0 && topicsTrendData[0].data.length > 0"
+                :datasets="topicsTrendData"
+              />
+              <div v-else class="flex items-center justify-center h-full">
+                <span class="text-sm text-gray-600 dark:text-gray-400">
+                  {{ $t('LABEL_REPORTS.NO_ENOUGH_DATA') }}
                 </span>
               </div>
             </div>

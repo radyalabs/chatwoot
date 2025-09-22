@@ -478,10 +478,10 @@ export default {
             </div>
           </div>
         </div>
-        <div v-else-if="userTier && userTier !== 'pertamax_turbo' && userTier !== 'pertamax'" 
+        <!-- <div v-else-if="userTier && userTier !== 'pertamax_turbo' && userTier !== 'pertamax'" 
              class="text-sm text-gray-500 dark:text-gray-400">
           {{ $t('OVERVIEW_REPORTS.UPGRADE_FOR_EXPORT') }}
-        </div>
+        </div> -->
       </div>
     </ReportHeader>
 
@@ -527,7 +527,7 @@ export default {
           </div>
 
           <!-- Donut Chart Section -->
-          <div class="flex-1 max-w-sm">
+          <div v-if="userTier === 'pertalite' || userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="flex-1 max-w-sm">
             <div class=" rounded-lg p-6 h-full">
               <div class="h-48 flex items-center justify-center">
                 <DonutChart
@@ -545,7 +545,7 @@ export default {
         </div>
 
         <!-- Bar Chart Section -->
-        <div class="p-4 pt-0">
+        <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="p-4 pt-0">
           <div class=" rounded-lg p-6">
             <div class="flex justify-between items-center mb-4">
               <h6 class="text-lg font-semibold text-gray-900 dark:text-white">
@@ -569,7 +569,7 @@ export default {
     </div>
     
     <!-- Topics Analysis Section -->
-    <div class="flex flex-row flex-wrap max-w-full">
+    <div v-if="userTier === 'pertalite' || userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="flex flex-row flex-wrap max-w-full">
       <MetricCardFull>
           <div class="p-4 pt-0">
             <div class=" rounded-lg p-6">
@@ -577,7 +577,7 @@ export default {
                 <h6 class="text-lg font-semibold text-gray-900 dark:text-white">
                   {{ showWordCloud ? $t('AI_AGENT_REPORTS.TOPICS_ANALYSIS.HEADER_CLOUD') : $t('AI_AGENT_REPORTS.TOPICS_ANALYSIS.HEADER_CHART') }}
                 </h6>
-                <button
+                <button v-if="userTier === 'pertamax_turbo'"
                   @click="toggleWordCloud"
                   class="inline-flex items-center px-3 py-2 border border-green-700 dark:border-gray-600 shadow-sm text-sm leading-4 font-medium rounded-md text-green-700 dark:text-green-200 dark:bg-green-800 hover:bg-green-50 dark:hover:bg-green-700 transition-colors"
                 >
@@ -631,7 +631,7 @@ export default {
     </div>
 
     <!-- Bot Summary Table -->
-    <div class="flex flex-row flex-wrap max-w-full">
+    <div v-if="userTier === 'pertamax_turbo'" class="flex flex-row flex-wrap max-w-full">
       <MetricCard :header="$t('AI_AGENT_REPORTS.BOT_SUMMARY.HEADER')">
         <BotTable
           :bots="botData"

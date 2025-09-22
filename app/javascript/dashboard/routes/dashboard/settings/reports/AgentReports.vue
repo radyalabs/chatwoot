@@ -56,7 +56,7 @@ export default {
     }),
     // User tier based on subscription plan
     userTier() {
-      const planName = 'pertalite'
+      const planName = 'pertamax_turbo'
       // const planName = this.activeSubscription?.plan_name?.toLowerCase();
       if (!planName) return null;
       if (planName.includes('pertamax turbo') || planName.includes('unlimited')) {
@@ -491,10 +491,10 @@ export default {
             </div>
           </div>
         </div>
-        <div v-else-if="userTier && userTier !== 'pertamax_turbo' && userTier !== 'pertamax'" 
+        <!-- <div v-else-if="userTier && userTier !== 'pertamax_turbo' && userTier !== 'pertamax'" 
             class="text-sm text-gray-500 dark:text-gray-400">
           {{ $t('OVERVIEW_REPORTS.UPGRADE_FOR_EXPORT') }}
-        </div>
+        </div> -->
       </div>
     </ReportHeader>
 
@@ -574,7 +574,7 @@ export default {
     </div>
 
     <!-- Average Resolution Time Line Chart -->
-    <div class="flex flex-row flex-wrap max-w-full">
+    <div v-if="userTier === 'pertalite' || userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="flex flex-row flex-wrap max-w-full">
       <MetricCardFull class="w-full max-w-full">
         <div class="p-4">
           <div class="rounded-lg p-6">
@@ -600,7 +600,7 @@ export default {
     </div>
 
     <!-- Agent Performance Table -->
-    <div class="flex flex-row flex-wrap max-w-full">
+    <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="flex flex-row flex-wrap max-w-full">
       <MetricCard :header="$t('AGENT_REPORTS.AGENT_PERFORMANCE_TABLE.HEADER')">
         <AgentTable
           :agents="agentTableData"

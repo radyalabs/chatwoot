@@ -63,29 +63,9 @@ export default {
     };
   },
   computed: {
-    ...mapState({
-      activeSubscription: state => state.billing?.billing?.myActiveSubscription || state.billing?.billing?.latestSubscription,
-    }),
-    // User tier based on subscription plan
+    // Get user tier from route meta (passed from routes.js)
     userTier() {
-      const planName = 'pertalite'
-      // const planName = this.activeSubscription?.plan_name?.toLowerCase();
-      if (!planName) return null;
-      if (planName.includes('pertamax turbo') || planName.includes('unlimited')) {
-        console.log('userTier computed property accessed, planName:', planName);
-        return 'pertamax_turbo';
-      } else if (planName.includes('pertamax') || planName.includes('enterprise')) {
-        console.log('userTier computed property accessed, planName:', planName);
-        return 'pertamax';
-      } else if (planName.includes('pertalite') || planName.includes('business')) {
-        console.log('userTier computed property accessed, planName:', planName);
-        return 'pertalite';
-      } else if (planName.includes('premium') || planName.includes('business')) {
-        console.log('userTier computed property accessed, planName:', planName);
-        return 'premium';
-      }
-      console.log('userTier computed property accessed, planName:', planName);
-      return 'free';
+      return this.$route.meta?.userTier || 'free';
     },
     // Get available export options based on tier
     availableExportOptions() {
@@ -415,8 +395,6 @@ export default {
     },
   },
   mounted() {
-    this.$store.dispatch('myActiveSubscription');
-
     window.addEventListener('click', this.closeDropdownOnOutsideClick);
   },
   beforeUnmount() {
@@ -486,7 +464,7 @@ export default {
     </ReportHeader>
 
     <!-- Laporan Bot AI Charts Section -->
-    <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="flex flex-row flex-wrap max-w-full">
+    <div class="flex flex-row flex-wrap max-w-full">
       <MetricCardFull class="w-full max-w-full">
         <!-- KPIs and Donut Chart Row -->
         <div class="flex flex-col lg:flex-row gap-6 p-4">

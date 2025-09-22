@@ -57,29 +57,9 @@ export default {
       uiFlags: 'getOverviewUIFlags',
       creditUsageMetric: 'getCreditUsageMetric',
     }),
-    ...mapState({
-      activeSubscription: state => state.billing?.billing?.myActiveSubscription || state.billing?.billing?.latestSubscription,
-    }),
     // User tier based on subscription plan
     userTier() {
-      const planName = 'pertalite'
-      // const planName = this.activeSubscription?.plan_name?.toLowerCase();
-      if (!planName) return null;
-      if (planName.includes('pertamax turbo') || planName.includes('unlimited')) {
-        console.log('userTier computed property accessed, planName:', planName);
-        return 'pertamax_turbo';
-      } else if (planName.includes('pertamax') || planName.includes('enterprise')) {
-        console.log('userTier computed property accessed, planName:', planName);
-        return 'pertamax';
-      } else if (planName.includes('pertalite') || planName.includes('business')) {
-        console.log('userTier computed property accessed, planName:', planName);
-        return 'pertalite';
-      } else if (planName.includes('premium') || planName.includes('business')) {
-        console.log('userTier computed property accessed, planName:', planName);
-        return 'premium';
-      }
-      console.log('userTier computed property accessed, planName:', planName);
-      return 'free';
+      return this.$route.meta?.userTier || 'free';
     },
     // Get available export options based on tier
     availableExportOptions() {
@@ -184,7 +164,6 @@ export default {
   mounted() {
     this.$store.dispatch('agents/get');
     // Fetch active subscription for tier checking
-    this.$store.dispatch('myActiveSubscription');
     this.initalizeReport();
     window.addEventListener('click', this.closeDropdownOnOutsideClick);
   },
@@ -355,6 +334,7 @@ export default {
           </div>
         </div>
       </div>
+      <!-- Show upgrade message for users with insufficient tier -->
       <!-- <div v-else-if="userTier && userTier !== 'pertamax_turbo' && userTier !== 'pertamax'" 
            class="text-sm text-gray-500 dark:text-gray-400">
         {{ $t('OVERVIEW_REPORTS.UPGRADE_FOR_EXPORT') }}

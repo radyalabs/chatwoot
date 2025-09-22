@@ -85,29 +85,9 @@ export default {
     };
   },
   computed: {
-    ...mapState({
-      activeSubscription: state => state.billing?.billing?.myActiveSubscription || state.billing?.billing?.latestSubscription,
-    }),
-    // User tier based on subscription plan
+    // Get user tier from route meta (passed from routes.js)
     userTier() {
-      const planName = 'pertamax'
-      // const planName = this.activeSubscription?.plan_name?.toLowerCase();
-      if (!planName) return null;
-      if (planName.includes('pertamax turbo') || planName.includes('unlimited')) {
-        console.log('userTier computed property accessed, planName:', planName);
-        return 'pertamax_turbo';
-      } else if (planName.includes('pertamax') || planName.includes('enterprise')) {
-        console.log('userTier computed property accessed, planName:', planName);
-        return 'pertamax';
-      } else if (planName.includes('pertalite') || planName.includes('business')) {
-        console.log('userTier computed property accessed, planName:', planName);
-        return 'pertalite';
-      } else if (planName.includes('premium') || planName.includes('business')) {
-        console.log('userTier computed property accessed, planName:', planName);
-        return 'premium';
-      }
-      console.log('userTier computed property accessed, planName:', planName);
-      return 'free';
+      return this.$route.meta?.userTier || 'free';
     },
     // Get available export options based on tier
     availableExportOptions() {
@@ -560,7 +540,6 @@ export default {
     },
   },
   mounted() {
-    this.$store.dispatch('myActiveSubscription');
     this.calculateDateRange();
     this.fetchAllData();
     console.log('Word cloud data:', this.wordCloudData);

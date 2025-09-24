@@ -58,10 +58,10 @@ export default {
     };
   },
   computed: {
-    ...mapGetters({
-      accountId: 'getCurrentAccountId',
-      isFeatureEnabledOnAccount: 'accounts/isFeatureEnabledonAccount',
-    }),
+    // ...mapGetters({
+    //   accountId: 'getCurrentAccountId',
+    //   isFeatureEnabledOnAccount: 'accounts/isFeatureEnabledonAccount',
+    // }),
     // Get user tier from route meta (passed from routes.js)
     userTier() {
       return this.$route.meta?.userTier || 'free';
@@ -92,12 +92,12 @@ export default {
         rating: this.rating,
       };
     },
-    isTeamsEnabled() {
-      return this.isFeatureEnabledOnAccount(
-        this.accountId,
-        FEATURE_FLAGS.TEAM_MANAGEMENT
-      );
-    },
+    // isTeamsEnabled() {
+    //   return this.isFeatureEnabledOnAccount(
+    //     this.accountId,
+    //     FEATURE_FLAGS.TEAM_MANAGEMENT
+    //   );
+    // },
     csatTrendData() {
       console.log('Generate CSAT data')
       // Generate dynamic line chart data for CSAT trends over time
@@ -371,7 +371,7 @@ export default {
   mounted() {
     window.addEventListener('click', this.closeDropdownOnOutsideClick);
     // Initialize with default data
-    this.fetchAllData();
+    // this.fetchAllData();
   },
   beforeUnmount() {
     window.removeEventListener('click', this.closeDropdownOnOutsideClick);
@@ -444,14 +444,14 @@ export default {
               <h5 class="mb-0 text-n-slate-12 font-medium text-lg">
                 {{ $t('CSAT_REPORTS.TRENDS.HEADER') }}
               </h5>
-              <span
+              <!-- <span
                 v-if="selectedAgents.length > 0"
                 class="flex flex-row items-center py-0.5 px-2 rounded bg-blue-100 dark:bg-blue-900/50 text-xs"
               >
                 <span class="text-xs text-blue-700 dark:text-blue-400">
                   {{ selectedAgents.length }} {{ $t('CSAT_REPORTS.AGENTS_SELECTED') }}
                 </span>
-              </span>
+              </span> -->
             </div>
           </template>
           <div class="p-4">

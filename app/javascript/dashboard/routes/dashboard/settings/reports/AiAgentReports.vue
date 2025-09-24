@@ -57,6 +57,7 @@ export default {
       dropdownOpen: false,
       showWordCloud: false,
       botPageIndex: 0,
+      selectedBot: null,
       wordCloudData: [
       ['Billing Issues', 45], ['Account Access', 38], ['Product Support', 32], ['Technical Issues', 28], ['Order Status', 24], ['Refund Requests', 18], ['Feature Requests', 15], ['Payment Issues', 12], ['Login Problems', 10], ['API Questions', 8], ['Integration Help', 7], ['Documentation', 6], ['Bug Reports', 5], ['Security Concerns', 4], ['Performance Issues', 3],
     ]
@@ -335,24 +336,26 @@ export default {
       });
     },
     getRequestPayload() {
-      const { from, to, groupBy, businessHours } = this;
+      const { from, to, groupBy, businessHours, selectedBot } = this;
 
       return {
         from,
         to,
         groupBy: groupBy?.period,
         businessHours,
+        botId: selectedBot?.id !== 'all' ? selectedBot?.id : null,
       };
     },
-    onFilterChange({ from, to, groupBy, businessHours }) {
+    onFilterChange({ from, to, groupBy, businessHours, selectedBot }) {
       this.from = from;
       this.to = to;
       this.groupBy = groupBy;
       this.businessHours = businessHours;
+      this.selectedBot = selectedBot;
       this.fetchAllData();
 
       useTrack(REPORTS_EVENTS.FILTER_REPORT, {
-        filterValue: { from, to, groupBy, businessHours },
+        filterValue: { from, to, groupBy, businessHours, selectedBot },
         reportType: 'bots',
       });
     },
@@ -413,6 +416,7 @@ export default {
             :show-agents-filter="false"
             show-group-by-filter
             :show-business-hours-switch="false"
+            :show-bot-filter="true"
             @filter-change="onFilterChange"
           />
         </div>

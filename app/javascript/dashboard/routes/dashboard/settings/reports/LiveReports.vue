@@ -369,6 +369,14 @@ export default {
           </div>
           <div class="flex-1 min-w-0 pb-2 pr-2">
             <h3 class="text-sm">
+              {{ $t('OVERVIEW_REPORTS.CHAT_SUMMARY.RESOLVED_PERCENTAGE') }}
+            </h3>
+            <p class="text-n-slate-12 text-3xl mb-0 mt-1">
+              {{ accountConversationMetric?.ai_responses/accountConversationMetric?.open * 100 || 0 }}%
+            </p>
+          </div>
+          <div class="flex-1 min-w-0 pb-2 pr-2">
+            <h3 class="text-sm">
               {{ $t('OVERVIEW_REPORTS.CHAT_SUMMARY.CHAT_HANDOVERED') }}
             </h3>
             <p class="text-n-slate-12 text-3xl mb-0 mt-1">

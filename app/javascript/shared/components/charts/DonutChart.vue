@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { Doughnut } from 'vue-chartjs';
 import {
   Chart as ChartJS,
@@ -110,20 +110,57 @@ const chartData = computed(() => {
   };
 });
 
-const isDark = () => {
+// Reactive dark mode detection
+const isDarkMode = ref(false);
+
+const updateDarkMode = () => {
   if (typeof window !== 'undefined') {
-    return document.documentElement.classList.contains('dark') || window.matchMedia('(prefers-color-scheme: dark)').matches;
+    isDarkMode.value = document.documentElement.classList.contains('dark') || 
+                      window.matchMedia('(prefers-color-scheme: dark)').matches;
   }
-  return false;
 };
 
+// MutationObserver to watch for class changes on documentElement
+let observer = null;
+
+onMounted(() => {
+  updateDarkMode();
+  
+  // Watch for changes to the documentElement class
+  if (typeof window !== 'undefined') {
+    observer = new MutationObserver(() => {
+      updateDarkMode();
+    });
+    
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+    
+    // Also listen for media query changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', updateDarkMode);
+  }
+});
+
+onUnmounted(() => {
+  if (observer) {
+    observer.disconnect();
+  }
+  if (typeof window !== 'undefined') {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.removeEventListener('change', updateDarkMode);
+  }
+});
+
 const options = computed(() => {
-  const legendColor = isDark() ? '#fff' : '#222';
+  const legendColor = isDarkMode.value ? '#fff' : '#374151'; // Using a darker gray for better contrast in light mode
   const merged = { ...defaultChartOptions, ...props.chartOptions };
   if (!merged.plugins) merged.plugins = {};
   if (!merged.plugins.legend) merged.plugins.legend = {};
   if (!merged.plugins.legend.labels) merged.plugins.legend.labels = {};
-  merged.plugins.legend.labels.color = legendColor;
+  if (!merged.plugins.legend.labels.font) merged.plugins.legend.labels.font = {};
+  merged.plugins.legend.labels.font.color = legendColor;
   return merged;
 });
 </script>

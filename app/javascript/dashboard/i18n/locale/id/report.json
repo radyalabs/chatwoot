@@ -609,6 +609,7 @@
       "HEADER": "Ringkasan Percakapan",
       "CHAT_IN": "Total percakapan masuk",
       "CHAT_ANSWERED_BY_AI": "Percakapan diselesaikan AI",
+      "RESOLVED_PERCENTAGE": "Persentase terselesaikan oleh AI",
       "CHAT_HANDOVERED": "Percakapan dialihkan ke agen"
     },
     "CONVERSATION_TRENDS_LINE_CHART": {

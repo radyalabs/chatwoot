@@ -603,6 +603,7 @@
       "HEADER": "Chat Summary",
       "CHAT_IN": "Total incoming chats",
       "CHAT_ANSWERED_BY_AI": "Chats resolved by AI",
+      "RESOLVED_PERCENTAGE": "Resolved by AI percentage",
       "CHAT_HANDOVERED": "Chats handovered to agent"
     },
     "CONVERSATION_TRENDS_LINE_CHART": {

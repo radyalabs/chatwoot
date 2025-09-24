@@ -4,11 +4,12 @@ class Captain::Llm::BaseFlowiseService
   include HTTParty
   base_uri ENV.fetch('FLOWISE_API_URL', 'https://ai.radyalabs.id/api/v1')
 
-  def initialize(account_id, ai_agent, question, session_id)
+  def initialize(account_id, ai_agent, question, session_id, additional_attributes)
     @account_id = account_id
     @ai_agent = ai_agent
     @question = question
     @session_id = session_id
+    @additional_attributes = additional_attributes
   end
 
   def perform
@@ -17,15 +18,23 @@ class Captain::Llm::BaseFlowiseService
 
   private
 
-  def generate_response
+  def generate_response # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
     Rails.logger.info '[generate_response] Generating response for Flowise AI Agent'
     response = self.class.post(
       "/prediction/#{@ai_agent.chat_flow_id}",
       body: request_body.to_json,
       headers: headers
     )
-    Rails.logger.info "[generate_response] Received Flowise response: #{response.code} #{response.body}"
+    Rails.logger.info '[generate_response] Received Flowise response'
     response
+  rescue Net::OpenTimeout => e
+    Rails.logger.error "[generate_response] Net::OpenTimeout error: #{e.message}"
+    raise "Failed to generate response: #{e.message}"
+  rescue Net::ReadTimeout => e
+    Rails.logger.error "[generate_response] Net::ReadTimeout error: #{e.message}"
+    raise "Failed to generate response: #{e.message}"
+  rescue Net::WriteTimeout => e
+    Rails.logger.error "[generate_response] Net::WriteTimeout error: #{e.message}"
   rescue HTTParty::Error => e
     Rails.logger.error "[generate_response] HTTParty error: #{e.message}"
     raise "Failed to generate response: #{e.message}"

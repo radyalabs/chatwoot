@@ -47,7 +47,7 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
 
   def send_messages
     send_message = Captain::Llm::AssistantChatService.new(
-      @message.content,
+      @message,
       @context.conversation.id,
       @context.ai_agent,
       @current_account.id
@@ -56,13 +56,9 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
     return send_reply_failure(I18n.t('conversations.bot.failure')) unless send_message.success?
 
     @context.usage.increment_ai_responses
-    Rails.logger.info("🤖 AI Response: #{send_message.body}")
-
-    response = send_message.parsed_response
+    parsed = send_message.parsed_response
+    response = json_response(parsed, is_custom_agent: @context.ai_agent.custom_agent?)
     message, is_handover = parsed_response(response)
-
-    Rails.logger.info("🤖 AI Reply: #{message}, Handover: #{is_handover}")
-
     send_reply(message, is_handover: is_handover, additional_attributes: { message_type: 1, sender_type: 'AiAgent' })
   end
 

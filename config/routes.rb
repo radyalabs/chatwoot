@@ -48,6 +48,19 @@ Rails.application.routes.draw do
       # ----------------------------------
 
       # ----------------------------------
+      # start of OTP scoped api routes
+      resources :otp, only: [] do
+        collection do
+          post :generate
+          post :verify
+          post :resend
+          get :status
+        end
+      end
+      # end of OTP scoped api routes
+      # ----------------------------------
+
+      # ----------------------------------
       # start of subscription scoped api routes
       resources :subscriptions, only: [] do
         collection do
@@ -399,7 +412,7 @@ Rails.application.routes.draw do
           post :availability
           post :auto_offline
           put :set_active_account
-          post :resend_confirmation
+          # post :resend_confirmation # Removed - now using OTP verification system
         end
       end
 
@@ -591,6 +604,7 @@ Rails.application.routes.draw do
   post 'webhooks/whatsapp/:phone_number', to: 'webhooks/whatsapp#process_payload'
   get 'webhooks/instagram', to: 'webhooks/instagram#verify'
   post 'webhooks/instagram', to: 'webhooks/instagram#events'
+  post 'webhooks/waha/:phone_number', to: 'webhooks/waha#process_payload'
 
   namespace :twitter do
     resource :callback, only: [:show]

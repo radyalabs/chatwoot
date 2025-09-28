@@ -74,14 +74,31 @@
                 <h3 class="text-xl font-semibold text-slate-900 dark:text-slate-25 mb-2">{{ $t('AGENT_MGMT.BOOKING_BOT.CONNECTED_HEADER') }}</h3>
                 <p class="text-gray-600 dark:text-gray-400">{{ $t('AGENT_MGMT.BOOKING_BOT.CONNECTED_DESC') }}</p>
                 <p class="mt-2 text-sm text-gray-500">{{ catalogAccount?.email }}</p>
-                <button
-                  class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-                  @click="createSheets"
-                  :disabled="catalogLoading"
-                >
-                  <span v-if="catalogLoading">{{ $t('AGENT_MGMT.BOOKING_BOT.CREATE_SHEETS_LOADING') }}</span>
-                  <span v-else>{{ $t('AGENT_MGMT.BOOKING_BOT.CREATE_SHEETS_BTN') }}</span>
-                </button>
+                <div class="flex gap-2 center justify-center mt-4">
+                  <template v-if="!salesAuthError">
+                    <button
+                      class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                      @click="createSheets"
+                      :disabled="catalogLoading"
+                    >
+                      <span v-if="catalogLoading">{{ $t('AGENT_MGMT.BOOKING_BOT.CREATE_SHEETS_LOADING') }}</span>
+                      <span v-else>{{ $t('AGENT_MGMT.BOOKING_BOT.CREATE_SHEETS_BTN') }}</span>
+                    </button>
+                    </template>
+                    <template v-else>
+                      <div class="mt-3 text-red-600 text-sm flex items-center gap-2">
+                        <p class="text-sm">{{ salesAuthError }}</p>
+                        <button
+                          class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                          @click="retryAuthentication"
+                          :disabled="catalogLoading"
+                        >
+                          <span v-if="catalogLoading">{{ $t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_LOADING') }}</span>
+                          <span v-else>{{ $t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_BTN') }}</span>
+                        </button>
+                      </div>
+                    </template>
+                </div>
               </div>
             </div>
             <div v-else-if="catalogStep === 'sheetConfig'">
@@ -105,7 +122,7 @@
                       </div>
                     </div>
                   </div>
-                  <div class="flex flex-col gap-2">
+                  <div v-if="catalogSheets.input && !salesAuthError" class="flex flex-col gap-2">
                     <a 
                       :href="catalogSheets.input" 
                       target="_blank" 
@@ -121,20 +138,42 @@
 
                 <div class="border-t border-blue-200 dark:border-blue-700 pt-6">
                   <div class="flex justify-start">
-                    <button
-                      @click="syncProductColumns"
-                      :disabled="syncingColumns"
-                      class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                      <svg v-if="syncingColumns" class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"/>
-                        <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" class="opacity-75"/>
-                      </svg>
-                      <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                      </svg>
-                      {{ syncingColumns ? $t('AGENT_MGMT.SALESBOT.CATALOG.SYNC_BUTTON_LOADING') : $t('AGENT_MGMT.SALESBOT.CATALOG.SYNC_BUTTON') }}
-                    </button>
+                    <div v-if="catalogSheets.input && !salesAuthError">
+                      <button
+                        @click="syncProductColumns"
+                        :disabled="syncingColumns"
+                        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        <svg v-if="syncingColumns" class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"/>
+                          <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" class="opacity-75"/>
+                        </svg>
+                        <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        {{ syncingColumns ? $t('AGENT_MGMT.SALESBOT.CATALOG.SYNC_BUTTON_LOADING') : $t('AGENT_MGMT.SALESBOT.CATALOG.SYNC_BUTTON') }}
+                      </button>
+                    </div>
+                    <div v-else class="text-red-600 text-sm flex items-center gap-2">
+                      <button
+                        @click="retryAuthentication"
+                        class="inline-flex items-center space-x-2 border-2 border-green-700 hover:border-green-700 dark:border-green-700 text-green-600 hover:text-green-700 dark:text-grey-400 dark:hover:text-grey-500 pr-4 py-2 rounded-md font-medium transition-colors bg-transparent hover:bg-grey-50 dark:hover:bg-grey-900/20"
+                        :disabled="loading"
+                      >
+                        <span v-if="loading">{{ $t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_LOADING') }}</span>
+                        <span>{{ t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_BTN') }}</span>
+                      </button>
+                    </div>
+                    <div class="gap-2 items-center">
+                      <button
+                        @click="disconnectGoogle"
+                        class="inline-flex items-center space-x-2 border-2 border-red-600 hover:border-red-700 dark:border-red-400 dark:hover:border-red-500 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500 px-4 py-2 rounded-md font-medium transition-colors bg-transparent hover:bg-red-50 dark:hover:bg-red-900/20 ml-3"
+                        :disabled="loading"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-ban-icon lucide-ban"><path d="M4.929 4.929 19.07 19.071"/><circle cx="12" cy="12" r="10"/></svg>
+                        <span>{{ $t('AGENT_MGMT.BOOKING_BOT.DISC_BTN') }}</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -154,6 +193,7 @@
                     </div>
                   </div>
                   <a 
+                    v-if="catalogSheets.output && !salesAuthError"
                     :href="catalogSheets.output" 
                     target="_blank" 
                     class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors shadow-sm"
@@ -1208,6 +1248,114 @@
             </div>
           </div>
         </div>
+
+        <!-- Cart Configuration Tab -->
+        <div v-show="activeTabIndex === 3" class="w-full min-w-0">
+          <div class="flex flex-row gap-4">
+            <div class="flex-1 min-w-0 flex flex-col justify-stretch gap-6">
+              <div class="space-y-4">
+                <div>
+                  <label class="block font-medium mb-1">{{ $t('AGENT_MGMT.SALESBOT.CART.HEADER') }}</label>
+
+                  <!-- Cart Toggle -->
+                  <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
+                    <div class="flex items-center justify-between p-4">
+                      <div class="flex items-center">
+                        <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="stroke-green-600 dark:stroke-white lucide lucide-shopping-cart">
+                            <circle cx="8" cy="21" r="1"/>
+                            <circle cx="19" cy="21" r="1"/>
+                            <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+                          </svg> 
+                        </div>
+                        <div>
+                          <h3 class="font-medium">{{ $t('AGENT_MGMT.SALESBOT.CART.ENABLE_TITLE') }}</h3>
+                          <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.SALESBOT.CART.ENABLE_DESC') }}</p>
+                        </div>
+                      </div>
+                      <label class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" v-model="cartEnabled" class="sr-only peer">
+                        <div
+                          class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
+                        </div>
+                      </label>
+                    </div>
+                    
+                    <!-- Cart Status Info -->
+                    <div class="border-t border-gray-200 dark:border-gray-700 p-4">
+                      <div v-if="cartEnabled" class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                        <div class="flex items-start">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="stroke-green-600 dark:stroke-green-400 mt-0.5 mr-2 flex-shrink-0">
+                            <path d="M9 12l2 2 4-4"/>
+                            <circle cx="12" cy="12" r="10"/>
+                          </svg>
+                          <div>
+                            <p class="text-sm font-medium text-green-800 dark:text-green-200">
+                              {{ $t('AGENT_MGMT.SALESBOT.CART.ENABLED_STATUS') }}
+                            </p>
+                            <p class="text-sm text-green-600 dark:text-green-300 mt-1">
+                              {{ $t('AGENT_MGMT.SALESBOT.CART.ENABLED_DESC_DETAIL') }}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div v-else class="bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                        <div class="flex items-start">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="stroke-gray-500 dark:stroke-gray-400 mt-0.5 mr-2 flex-shrink-0">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="15" y1="9" x2="9" y2="15"/>
+                            <line x1="9" y1="9" x2="15" y2="15"/>
+                          </svg>
+                          <div>
+                            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              {{ $t('AGENT_MGMT.SALESBOT.CART.DISABLED_STATUS') }}
+                            </p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                              {{ $t('AGENT_MGMT.SALESBOT.CART.DISABLED_DESC_DETAIL') }}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="w-[240px] flex flex-col gap-3">
+              <div class="sticky top-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="w-10 h-10 flex-shrink-0 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shopping-cart w-5 h-5 text-green-600 dark:text-green-400">
+                        <circle cx="8" cy="21" r="1"/>
+                        <circle cx="19" cy="21" r="1"/>
+                        <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+                      </svg>
+                  </div>
+                  <div>
+                    <h3 class="font-semibold text-slate-700 dark:text-slate-300">{{ $t('AGENT_MGMT.SALESBOT.CART.HEADER') }}</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ $t('AGENT_MGMT.SALESBOT.CART.HEADER_DESC') }}</p>
+                  </div>
+                </div>
+                
+                <Button
+                  class="w-full"
+                  :is-loading="isSaving"
+                  :disabled="isSaving"
+                  @click="() => submitCartConfig()"
+                >
+                  <span class="flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    {{ $t('AGENT_MGMT.FORM_CREATE.SUBMIT') }}
+                  </span>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1235,6 +1383,10 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  googleSheetsAuth: {
+    type: Object,
+    required: true,
+  },
 });
 
 // Helper function to get agent ID by type
@@ -1258,7 +1410,6 @@ onMounted(async () => {
   
   // Load provinces for address selection
   loadProvinsi();
-  await checkAuthStatus();
   // Pre-load Google Maps API but don't initialize map yet
   try {
     await loadGoogleMaps();
@@ -1290,13 +1441,63 @@ watch(
   { immediate: true, deep: true }
 );
 
-const catalogStep = ref('connected'); // 'auth', 'connected', 'sheetConfig'
-const catalogLoading = ref(false);
-const catalogAccount = ref(null); // { email: '...', name: '...' }
-const catalogSheets = reactive({ input: '', output: '' });
+const catalogStep = computed(() => {
+  // If authenticated but no sales spreadsheets yet, show 'connected' step to allow creating sheets
+  if (props.googleSheetsAuth.step === 'sheetConfig') {
+    const salesSheets = props.googleSheetsAuth.spreadsheetUrls.sales;
+    if (!salesSheets?.input && !salesSheets?.output) {
+
+      return 'connected';
+    }
+  }
+  return props.googleSheetsAuth.step;
+});
+
+const catalogLoading = computed(() => props.googleSheetsAuth.loading);
+const catalogAccount = computed(() => props.googleSheetsAuth.account);
+const catalogSheets = computed(() => props.googleSheetsAuth.spreadsheetUrls.sales);
+
+// Computed property to determine if we should show auth error for sales specifically
+const salesAuthError = computed(() => {
+  // Only show auth error if it's really an auth problem, not just missing spreadsheets
+  const error = props.googleSheetsAuth.error;
+  if (!error) return null;
+  
+  // Don't show error if it's just about missing spreadsheets for new agents
+  if (error.includes('not found') || error.includes('404')) {
+    return null;
+  }
+  
+  // Show error for actual auth/permission issues
+  if (error.includes('authentication') || error.includes('permission') || error.includes('unauthorized')) {
+    return error;
+  }
+  
+  return null; // Don't show other types of errors in the UI
+});
+
 const notification = ref(null);
 const productColumns = ref('sku,name,unit_price,quantity,deskripsi');
 const syncingColumns = ref(false);
+const authError = computed(() => props.googleSheetsAuth.error);
+watch(salesAuthError, (newError) => {
+  if (newError) {
+    notification.value = { message: t('AGENT_MGMT.AUTH_ERROR'), type: 'error' };
+  }
+  else {
+    notification.value = null;
+  }
+}, { immediate: true });
+
+function retryAuthentication() {
+  connectGoogle();
+  // Note: salesAuthError is computed, so error will clear automatically when auth succeeds
+}
+
+function disconnectGoogle() {
+  // TODO: Implement disconnect logic
+  console.log('Disconnect Google account clicked');
+}
 
 function showNotification(message, type = 'success') {
   notification.value = { message, type };
@@ -1309,7 +1510,7 @@ function showNotification(message, type = 'success') {
 
 async function connectGoogle() {
   try {
-    catalogLoading.value = true;
+    props.googleSheetsAuth.loading = true;
     const response = await googleSheetsExportAPI.getAuthorizationUrl();
     if (response.data.authorization_url) {
       showNotification('Opening Google authentication in a new tab...', 'info');
@@ -1324,67 +1525,12 @@ async function connectGoogle() {
   } catch (error) {
     showNotification('Authentication failed. Please try again.', 'error');
   } finally {
-    catalogLoading.value = false;
-  }
-}
-// async function connectGoogle() {
-//   try {
-//     catalogLoading.value = true;
-//     const response = await googleSheetsExportAPI.getAuthorizationUrl();
-//     if (response.data.authorization_url) {
-//       showNotification('Redirecting to Google for authentication...', 'info');
-//       window.location.href = response.data.authorization_url;
-//     } else {
-//       showNotification('Failed to get authorization URL. Please check backend logs.', 'error');
-//     }
-//   } catch (error) {
-//     showNotification('Authentication failed. Please try again.', 'error');
-//   } finally {
-//     catalogLoading.value = false;
-//   }
-// }
-
-async function checkAuthStatus() {
-  try {
-    catalogLoading.value = true;
-    const response = await googleSheetsExportAPI.getStatus();
-    if (response.data.authorized) {
-      catalogStep.value = 'connected';
-      catalogAccount.value = {
-        email: response.data.email,
-        name: 'Connected Account',
-      };
-      try {
-        const flowData = props.data.display_flow_data;
-        const payload = {
-          account_id: parseInt(flowData.account_id, 10),
-          agent_id: salesAgentId.value,
-          type: 'sales',
-        };
-        const spreadsheet_url_response = await googleSheetsExportAPI.getSpreadsheetUrl(payload);
-
-        if (spreadsheet_url_response.data.input_spreadsheet_url && spreadsheet_url_response.data.output_spreadsheet_url) {
-          catalogSheets.input = spreadsheet_url_response.data.input_spreadsheet_url;
-          catalogSheets.output = spreadsheet_url_response.data.output_spreadsheet_url;
-          catalogStep.value = 'sheetConfig';
-        } else {
-          catalogSheets.output = '';
-        }
-      } catch (error) {
-        catalogStep.value = 'connected';
-      }
-    } else {
-      catalogStep.value = 'auth';
-    }
-  } catch (error) {
-    catalogStep.value = 'auth';
-  } finally {
-    catalogLoading.value = false;
+    props.googleSheetsAuth.loading = false;
   }
 }
 
 async function createSheets() {
-  catalogLoading.value = true;
+  props.googleSheetsAuth.loading = true;
   try {
     const flowData = props.data.display_flow_data;
     const payload = {
@@ -1392,22 +1538,22 @@ async function createSheets() {
       agent_id: salesAgentId.value,
       type: 'sales',
     };
-    // console.log(payload);
+
     const response = await googleSheetsExportAPI.createSpreadsheet(payload);
-    // console.log(response)
-    catalogSheets.input = response.data.input_spreadsheet_url;
-    catalogSheets.output = response.data.output_spreadsheet_url;
-    catalogStep.value = 'sheetConfig';
+
+    props.googleSheetsAuth.spreadsheetUrls.sales.input = response.data.input_spreadsheet_url;
+    props.googleSheetsAuth.spreadsheetUrls.sales.output = response.data.output_spreadsheet_url;
+    props.googleSheetsAuth.step = 'sheetConfig';
     showNotification('catalog output sheet created successfully!', 'success')
   } catch (error) {
     // eslint-disable-next-line no-console
-    catalogLoading.value = false;
+    props.googleSheetsAuth.loading = false;
     showNotification(
       'Failed to create catalog sheet. Please try again.',
       'error'
     );
   } finally {
-    catalogLoading.value = false;
+    props.googleSheetsAuth.loading = false;
   }
 }
 
@@ -1470,7 +1616,7 @@ async function syncProductColumns() {
     
     // If no existing knowledge source, create one first
     if (!knowledgeId) {
-      console.log('Creating new knowledge source for tab 4');
+
       const createRequest = {
         id: null,
         tab: 4,
@@ -1480,7 +1626,7 @@ async function syncProductColumns() {
     }
     // Update the knowledge source with new data
     else {
-      console.log('Updating existing knowledge source ID:', knowledgeId);
+
       await aiAgents.updateKnowledgeText(props.data.id, {
         id: knowledgeId,
         tab: 4,
@@ -1515,10 +1661,17 @@ const tabs = computed(() => [
     name: t('AGENT_MGMT.SALESBOT.PAYMENT.HEADER'),
     icon: 'i-lucide-credit-card',
   },
+  {
+    key: '3',
+    index: 3,
+    name: t('AGENT_MGMT.SALESBOT.CART.HEADER'),
+    icon: 'i-lucide-shopping-cart',
+  },
 ])
 const activeTabIndex = ref(0);
 const catalogSheet = ref('');
 const catalogDesc = ref('');
+const cartEnabled = ref(false);
 
 const shippingMethods = reactive({
   kurirToko: false,
@@ -1825,7 +1978,7 @@ function onKecamatanChange() {
   if (kurirBiasa.kecamatan) {
     loadKelurahan(kurirBiasa.provinsi, kurirBiasa.kota, kurirBiasa.kecamatan);
   }
-  console.log('Kecamatan changed:', kurirBiasa.kecamatan);
+
 }
 
 // Search dropdown functions
@@ -2668,6 +2821,47 @@ async function submitPaymentConfig() {
   }
 }
 
+// Submit Cart Configuration
+async function submitCartConfig() {
+  if (isSaving.value) return;
+
+  try {
+    isSaving.value = true;
+
+    // Save to backend
+    let flowData = props.data.display_flow_data;
+    const agentIndex = flowData.enabled_agents.indexOf('sales');
+    
+    if (agentIndex === -1) {
+      useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.AGENT_NOT_FOUND'))
+      return;
+    }
+
+    // Initialize configurations if not exists
+    if (!flowData.agents_config[agentIndex].configurations) {
+      flowData.agents_config[agentIndex].configurations = {};
+    }
+    
+    // Update cart configuration
+    flowData.agents_config[agentIndex].configurations.cart_enabled = cartEnabled.value;
+
+    const payload = {
+      flow_data: flowData,
+    };
+
+    await aiAgents.updateAgent(props.data.id, payload);
+
+    // Update local props data to maintain state after update
+    updateLocalPropsData('cart_enabled', cartEnabled.value);
+
+    useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_SUCCESS'));
+  } catch (error) {
+    useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_ERROR'));
+  } finally {
+    isSaving.value = false;
+  }
+}
+
 // Function to load saved configuration from backend
 function loadSavedConfiguration() {
   try {
@@ -2944,6 +3138,11 @@ function loadSavedConfiguration() {
           }
         }
       });
+    }
+
+    // Load Cart Configuration
+    if (config.cart_enabled !== undefined) {
+      cartEnabled.value = config.cart_enabled;
     }
     
   } catch (error) {

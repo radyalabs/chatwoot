@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2025_09_17_030942) do
+ActiveRecord::Schema[7.0].define(version: 2025_09_22_000002) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -994,19 +994,21 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_17_030942) do
     t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
-  create_table "operational_hours", force: :cascade do |t|
-    t.bigint "agent_bot_id", null: false
-    t.integer "day_of_week", null: false
-    t.integer "open_hour"
-    t.integer "open_minute"
-    t.integer "close_hour"
-    t.integer "close_minute"
-    t.boolean "open_allday", default: false
-    t.boolean "close_allday", default: false
+  create_table "otps", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "code", limit: 6, null: false
+    t.string "purpose", default: "email_verification", null: false
+    t.boolean "verified", default: false, null: false
+    t.datetime "verified_at", precision: nil
+    t.datetime "expires_at", precision: nil, null: false
+    t.string "ip_address"
+    t.string "user_agent"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["agent_bot_id"], name: "index_operational_hours_on_agent_bot_id"
-    t.index ["day_of_week", "agent_bot_id"], name: "index_operational_hours_on_day_of_week_and_agent_bot_id", unique: true
+    t.index ["code", "expires_at"], name: "index_otps_on_code_and_expires_at"
+    t.index ["expires_at"], name: "index_otps_on_expires_at"
+    t.index ["user_id", "purpose"], name: "index_otps_on_user_id_and_purpose_unique", unique: true
+    t.index ["user_id"], name: "index_otps_on_user_id"
   end
 
   create_table "platform_app_permissibles", force: :cascade do |t|
@@ -1453,7 +1455,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_17_030942) do
   add_foreign_key "knowledge_source_texts", "knowledge_sources"
   add_foreign_key "knowledge_source_websites", "knowledge_sources"
   add_foreign_key "knowledge_sources", "ai_agents"
-  add_foreign_key "operational_hours", "agent_bots"
+  add_foreign_key "otps", "users"
   add_foreign_key "quick_replies", "accounts"
   add_foreign_key "subscription_payments", "subscriptions"
   add_foreign_key "subscription_topups", "subscriptions"

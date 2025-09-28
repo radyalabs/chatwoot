@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue';
+import { ref, reactive, onMounted, computed, watch } from 'vue';
 import googleSheetsExportAPI from '../../../../api/googleSheetsExport';
 import FileKnowledgeSources from '../knowledge-sources/FileKnowledgeSources.vue';
 import aiAgents from '../../../../api/aiAgents';
@@ -11,6 +11,10 @@ const { t } = useI18n();
 
 const props = defineProps({
   data: {
+    type: Object,
+    required: true,
+  },
+  googleSheetsAuth: {
     type: Object,
     required: true,
   },
@@ -34,11 +38,86 @@ const tabs = computed(() => [
 ]);
 
 // Steps: 'auth', 'connected', 'sheetConfig'
-const step = ref('auth');
-const loading = ref(false);
-const account = ref(null); // { email: '...', name: '...' }
-const sheets = reactive({ input: '', output: '' });
+const step = computed(() => props.googleSheetsAuth.step);
+const loading = computed(() => props.googleSheetsAuth.loading);
+const account = computed(() => props.googleSheetsAuth.account);
+const sheets = computed(() => props.googleSheetsAuth.spreadsheetUrls.booking);
 const notification = ref(null);
+const authError = computed(() => props.googleSheetsAuth.error);
+
+// Booking-specific computed properties for better template logic
+const bookingStep = computed(() => {
+  // If we have booking sheets configured but no URLs, show 'connected' to display Create Sheets button
+  if (props.googleSheetsAuth.step === 'sheetConfig' && 
+      (!sheets.value.input || !sheets.value.output)) {
+    return 'connected';
+  }
+  return props.googleSheetsAuth.step;
+});
+
+const bookingAuthError = computed(() => {
+  const error = props.googleSheetsAuth.error;
+  if (!error) return null;
+  
+  // Only show auth-related errors for booking agent
+  const authKeywords = ['authentication', 'expired', 'invalid', 'unauthorized', 'token', 'permission'];
+  const isAuthError = authKeywords.some(keyword => 
+    error.toLowerCase().includes(keyword)
+  );
+  
+  return isAuthError ? 'Your Google authentication has expired. Please re-authenticate to continue.' : null;
+});
+
+watch(bookingAuthError, (newError) => {
+  if (newError) {
+    notification.value = { message: t('AGENT_MGMT.AUTH_ERROR'), type: 'error' };
+  } else {
+    notification.value = null;
+  }
+}, { immediate: true });
+
+function retryAuthentication() {
+  connectGoogle();
+}
+
+function disconnectGoogle() {
+  // TODO: Implement disconnect logic
+  console.log('Disconnect Google account clicked');
+}
+
+async function createSheets() {
+  try {
+
+    props.googleSheetsAuth.loading = true;
+    
+    const flowData = props.data.display_flow_data;
+    const payload = {
+      account_id: parseInt(flowData.account_id, 10),
+      agent_id: agentId.value,
+      type: 'booking',
+    };
+    
+
+    const response = await googleSheetsExportAPI.createSpreadsheet(payload);
+    
+    if (response.data.input_spreadsheet_url && response.data.output_spreadsheet_url) {
+      // Update parent's auth state
+      props.googleSheetsAuth.spreadsheetUrls.booking.input = response.data.input_spreadsheet_url;
+      props.googleSheetsAuth.spreadsheetUrls.booking.output = response.data.output_spreadsheet_url;
+      props.googleSheetsAuth.step = 'sheetConfig';
+      
+      showNotification('Booking spreadsheets created successfully!', 'success');
+
+    } else {
+      throw new Error('Missing spreadsheet URLs in response');
+    }
+  } catch (error) {
+    console.error('🚨 Failed to create booking sheets:', error);
+    showNotification('Failed to create booking sheets. Please try again.', 'error');
+  } finally {
+    props.googleSheetsAuth.loading = false;
+  }
+}
 
 // Save state
 const isSaving = ref(false);
@@ -77,7 +156,7 @@ const agentId = computed(() => {
 
 async function connectGoogle() {
   try {
-    loading.value = true;
+    props.googleSheetsAuth.loading = true;
     const response = await googleSheetsExportAPI.getAuthorizationUrl();
     if (response.data.authorization_url) {
       showNotification('Redirecting to Google for authentication...', 'info');
@@ -88,77 +167,8 @@ async function connectGoogle() {
   } catch (error) {
     showNotification('Authentication failed. Please try again.', 'error');
   } finally {
-    loading.value = false;
+    props.googleSheetsAuth.loading = false;
   }
-}
-
-async function checkAuthStatus() {
-  // useAlert(t('IN BOOKING...'));
-  console.log('checking auth status...');
-  try {
-    loading.value = true;
-    const response = await googleSheetsExportAPI.getStatus();
-    console.log(JSON.stringify(response.data));
-    if (response.data.authorized) {
-      step.value = 'connected';
-      account.value = {
-        email: response.data.email,
-        name: 'Connected Account',
-      };
-      try {
-        const flowData = props.data.display_flow_data;
-        if (flowData.agents_config[0].configurations.minimum_duration) {
-          minDuration.value =
-            flowData.agents_config[0].configurations.minimum_duration;
-        }
-        if (flowData.agents_config[0].configurations.industry) {
-          selectedTemplate.value =
-            flowData.agents_config[0].configurations.industry;
-        }
-        const payload = {
-          account_id: parseInt(flowData.account_id, 10),
-          agent_id: agentId.value,
-          type: 'booking',
-        };
-        console.log(JSON.stringify(payload));
-        console.log('payload:', payload);
-        const spreadsheet_url_response =
-          await googleSheetsExportAPI.getSpreadsheetUrl(payload);
-        console.log(JSON.stringify(payload));
-        console.log(JSON.stringify(spreadsheet_url_response));
-
-        console.log(
-          'spreadsheet_url_response.data:',
-          spreadsheet_url_response.data
-        );
-        if (spreadsheet_url_response.data) {
-          sheets.input = spreadsheet_url_response.data.input_spreadsheet_url;
-          sheets.output = spreadsheet_url_response.data.output_spreadsheet_url;
-          step.value = 'sheetConfig';
-        } else {
-          sheets.input = '';
-          sheets.output = '';
-        }
-      } catch (error) {
-        console.error(
-          'Failed to check authorization status while retrieving spreadsheet data:',
-          error
-        );
-        step.value = 'connected';
-      }
-    } else {
-      step.value = 'auth';
-    }
-    console.log('step:', step);
-    console.log('account:', account);
-  } catch (error) {
-    console.error('Failed to check authorization status:', error)
-    step.value = 'auth';
-  } finally {
-    loading.value = false;
-  }
-  console.log('step.value:', step.value);
-  console.log('checking auth status DONE');
 }
 
 function showNotification(message, type = 'success') {
@@ -173,10 +183,6 @@ async function syncScheduleColumns() {
     syncingColumns.value = true;
     showNotification('Syncing schedule columns from sheet...', 'info');
 
-    // TODO: Replace with your actual API endpoint
-    // prepare payload
-    // retrieve resource_names, location_names, & resource_types
-    // save to flow_data
     let flowData = props.data.display_flow_data;
     const payload = {
       account_id: parseInt(flowData.account_id, 10),
@@ -185,31 +191,23 @@ async function syncScheduleColumns() {
     }
 
     const result = await googleSheetsExportAPI.syncSpreadsheet(payload);
-    console.log('flowData:', flowData);
-    console.log('result:', result);
-    const agentsConfig = flowData.agents_config;
-    // const agent_index = agentsConfig.findIndex(
-    //   agent => agent.type === 'booking'
-    // );
+
+
     const agent_index = flowData.enabled_agents.indexOf('booking');
-    console.log('agent_index:', agent_index);
+
     flowData.agents_config[agent_index].configurations.resource_names =
       result.data.data.unique_resource_names;
     flowData.agents_config[agent_index].configurations.location_names =
       result.data.data.unique_location_names;
     flowData.agents_config[agent_index].configurations.resource_types =
       result.data.data.unique_resource_types;
-    // console.log(flowData);
-    // console.log(props.config);
+    
     const updatePayload = {
       flow_data: flowData,
     };
-    // eslint-disable-next-line no-console
-    console.log('payload:', updatePayload);
-    // ✅ Properly await the API call
+
     await aiAgents.updateAgent(props.data.id, updatePayload);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error('Failed to sync schedule columns:', error);
     showNotification('Failed to sync schedule columns', 'error');
     syncingColumns.value = false;
@@ -217,8 +215,6 @@ async function syncScheduleColumns() {
     syncingColumns.value = false;
   }
 }
-
-
 
 async function save() {
   if (isSaving.value) return; // Prevent multiple calls
@@ -228,9 +224,7 @@ async function save() {
   };
   try {
     isSaving.value = true;
-    // Hardcoded payload, exactly as you had it
     let flowData = props.data.display_flow_data;
-    // eslint-disable-next-line no-console
     const agent_index = flowData.enabled_agents.indexOf('booking');
 
     if (agent_index === -1) {
@@ -242,16 +236,13 @@ async function save() {
       configData.minDuration;
     flowData.agents_config[agent_index].configurations.industry =
       configData.selectedTemplate;
-    // console.log(flowData);
-    // console.log(props.config);
+    
     const payload = {
       flow_data: flowData,
     };
-    console.log("payload:", payload);
-    // ✅ Properly await the API call
+
     await aiAgents.updateAgent(props.data.id, payload);
 
-    // ✅ Show success console.log after success
     useAlert(t('AGENT_MGMT.CSBOT.TICKET.SAVE_SUCCESS'));
   } catch (e) {
     console.error('Save error:', e);
@@ -286,53 +277,23 @@ async function save() {
 //   }
 // }
 
+// Load configuration data on mount
 onMounted(async () => {
-  // eslint-disable-next-line no-use-before-define
-  await checkAuthStatus();
-});
-
-// async function createSheets() {
-//   loading.value = true;
-//   // TODO: Call backend to create sheets if needed
-//   // For now, just simulate success
-//   setTimeout(() => {
-//     sheets.input = 'https://docs.google.com/spreadsheets/d/input-sheet-id';
-//     sheets.output = 'https://docs.google.com/spreadsheets/d/output-sheet-id';
-//     loading.value = false;
-//     step.value = 'sheetConfig';
-//   }, 1200);
-// }
-
-async function createSheets() {
-  loading.value = true;
-  try {
-    // TODO: Call backend to create output sheet
-    // For now, simulate sheet creation
-    // await new Promise(resolve => setTimeout(resolve, 1200))
-    // eslint-disable-next-line no-console
-    console.log(JSON.stringify(props.data));
-    // eslint-disable-next-line no-console
-    const flowData = props.data.display_flow_data;
-    const payload = {
-      account_id: parseInt(flowData.account_id, 10),
-      agent_id: agentId.value,
-      type: 'booking',
-    };
-    // console.log(payload);
-    const response = await googleSheetsExportAPI.createSpreadsheet(payload);
-    // console.log(response)
-    sheets.input = response.data.input_spreadsheet_url;
-    sheets.output = response.data.output_spreadsheet_url;
-    step.value = 'sheetConfig';
-    showNotification('Output sheet created successfully!', 'success');
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Failed to create sheet:', error);
-    showNotification('Failed to create sheet. Please try again.', 'error');
-  } finally {
-    loading.value = false;
+  // Load existing configuration if available
+  const flowData = props.data?.display_flow_data;
+  if (flowData?.agents_config) {
+    const agent_index = flowData.enabled_agents.indexOf('booking');
+    if (agent_index !== -1) {
+      const config = flowData.agents_config[agent_index].configurations;
+      if (config?.minimum_duration) {
+        minDuration.value = config.minimum_duration;
+      }
+      if (config?.industry) {
+        selectedTemplate.value = config.industry;
+      }
+    }
   }
-}
+});
 </script>
 
 <template>
@@ -392,7 +353,7 @@ async function createSheets() {
           <div class="flex flex-row gap-4">
             <div class="flex-1 min-w-0 flex flex-col justify-stretch gap-6">
               <!-- Step 1: Google Auth -->
-              <div v-if="step === 'auth'" class="w-full mx-auto">
+              <div v-if="bookingStep === 'auth'" class="w-full mx-auto">
                 <div>
                   <label class="block font-medium mb-1">{{ $t('AGENT_MGMT.BOOKING_BOT.AUTH_LABEL') }}</label>
                   <p class="text-gray-600 dark:text-gray-400 mb-4">
@@ -408,7 +369,7 @@ async function createSheets() {
               </div>
 
               <!-- Step 2: Connected Confirmation -->
-              <div v-else-if="step === 'connected'" class="py-8">
+              <div v-else-if="bookingStep === 'connected'" class="py-8">
                 <div class="text-center mb-8">
                   <div class="w-16 h-16 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg class="w-8 h-8 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
@@ -430,7 +391,7 @@ async function createSheets() {
               </div>
 
               <!-- Step 3: Sheet Configuration -->
-              <div v-else-if="step === 'sheetConfig'">
+              <div v-else-if="bookingStep === 'sheetConfig' && sheets.input && sheets.output">
                 <div class="space-y-6">
                   <!-- Input Sheet Section - Schedule Data -->
                   <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-6 mb-6 border border-blue-200 dark:border-blue-800">
@@ -452,7 +413,7 @@ async function createSheets() {
                           </div>
                         </div>
                       </div>
-                      <div class="flex flex-col gap-2">
+                      <div v-if="!ticketAuthError" class="flex flex-col gap-2">
                         <a 
                           :href="sheets.input" 
                           target="_blank" 
@@ -500,20 +461,39 @@ async function createSheets() {
 
                       <!-- Sync Button for Resource and Location Lists -->
                       <div class="flex justify-start">
+                        <div v-if="!bookingAuthError && sheets.input && sheets.output">
+                          <button
+                            @click="syncScheduleColumns"
+                            :disabled="syncingColumns"
+                            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 h-10"
+                          >
+                            <svg v-if="syncingColumns" class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"/>
+                              <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" class="opacity-75"/>
+                            </svg>
+                            <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            {{ syncingColumns ? 'Syncing...' : $t('AGENT_MGMT.BOOKING_BOT.SYNC_BUTTON') }}
+                          </button>
+                        </div>
+                        <div v-else class="text-red-600 text-sm flex items-center gap-2">
                         <button
-                          @click="syncScheduleColumns"
-                          :disabled="syncingColumns"
-                          class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 h-10"
+                          @click="retryAuthentication"
+                          class="inline-flex items-center space-x-2 border-2 border-green-700 hover:border-green-700 dark:border-green-700 text-green-600 hover:text-green-700 dark:text-grey-400 dark:hover:text-grey-500 px-4 py-2 rounded-md font-medium transition-colors bg-transparent hover:bg-grey-50 dark:hover:bg-grey-900/20"
+                          :disabled="loading"
                         >
-                          <svg v-if="syncingColumns" class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"/>
-                            <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" class="opacity-75"/>
-                          </svg>
-                          <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                          </svg>
-                          {{ syncingColumns ? 'Syncing...' : $t('AGENT_MGMT.BOOKING_BOT.SYNC_BUTTON') }}
+                          <span>{{ $t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_BTN') }}</span>
                         </button>
+                      </div>
+                      <button
+                        @click="disconnectGoogle"
+                        class="inline-flex items-center space-x-2 border-2 border-red-600 hover:border-red-700 dark:border-red-400 dark:hover:border-red-500 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500 px-4 py-2 rounded-md font-medium transition-colors bg-transparent hover:bg-red-50 dark:hover:bg-red-900/20 ml-3"
+                        :disabled="loading"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-ban-icon lucide-ban"><path d="M4.929 4.929 19.07 19.071"/><circle cx="12" cy="12" r="10"/></svg>
+                        <span>{{ $t('AGENT_MGMT.BOOKING_BOT.DISC_BTN') }}</span>
+                      </button>
                       </div>
                     </div>
                   </div>
@@ -532,23 +512,25 @@ async function createSheets() {
                           <p class="text-sm text-slate-600 dark:text-slate-400">{{ $t('AGENT_MGMT.BOOKING_BOT.OUTPUT_SHEET_DESC') }}</p>
                         </div>
                       </div>
-                      <a 
-                        :href="sheets.output" 
-                        target="_blank" 
-                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors shadow-sm"
-                      >
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                        </svg>
-                        {{ $t('AGENT_MGMT.BOOKING_BOT.OPEN_SHEET_BTN') }}
-                      </a>
+                      <div v-if="!ticketAuthError">
+                        <a 
+                          :href="sheets.output" 
+                          target="_blank" 
+                          class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors shadow-sm"
+                        >
+                          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                          </svg>
+                          {{ $t('AGENT_MGMT.BOOKING_BOT.OPEN_SHEET_BTN') }}
+                        </a>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
             
-            <div v-if="step === 'sheetConfig'" class="w-[240px] flex flex-col gap-3">
+            <div v-if="bookingStep === 'sheetConfig'" class="w-[240px] flex flex-col gap-3">
               <div class="sticky top-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
                 <div class="flex items-center gap-3 mb-4">
                   <div class="w-10 h-10 flex-shrink-0 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">                    <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

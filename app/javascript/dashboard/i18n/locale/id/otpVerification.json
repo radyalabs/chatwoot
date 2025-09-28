@@ -1,0 +1,36 @@
+{
+  "OTP_VERIFICATION": {
+    "TITLE": "Verifikasi Email",
+    "SUBTITLE": "Kami telah mengirim kode verifikasi ke",
+    "OTP_CODE": {
+      "LABEL": "Kode Verifikasi",
+      "PLACEHOLDER": "Masukkan kode 6 digit",
+      "ERROR": "Silakan masukkan kode 6 digit yang valid"
+    },
+    "BUTTONS": {
+      "VERIFY": "Verifikasi Email",
+      "RESEND": "Kirim Ulang Kode",
+      "RESENDING": "Mengirim...",
+      "BACK_TO_SIGNUP": "← Kembali ke Daftar"
+    },
+    "MESSAGES": {
+      "CODE_SENT": "OTP telah dikirim ke alamat email Anda",
+      "CODE_ALREADY_ACTIVE": "Anda sudah memiliki kode verifikasi yang aktif. Silakan periksa email Anda.",
+      "CODE_RESENT": "OTP telah dikirim ulang ke email Anda",
+      "VERIFICATION_SUCCESS": "Email berhasil diverifikasi!",
+      "ACCOUNT_CREATED": "Akun berhasil dibuat! Mengarahkan ke halaman login...",
+      "COUNTDOWN": "Kirim ulang tersedia dalam",
+      "DIDNT_RECEIVE": "Tidak menerima kode?",
+      "EXPIRED": "Kode kedaluwarsa. Silakan minta yang baru."
+    },
+    "ERRORS": {
+      "USER_NOT_FOUND": "Pengguna tidak ditemukan",
+      "EMAIL_ALREADY_VERIFIED": "Email sudah diverifikasi",
+      "INVALID_CODE": "Kode OTP tidak valid atau kedaluwarsa",
+      "FAILED_TO_GENERATE": "Gagal menghasilkan OTP. Silakan coba lagi.",
+      "FAILED_TO_VERIFY": "Gagal memverifikasi kode",
+      "FAILED_TO_RESEND": "Gagal mengirim ulang OTP",
+      "WAIT_BEFORE_RESEND": "Harap tunggu sebelum meminta kode baru"
+    }
+  }
+}

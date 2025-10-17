@@ -498,6 +498,11 @@ Rails.application.routes.draw do
           get :index
         end
       end
+      resources :agents, only: [:create] do
+        scope module: :agents do
+          resources :operational_hours, only: [:index, :create, :update, :show]
+        end
+      end
     end
   end
 

@@ -43,10 +43,13 @@
           <GeneralTab :config="config" :data="data" :google-sheets-auth="googleSheetsAuth"/>
         </div>
         <div v-show="activeIndex === 1" class="w-full min-w-0">
-          <FileKnowledgeSources :data="data" />
+         <FileKnowledgeSources 
+            :data="data" 
+            context="cs"
+          />
         </div>
         <div v-show="activeIndex === 2" class="w-full">
-          <QnaKnowledgeSources :data="data" />
+          <QnaKnowledgeSources :data="data" context="cs" />
         </div>
         <div v-show="activeIndex === 3" class="w-full">
           <CategoryTab :data="data" />
@@ -137,6 +140,12 @@ const tabs = computed(() => [
   //   name: 'Catalog',
   //   icon: 'i-lucide-shopping-cart',
   // },
+  {
+    key: '6',
+    index: 6,
+    name: 'Penomoran Otomatis',
+    icon: 'i-lucide-notebook-tabs',
+  },
 ])
 
 const activeIndex = ref(0)

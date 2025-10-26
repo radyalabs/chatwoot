@@ -19,6 +19,14 @@ class BillingAPI extends ApiClient {
     return axios.get(`${this.url}/histories`);
   }
 
+  pricingPlans() {
+    return axios.get(`${this.url}/plans`);
+  }
+
+  customPlans() {
+    return axios.get(`${this.url}/custom_plans`);
+  }
+
   createSubscription({
     id,
     name,

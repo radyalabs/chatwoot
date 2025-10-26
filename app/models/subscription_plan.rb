@@ -3,27 +3,42 @@
 # Table name: subscription_plans
 #
 #  id                 :bigint           not null, primary key
-#  annual_price       :decimal(16, 2)   not null
+#  annual_price       :decimal(16, 2)
 #  available_channels :text             default([]), is an Array
 #  description        :text
 #  duration_days      :integer
 #  features           :jsonb            not null
 #  is_active          :boolean          default(TRUE)
+#  is_custom          :boolean          default(FALSE)
 #  max_ai_agents      :integer          default(0), not null
 #  max_ai_responses   :integer          default(0), not null
 #  max_channels       :integer          default(0)
 #  max_human_agents   :integer          default(0), not null
 #  max_mau            :integer          default(0), not null
-#  monthly_price      :decimal(16, 2)   not null
+#  monthly_price      :decimal(16, 2)
 #  name               :string           not null
+#  quarterly_price    :decimal(, )
+#  semi_annual_price  :decimal(, )
 #  support_level      :string
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
+#  owner_account_id   :bigint
+#
+# Indexes
+#
+#  index_subscription_plans_on_owner_account_id  (owner_account_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (owner_account_id => accounts.id)
 #
 class SubscriptionPlan < ApplicationRecord
   has_many :subscriptions
   has_and_belongs_to_many :vouchers
+  belongs_to :owner_account, class_name: 'Account', optional: true
 
+  validates :owner_account_id, presence: true, if: :is_custom?
+  validates :owner_account_id, uniqueness: { message: 'Custom plan for this account already exists' }, if: :is_custom?
   validates :description, presence: true
   validates :name, presence: true
   validates :max_mau, :max_ai_agents, :max_ai_responses, :max_human_agents, :max_channels, numericality: { greater_than_or_equal_to: 0 }

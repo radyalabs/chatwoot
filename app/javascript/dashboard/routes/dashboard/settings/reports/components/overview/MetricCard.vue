@@ -36,12 +36,12 @@ export default {
             {{ header }}
           </h5>
           <span
-            class="flex flex-row items-center py-0.5 px-2 rounded bg-n-teal-3 dark:bg-yellow-500/50 text-xs"
+            class="flex flex-row items-center py-0.5 px-2 rounded bg-green-700 dark:bg-green-700 text-white text-xs"
           >
             <span
-              class="bg-n-teal-9 dark:bg-yellow-600 h-1 w-1 rounded-full mr-1 rtl:mr-0 rtl:ml-0"
+              class="bg-white dark:bg-white h-1 w-1 rounded-full mr-1 rtl:mr-0 rtl:ml-0"
             />
-            <span class="text-xs text-n-teal-11 dark:text-yellow-600">
+            <span class="text-xs text-grey-700 dark:text-grey-700">
               {{ $t('OVERVIEW_REPORTS.LIVE') }}
             </span>
           </span>

@@ -2,6 +2,17 @@
 
 <p>Time to save the world. A new conversation has been assigned to you</p>
 
+<p>Total recent messages: {{ conversation.recent_messages.size }}</p>
+
+{% for msg in conversation.recent_messages %}
+  <pre>
+  sender: {{ msg.sender }}
+  content: {{ msg.content }}
+  attachments: {{ msg.attachments }}
+  </pre>
+{% endfor %}
+
+
 {% for chat_message in conversation.recent_messages %}
   <div>
     <h4 style="margin: 0;">

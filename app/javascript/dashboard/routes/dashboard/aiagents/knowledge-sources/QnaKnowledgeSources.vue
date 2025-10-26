@@ -132,7 +132,13 @@ async function deleteData() {
         qnas.value.splice(indexToDelete, 1);
       }
     }
-    
+    qnas.value = qnas.value.filter(v => {
+      if (v.id && dataId) {
+        return v.id !== dataId;
+      }
+      return v !== dataToDelete;
+    });
+    fetchKnowledge();
     useAlert(t('AGENT_MGMT.QNA.SAVE_SUCCESS'));
   } catch (e) {
     useAlert(t('AGENT_MGMT.QNA.SAVE_ERROR'));

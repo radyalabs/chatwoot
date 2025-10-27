@@ -14,6 +14,7 @@ import { required } from '@vuelidate/validators';
 import useVuelidate from '@vuelidate/core';
 import { useAlert } from 'dashboard/composables';
 import { useI18n } from 'vue-i18n';
+import { useStore } from 'vuex';
 import aiAgents from '../../../api/aiAgents';
 import MarkdownIt from 'markdown-it';
 
@@ -31,6 +32,7 @@ const props = defineProps({
 });
 
 const { t } = useI18n();
+const store = useStore();
 
 // custom agent type
 const isCustomAgent = computed(() => props.botType === 'custom_agent');
@@ -109,6 +111,17 @@ watch(
     // state.description = v.description || '';
     state.welcoming_message = v.display_flow_data.agents_config[0].bot_prompt.persona;
     state.routing_conditions = v.display_flow_data.agents_config[0].bot_prompt.handover_conditions;
+    let numberConfigData = null;
+    try {
+      await store.dispatch('numberFormatConfig/fetchConfig');
+      numberConfigData = store.state.numberFormatConfig.config;
+    } catch (e) {
+      console.error('Gagal memuat NumberFormatConfig:', e);
+    }
+
+    const flowDataGabungan = JSON.parse(JSON.stringify(v.display_flow_data));
+    flowDataGabungan.number_format_config = numberConfigData;
+    console.log('flowData:', flowDataGabungan);
     
     // 🚫 Do NOT set state.business_info from v.business_info!
     // Why? Because the real source of truth is knowledge_sources (tab:1)
@@ -120,12 +133,7 @@ watch(
         knowledgeSources.value = res.data?.knowledge_source_texts || [];
         console.log("knowledgeSources value:")
         console.log(knowledgeSources.value)
-        console.log("props.data:")
-        console.log(props.data)
-        console.log(props.data.display_flow_data)
         const flowData = props.data.display_flow_data;
-        console.log("flowData:")
-        console.log(flowData)
         const agents_config = flowData.agents_config;
         console.log(agents_config)
         // ✅ STEP 2: Update bot_prompt for every agent that is customer_service
@@ -203,6 +211,8 @@ async function submit() {
     // ✅ Update agent info
     // ✅ STEP 1: Deep clone flowData to avoid mutating props
     const flowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
+    const numberConfig = store.state.numberFormatConfig.config;
+    flowData.number_format_config = numberConfig;
 
     // ✅ STEP 2: Update bot_prompt for every agent that is customer_service
     flowData.agents_config.forEach(agent_config => {
@@ -218,6 +228,7 @@ async function submit() {
     const payload = {
       flow_data: flowData,
     };
+    console.log("PAYLOAD FINAL YANG DIKIRIM:", payload);
     // ✅ Properly await the API call
     await aiAgents.updateAgent(props.data.id, payload);
 

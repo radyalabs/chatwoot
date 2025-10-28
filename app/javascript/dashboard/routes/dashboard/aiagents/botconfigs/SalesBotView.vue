@@ -1378,10 +1378,13 @@
             </div>
           </div>
 
-          <div v-show="activeIndex === 4" class="w-full">
-            <CustomNumberingTab :data="data" />
+          <!-- QnA Tab Content -->
+          <div v-show="activeTabIndex === 4" class="w-full min-w-0">
+            <QnaKnowledgeSources
+              :data="data"
+              context="sales"
+            />
           </div>
-
         </div>
       </div>
     </div>
@@ -1392,18 +1395,13 @@
 import Input from 'dashboard/components-next/input/Input.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import provinsiJson from '../wilayah/provinsi/provinsi.json';
-import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue';
-
+import QnaKnowledgeSources from '../knowledge-sources/QnaKnowledgeSources.vue';
 import { ref, reactive, watch, onMounted, computed } from 'vue';
-import { useI18n } from 'vue-i18n'
-
-// Google Sheets Auth Flow for Catalog
-import googleSheetsExportAPI from '../../../../api/googleSheetsExport';
+import { useI18n } from 'vue-i18n';
 // AI Agents API
-import aiAgents from '../../../../api/aiAgents';
 import { useAlert } from 'dashboard/composables';
 
-const { t } = useI18n()
+const { t } = useI18n();
 
 // Props for data from parent component
 const props = defineProps({
@@ -1731,8 +1729,8 @@ const tabs = computed(() => [
   {
     key: '4',
     index: 4,
-    name: t('AGENT_MGMT.NUMBERING'),
-    icon: 'i-lucide-notebook-tabs',
+    name: 'QnA',
+    icon: 'i-lucide-help-circle',
   },
 ])
 const activeTabIndex = ref(0);

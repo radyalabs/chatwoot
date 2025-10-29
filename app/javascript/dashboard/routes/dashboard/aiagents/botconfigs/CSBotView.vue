@@ -61,7 +61,7 @@
           <ProductCatalogTab :data="data" />
         </div>
         <div v-show="activeIndex === 6" class="w-full">
-          <ProductCatalogTab :data="data" />
+          <CustomNumberingTab :data="data" />
         </div>
       </div>
 

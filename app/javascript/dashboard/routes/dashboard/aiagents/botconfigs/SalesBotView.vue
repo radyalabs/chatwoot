@@ -1389,6 +1389,7 @@
           <div v-show="activeIndex === 5" class="w-full">
             <CustomNumberingTab :data="data" />
           </div>
+
         </div>
       </div>
     </div>
@@ -1402,15 +1403,11 @@ import provinsiJson from '../wilayah/provinsi/provinsi.json';
 import QnaKnowledgeSources from '../knowledge-sources/QnaKnowledgeSources.vue';
 import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue';
 import { ref, reactive, watch, onMounted, computed } from 'vue';
-import { useI18n } from 'vue-i18n'
-
-// Google Sheets Auth Flow for Catalog
-import googleSheetsExportAPI from '../../../../api/googleSheetsExport';
+import { useI18n } from 'vue-i18n';
 // AI Agents API
-import aiAgents from '../../../../api/aiAgents';
 import { useAlert } from 'dashboard/composables';
 
-const { t } = useI18n()
+const { t } = useI18n();
 
 // Props for data from parent component
 const props = defineProps({

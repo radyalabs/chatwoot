@@ -6,15 +6,20 @@
       <div>
         <label>Format Penomoran <span class="text-red-500">*</span></label>
         <div class="flex gap-2">
-          <input v-model="form.format" type="text" class="input flex-1" />
-          <select v-model="codeOption" class="input w-60" @change="addCode">
-            <option disabled value="">Tambah Kode Penomoran</option>
-            <option>[NUMBER]</option>
-            <option>[YEAR]</option>
-            <option>[MONTH]</option>
+          <input v-model="form.format" type="text" class="input flex-1"/>
+          <select v-model="codeOption" class="input w-80" @change="addCode">
+            <option value="" disabled selected hidden>Tambah Kode Penomoran</option>
+
+            <option value="[NUMBER]">Nomor Urut (1 - 10000)</option>
+            <option value="[MONTH]">Bulan (01 - 12)</option>
+            <option value="[MONTH_ROMAN]">Bulan Romawi (I - XII)</option>
+            <option value="[MONTH_SHORT]">Bulan (JAN - DES)</option>
+            <option value="[MONTH_LONG]">Bulan (JANUARI - DESEMBER)</option>
+            <option value="[YEAR_SHORT]">Tahun (cth: 25)</option>
+            <option value="[YEAR]">Tahun (cth: 2025)</option>
           </select>
         </div>
-        <p class="text-sm text-gray-400 mt-1">Contoh Output: {{ liveSampleOutput }}</p>
+        <p class="text-md text-gray-400 mt-1">Contoh Output: {{ liveSampleOutput }}</p>
       </div>
 
       <div>

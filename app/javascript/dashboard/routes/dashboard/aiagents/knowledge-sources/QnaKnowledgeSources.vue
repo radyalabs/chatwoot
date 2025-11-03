@@ -24,6 +24,25 @@ const maxQna = 25
 const qnas = ref([]);
 const expandedQnas = ref({}); // Track expanded state for each QnA
 
+// Helper function to get prefix for current context
+const getPrefix = () => {
+  return props.context !== 'general' ? `[${props.context.toUpperCase()}] ` : '';
+};
+
+// Helper function to strip prefix from question
+const stripPrefix = (question) => {
+  if (props.context === 'general') return question;
+  const prefix = `[${props.context.toUpperCase()}] `;
+  return question?.startsWith(prefix) ? question.slice(prefix.length) : question;
+};
+
+// Helper function to add prefix to question
+const addPrefix = (question) => {
+  if (props.context === 'general') return question;
+  const prefix = `[${props.context.toUpperCase()}] `;
+  return prefix + question;
+};
+
 // Filter QnAs based on context prefix in question field
 const contextQnas = computed(() => {
   if (props.context === 'general') {
@@ -38,13 +57,26 @@ const contextQnas = computed(() => {
   });
 });
 
+// Get display question (without prefix) for a QnA item
+const getDisplayQuestion = (item) => {
+  return stripPrefix(item.question || '');
+};
+
 const reachedMaxQnas = computed(() => contextQnas.value.length >= maxQna)
 const isFetching = ref(false);
 async function fetchKnowledge() {
   try {
     isFetching.value = true;
     const data = await aiAgents.getKnowledgeSources(props.data.id);
+    
+    const unsavedItems = qnas.value.filter(qna => !qna.id);
+    
     qnas.value = data.data?.knowledge_source_qnas || [];
+    
+    if (unsavedItems.length > 0) {
+      qnas.value = [...qnas.value, ...unsavedItems];
+    }
+    
     console.log(`[${props.context}] Total QnAs: ${qnas.value.length} | Context QnAs: ${contextQnas.value.length}`);
   } catch (e) {
     useAlert(t('AGENT_MGMT.QNA.FETCH_ERROR'));
@@ -69,25 +101,38 @@ watch(
 
 const showDeleteModal = ref();
 const deleteModalData = ref();
+const deleteModalIndex = ref();
 function deleteQna(data, index) {
-  // Find the actual QnA from contextQnas
-  deleteModalData.value = contextQnas.value[index];
+  const contextQna = contextQnas.value[index];
+  const actualIndex = qnas.value.findIndex(qna => qna === contextQna);
+  
+  deleteModalData.value = contextQna;
+  deleteModalIndex.value = actualIndex;
   showDeleteModal.value = true;
 }
 const deleteLoadingIds = ref({});
 async function deleteData() {
   const dataToDelete = deleteModalData.value;
   const dataId = dataToDelete?.id;
+  const indexToDelete = deleteModalIndex.value;
   
   try {
     showDeleteModal.value = false;
     deleteLoadingIds.value[dataId] = true;
+    
+    // If it has an ID, delete from server
     if (dataId) {
       await aiAgents.deleteKnowledgeQna(props.data.id, dataId);
+      if (indexToDelete !== -1) {
+        qnas.value.splice(indexToDelete, 1);
+      }
+    } else {
+      // If no ID (newly created
+      if (indexToDelete !== -1) {
+        qnas.value.splice(indexToDelete, 1);
+      }
     }
-    // Remove from main qnas array
-    qnas.value = qnas.value.filter(v => v.id !== dataId || v !== dataToDelete);
-    fetchKnowledge();
+    
     useAlert(t('AGENT_MGMT.QNA.SAVE_SUCCESS'));
   } catch (e) {
     useAlert(t('AGENT_MGMT.QNA.SAVE_ERROR'));
@@ -101,16 +146,37 @@ async function save() {
   try {
     isSaving.value = true;
 
-    const request = qnas.value
+    const itemsToSave = qnas.value
       .map(e => {
+        const question = e.question?.trim() || '';
+        const answer = e.answer?.trim() || '';
+        
+        // Strip prefix to check if there's actual content
+        const questionContent = stripPrefix(question).trim();
+        
         return {
+          originalItem: e,
           id: e.id || null,
-          question: e.question?.trim(),
-          answer: e.answer?.trim(),
+          question: question,
+          answer: answer,
+          hasContent: questionContent.length > 0 && answer.length > 0
         };
       })
-      .filter(t => t.question && t.answer);
+      .filter(t => t.hasContent);
+    
+    const request = itemsToSave.map(t => ({ 
+      id: t.id, 
+      question: t.question, 
+      answer: t.answer 
+    }));
+    
+    // Store items that will be saved (to exclude them from unsaved items later)
+    const itemsThatWillBeSaved = itemsToSave.map(t => t.originalItem);
+      
     await aiAgents.createOrUpdateKnowledgeQna(props.data.id, request);
+    
+    qnas.value = qnas.value.filter(qna => !itemsThatWillBeSaved.includes(qna));
+    
     fetchKnowledge();
     useAlert(t('AGENT_MGMT.QNA.SAVE_SUCCESS'));
   } catch (e) {
@@ -125,8 +191,8 @@ function addQna() {
     return
   }
   
-  // Add prefix to new QnA question
-  const prefix = props.context !== 'general' ? `[${props.context.toUpperCase()}] ` : '';
+  // Add prefix to new QnA question (stored in backend, not displayed)
+  const prefix = getPrefix();
   const newQna = {
     question: prefix,
     answer: ''
@@ -143,6 +209,11 @@ function addQna() {
       block: 'end',
     });
   });
+}
+
+function updateQuestion(item, displayValue) {
+  const prefix = getPrefix();
+  item.question = prefix + (displayValue || '');
 }
 
 function toggleQnaExpand(index) {
@@ -185,8 +256,8 @@ const maxCharAnswer = 700
               <h3 class="text-sm font-medium text-slate-700 dark:text-slate-300">
                 QnA #{{ index + 1 }}
               </h3>
-              <span v-if="item.question" class="text-xs text-slate-500 dark:text-slate-400 truncate max-w-xs">
-                - {{ item.question }}
+              <span v-if="getDisplayQuestion(item)" class="text-xs text-slate-500 dark:text-slate-400 truncate max-w-xs">
+                - {{ getDisplayQuestion(item) }}
               </span>
             </div>
             <div class="flex items-center gap-2">
@@ -223,11 +294,12 @@ const maxCharAnswer = 700
                 </label>
                 <div class="relative">
                   <TextArea 
-                    v-model="item.question" 
+                    :model-value="getDisplayQuestion(item)"
                     showCharacterCount="true" 
                     :maxLength="maxCharQuestion" 
                     :placeholder="$t('AGENT_MGMT.QNA_PLACEHOLDER.QUESTION')"
                     class="w-full"
+                    @update:model-value="(value) => updateQuestion(item, value)"
                   />
                 </div>
               </div>

@@ -14,7 +14,7 @@ const props = defineProps({
   context: {
     type: String,
     default: 'general',
-    validator: (value) => ['booking', 'cs', 'general'].includes(value)
+    validator: (value) => ['booking', 'cs', 'general', 'lead_generation'].includes(value)
   }
 });
 
@@ -118,7 +118,7 @@ function addFile(file) {
     return;
   }
   
-  if (file.size > 5242880) {
+  if (file.size > 20971520) {
     useAlert(t('CONVERSATION.UPLOAD_MAX_REACHED'));
     return;
   }

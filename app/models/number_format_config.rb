@@ -4,7 +4,7 @@
 #
 #  id             :bigint           not null, primary key
 #  current_number :integer          default(1)
-#  format         :string           default("INV/")
+#  format         :string           default("[NUMBER]/[MONTH]/[YEAR]")
 #  reset_every    :string           default("never")
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null

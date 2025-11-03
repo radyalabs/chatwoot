@@ -15,8 +15,8 @@
             <option value="[MONTH_ROMAN]">Bulan Romawi (I - XII)</option>
             <option value="[MONTH_SHORT]">Bulan (JAN - DES)</option>
             <option value="[MONTH_LONG]">Bulan (JANUARI - DESEMBER)</option>
-            <option value="[YEAR_SHORT]">Tahun (cth: 25)</option>
-            <option value="[YEAR]">Tahun (cth: 2025)</option>
+            <option value="[YEAR_SHORT]">Tahun (contoh: 25)</option>
+            <option value="[YEAR]">Tahun (contoh: 2025)</option>
           </select>
         </div>
         <p class="text-md text-gray-400 mt-1">Contoh Output: {{ liveSampleOutput }}</p>
@@ -65,17 +65,15 @@
 </template>
 
 <script>
-// Kita hanya perlu mapState, mapGetters, dan mapActions
 import { mapState, mapGetters, mapActions } from 'vuex';
 
 export default {
   name: 'AutoNumbering',
   data() {
     return {
-      // 1. 'form' adalah data LOKAL untuk diedit
       form: {
         id: null,
-        format: 'INV/',
+        format: '[NUMBER]/[MONTH]/[YEAR]',
         currentNumber: 1,
         resetEvery: 'never',
       },
@@ -84,9 +82,7 @@ export default {
     };
   },
   computed: {
-    // 2. Ambil data 'read-only' dari Vuex
     ...mapState('numberFormatConfig', {
-      // Beri nama 'configFromStore' agar tidak bentrok dengan 'form'
       configFromStore: state => state.config,
       loading: state => state.loading,
     }),
@@ -94,25 +90,31 @@ export default {
       'errorMessage',
     ]),
 
-    // 3. Buat computed LOKAL untuk preview
     liveSampleOutput() {
-      // Gunakan 'this.form' (data lokal) bukan state Vuex
-      // Ini akan update saat Anda mengetik
       if (!this.form.format) return '...';
+
+      const roman = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
+      const shortMonths = ['JAN','FEB','MAR','APR','MEI','JUN','JUL','AGU','SEP','OKT','NOV','DES'];
+      const longMonths = ['JANUARI','FEBRUARI','MARET','APRIL','MEI','JUNI','JULI','AGUSTUS','SEPTEMBER','OKTOBER','NOVEMBER','DESEMBER'];
+
       const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();                
+      const yearShort = String(year).slice(-2);      
+      const monthIndex = now.getMonth();             
+      const monthNum = String(monthIndex + 1).padStart(2, '0');
+      
       const number = String(this.form.currentNumber || 0).padStart(5, '0');
       return this.form.format
+        .replace(/\[NUMBER\]/g, number)
         .replace(/\[YEAR\]/g, year)
-        .replace(/\[MONTH\]/g, month)
-        .replace(/\[NUMBER\]/g, number);
+        .replace(/\[YEAR_SHORT\]/g, yearShort)
+        .replace(/\[MONTH\]/g, monthNum)
+        .replace(/\[MONTH_ROMAN\]/g, roman[monthIndex])
+        .replace(/\[MONTH_SHORT\]/g, shortMonths[monthIndex])
+        .replace(/\[MONTH_LONG\]/g, longMonths[monthIndex]);
     },
   },
   watch: {
-    // 4. 'watch' adalah KUNCI-nya
-    // Saat data dari Vuex (configFromStore) berubah (setelah fetch),
-    // kita SALIN datanya ke 'form' lokal kita.
     configFromStore(newConfig) {
       if (newConfig) {
         this.form = { ...newConfig };
@@ -120,14 +122,12 @@ export default {
     },
   },
   methods: {
-    // 5. Ambil 'actions' dari Vuex
     ...mapActions('numberFormatConfig', [
       'fetchConfig',
       'saveConfig',
     ]),
 
     addCode() {
-      // Method ini sekarang hanya mengubah data 'form' LOKAL
       const token = this.codeOption;
       if (!token) return;
       this.form.format = this.form.format + token;
@@ -148,29 +148,25 @@ export default {
     },
   },
   async mounted() {
-    // 8. Saat komponen dimuat, panggil 'fetchConfig'
-    // 'watch' akan otomatis mengisi 'form' setelah data diterima.
     await this.fetchConfig();
   },
 };
 </script>
 
 <style scoped>
-/* Latar belakang overlay */
 .success-modal-overlay {
-  position: fixed; /* Menutupi seluruh layar */
+  position: fixed; 
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* Hitam transparan */
+  background-color: rgba(0, 0, 0, 0.5); 
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 999; /* Tampil di atas segalanya */
+  z-index: 999; 
 }
 
-/* Kotak modal */
 .success-modal-content {
   background-color: white;
   padding: 24px;
@@ -181,37 +177,33 @@ export default {
   width: 90%;
 }
 
-/* Lingkaran ikon (warna hijau seperti gambar) */
 .modal-icon-wrapper {
   width: 72px;
   height: 72px;
-  background-color: #A7F3D0; /* Ganti dengan warna hijau Anda */
-  border-radius: 50%; /* Membuatnya jadi lingkaran */
-  margin: 0 auto 20px auto; /* Posisi di tengah */
+  background-color: #A7F3D0; 
+  border-radius: 50%; 
+  margin: 0 auto 20px auto; 
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-/* Ikon checkmark di dalam lingkaran */
 .modal-icon {
   width: 36px;
   height: 36px;
-  color: #065F46; /* Warna ikon (hijau tua) */
+  color: #065F46; 
 }
 
-/* Judul "Sukses!" */
 .modal-title {
-  font-size: 24px; /* Ukuran font (bisa diganti) */
-  font-weight: 600; /* Tebal */
+  font-size: 24px; 
+  font-weight: 600; 
   margin-bottom: 8px;
   color: black;
 }
 
-/* Pesan di bawah judul */
 .modal-message {
-  font-size: 16px; /* Ukuran font (bisa diganti) */
-  color: black; /* Warna abu-abu */
+  font-size: 16px; 
+  color: black; 
   margin-bottom: 24px;
 }
 </style>

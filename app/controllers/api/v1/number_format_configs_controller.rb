@@ -41,6 +41,6 @@ class Api::V1::NumberFormatConfigsController < Api::BaseController
   end
 
   def config_params
-    params.require(:number_format_config).permit(:format, :current_number, :reset_every)
+    params.require(:number_format_config).permit(:format, :current_number, :reset_every, :prefix, :number_digits)
   end
 end

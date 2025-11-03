@@ -3,9 +3,11 @@ import NumberFormatConfigAPI from '../../api/numberFormatConfig';
 const state = {
   config: {
     id: null,
-    format: 'INV/',
+    prefix: '',
+    format: '[NUMBER]/[MONTH]/[YEAR]',
     currentNumber: 1,
     resetEvery: 'never',
+    number_digits: 3,
   },
   loading: false,
   error: null,
@@ -26,7 +28,6 @@ const getters = {
 };
 
 const actions = {
-  // 1. fetchConfig HARUS aman dari 'null'
   async fetchConfig({ commit }) {
     commit('SET_LOADING', true);
     commit('SET_ERROR', null);
@@ -35,16 +36,15 @@ const actions = {
       const config = response.data; // <-- Bisa 'null'
 
       if (config) {
-        // Data ada
         commit('SET_CONFIG', {
           id: config.id,
+          prefix: config.prefix,
           format: config.format,
           currentNumber: config.current_number, 
           resetEvery: config.reset_every,
+          number_digits: config.number_digits,
         });
       } else {
-        // Data 'null', JANGAN commit(null)
-        // Commit state default agar tidak crash
         commit('SET_CONFIG', state.config);
       }
     } catch (err) {
@@ -54,17 +54,17 @@ const actions = {
     }
   },
 
-  // 2. saveConfig sekarang menerima 'formPayload' dari komponen
   async saveConfig({ commit, dispatch }, formPayload) {
     commit('SET_LOADING', true);
     commit('SET_ERROR', null);
-    
-    // Normalisasi payload untuk API
+
     const apiPayload = {
       id: formPayload.id,
+      prefix: formPayload.prefix,
       format: formPayload.format,
       current_number: Number(formPayload.currentNumber),
       reset_every: formPayload.resetEvery,
+      number_digits: Number(formPayload.number_digits),
     };
 
     try {
@@ -73,7 +73,6 @@ const actions = {
       } else {
         await NumberFormatConfigAPI.createConfig(apiPayload);
       }
-      // Panggil 'fetchConfig' lagi untuk refresh data
       await dispatch('fetchConfig'); 
     } catch (err) {
       commit('SET_ERROR', err);
@@ -93,7 +92,6 @@ const mutations = {
   SET_CONFIG(state, configPayload) {
     state.config = configPayload;
   },
-  // MUTASI UPDATE_FORM_FIELD BISA DIHAPUS
 };
 
 export default {

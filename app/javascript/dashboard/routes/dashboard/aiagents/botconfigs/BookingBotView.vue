@@ -2,7 +2,6 @@
 import { ref, reactive, onMounted, computed, watch } from 'vue';
 import googleSheetsExportAPI from '../../../../api/googleSheetsExport';
 import FileKnowledgeSources from '../knowledge-sources/FileKnowledgeSources.vue';
-import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue';
 import aiAgents from '../../../../api/aiAgents';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -35,12 +34,6 @@ const tabs = computed(() => [
     index: 1,
     name: t('AGENT_MGMT.BOOKING_BOT.FILE_TAB'),
     icon: 'i-lucide-folder',
-  },
-  {
-    key: '2',
-    index: 2,
-    name: t('AGENT_MGMT.NUMBERING'),
-    icon: 'i-lucide-notebook-tabs',
   },
 ]);
 
@@ -610,10 +603,6 @@ onMounted(async () => {
             :data="data" 
             context="booking"
           />
-        </div>
-
-        <div v-show="activeIndex === 2" class="w-full">
-          <CustomNumberingTab :data="data" />
         </div>
       </div>
     </div>

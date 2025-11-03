@@ -1001,6 +1001,8 @@ ActiveRecord::Schema[7.0].define(version: 2025_10_31_064222) do
     t.bigint "account_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "prefix", default: ""
+    t.integer "number_digits", default: 3
     t.index ["account_id"], name: "index_number_format_configs_on_account_id", unique: true
   end
 

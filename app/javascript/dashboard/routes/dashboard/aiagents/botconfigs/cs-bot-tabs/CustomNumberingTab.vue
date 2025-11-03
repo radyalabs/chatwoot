@@ -22,9 +22,31 @@
         <p class="text-md text-gray-400 mt-1">Contoh Output: {{ liveSampleOutput }}</p>
       </div>
 
-      <div>
-        <label>Nomor Saat Ini <span class="text-red-500">*</span></label>
-        <input v-model.number="form.currentNumber" type="number" class="input w-full" min="0" />
+      <div class="flex gap-4">
+        <div class="flex-1">
+          <label>Nomor Saat Ini <span class="text-red-500">*</span></label>
+          <input v-model.number="form.currentNumber" type="number" class="input w-full" min="1" />
+        </div>
+
+        <div class="flex-1">
+          <label>Jumlah Digit Nomor Urut</label>
+          <input 
+            v-model.number="form.number_digits" 
+            type="number" 
+            class="input w-full" 
+            min="3"
+          />
+        </div>
+
+        <div class="flex-1">
+          <label>Kode Toko (Opsional)</label>
+          <input 
+            v-model="form.prefix" 
+            type="text" 
+            class="input w-full" 
+            placeholder="Contoh: PB/ atau INV-"
+          />
+        </div>
       </div>
 
       <div>
@@ -73,9 +95,11 @@ export default {
     return {
       form: {
         id: null,
+        prefix: '',
         format: '[NUMBER]/[MONTH]/[YEAR]',
         currentNumber: 1,
         resetEvery: 'never',
+        number_digits: 3,
       },
       codeOption: '',
       showSuccessModal: false,
@@ -102,9 +126,14 @@ export default {
       const yearShort = String(year).slice(-2);      
       const monthIndex = now.getMonth();             
       const monthNum = String(monthIndex + 1).padStart(2, '0');
-      
-      const number = String(this.form.currentNumber || 0).padStart(5, '0');
-      return this.form.format
+
+      let padding = this.form.number_digits || 3;
+      if (padding < 3) {
+        padding = 3;
+      }
+      const number = String(this.form.currentNumber || 0).padStart(padding, '0');
+
+      const processedFormat = this.form.format
         .replace(/\[NUMBER\]/g, number)
         .replace(/\[YEAR\]/g, year)
         .replace(/\[YEAR_SHORT\]/g, yearShort)
@@ -112,6 +141,8 @@ export default {
         .replace(/\[MONTH_ROMAN\]/g, roman[monthIndex])
         .replace(/\[MONTH_SHORT\]/g, shortMonths[monthIndex])
         .replace(/\[MONTH_LONG\]/g, longMonths[monthIndex]);
+
+      return (this.form.prefix || '') + processedFormat;
     },
   },
   watch: {

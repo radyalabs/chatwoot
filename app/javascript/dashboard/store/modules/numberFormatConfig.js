@@ -17,13 +17,11 @@ const getters = {
   // Getter ini aman jika state.config null
   errorMessage: state => {
     if (!state.error) return '';
-    // ... (sisa logika error) ...
   },
   // Kita biarkan getter ini di sini untuk referensi,
   // tapi kita buat aman
   sampleOutput: state => {
-    if (!state.config) return '...'; // <-- AMAN
-    // ... (sisa logika sampleOutput) ...
+    if (!state.config) return '...';
   }
 };
 
@@ -33,7 +31,7 @@ const actions = {
     commit('SET_ERROR', null);
     try {
       const response = await NumberFormatConfigAPI.getConfig();
-      const config = response.data; // <-- Bisa 'null'
+      const config = response.data;
 
       if (config) {
         commit('SET_CONFIG', {

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2025_10_21_083150) do
+ActiveRecord::Schema[7.0].define(version: 2025_10_31_064222) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -995,12 +995,14 @@ ActiveRecord::Schema[7.0].define(version: 2025_10_21_083150) do
   end
 
   create_table "number_format_configs", force: :cascade do |t|
-    t.string "format", default: "INV/"
+    t.string "format", default: "[NUMBER]/[MONTH]/[YEAR]"
     t.integer "current_number", default: 1
     t.string "reset_every", default: "never"
     t.bigint "account_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "prefix", default: ""
+    t.integer "number_digits", default: 3
     t.index ["account_id"], name: "index_number_format_configs_on_account_id", unique: true
   end
 

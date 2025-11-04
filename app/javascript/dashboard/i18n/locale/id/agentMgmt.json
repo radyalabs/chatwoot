@@ -6,6 +6,7 @@
     "LOADING": "Mendapatkan Daftar Agen",
     "DESCRIPTION": "Agen adalah anggota tim dukungan yang dapat melihat dan membalas pesan pengguna. Berikut adalah daftar agen yang ada di akun Anda.",
     "LEARN_MORE": "Pelajari tentang peran pengguna",
+    "NUMBERING": "Penomoran Otomatis",
     "AGENT_TYPES": {
       "ADMINISTRATOR": "Administrator",
       "AGENT": "Agen"

@@ -341,6 +341,10 @@
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
           </div>
         </div>
+        <!-- Automatic Numbering Tab -->
+        <div v-show="activeIndex === 5" class="w-full">
+          <CustomNumberingTab :data="data" />
+        </div>
       </div>
     </div>
   </div>
@@ -353,6 +357,7 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import FileKnowledgeSources from '../knowledge-sources/FileKnowledgeSources.vue'
 import QnaKnowledgeSources from '../knowledge-sources/QnaKnowledgeSources.vue'
 import PrioritiesTab from './cs-bot-tabs/PrioritiesTab.vue'
+import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue'
 import googleSheetsExportAPI from '../../../../api/googleSheetsExport'
 import aiAgents from '../../../../api/aiAgents'
 import { useAlert } from 'dashboard/composables';
@@ -441,6 +446,12 @@ const tabs = computed(() => [
     index: 4,
     name: 'Prioritas',
     icon: 'i-lucide-star',
+  },
+  {
+    key: '5',
+    index: 5,
+    name: t('AGENT_MGMT.NUMBERING'),
+    icon: 'i-lucide-notebook-tabs',
   },
 ])
 

@@ -83,7 +83,8 @@ const state = reactive({
 const rules = {
   name: { required },
   description: {},
-  business_info: { required },
+  instruction: {},
+  business_info: {},
   welcoming_message: {},
   routing_conditions: {},
   has_website: {},

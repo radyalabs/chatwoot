@@ -1,6 +1,6 @@
 <script setup>
 import { useAlert } from 'dashboard/composables';
-import { computed, onMounted, ref, h, nextTick, useTemplateRef, watch } from 'vue';
+import { computed, onMounted, ref, h, nextTick, useTemplateRef } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import {
@@ -323,32 +323,13 @@ const billingCycleTabs = computed(() => {
 });
 
 const menuTabs = computed(() => {
-  const allTabs = [
+  return [
     { id: 'billing', name: t('BILLING.TAB_PAYMENT') },
     { id: 'custom', name: t('BILLING.TAB_CUSTOM_PRICING') },
     { id: 'history', name: t('BILLING.TAB_HISTORY_PAYMENT') }
-  ];
-
-  return allTabs.filter(tab => {
-    if (tab.id !== 'custom') {
-      return true;
-    }
-
-    return custom_plans.value && custom_plans.value.length > 0;
-  });
+  ]
 });
-
-const selectedMenuTab = ref('billing');
-
-watch(menuTabs, (newVisibleTabs) => {
-  const isSelectedTabVisible = newVisibleTabs.some(
-    tab => tab.id === selectedMenuTab.value
-  );
-
-  if (!isSelectedTabVisible) {
-    selectedMenuTab.value = 'billing';
-  }
-});
+const selectedMenuTab = ref(menuTabs.value[0].id)
 // END TAB PRICING & PACKAGES
 
 const selectedTabDisplay = computed(() => {

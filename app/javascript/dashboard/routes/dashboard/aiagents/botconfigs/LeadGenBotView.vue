@@ -1,16 +1,6 @@
 <template>
-  <div class="w-full min-h-0">
-    <div v-if="notification"
-      :class="['fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transition-all duration-300',
-        notification.type === 'success' ? 'bg-green-500 text-white' :
-        notification.type === 'error' ? 'bg-red-500 text-white' :
-        notification.type === 'info' ? 'bg-blue-500 text-white' :
-        'bg-gray-500 text-white']">
-      <div class="flex items-center space-x-2">
-        <span>{{ notification.message }}</span>
-      </div>
-    </div>
-    <div class="pb-4 flex-shrink-0">
+  <div class="w-full">
+    <div class="pb-4">
       <h2 class="text-xl font-semibold text-slate-900 dark:text-slate-25 mb-1">
         {{ $t('AGENT_MGMT.LEADGENBOT.HEADER') }}
       </h2>
@@ -341,10 +331,6 @@
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
           </div>
         </div>
-        <!-- Automatic Numbering Tab -->
-        <div v-show="activeIndex === 5" class="w-full">
-          <CustomNumberingTab :data="data" />
-        </div>
       </div>
     </div>
   </div>
@@ -357,7 +343,6 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import FileKnowledgeSources from '../knowledge-sources/FileKnowledgeSources.vue'
 import QnaKnowledgeSources from '../knowledge-sources/QnaKnowledgeSources.vue'
 import PrioritiesTab from './cs-bot-tabs/PrioritiesTab.vue'
-import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue'
 import googleSheetsExportAPI from '../../../../api/googleSheetsExport'
 import aiAgents from '../../../../api/aiAgents'
 import { useAlert } from 'dashboard/composables';
@@ -446,12 +431,6 @@ const tabs = computed(() => [
     index: 4,
     name: 'Prioritas',
     icon: 'i-lucide-star',
-  },
-  {
-    key: '5',
-    index: 5,
-    name: t('AGENT_MGMT.NUMBERING'),
-    icon: 'i-lucide-notebook-tabs',
   },
 ])
 

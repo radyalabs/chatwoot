@@ -113,19 +113,6 @@ watch(
     // state.description = v.description || '';
     state.welcoming_message = v.display_flow_data.agents_config[0].bot_prompt.persona;
     state.routing_conditions = v.display_flow_data.agents_config[0].bot_prompt.handover_conditions;
-
-    let numberConfigData = null;
-    try {
-      // Panggil dan tunggu data config
-      await store.dispatch('numberFormatConfig/fetchConfig');
-      numberConfigData = store.state.numberFormatConfig.config;
-    } catch (e) {
-      console.error('Gagal memuat NumberFormatConfig:', e);
-    }
-    // Buat salinan dan gabungkan data
-    const flowDataGabungan = JSON.parse(JSON.stringify(v.display_flow_data));
-    flowDataGabungan.number_format_config = numberConfigData;
-    console.log('flowData numbering:', flowDataGabungan);
     
     // 🚫 Do NOT set state.business_info from v.business_info!
     // Why? Because the real source of truth is knowledge_sources (tab:1)

@@ -119,8 +119,6 @@ Rails.application.routes.draw do
         # end of subscription scoped api routes
         # ----------------------------------
 
-        resource :number_format_config, only: [:show, :create, :update]
-
         member do
           post :update_active_at
           get :cache_keys

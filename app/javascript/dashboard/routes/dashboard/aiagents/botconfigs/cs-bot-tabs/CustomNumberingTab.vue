@@ -87,14 +87,21 @@
 </template>
 
 <script>
-import { mapState, mapGetters, mapActions } from 'vuex';
+import { useAlert } from 'dashboard/composables';
+import aiAgents from '../../../../../api/aiAgents';
 
 export default {
   name: 'AutoNumbering',
+  props: {
+    data: {
+      type: Object,
+      required: true,
+    },
+  },
+
   data() {
     return {
       form: {
-        id: null,
         prefix: '',
         format: '[NUMBER]/[MONTH]/[YEAR]',
         currentNumber: 1,
@@ -103,17 +110,10 @@ export default {
       },
       codeOption: '',
       showSuccessModal: false,
+      loading: false,
     };
   },
   computed: {
-    ...mapState('numberFormatConfig', {
-      configFromStore: state => state.config,
-      loading: state => state.loading,
-    }),
-    ...mapGetters('numberFormatConfig', [
-      'errorMessage',
-    ]),
-
     liveSampleOutput() {
       if (!this.form.format) return '...';
 
@@ -146,18 +146,29 @@ export default {
     },
   },
   watch: {
-    configFromStore(newConfig) {
-      if (newConfig) {
-        this.form = { ...newConfig };
-      }
-    },
+    data: {
+      handler(newData) {
+        // Cek jika 'number_format_config' ada di dalam flowData
+        if (newData && 
+            newData.display_flow_data && 
+            newData.display_flow_data.agents_config && 
+            newData.display_flow_data.agents_config[0] &&
+            newData.display_flow_data.agents_config[0].configurations && 
+            newData.display_flow_data.agents_config[0].configurations.number_format
+        ) {
+          // Gabungkan data dari flowData dengan data default
+          this.form = { 
+            ...this.form, 
+            ...newData.display_flow_data.agents_config[0].configurations.number_format 
+          };
+        }
+      },
+      immediate: true,
+      deep: true,
+    }
   },
-  methods: {
-    ...mapActions('numberFormatConfig', [
-      'fetchConfig',
-      'saveConfig',
-    ]),
 
+  methods: {
     addCode() {
       const token = this.codeOption;
       if (!token) return;
@@ -166,20 +177,41 @@ export default {
     },
 
     async onSave() {
+      if (this.loading) return;
+
       try {
-        await this.saveConfig(this.form);
-        this.showSuccessModal = true; 
+        this.loading = true;
+        const flowData = JSON.parse(JSON.stringify(this.data.display_flow_data));
+
+        // Pastikan path-nya ada
+        if (flowData.agents_config && flowData.agents_config[0]) {
+          if (!flowData.agents_config[0].configurations) {
+            flowData.agents_config[0].configurations = {};
+          }
+          // Suntikkan 'form' kita ke lokasi yang benar
+          flowData.agents_config[0].configurations.number_format = this.form;
+        } else {
+          throw new Error("Format data tidak ditemukan.");
+        }
+
+        const payload = {
+          flow_data: flowData,
+        };
+
+        await aiAgents.updateAgent(this.data.id, payload);
+
+        this.showSuccessModal = true;
+
       } catch (error) {
-        console.error("Mohon maaf, Format belum berhasil disimpan");
+        console.error("Gagal menyimpan:", error);
+      } finally {
+        this.loading = false;
       }
     },
     
     closeSuccessModal() {
       this.showSuccessModal = false;
     },
-  },
-  async mounted() {
-    await this.fetchConfig();
   },
 };
 </script>

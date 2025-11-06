@@ -154,23 +154,7 @@ class V2::AiAgents::AiAgentBuilder < V2::AiAgents::AiAgentBaseBuilder
       :name, :description, :template_id, :template_ids, :template_type, :agent_type,
       :system_prompts, :welcoming_message, :routing_conditions, :control_flow_rules,
       :llm_model, :history_limit, :context_limit, :message_await, :message_limit, :timezone,
-      selected_labels: %i[label_id label_condition],
-      flow_data: [
-        :type, :bot_name, :account_id,
-        enabled_agents: [],
-
-        number_format_config: [:id, :format, :currentNumber, :resetEvery],
-
-        agents_config: [
-          :agent_id, :type, :bot_name, :collection_name,
-
-          bot_prompt: [:persona, :instructions, :handover_conditions],
-
-          configurations: [:name],
-
-          tools: [:name]
-        ]
-      ]
+      flow_data: {}, selected_labels: %i[label_id label_condition]
     ).to_h.with_indifferent_access
   end
 end

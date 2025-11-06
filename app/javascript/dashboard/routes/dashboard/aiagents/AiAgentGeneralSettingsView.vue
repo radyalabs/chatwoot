@@ -8,7 +8,6 @@ import {
   watch,
   watchEffect,
 } from 'vue';
-import { useStore } from 'vuex';
 import Input from 'dashboard/components-next/input/Input.vue';
 import TextArea from 'dashboard/components-next/textarea/TextArea.vue';
 import { required } from '@vuelidate/validators';
@@ -32,7 +31,6 @@ const props = defineProps({
 });
 
 const { t } = useI18n();
-const store = useStore();
 
 // custom agent type
 const isCustomAgent = computed(() => props.botType === 'custom_agent');
@@ -424,4 +422,5 @@ function resetChat() {
     </div>
     <!-- Chat Preview Section -->
   </div>
+
 </template>

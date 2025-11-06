@@ -2,6 +2,7 @@
 import { ref, reactive, onMounted, computed, watch } from 'vue';
 import googleSheetsExportAPI from '../../../../api/googleSheetsExport';
 import aiAgents from '../../../../api/aiAgents';
+import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import Button from 'dashboard/components-next/button/Button.vue';
@@ -33,6 +34,12 @@ const tabs = computed(() => [
     index: 1,
     name: t('AGENT_MGMT.RESTAURANT_BOT.ORDERS_COSTS_TAB'),
     icon: 'i-lucide-calculator',
+  },
+  {
+    key: '2',
+    index: 2,
+    name: t('AGENT_MGMT.NUMBERING'),
+    icon: 'i-lucide-notebook-tabs',
   },
 ]);
 
@@ -637,6 +644,11 @@ function saveOrderSettings() {
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Custom Numbering -->
+        <div v-show="activeIndex === 2" class="w-full">
+          <CustomNumberingTab :data="data" />
         </div>
       </div>
     </div>

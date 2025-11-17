@@ -7,6 +7,7 @@ import { useVuelidate } from '@vuelidate/core';
 import { required } from '@vuelidate/validators';
 import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
 import { LocalStorage } from 'shared/helpers/localStorage';
+import billingAPI from 'dashboard/api/billing';
 
 export default {
   components: {
@@ -20,7 +21,9 @@ export default {
     },
   },
   setup() {
-    return { v$: useVuelidate() };
+    return { 
+      v$: useVuelidate(),
+    };
   },
   data() {
     return {
@@ -69,12 +72,28 @@ export default {
           checked: false,
         },
       ],
+      // Local cache to avoid triggering global UI flags / route resets
+      localSubscription: null,
     };
   },
   computed: {
     ...mapGetters({
       uiFlags: 'inboxes/getUIFlags',
     }),
+    activeSubscription() {
+      return (
+        this.localSubscription ||
+        this.$store.state.billing?.billing?.latestSubscription ||
+        null
+      );
+    },
+    shouldHideBranding() {
+      const planName = (this.activeSubscription?.plan_name || '')
+        .toString()
+        .toLowerCase();
+      // console.log('planName', planName);
+      return planName === 'pertamax' || planName === 'pertamax turbo';
+    },
     storageKey() {
       return `${LOCAL_STORAGE_KEYS.WIDGET_BUILDER}${this.inbox.id}`;
     },
@@ -142,8 +161,9 @@ export default {
         : '';
     },
   },
-  mounted() {
+  async mounted() {
     this.setDefaults();
+    this.fetchLatestSubscriptionSafely();
   },
   validations: {
     websiteName: { required },
@@ -259,6 +279,19 @@ export default {
     },
     getSavedInboxInformation() {
       return LocalStorage.get(this.storageKey);
+    },
+    async fetchLatestSubscriptionSafely() {
+      try {
+        const existing = this.$store.state.billing?.billing?.latestSubscription;
+        if (existing && Object.keys(existing).length) {
+          // Store already has it; no need to fetch
+          return;
+        }
+        const response = await billingAPI.latestSubscription();
+        this.localSubscription = response?.data || null;
+      } catch (e) {
+        // Silent fail
+      }
     },
   },
 };
@@ -411,6 +444,7 @@ export default {
             :widget-bubble-position="widgetBubblePosition"
             :widget-bubble-launcher-title="widgetBubbleLauncherTitle"
             :widget-bubble-type="widgetBubbleType"
+            :hide-branding="shouldHideBranding"
           />
         </div>
         <div v-else class="mx-5 p-2.5 bg-slate-50 rounded-lg dark:bg-slate-700">

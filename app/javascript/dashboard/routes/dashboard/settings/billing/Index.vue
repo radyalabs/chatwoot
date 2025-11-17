@@ -1,6 +1,6 @@
 <script setup>
 import { useAlert } from 'dashboard/composables';
-import { computed, onMounted, ref, h, nextTick, useTemplateRef } from 'vue';
+import { computed, onMounted, ref, h, nextTick, useTemplateRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import {
@@ -323,13 +323,32 @@ const billingCycleTabs = computed(() => {
 });
 
 const menuTabs = computed(() => {
-  return [
+  const allTabs = [
     { id: 'billing', name: t('BILLING.TAB_PAYMENT') },
     { id: 'custom', name: t('BILLING.TAB_CUSTOM_PRICING') },
     { id: 'history', name: t('BILLING.TAB_HISTORY_PAYMENT') }
-  ]
+  ];
+
+  return allTabs.filter(tab => {
+    if (tab.id !== 'custom') {
+      return true;
+    }
+
+    return custom_plans.value && custom_plans.value.length > 0;
+  });
 });
-const selectedMenuTab = ref(menuTabs.value[0].id)
+
+const selectedMenuTab = ref('billing');
+
+watch(menuTabs, (newVisibleTabs) => {
+  const isSelectedTabVisible = newVisibleTabs.some(
+    tab => tab.id === selectedMenuTab.value
+  );
+
+  if (!isSelectedTabVisible) {
+    selectedMenuTab.value = 'billing';
+  }
+});
 // END TAB PRICING & PACKAGES
 
 const selectedTabDisplay = computed(() => {
@@ -683,7 +702,7 @@ function scrollToPackage() {
           >
             <p>{{ $t('BILLING.NO_CUSTOM_PLANS') }}</p>
           </div>
-          <div v-else class="pricing-plans mt-4">
+          <div v-else class="custom-plans mt-4">
             <div v-for="plan in custom_plans" :key="plan.id" class="pricing-card bg-[#fff] dark:bg-[#23252d]">
               <div class="plan-header flex flex-row">
                 <div class="flex-1">
@@ -1168,8 +1187,9 @@ export default {
 
 .custom-plans {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 280px));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 350px));
   gap: 1.5rem;
+  justify-content: center;
 }
 
 .pricing-card {

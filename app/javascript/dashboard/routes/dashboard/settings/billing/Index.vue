@@ -694,13 +694,7 @@ function scrollToPackage() {
 
         <!-- Custom Pricing Section -->
         <div v-else-if="selectedMenuTab === 'custom'" class="pricing-container">
-          <div
-            v-if="custom_plans.length === 0"
-            class="text-center py-10"
-          >
-            <p>{{ $t('BILLING.NO_CUSTOM_PLANS') }}</p>
-          </div>
-          <div v-else class="custom-plans mt-4">
+          <div class="custom-plans mt-4">
             <div v-for="plan in custom_plans" :key="plan.id" class="pricing-card bg-[#fff] dark:bg-[#23252d]">
               <div class="plan-header flex flex-row">
                 <div class="flex-1">
@@ -727,7 +721,7 @@ function scrollToPackage() {
                 <ul class="feature-list">
                   <li v-for="(feature, index) in plan.features" :key="index" class="feature-item">
                     <span class="icon-check" />
-                    <span class="feature-text text-[#475569] dark:text-[#E0E1E6]">{{ feature }}</span>
+                    <span class="feature-text text-[#475569] dark:text-[#E0E1E6]">{{ $t(`BILLING.${feature.replaceAll('.', '')}`) }}</span>
                   </li>
                 </ul>
               </div>

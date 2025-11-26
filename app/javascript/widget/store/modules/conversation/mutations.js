@@ -5,32 +5,69 @@ export const mutations = {
   clearConversations($state) {
     $state.conversations = {};
   },
-  pushMessageToConversation($state, message) {
-    const { id, status, message_type: type } = message;
+  setConversationList($state, payload) {
+    $state.conversationsList = payload;
+  },
 
-    const messagesInbox = $state.conversations;
-    const isMessageIncoming = type === MESSAGE_TYPE.INCOMING;
-    const isTemporaryMessage = status === 'in_progress';
+  setActiveConversation($state, conversationId) {
+    $state.selectedConversationId = conversationId;
+  },
 
-    if (!isMessageIncoming || isTemporaryMessage) {
-      messagesInbox[id] = message;
-      return;
-    }
-
-    const [messageInConversation] = findUndeliveredMessage(
-      messagesInbox,
-      message
-    );
-    if (!messageInConversation) {
-      messagesInbox[id] = message;
-    } else {
-      // [VITE] instead of leaving undefined behind, we remove it completely
-      // remove the temporary message and replace it with the new message
-      // messagesInbox[messageInConversation.id] = undefined;
-      delete messagesInbox[messageInConversation.id];
-      messagesInbox[id] = message;
+  clearMessages($state) {
+    const id = $state.selectedConversationId;
+    if (id && $state.conversations[id]) {
+      $state.conversations[id].messages = [];
     }
   },
+  initConversationObject($state, conversationId) {
+    if (!$state.conversations) {
+      $state.conversations = {};
+    }
+
+    if (!$state.conversations[conversationId]) {
+      $state.conversations[conversationId] = {
+        messages: [],
+        meta: {},
+      };
+    }
+  },
+  pushMessageToConversation($state, message) {
+    const conversationId = $state.selectedConversationId;
+    if (!conversationId) return;
+
+    if (!$state.conversations[conversationId]) {
+      $state.conversations[conversationId] = { messages: [], meta: {} };
+    }
+
+    const messages = $state.conversations[conversationId].messages;
+    const exists = messages.some(m =>
+      (m.id && m.id === message.id) ||
+      (m.content && m.content === message.content && !m.id)
+    );
+    if (!exists) {
+      messages.push(message);
+    }
+  },
+
+  removeMessageById($state, id) {
+    const conversationId = $state.selectedConversationId;
+    if (!conversationId) return;
+
+    const messages = $state.conversations[conversationId]?.messages || [];
+    $state.conversations[conversationId].messages = messages.filter(
+      msg => msg.id !== id
+    );
+  },
+
+  updateMessageStatus($state, { id, status }) {
+    const conversationId = $state.selectedConversationId;
+    if (!conversationId) return;
+
+    const messages = $state.conversations[conversationId]?.messages || [];
+    const msg = messages.find(m => m.id === id);
+    if (msg) msg.status = status;
+  },
+
 
   updateAttachmentMessageStatus($state, { message, tempId }) {
     const { id } = message;
@@ -59,15 +96,24 @@ export const mutations = {
   },
 
   setMessagesInConversation($state, payload) {
-    if (!payload.length) {
-      $state.uiFlags.allMessagesLoaded = true;
-      return;
+    const conversationId = $state.selectedConversationId;
+    if (!conversationId) return;
+
+    if (!$state.conversations[conversationId]) {
+      $state.conversations[conversationId] = { messages: [], meta: {} };
     }
 
-    payload.forEach(message => {
-      $state.conversations[message.id] = message;
-    });
+    const existing = $state.conversations[conversationId].messages || [];
+
+    const combined = [...payload, ...existing];
+    const unique = combined.filter(
+      (msg, index, self) =>
+        index === self.findIndex(m => m.id === msg.id)
+    );
+
+    $state.conversations[conversationId].messages = unique;
   },
+
 
   setMissingMessagesInConversation($state, payload) {
     $state.conversation = payload;
@@ -89,6 +135,13 @@ export const mutations = {
 
     const newMeta = message.meta ? { ...message.meta, ...meta } : { ...meta };
     message.meta = { ...newMeta };
+  },
+
+  setConversationMeta($state, payload) {
+    $state.meta = {
+      ...$state.meta,
+      ...payload,
+    };
   },
 
   deleteMessage($state, id) {

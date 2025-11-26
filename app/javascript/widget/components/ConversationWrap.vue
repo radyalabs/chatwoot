@@ -54,6 +54,33 @@ export default {
         (isConversationInPendingStatus && isLastMessageIncoming)
       );
     },
+    cleanedGroupedMessages() {
+      if (!this.groupedMessages.length) return [];
+
+      let isFirstMessageRemoved = false;
+
+      return this.groupedMessages.map(group => {
+        const filtered = group.messages.filter((msg, index) => {
+          if (!isFirstMessageRemoved) {
+            const isAutoHalo =
+              msg.sender?.type === 'contact' &&
+              typeof msg.content === 'string' &&
+              msg.content.trim().toLowerCase() === 'halo';
+
+            if (isAutoHalo) {
+              isFirstMessageRemoved = true;
+              return false; // sembunyikan
+            }
+          }
+          return true;
+        });
+
+        return {
+          date: group.date,
+          messages: filtered
+        };
+      });
+    },
   },
   watch: {
     allMessagesLoaded() {
@@ -105,7 +132,7 @@ export default {
         <Spinner />
       </div>
       <div
-        v-for="groupedMessage in groupedMessages"
+        v-for="groupedMessage in cleanedGroupedMessages"
         :key="groupedMessage.date"
         class="messages-wrap"
       >

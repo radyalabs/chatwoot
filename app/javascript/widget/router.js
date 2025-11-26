@@ -21,19 +21,25 @@ const router = createRouter({
       children: [
         {
           path: '',
-          name: 'home',
-          component: () => import('./views/Home.vue'),
+          name: 'conversation-list',
+          component: () => import('./views/ConversationList.vue'),
+        },
+        {
+          path: '/messages/:conversationId', 
+          name: 'conversation-chat',
+          component: () => import('./views/Messages.vue'),
+          props: true, 
         },
         {
           path: '/prechat-form',
           name: 'prechat-form',
           component: () => import('./views/PreChatForm.vue'),
         },
-        {
-          path: '/messages',
-          name: 'messages',
-          component: () => import('./views/Messages.vue'),
-        },
+        // {
+        //   path: '/messages',
+        //   name: 'messages',
+        //   component: () => import('./views/Messages.vue'),
+        // },
         {
           path: '/article',
           name: 'article-viewer',

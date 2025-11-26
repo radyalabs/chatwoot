@@ -46,6 +46,16 @@
   "BUBBLE": {
     "LABEL": "Chat dengan kami"
   },
+  "LAST_MESSAGE":{
+    "CONVERSATION_RESOLVED": "Percakapan Selesai",
+    "CONVERSATION_REOPENED": "Percakapan dibuka kembali",
+    "AGENT_JOINED": "Agen bergabung dalam percakapan",
+    "AGENT_LEFT": "Agen meninggalkan percakapan",
+    "USER_JOINED": "Pengguna bergabung dalam percakapan",
+    "USER_LEFT": "Pengguna meninggalkan percakapan",
+    "UPDATED_CONVERSATION": "Percakapan diperbarui",
+    "NEW_MESSAGE": "Pesan baru"
+  },
   "POWERED_BY": "Powered by Jangkau",
   "EMAIL_PLACEHOLDER": "Masukkan email Anda",
   "CHAT_PLACEHOLDER": "Ketik pesan Anda",

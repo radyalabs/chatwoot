@@ -52,7 +52,7 @@ export default {
   },
   methods: {
     onBackButtonClick() {
-      this.replaceRoute('home');
+      this.replaceRoute('conversation-list');
     },
   },
 };
@@ -81,22 +81,15 @@ export default {
         :src="avatarUrl"
         alt="avatar"
       />
-      <div>
+      <div class="flex flex-col justify-center ml-2">
         <div
-          class="flex items-center text-base font-medium leading-4"
+          class="text-base font-medium leading-4"
           :class="getThemeClass('text-black-900', 'dark:text-slate-50')"
         >
           <span v-dompurify-html="title" class="mr-1" />
-          <div
-            :class="`h-2 w-2 rounded-full
-              ${isOnline ? 'bg-green-500' : 'hidden'}`"
-          />
-        </div>
-        <div
-          class="mt-1 text-xs leading-3"
-          :class="getThemeClass('text-black-700', 'dark:text-slate-400')"
-        >
-          {{ replyWaitMessage }}
+          <div class="text-xs text-green-500 mt-1 font-medium">
+            Online
+          </div>
         </div>
       </div>
     </div>

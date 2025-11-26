@@ -10,7 +10,7 @@ const isMessageInActiveConversation = (getters, message) => {
   const { conversation_id: conversationId } = message;
   const activeConversationId =
     getters['conversationAttributes/getConversationParams'].id;
-  return activeConversationId && conversationId !== activeConversationId;
+  return conversationId === activeConversationId;
 };
 
 class ActionCableConnector extends BaseActionCableConnector {
@@ -52,7 +52,9 @@ class ActionCableConnector extends BaseActionCableConnector {
   };
 
   onMessageCreated = data => {
-    if (isMessageInActiveConversation(this.app.$store.getters, data)) {
+    const getters = this.app.$store.getters;
+
+    if (!isMessageInActiveConversation(getters, data)) {
       return;
     }
 
@@ -65,13 +67,16 @@ class ActionCableConnector extends BaseActionCableConnector {
       eventIdentifier: CHATWOOT_ON_MESSAGE,
       data,
     });
+
     if (data.sender_type === 'User') {
       playNewMessageNotificationInWidget();
     }
   };
 
   onMessageUpdated = data => {
-    if (isMessageInActiveConversation(this.app.$store.getters, data)) {
+    const getters = this.app.$store.getters;
+
+    if (!isMessageInActiveConversation(getters, data)) {
       return;
     }
 

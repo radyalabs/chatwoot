@@ -45,7 +45,7 @@ export default {
       );
     },
     showBackButton() {
-      return ['article-viewer', 'messages', 'prechat-form', 'conversation-chat'].includes(
+      return ['article-viewer', 'messages', 'conversation-chat'].includes(
         this.$route.name
       );
     },
@@ -80,8 +80,8 @@ export default {
       return {};
     },
     showBranding() {
-      if (this.conversationMeta && this.conversationMeta.disable_branding) {
-        return false; // Sembunyikan Branding
+      if (this.conversationMeta?.disable_branding) {
+        return false;
       }
       const channelConfig = window.chatwootWebChannel || {};
       if (channelConfig.disableBranding || channelConfig.disable_branding) {

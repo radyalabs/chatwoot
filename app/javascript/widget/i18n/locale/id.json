@@ -16,6 +16,14 @@
     "ONLINE": "Bisa chat kapan saja",
     "OFFLINE": "Kami sedang tidak tersedia saat ini"
   },
+  "CONVERSATION_HISTORY": {
+    "TITLE": "Pesan",
+    "START":"Mulai Percakapan Baru",
+    "NEW": "Buat Percakapan",
+    "NEW_DESC": "Mulai Percakapan dengan Asisten Kami",
+    "LATEST": "Percakapan Sebelumnya",
+    "NEW_USER": "No conversations yet"
+  },
   "REPLY_TIME": {
     "IN_A_FEW_MINUTES": "Chat kapan saja, Selalu siap bantu 24 jam",
     "IN_A_FEW_HOURS": "Biasanya membalas dalam beberapa jam",

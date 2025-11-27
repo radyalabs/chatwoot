@@ -23,6 +23,7 @@ export const actions = {
       const { data } = await createConversationAPI(params);
       const { messages } = data;
       const conversationId = data.id;
+      commit('setActiveConversation', conversationId);
 
       if (!messages || messages.length === 0) {
         await sendMessageAPI(conversationId, 'Halo');
@@ -35,11 +36,10 @@ export const actions = {
       }
       dispatch('conversationAttributes/getAttributes', {}, { root: true });
       emitter.emit(ON_CONVERSATION_CREATED);
+      dispatch('loadConversation', conversationId);
       return conversationId;
-
     } catch (error) {
       throw error;
-
     } finally {
       commit('setConversationUIFlag', { isCreating: false });
     }
@@ -85,8 +85,6 @@ export const actions = {
       commit('updateMessageStatus', { id: tempId, status: 'failed' });
     }
   },
-
-
 
   sendAttachment: async ({ commit, getters }, params) => {
     const {
@@ -142,42 +140,93 @@ export const actions = {
 
   loadConversation: async ({ commit, dispatch }, conversationId) => {
     commit('setActiveConversation', conversationId);
+    dispatch('conversationAttributes/update', {
+      id: conversationId,
+      status: 'open',
+    }, { root: true });
     commit('clearMessages');
     await dispatch('fetchOldConversations');
     return conversationId;
   },
 
-  fetchOldConversations: async ({ commit, getters }, { before } = {}) => {
+  fetchOldConversations: async ({ commit, getters, state }, { before } = {}) => {
     try {
-      commit('setConversationListLoading', true);
+      console.log('[fetchOldConversations] START');
 
       const conversationId = getters.getSelectedConversationId;
-      if (!conversationId) return;
+      console.log('[fetchOldConversations] conversationId =', conversationId);
 
-      commit('initConversationObject', conversationId);
+      console.log('[fetchOldConversations] before =', before);
 
-      const {
-        data: { payload, meta },
-      } = await getMessagesAPI({ conversationId, before });
+      if (state.uiFlags.isFetchingList) {
+        console.log('[fetchOldConversations] Aborting: already fetching');
+        return;
+      }
+
+      commit('setConversationListLoading', true);
+
+      if (!conversationId) {
+        console.log('[fetchOldConversations] STOP: No conversationId');
+        return;
+      }
+
+      console.log('[fetchOldConversations] Calling API getMessagesAPI...');
+      const response = await getMessagesAPI({ conversationId, before });
+
+      console.log('[fetchOldConversations] API RESPONSE:', response.data);
+
+      const { payload, meta } = response.data;
+
+      console.log('[fetchOldConversations] payload length =', payload.length);
+      console.log('[fetchOldConversations] meta =', meta);
+
+      if (!Array.isArray(payload) || payload.length === 0) {
+        // mark that there are no more old messages to fetch
+        commit('setAllMessagesLoaded', true);
+        commit('setConversationListLoading', false);
+        console.log('[fetchOldConversations] No payload: marking all messages loaded');
+        return;
+      }
 
       const { contact_last_seen_at: lastSeen } = meta;
 
       const formattedMessages = getNonDeletedMessages({ messages: payload });
+      console.log('[fetchOldConversations] formattedMessages =', formattedMessages);
 
       commit('conversation/setMetaUserLastSeenAt', lastSeen, { root: true });
       commit('setMessagesInConversation', formattedMessages);
+
       commit('setConversationListLoading', false);
+      console.log('[fetchOldConversations] END');
     } catch (error) {
+      console.error('[fetchOldConversations] ERROR', error);
       commit('setConversationListLoading', false);
     }
   },
 
-  fetchAllConversations: async ({ commit }) => {
+  fetchAllConversations: async ({ commit, state }) => {
     try {
+      if (state.__is_fetching__) {
+        console.log('[fetchAllConversations] SKIPPED (already fetching)');
+        return;
+      }
+      state.__is_fetching__ = true;
+      console.log('[fetchAllConversations] START');
+
       const response = await getConversationsListAPI();
+
+      console.log('[fetchAllConversations] API RESPONSE:', response.data);
+
       commit('setConversationList', response.data.payload);
+
+      if (response.data.website_channel_config) {
+        commit('setConversationMeta', response.data.website_channel_config);
+      }
+      console.log('[fetchAllConversations] DONE');
     } catch (e) {
       console.error(e);
+    } finally {
+      state.__is_fetching__ = false;
     }
   },
 

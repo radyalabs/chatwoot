@@ -3,13 +3,13 @@
 
     <!-- HEADER -->
     <div class="p-4 text-white" :style="{ backgroundColor: widgetColor }">
-      <h1 class="text-lg">Messages</h1>
+      <h1 class="text-lg">{{ $t('CONVERSATION_HISTORY.TITLE') }}</h1>
     </div>
 
     <div class="flex-1 overflow-y-auto custom-scrollbar p-4 shadow-sm">
 
       <!-- NEW CHAT LABEL -->
-      <p class="text-lg text-slate-700 mb-2">Mulai Percakapan Baru</p>
+      <p class="text-lg text-slate-700 mb-2">{{ $t('CONVERSATION_HISTORY.START') }}</p>
 
       <!-- START NEW CHAT BOX -->
       <div 
@@ -17,8 +17,8 @@
         @click="onNewConversation"
       >
         <div>
-          <p class="text-slate-800">Buat Percakapan</p>
-          <p class="text-xs text-slate-500">Mulai Percakapan dengan Asisten Kami</p>
+          <p class="text-slate-800">{{ $t('CONVERSATION_HISTORY.NEW') }}</p>
+          <p class="text-xs text-slate-500">{{ $t('CONVERSATION_HISTORY.NEW_DESC') }}</p>
         </div>
 
         <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
@@ -31,7 +31,7 @@
       </div>
 
       <!-- RECENT LABEL -->
-      <p class="text-lg text-slate-700 mb-2">Percakapan Sebelumnya</p>
+      <p class="text-lg text-slate-700 mb-2">{{ $t('CONVERSATION_HISTORY.LATEST') }}</p>
 
       <!-- LOADING -->
       <div v-if="isLoading" class="flex flex-col items-center justify-center h-48 text-slate-400">
@@ -41,7 +41,7 @@
 
       <!-- NO DATA -->
       <div v-else-if="conversationsList.length === 0" class="text-center py-10 text-slate-500">
-        <p>No conversations yet.</p>
+        <p>{{ $t('CONVERSATION_HISTORY.NEW_USER') }}</p>
       </div>
 
       <!-- RECENT LIST -->
@@ -50,7 +50,7 @@
           v-for="chat in conversationsList"
           :key="chat.id"
           @click="openChat(chat.id)"
-          class="flex items-center justify-between py-3 shadow-sm rounded-xl cursor-pointer hover:bg-slate-50 px-1"
+          class="flex items-center justify-between py-3 shadow-sm rounded-xl cursor-pointer hover:bg-slate-50 px-1 h-20"
         >
           
           <!-- LEFT: Last message preview -->
@@ -161,7 +161,6 @@ export default {
           message: 'Halo',
           // Jika backend Anda butuh status custom, tambahkan di sini
         });
-        this.fetchAllConversations();
 
         if (newConversationId) {
           await this.loadConversation(newConversationId);
@@ -179,8 +178,20 @@ export default {
     }
   },
   async mounted() {
+    console.log('[ConversationList] mounted');
+
+    if (this.$store.state.conversation.__list_loaded__) {
+      console.log('[ConversationList] skip fetchAllConversations (already loaded)');
+      return;
+    }
+
+    console.log('[ConversationList] fetching conversations...');
     this.isLoading = true;
+
     await this.fetchAllConversations();
+
+    this.$store.state.conversation.__list_loaded__ = true;
+
     this.isLoading = false;
   }
 };

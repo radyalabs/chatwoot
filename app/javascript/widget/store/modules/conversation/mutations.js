@@ -6,11 +6,23 @@ export const mutations = {
     $state.conversations = {};
   },
   setConversationList($state, payload) {
-    $state.conversationsList = payload;
+    if (!Array.isArray(payload)) {
+      console.error("[setConversationList] payload bukan array!", payload);
+      $state.conversationsList = [];
+      return;
+    }
+
+    $state.conversationsList = payload
+      .slice() // clone
+      .sort((a, b) => b.timestamp - a.timestamp); // newest → oldest
   },
 
   setActiveConversation($state, conversationId) {
     $state.selectedConversationId = conversationId;
+  },
+
+  setAllMessagesLoaded(state, isLoaded) {
+    state.allMessagesLoaded = isLoaded;
   },
 
   clearMessages($state) {
@@ -40,13 +52,32 @@ export const mutations = {
     }
 
     const messages = $state.conversations[conversationId].messages;
-    const exists = messages.some(m =>
-      (m.id && m.id === message.id) ||
-      (m.content && m.content === message.content && !m.id)
-    );
-    if (!exists) {
+
+    // Update by ID
+    if (message.id) {
+      const index = messages.findIndex(m => m.id === message.id);
+      if (index !== -1) {
+        this._vm.$set(messages, index, {
+          ...messages[index],
+          ...message,
+        });
+      } else {
+        messages.push(message);
+      }
+    } else {
+      // Remove echo message
+      const echoIndex = messages.findIndex(m => !m.id && m.content === message.content);
+      if (echoIndex !== -1) {
+        messages.splice(echoIndex, 1);
+      }
       messages.push(message);
     }
+
+    // Sort
+    messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+    // FORCE rerender
+    $state.conversations[conversationId].messages = [...messages];
   },
 
   removeMessageById($state, id) {
@@ -92,11 +123,13 @@ export const mutations = {
   },
 
   setConversationListLoading($state, status) {
+    console.log('[mutation:setConversationListLoading] status =', status);
     $state.uiFlags.isFetchingList = status;
   },
 
   setMessagesInConversation($state, payload) {
     const conversationId = $state.selectedConversationId;
+    console.log('[mutation:setMessagesInConversation] conversationId =', conversationId);
     if (!conversationId) return;
 
     if (!$state.conversations[conversationId]) {
@@ -105,47 +138,80 @@ export const mutations = {
 
     const existing = $state.conversations[conversationId].messages || [];
 
+    console.log('[mutation:setMessagesInConversation] existing messages =', existing.length);
+    console.log('[mutation:setMessagesInConversation] incoming payload =', payload.length);
+
     const combined = [...payload, ...existing];
     const unique = combined.filter(
       (msg, index, self) =>
         index === self.findIndex(m => m.id === msg.id)
     );
 
+    console.log('[mutation:setMessagesInConversation] combined unique =', unique.length);
+
     $state.conversations[conversationId].messages = unique;
   },
 
 
   setMissingMessagesInConversation($state, payload) {
-    $state.conversation = payload;
+    const conversationId = $state.selectedConversationId;
+    if (!conversationId) return;
+
+    const existing = $state.conversations[conversationId]?.messages || [];
+
+    const merged = [...existing, ...payload];
+    const unique = merged.filter(
+      (msg, index, self) => index === self.findIndex(m => m.id === msg.id)
+    );
+
+    $state.conversations[conversationId].messages = unique;
   },
 
   updateMessage($state, { id, content_attributes }) {
-    $state.conversations[id] = {
-      ...$state.conversations[id],
-      content_attributes: {
-        ...($state.conversations[id].content_attributes || {}),
+    const conversationId = $state.selectedConversationId;
+    if (!conversationId) return;
+
+    const messages = $state.conversations[conversationId]?.messages || [];
+    const msg = messages.find(m => m.id === id);
+
+    if (msg) {
+      msg.content_attributes = {
+        ...msg.content_attributes,
         ...content_attributes,
-      },
-    };
+      };
+    }
   },
 
   updateMessageMeta($state, { id, meta }) {
-    const message = $state.conversations[id];
-    if (!message) return;
+    const conversationId = $state.selectedConversationId;
+    if (!conversationId) return;
 
-    const newMeta = message.meta ? { ...message.meta, ...meta } : { ...meta };
-    message.meta = { ...newMeta };
+    const messages = $state.conversations[conversationId]?.messages || [];
+    const msg = messages.find(m => m.id === id);
+
+    if (msg) {
+      msg.meta = {
+        ...msg.meta,
+        ...meta,
+      };
+    };
   },
 
-  setConversationMeta($state, payload) {
-    $state.meta = {
-      ...$state.meta,
+  setConversationMeta(state, payload) {
+    state.meta = {
+      ...state.meta,
       ...payload,
     };
   },
 
   deleteMessage($state, id) {
-    delete $state.conversations[id];
+    const conversationId = $state.selectedConversationId;
+    if (!conversationId) return;
+
+    const messages = $state.conversations[conversationId]?.messages || [];
+    $state.conversations[conversationId].messages = messages.filter(
+      msg => msg.id !== id
+    );
     // [VITE] In Vue 3 proxy objects, we can't delete properties by setting them to undefined
     // Instead, we have to use the delete operator
     // $state.conversations[id] = undefined;

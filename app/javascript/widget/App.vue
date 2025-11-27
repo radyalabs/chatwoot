@@ -294,9 +294,10 @@ export default {
           this.$store.dispatch('appConfig/toggleWidgetOpen', message.isOpen);
 
           if (message.isOpen) {
-            this.fetchAllConversations();
-            if (this.$route.name === 'conversation-list' || !this.$route.name) {
-               this.replaceRoute('conversation-list');
+            if (this.shouldShowPreChatForm) {
+              this.replaceRoute('prechat-form');
+            } else if (this.$route.name === 'conversation-list' || !this.$route.name) {
+              this.replaceRoute('conversation-list');
             }
           }
           if (!message.isOpen) {

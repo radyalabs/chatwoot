@@ -12,11 +12,17 @@ export const getters = {
   getAllMessagesLoaded: _state => _state.uiFlags.allMessagesLoaded,
   getIsCreating: _state => _state.uiFlags.isCreating,
   getIsAgentTyping: _state => _state.uiFlags.isAgentTyping,
-  getConversationMeta: _state => _state.meta,
+  getConversationMeta: state => ({
+    disable_branding: state.meta?.disable_branding ?? false,
+    userLastSeenAt: state.meta?.userLastSeenAt
+  }),
   getConversation: _state => _state.conversations,
   getConversationSize: _state => Object.keys(_state.conversations).length,
   // Mengambil List Percakapan (Header chat history)
-  getConversationsList: _state => _state.conversationsList || [],
+  getConversationsList: _state => {
+    if (!_state.conversationsList) return [];
+    return _state.conversationsList.slice(0, 4); // Ambil 4 paling akhir
+  },
   // Mengambil ID percakapan yang sedang dibuka sekarang
   getSelectedConversationId: _state => _state.selectedConversationId,
   getEarliestMessage: (_state, getters) => {

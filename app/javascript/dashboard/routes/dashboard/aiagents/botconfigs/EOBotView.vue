@@ -46,7 +46,7 @@
           <FileKnowledgeSources :data="data" />
         </div>
         <div v-show="activeIndex === 2" class="w-full">
-          <QnaKnowledgeSources :data="data" />
+          <QnaKnowledgeSources :data="data" context="event_organizer"/>
         </div>
 
         <!-- Custom Numbering Content -->

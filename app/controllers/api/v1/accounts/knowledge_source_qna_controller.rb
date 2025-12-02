@@ -106,7 +106,7 @@ class Api::V1::Accounts::KnowledgeSourceQnaController < Api::V1::Accounts::BaseC
 
   def qna_params
     params.require(:_json).map do |qna|
-      qna.permit(:id, :question, :answer)
+      qna.permit(:id, :question, :answer, :agent_id)
     end
   end
 end

@@ -236,7 +236,7 @@
 
         <!-- Tab 2: QnA Knowledge Sources -->
         <div v-show="activeIndex === 2" class="w-full min-w-0">
-          <QnaKnowledgeSources :data="data" />
+          <QnaKnowledgeSources :data="data" context="lead_generation"/>
         </div>
         
         <!-- Tab 3: Priorities -->

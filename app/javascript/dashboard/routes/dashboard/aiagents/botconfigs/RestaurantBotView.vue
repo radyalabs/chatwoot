@@ -1,6 +1,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed, watch } from 'vue';
 import googleSheetsExportAPI from '../../../../api/googleSheetsExport';
+import QnaKnowledgeSources from '../knowledge-sources/QnaKnowledgeSources.vue'
 import aiAgents from '../../../../api/aiAgents';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -38,6 +39,12 @@ const tabs = computed(() => [
   {
     key: '2',
     index: 2,
+    name: 'QnA',
+    icon: 'i-lucide-help-circle',
+  },
+  {
+    key: '3',
+    index: 3,
     name: 'Penomoran Otomatis',
     icon: 'i-lucide-notebook-tabs',
   },
@@ -646,8 +653,12 @@ function saveOrderSettings() {
           </div>
         </div>
 
-        <!-- Custom Numbering Content -->
         <div v-show="activeIndex === 2" class="w-full">
+          <QnaKnowledgeSources :data="data" context="restaurant"/>
+        </div>
+
+        <!-- Custom Numbering Content -->
+        <div v-show="activeIndex === 3" class="w-full">
           <CustomNumberingTab :data="data" />
         </div>
 

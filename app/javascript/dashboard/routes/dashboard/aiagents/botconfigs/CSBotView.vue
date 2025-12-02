@@ -55,7 +55,7 @@
           <CategoryTab :data="data" />
         </div>
         <div v-show="activeIndex === 4" class="w-full">
-          <PrioritiesTab :data="data" />
+          <PrioritiesTab :data="data" agent-type="customer_service"/>
         </div>
         <div v-show="activeIndex === 5" class="w-full">
           <ProductCatalogTab :data="data" />

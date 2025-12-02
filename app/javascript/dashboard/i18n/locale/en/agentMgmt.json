@@ -137,23 +137,13 @@
         "REMOVE": "Remove"
       },
       "CLASSIFICATION": {
-        "HEADER": "LeadGen Classification",
-        "HEADER_DESC": "Configure classification for LeadGen Bot output",
-        "ENABLE_TITLE": "Enable Classification Tab",
-        "ENABLE_DESC": "Add automatic classification column to LeadGen Bot output sheet",
-        "ENABLED_STATUS": "Classification tab enabled",
-        "ENABLED_DESC_DETAIL": "LeadGen Bot output sheet will include additional columns for classification results of each lead",
-        "DISABLED_STATUS": "Classification tab disabled",
-        "DISABLED_DESC_DETAIL": "LeadGen Bot output sheet will not include classification columns, only main lead data will be displayed"
-      },
-      "PRIORITY": {
-        "PRIORITY_TITLE": "Priorities",
-        "PRIORITY_PLACEHOLDER": "Priority type (e.g. Not Interested)",
-        "PRIORITY_CONDITION": "Priority Condition",
+        "CLASSIFICATION_TITLE": "Lead Classifications",
+        "CLASSIFICATION_PLACEHOLDER": "Classification type (e.g. low, medium, high)",
+        "CLASSIFICATION_CONDITION": "Classification Condition",
         "CONDITION_PLACEHOLDER": "Optional conditions or keywords...",
-        "ADD_PRIORITY": "Add Priority",
-        "SAVE_SUCCESS": "Successfully saved priorities",
-        "SAVE_ERROR": "Failed to save priorities"
+        "ADD_CLASSIFICATION": "Add Classification",
+        "SAVE_SUCCESS": "Successfully saved classifications",
+        "SAVE_ERROR": "Failed to save classifications"
       }
     },
     "COMMON": {

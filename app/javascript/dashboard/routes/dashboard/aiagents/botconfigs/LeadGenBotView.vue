@@ -239,113 +239,8 @@
           <QnaKnowledgeSources :data="data" />
         </div>
         
-        <!-- Cart Configuration Tab -->
+        <!-- Tab 3: Priorities -->
         <div v-show="activeIndex === 3" class="w-full">
-          <div class="flex flex-row gap-4">
-            <div class="flex-1 min-w-0 flex flex-col justify-stretch gap-6">
-              <div class="space-y-4">
-                <div>
-                  <!-- Cart Toggle -->
-                  <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
-                    <div class="flex items-center justify-between p-4">
-                      <div class="flex items-center">
-                        <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="stroke-green-600 dark:stroke-white i-lucide-tag">
-                            <circle cx="8" cy="21" r="1"/>
-                            <circle cx="19" cy="21" r="1"/>
-                            <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
-                          </svg> 
-                        </div>
-                        <div>
-                          <h3 class="font-medium">{{ $t('AGENT_MGMT.LEADGENBOT.CLASSIFICATION.ENABLE_TITLE') }}</h3>
-                          <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.LEADGENBOT.CLASSIFICATION.ENABLE_DESC') }}</p>
-                        </div>
-                      </div>
-                      <label class="inline-flex items-center cursor-pointer">
-                        <input type="checkbox" v-model="classificationEnabled" class="sr-only peer">
-                        <div
-                          class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
-                        </div>
-                      </label>
-                    </div>
-                    
-                    <!-- Cart Status Info -->
-                    <div class="border-t border-gray-200 dark:border-gray-700 p-4">
-                      <div v-if="classificationEnabled" class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
-                        <div class="flex items-start">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="stroke-green-600 dark:stroke-green-400 mt-0.5 mr-2 flex-shrink-0">
-                            <path d="M9 12l2 2 4-4"/>
-                            <circle cx="12" cy="12" r="10"/>
-                          </svg>
-                          <div>
-                            <p class="text-sm font-medium text-green-800 dark:text-green-200">
-                              {{ $t('AGENT_MGMT.LEADGENBOT.CLASSIFICATION.ENABLED_STATUS') }}
-                            </p>
-                            <p class="text-sm text-green-600 dark:text-green-300 mt-1">
-                              {{ $t('AGENT_MGMT.LEADGENBOT.CLASSIFICATION.ENABLED_DESC_DETAIL') }}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div v-else class="bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                        <div class="flex items-start">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="stroke-gray-500 dark:stroke-gray-400 mt-0.5 mr-2 flex-shrink-0">
-                            <circle cx="12" cy="12" r="10"/>
-                            <line x1="15" y1="9" x2="9" y2="15"/>
-                            <line x1="9" y1="9" x2="15" y2="15"/>
-                          </svg>
-                          <div>
-                            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                              {{ $t('AGENT_MGMT.LEADGENBOT.CLASSIFICATION.DISABLED_STATUS') }}
-                            </p>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                              {{ $t('AGENT_MGMT.LEADGENBOT.CLASSIFICATION.DISABLED_DESC_DETAIL') }}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="w-[240px] flex flex-col gap-3">
-              <div class="sticky top-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
-                <div class="flex items-center gap-3 mb-4">
-                  <div class="w-10 h-10 flex-shrink-0 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="i-lucide-tag w-5 h-5 text-green-600 dark:text-green-400">
-                        <circle cx="8" cy="21" r="1"/>
-                        <circle cx="19" cy="21" r="1"/>
-                        <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
-                      </svg>
-                  </div>
-                  <div>
-                    <h3 class="font-semibold text-slate-700 dark:text-slate-300">{{ $t('AGENT_MGMT.LEADGENBOT.CLASSIFICATION.HEADER') }}</h3>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ $t('AGENT_MGMT.LEADGENBOT.CLASSIFICATION.HEADER_DESC') }}</p>
-                  </div>
-                </div>
-                
-                <Button
-                  class="w-full"
-                  :is-loading="isSaving"
-                  :disabled="isSaving"
-                  @click="() => submitClassificationConfig()"
-                >
-                  <span class="flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    {{ $t('AGENT_MGMT.FORM_CREATE.SUBMIT') }}
-                  </span>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>       
-        <!-- Tab 4: Priorities -->
-        <div v-show="activeIndex === 4" class="w-full">
           <PrioritiesTab 
             v-if="data"
             :data="data" 
@@ -358,7 +253,7 @@
         </div>
 
         <!-- Custom Numbering Content -->
-        <div v-show="activeIndex === 5" class="w-full">
+        <div v-show="activeIndex === 4" class="w-full">
           <CustomNumberingTab :data="data" />
         </div>
 
@@ -394,27 +289,22 @@ const props = defineProps({
 
 const defaultLeadPriorities = [
   { 
-    name: 'Tidak Tertarik', 
-    condition: `- Pelanggan menolak produk setelah penjelasan
-- Budget tidak cocok dan tidak bisa dinego
-- Tidak responsif atau ingin mengakhiri percakapan
-- Sudah punya produk serupa dan puas
-- **Closing**: "Baik kak, terima kasih atas waktunya. Kalau ada yang berubah pikiran, jangan ragu kontak kami ya!"` 
+    name: 'low', 
+    condition: `- Pertanyaan umum tanpa minat beli jelas
+- Tidak memberikan info pribadi` 
   },
   { 
-    name: 'Tertarik dan Butuh Follow Up', 
-    condition: `- Pelanggan tertarik tapi bilang "pikir dulu", "diskusi sama yang lain"
-- Belum ada budget/timeline yang jelas
-- Minta dihubungi lagi nanti, butuh approval atasan/keluarga
-- Tertarik tapi belum siap commit
-- **Closing**: "Oke kak, kami catat dulu datanya ya. Tim admin kami akan follow up dalam 1x24 jam untuk update info terbaru!"`
+    name: 'medium', 
+    condition: `- Menanyakan fitur, manfaat, atau perbandingan produk
+- Menjelaskan kebutuhan atau masalah pribadi
+- Mencari rekomendasi produk`
   },
   { 
-    name: 'Tertarik dan Mau Buat Janji', 
-    condition: `- Pelanggan antusias dan mau langsung diskusi harga/detail
-- Siap set jadwal meeting/konsultasi/demo
-- Sudah qualified (budget, timeline, decision maker jelas)
-- Menunjukkan urgency tinggi untuk segera action`
+    name: 'high', 
+    condition: `- Menanyakan cara pembelian atau pemesanan
+- Meminta informasi harga dan ketersediaan produk
+- Memberikan detail kontak dengan sukarela
+- Menyatakan urgensi pembelian (“butuh segera”)`
   }
 ];
 
@@ -432,7 +322,7 @@ const leadgenAgentId = computed(() => {
   return getAgentIdByType('lead_generation');
 });
 
-// Define all 5 tabs for LeadGen Bot
+// Define all tabs for LeadGen Bot
 const tabs = computed(() => [
   {
     key: '0',
@@ -461,12 +351,6 @@ const tabs = computed(() => [
   {
     key: '4',
     index: 4,
-    name: 'Prioritas',
-    icon: 'i-lucide-star',
-  },
-  {
-    key: '5',
-    index: 5,
     name: 'Penomoran Otomatis',
     icon: 'i-lucide-notebook-tabs',
   },
@@ -689,113 +573,7 @@ async function syncProductColumns() {
     syncingColumns.value = false;
   }
 }
-const classificationEnabled = ref(false);
-// Submit Cart Configuration
-async function submitClassificationConfig() {
-  if (isSaving.value) return;
 
-  try {
-    isSaving.value = true;
-
-    // Save to backend
-    let flowData = props.data.display_flow_data;
-    const agentIndex = flowData.enabled_agents.indexOf('lead_generation');
-    
-    if (agentIndex === -1) {
-      useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.AGENT_NOT_FOUND'))
-      return;
-    }
-
-    // Initialize configurations if not exists
-    if (!flowData.agents_config[agentIndex].configurations) {
-      flowData.agents_config[agentIndex].configurations = {};
-    }
-    
-    // Update cart configuration
-    flowData.agents_config[agentIndex].configurations.classification_enabled = classificationEnabled.value;
-
-    const payload = {
-      flow_data: flowData,
-    };
-
-    await aiAgents.updateAgent(props.data.id, payload);
-
-    // Update local props data to maintain state after update
-    updateLocalPropsData('classification_enabled', classificationEnabled.value);
-
-    useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_SUCCESS'));
-  } catch (error) {
-    useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_ERROR'));
-  } finally {
-    isSaving.value = false;
-  }
-}
-// Function to update local props data after successful save
-function updateLocalPropsData(configType, configData) {
-  try {
-    const flowData = props.data.display_flow_data;
-    const agentIndex = flowData.enabled_agents.indexOf('lead_generation');
-    if (agentIndex === -1) return;
-    
-    // Initialize configurations if not exists
-    if (!flowData.agents_config[agentIndex].configurations) {
-      flowData.agents_config[agentIndex].configurations = {};
-    }
-    
-    // Update the specific configuration
-    flowData.agents_config[agentIndex].configurations[configType] = configData;
-    
-  } catch (error) {
-  }
-}
-function loadSavedConfiguration() {
-  try {
-    const flowData = props.data?.display_flow_data;
-    if (!flowData) {
-      console.log('No flow data available');
-      return;
-    }
-    
-    const agentIndex = flowData.enabled_agents?.indexOf('lead_generation');
-    
-    if (agentIndex === -1) {
-      console.log('Lead generation agent not found');
-      return;
-    }
-    
-    const config = flowData.agents_config?.[agentIndex]?.configurations;
-    
-    if (!config) {
-      console.log('No configuration found');
-      return;
-    }
-
-    // Load Classification Configuration
-    if (config.classification_enabled !== undefined) {
-      classificationEnabled.value = config.classification_enabled;
-      console.log('Loaded classification_enabled:', classificationEnabled.value);
-    } else {
-      console.log('classification_enabled not found in config');
-    }
-    
-  } catch (error) {
-    console.error('Error loading configuration:', error);
-  }
-}
-
-onMounted(async() => {
-  loadSavedConfiguration();
-});
-
-watch(
-  () => props.data,
-  (newData) => {
-    if (newData && newData.display_flow_data) {
-      loadSavedConfiguration();
-    }
-  },
-  { immediate: true, deep: true }
-);
 </script>
 
 <style scoped>

@@ -1,23 +1,36 @@
 <template>
-  <div class="flex flex-col h-full bg-white">
+  <div class="flex flex-col h-full bg-white overflow-hidden">
 
     <!-- HEADER -->
-    <div class="p-4 text-white" :style="{ backgroundColor: widgetColor }">
+    <div class="p-4 text-white flex justify-between items-center shadow-md z-10 shrink-0" :style="{ backgroundColor: widgetColor }">
       <h1 class="text-lg">{{ $t('CONVERSATION_HISTORY.TITLE') }}</h1>
+      <img 
+        v-if="avatarUrl"
+        :src="avatarUrl" 
+        alt="Logo" 
+        class="w-8 h-8 rounded-full bg-white object-contain p-0.5"
+      />
     </div>
 
-    <div class="flex-1 overflow-y-auto custom-scrollbar p-4 shadow-sm">
-
+    <div class="px-4 pt-4 pb-0 shrink-0 z-10 bg-white border-b border-slate-50">
+      <!-- WELCOME MESSAGE -->
+      <div v-if="welcomeTagline" class="mb-8 mt-2">
+        <h2 v-if="welcomeTitle" class="text-2xl font-bold text-slate-800 mb-1">
+          {{ welcomeTitle }}
+        </h2>
+        <p class="text-slate-600 leading-relaxed text-xs line-clamp-2">
+          {{ welcomeTagline }}
+        </p>
+      </div>
       <!-- NEW CHAT LABEL -->
-      <p class="text-lg text-slate-700 mb-2">{{ $t('CONVERSATION_HISTORY.START') }}</p>
-
+      <p class="text-sm text-slate-700 mb-2">{{ $t('CONVERSATION_HISTORY.START') }}</p>
       <!-- START NEW CHAT BOX -->
       <div 
         class="bg-slate-50 rounded-xl p-4 mb-6 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition"
         @click="onNewConversation"
       >
         <div>
-          <p class="text-slate-800">{{ $t('CONVERSATION_HISTORY.NEW') }}</p>
+          <p class="text-sm text-slate-800">{{ $t('CONVERSATION_HISTORY.NEW') }}</p>
           <p class="text-xs text-slate-500">{{ $t('CONVERSATION_HISTORY.NEW_DESC') }}</p>
         </div>
 
@@ -31,7 +44,10 @@
       </div>
 
       <!-- RECENT LABEL -->
-      <p class="text-lg text-slate-700 mb-2">{{ $t('CONVERSATION_HISTORY.LATEST') }}</p>
+      <p class="text-sm text-slate-700 mb-2">{{ $t('CONVERSATION_HISTORY.LATEST') }}</p>
+    </div>
+
+    <div class="flex-1 overflow-y-auto custom-scrollbar px-4 py-2 shadow-sm">
 
       <!-- LOADING -->
       <div v-if="isLoading" class="flex flex-col items-center justify-center h-48 text-slate-400">
@@ -41,7 +57,7 @@
 
       <!-- NO DATA -->
       <div v-else-if="conversationsList.length === 0" class="text-center py-10 text-slate-500">
-        <p>{{ $t('CONVERSATION_HISTORY.NEW_USER') }}</p>
+        <p class="text-sm">{{ $t('CONVERSATION_HISTORY.NEW_USER') }}</p>
       </div>
 
       <!-- RECENT LIST -->
@@ -50,7 +66,7 @@
           v-for="chat in conversationsList"
           :key="chat.id"
           @click="openChat(chat.id)"
-          class="flex items-center justify-between py-3 shadow-sm rounded-xl cursor-pointer hover:bg-slate-50 px-1 h-20"
+          class="flex items-center justify-between py-1 shadow-sm rounded-xl cursor-pointer hover:bg-slate-50 px-1 h-20"
         >
           
           <!-- LEFT: Last message preview -->
@@ -59,17 +75,18 @@
               {{ getLastMessageText(chat) }}
             </p>
 
-            <p class="text-xs text-slate-400">
-              {{ formatTime(chat.timestamp) }}
-            </p>
+            <div class="flex items-center gap-4">
+              <span class="text-xs text-slate-400">
+                {{ formatTime(chat.timestamp) }}
+              </span>
 
-            <!-- <p class="text-xs text-slate-400 flex items-center gap-1">
-              {{ formatTimestamp(chat.timestamp) }}
-              · 
-              <span :class="statusColor(chat.status)">
+              <span 
+                class="text-[10px] px-1.5 py-0.5 rounded border capitalize"
+                :class="getStatusClasses(chat.status)"
+              >
                 {{ getStatusLabel(chat.status) }}
               </span>
-            </p> -->
+            </div>
           </div>
 
           <!-- RIGHT: unread bubble -->
@@ -110,6 +127,16 @@ export default {
     }),
     conversationsList() {
       return this.getConversationsList;
+    },
+    welcomeTagline() {
+      return window.chatwootWebChannel?.welcomeTagline || '';
+    },
+    welcomeTitle() {
+      return window.chatwootWebChannel?.welcomeTitle || '';
+    },
+    avatarUrl() {
+      const url = window.chatwootWebChannel?.avatarUrl || '';
+      return url.replace('0.0.0.0', '127.0.0.1');
     }
   },
   methods: {
@@ -118,7 +145,35 @@ export default {
     formatTime(timestamp) {
       if (!timestamp) return '';
       const date = new Date(timestamp * 1000);
-      return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+
+      return new Intl.DateTimeFormat('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false // Pakai format 24 jam (14:00), ubah ke true jika ingin AM/PM
+      }).format(date);
+    },
+
+    getStatusLabel(status) {
+      const map = {
+        open: 'Berjalan',
+        resolved: 'Selesai',
+        pending: 'Menunggu',
+        snoozed: 'Ditunda'
+      };
+      return map[status] || status;
+    },
+
+    getStatusClasses(status) {
+      if (status === 'open') {
+        return 'bg-green-50 text-green-600 border-green-200';
+      }
+      if (status === 'resolved') {
+        return 'bg-slate-100 text-slate-500 border-slate-200';
+      }
+      if (status === 'pending') {
+        return 'bg-yellow-50 text-yellow-600 border-yellow-200';
+      }
+      return 'bg-gray-50 text-gray-500 border-gray-200';
     },
 
     getLastMessageText(chat) {

@@ -43,7 +43,12 @@ export default {
   computed: {
     ...mapGetters({
       widgetColor: 'appConfig/getWidgetColor',
-    })
+    }),
+    computedAvatarUrl() {
+      if (this.avatarUrl) return this.avatarUrl.replace('0.0.0.0', '127.0.0.1');
+      const url = window.chatwootWebChannel?.avatarUrl || '';
+      return url.replace('0.0.0.0', '127.0.0.1');
+    },
   },
   methods: {
     onBackButtonClick() {

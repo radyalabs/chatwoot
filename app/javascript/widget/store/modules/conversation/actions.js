@@ -259,9 +259,11 @@ export const actions = {
 
       if (!missingMessages.length) return;
 
-      commit('appendMessagesToConversation', {
-        conversationId,
-        messages: missingMessages,
+      missingMessages.forEach(message => {
+        commit('pushMessageToConversation', {
+          conversation_id: conversationId,
+          ...message,
+        });
       });
 
       commit('conversation/setMetaUserLastSeenAt', lastSeen, { root: true });

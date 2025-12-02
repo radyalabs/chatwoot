@@ -44,6 +44,7 @@ export const mutations = {
     }
   },
   pushMessageToConversation($state, message) {
+    console.log('%c[MUTATION] addOrUpdateMessage:', 'color: purple', message);
     const conversationId = $state.selectedConversationId;
     if (!conversationId) return;
 
@@ -52,6 +53,16 @@ export const mutations = {
     }
 
     const messages = $state.conversations[conversationId].messages;
+    if (message.id && !message.is_temp) {
+      const duplicateTempIndex = messages.findIndex(
+        m => m.is_temp && m.content === message.content
+      );
+      
+      if (duplicateTempIndex !== -1) {
+        console.log('[MUTATION] Menghapus pesan temp duplikat:', messages[duplicateTempIndex]);
+        messages.splice(duplicateTempIndex, 1);
+      }
+    }
 
     // Update by ID
     if (message.id) {
@@ -99,6 +110,9 @@ export const mutations = {
     if (msg) msg.status = status;
   },
 
+  clearSelectedConversation(state) {
+    state.selectedConversationId = null;
+  },
 
   updateAttachmentMessageStatus($state, { message, tempId }) {
     const { id } = message;
@@ -141,7 +155,8 @@ export const mutations = {
     console.log('[mutation:setMessagesInConversation] existing messages =', existing.length);
     console.log('[mutation:setMessagesInConversation] incoming payload =', payload.length);
 
-    const combined = [...payload, ...existing];
+    const combined = [...existing, ...payload];
+    combined.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     const unique = combined.filter(
       (msg, index, self) =>
         index === self.findIndex(m => m.id === msg.id)

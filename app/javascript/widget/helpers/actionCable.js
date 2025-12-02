@@ -7,10 +7,20 @@ import { CHATWOOT_ON_MESSAGE } from '../constants/sdkEvents';
 import { emitter } from '../../shared/helpers/mitt';
 
 const isMessageInActiveConversation = (getters, message) => {
-  const { conversation_id: conversationId } = message;
-  const activeConversationId =
-    getters['conversationAttributes/getConversationParams'].id;
-  return conversationId === activeConversationId;
+  const { conversation_id: incomingConvId } = message;
+  
+  // Ambil ID dari UI state (yang sedang dilihat user)
+  const uiConversationId = getters['conversation/getSelectedConversationId'];
+  
+  // Ambil ID dari Attributes (backup)
+  const attrConversationId = getters['conversationAttributes/getConversationParams']?.id;
+
+  // Cek apakah pesan cocok dengan SALAH SATU dari ID tersebut
+  const isActive = 
+    Number(incomingConvId) === Number(uiConversationId) || 
+    Number(incomingConvId) === Number(attrConversationId);
+
+  return isActive;
 };
 
 class ActionCableConnector extends BaseActionCableConnector {
@@ -25,6 +35,11 @@ class ActionCableConnector extends BaseActionCableConnector {
       'conversation.created': this.onConversationCreated,
       'presence.update': this.onPresenceUpdate,
       'contact.merged': this.onContactMerge,
+    };
+    console.log('%c[DEBUG AC] ActionCableConnector INIT', 'color: green');
+
+    this.onReceived = (event, data) => {
+      console.log('%c[DEBUG AC] RAW EVENT RECEIVED:', 'color: cyan', event, data);
     };
   }
 
@@ -52,14 +67,11 @@ class ActionCableConnector extends BaseActionCableConnector {
   };
 
   onMessageCreated = async data => {
+    console.log('%c[DEBUG AC] onMessageCreated CALLED:', 'color: orange', data);
     const getters = this.app.$store.getters;
     let currentConvId = getters['conversationAttributes/getConversationParams'].id;
 
     if (!currentConvId && data.conversation_id) {
-      await this.app.$store.dispatch('conversationAttributes/update', {
-        id: data.conversation_id,
-        status: data.status || 'open',
-      });
       currentConvId = data.conversation_id;
     }
 
@@ -67,7 +79,11 @@ class ActionCableConnector extends BaseActionCableConnector {
       return;
     }
 
-    console.log('[AC] Message ACCEPTED, adding to store...');
+    console.log(
+      '%c[DISPATCH] addOrUpdateMessage CALLED:',
+      'color: #09f',
+      data
+    );
     this.app.$store
       .dispatch('conversation/addOrUpdateMessage', data)
       .then(() => emitter.emit(ON_AGENT_MESSAGE_RECEIVED));
@@ -84,6 +100,7 @@ class ActionCableConnector extends BaseActionCableConnector {
   };
 
   onMessageUpdated = data => {
+    console.log('%c[DEBUG AC] onMessageUpdated CALLED:', 'color: orange', data);
     const getters = this.app.$store.getters;
 
     if (!isMessageInActiveConversation(getters, data)) {
@@ -100,8 +117,8 @@ class ActionCableConnector extends BaseActionCableConnector {
 
     console.log('[AC] REALTIME NEW MESSAGE', data);
     const convId = data.conversation_id;
-    this.app.$store.commit('conversation/pushMessageToConversation', {
-      conversation_id: convId,
+    this.app.$store.commit('conversation/updateMessage', {
+      id: data.id,
       ...data,
     });
   };

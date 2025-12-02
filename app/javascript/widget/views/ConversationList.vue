@@ -180,6 +180,9 @@ export default {
   async mounted() {
     console.log('[ConversationList] mounted');
 
+    // clear selected conversation
+    this.$store.commit('conversation/clearSelectedConversation');
+
     if (this.$store.state.conversation.__list_loaded__) {
       console.log('[ConversationList] skip fetchAllConversations (already loaded)');
       return;

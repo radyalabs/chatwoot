@@ -44,19 +44,25 @@ export default {
     ...mapGetters({
       widgetColor: 'appConfig/getWidgetColor',
     })
-    // isOnline() {
-    //   const { workingHoursEnabled } = this.channelConfig;
-    //   const anyAgentOnline = this.availableAgents.length > 0;
-
-    //   if (workingHoursEnabled) {
-    //     return this.isInBetweenTheWorkingHours;
-    //   }
-    //   return anyAgentOnline;
-    // },
   },
   methods: {
     onBackButtonClick() {
+      try {
+        if (this.$store && this.$store.state && this.$store.state.conversation) {
+          this.$store.state.conversation.__list_loaded__ = false;
+        }
+      } catch (e) {
+        // ignore if state shape differs
+        console.warn('[ChatHeader] failed to reset __list_loaded__ flag', e);
+      }
+
+      // navigate back to conversation list
       this.replaceRoute('conversation-list');
+
+      // optionally trigger an immediate fetch (harmless if ConversationList also fetches on mount)
+      if (this.$store && this.$store.dispatch) {
+       this.$store.dispatch('conversation/fetchAllConversations');
+      }
     },
   },
 };

@@ -12,33 +12,61 @@ export default {
       default: null,
     },
   },
+  data() {
+    return {
+      pollingInterval: null,
+    };
+  },
   computed: {
     ...mapGetters({
       groupedMessages: 'conversation/getGroupedConversation',
     }),
   },
-
   watch: {
     conversationId: {
       immediate: true,
       async handler(newId) {
+        this.stopPolling();
         if (newId && newId !== 'new') {
           await this.fetchSpecificConversation(newId);
+          this.startPolling();
         }
       },
     },
   },
 
   methods: {
-    ...mapActions('conversation', ['loadConversation','setUserLastSeen']),
+    ...mapActions('conversation', ['loadConversation','setUserLastSeen', 'syncLatestMessages']),
 
     async fetchSpecificConversation(id) {
       await this.loadConversation(id);
       this.setUserLastSeen();
     },
+    startPolling() {
+      // Cek pesan baru setiap 4 detik
+      this.pollingInterval = setInterval(() => {
+        if (this.conversationId && this.conversationId !== 'new') {
+          this.syncLatestMessages();
+        }
+      }, 4000);
+    },
+
+    stopPolling() {
+      if (this.pollingInterval) {
+        clearInterval(this.pollingInterval);
+        this.pollingInterval = null;
+      }
+    },
   },
 
   mounted() {
+    if (this.conversationId && this.conversationId !== 'new') {
+      this.startPolling();
+    }
+  },
+
+  beforeUnmount() { // Gunakan beforeDestroy jika Vue 2
+    this.stopPolling();
   },
 };
 </script>

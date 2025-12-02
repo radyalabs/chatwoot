@@ -12,7 +12,7 @@ end
 json.website_channel_config do
   current_account = @contact_inbox.inbox.account
   tx = current_account.transactions.where(status: ['paid', 'success', 'completed', 'Dibayar']).order(expiry_date: :desc).first
-  is_premium = ['Pertamax', 'Pertamax Turbo'].include?(tx&.package_name)
+  is_premium = ['Pertamax', 'Pertamax Turbo', 'Custom'].include?(tx&.package_name)
   
   json.disable_branding is_premium
 end

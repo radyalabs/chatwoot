@@ -18,7 +18,7 @@ json.meta do
     tx = @conversation.account.transactions.where(status: ['paid', 'success', 'completed', 'Dibayar']).order(expiry_date: :desc).first
     
     # 2. Cek apakah paketnya Premium
-    is_premium = ['Pertamax', 'Pertamax Turbo'].include?(tx&.package_name)
+    is_premium = ['Pertamax', 'Pertamax Turbo', 'Custom'].include?(tx&.package_name)
 
     # 3. Kirim hasilnya saja
     json.disable_branding is_premium

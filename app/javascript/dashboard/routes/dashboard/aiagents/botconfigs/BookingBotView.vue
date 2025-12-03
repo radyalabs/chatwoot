@@ -51,6 +51,30 @@ const tabs = computed(() => [
   },
 ]);
 
+// follow-up
+const followUpConfig = reactive({
+  enabled: false,
+  delay: '',
+  message: ''
+});
+
+// temperature bot
+const creativityLevel = ref('normal'); // Default value
+
+const creativityOptions = [
+  { label: 'Tidak sama sekali', value: 'none' },
+  { label: 'Minim', value: 'low' },
+  { label: 'Normal', value: 'normal' },
+  { label: 'Lebih tinggi', value: 'high' },
+  { label: 'Maksimal', value: 'max' },
+];
+
+const idleConfig = reactive({
+  duration: '',      
+  action: 'resolve', // 'message' atau 'resolve'
+  message: ''        // Pesan jika action === 'message'
+});
+
 // Steps: 'auth', 'connected', 'sheetConfig'
 const step = computed(() => props.googleSheetsAuth.step);
 const loading = computed(() => props.googleSheetsAuth.loading);
@@ -247,6 +271,17 @@ async function save() {
   const configData = {
     selectedTemplate: selectedTemplate.value,
     minDuration: minDuration.value,
+    creativityLevel: creativityLevel.value,
+    idleSettings: {
+      duration: idleConfig.duration,
+      action: idleConfig.action,
+      message: idleConfig.message
+    },
+    followUp: {
+      enabled: followUpConfig.enabled,
+      delay: followUpConfig.delay,
+      message: followUpConfig.message
+    },
   };
   try {
     isSaving.value = true;
@@ -262,7 +297,9 @@ async function save() {
       configData.minDuration;
     flowData.agents_config[agent_index].configurations.industry =
       configData.selectedTemplate;
-    
+    flowData.agents_config[agent_index].configurations.idle_settings = configData.idleSettings;
+    flowData.agents_config[agent_index].configurations.creativity_level = configData.creativityLevel;
+    flowData.agents_config[agent_index].configurations.follow_up = configData.followUp;
     const payload = {
       flow_data: flowData,
     };
@@ -316,6 +353,20 @@ onMounted(async () => {
       }
       if (config?.industry) {
         selectedTemplate.value = config.industry;
+      }
+      if (config?.creativity_level) {
+        creativityLevel.value = config.creativity_level;
+      }
+      if (config?.idle_settings) {
+        idleConfig.enabled = config.idle_settings.enabled || false;
+        idleConfig.duration = config.idle_settings.duration || '';
+        idleConfig.action = config.idle_settings.action || 'resolve';
+        idleConfig.message = config.idle_settings.message || '';
+      }
+      if (config?.follow_up) {
+        followUpConfig.enabled = config.follow_up.enabled || false;
+        followUpConfig.delay = config.follow_up.delay || '';
+        followUpConfig.message = config.follow_up.message || '';
       }
     }
   }
@@ -438,10 +489,10 @@ onMounted(async () => {
               <div v-else-if="bookingStep === 'sheetConfig'">
                 <div class="space-y-6">
                   <!-- Input Sheet Section - Schedule Data -->
-                  <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-6 mb-6 border border-blue-200 dark:border-blue-800">
-                    <div class="flex items-start justify-between">
+                  <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg mb-6 border border-blue-200 dark:border-blue-800">
+                    <div class="flex items-start justify-between p-6">
                       <div class="flex-1">
-                        <div class="flex items-center mb-3">
+                        <div class="flex items-center">
                           <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
                             <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
                               <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
@@ -472,7 +523,7 @@ onMounted(async () => {
                     </div>
 
                     <!-- Schedule Column Sync Section -->
-                    <div class="border-t border-blue-200 dark:border-blue-700 pt-6">
+                    <div class="border-t border-blue-200 dark:border-blue-700 p-6">
                       <div class="mb-4">
                         <h4 class="text-md font-medium text-slate-900 dark:text-slate-25 mb-2">{{ $t('AGENT_MGMT.BOOKING_BOT.SCHEDULE_CONFIGURATION') }}</h4>
                         <p class="text-sm text-blue-700 dark:text-blue-300">
@@ -491,15 +542,6 @@ onMounted(async () => {
                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                               v-model="minDuration" 
                             />
-                          </div>
-                          <div class="flex-1">
-                            <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.BOOKING_BOT.INDUSTRY_TEMPLATE') }}</label>
-                            <select 
-                              v-model="selectedTemplate" 
-                              class="w-full mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                            >
-                              <option v-for="tpl in templates" :key="tpl.value" :value="tpl.value">{{ tpl.label }}</option>
-                            </select>
                           </div>
                         </div>
 
@@ -546,7 +588,7 @@ onMounted(async () => {
                   </div>
 
                   <!-- Output Sheet Section - Booking Results -->
-                  <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-6 mb-6 border border-blue-200 dark:border-blue-800">
+                  <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-6 mb-2 border border-blue-200 dark:border-blue-800">
                     <div class="flex items-center justify-between">
                       <div class="flex items-center">
                         <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
@@ -573,38 +615,208 @@ onMounted(async () => {
                       </div>
                     </div>
                   </div>
-                </div>
+
+                  <!-- Bot Temperature Section -->
+                  <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
+                    <div class="flex items-start justify-between p-6">
+                      <div class="flex items-center">
+                        <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
+                            <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 class="font-medium text-slate-900 dark:text-slate-25">Tingkat Kreativitas</h3>
+                          <p class="text-sm text-gray-500 mt-1">Tentukan seberapa kreatif bot dalam merespons percakapan di luar skenario booking</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                      <div class="border-t border-gray-200 dark:border-gray-700 p-6">
+                        <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">Skala Kreativitas</label>
+                        <select 
+                          v-model="creativityLevel" 
+                          class="w-full mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        >
+                          <option v-for="opt in creativityOptions" :key="opt.value" :value="opt.value">
+                            {{ opt.label }}
+                          </option>
+                        </select>
+                      </div>
+                  </div>
+
+                  <!-- Idle State Section -->
+                  <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
+                    <div class="flex items-center justify-between p-6">
+                      <div class="flex items-center">
+                        <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 class="font-medium text-slate-900 dark:text-slate-25">Pengaturan Idle Chat</h3>
+                          <p class="text-sm text-gray-500 mt-1">Atur tindakan otomatis jika tidak ada aktivitas chat</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div
+                      class="border-t border-gray-200 dark:border-gray-700 p-6 space-y-6 transition-all duration-200 ease-in-out"
+                    >
+                      <div>
+                        <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
+                          Batas Waktu Idle (Menit)
+                        </label>
+                        <div class="relative">
+                          <input 
+                            type="number" 
+                            min="1"
+                            v-model="idleConfig.duration"
+                            placeholder="Contoh: 15" 
+                            class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm h-10 !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out" 
+                          />
+                          <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">menit tanpa aktivitas</span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label class="block text-sm font-medium mb-3 text-slate-900 dark:text-slate-25">
+                          Aksi saat Idle
+                        </label>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                          <div class="flex items-center">
+                            <input 
+                              id="action-resolve" 
+                              type="radio" 
+                              value="resolve" 
+                              v-model="idleConfig.action"
+                              class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                            >
+                            <label for="action-resolve" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                              Langsung Resolve Chat
+                            </label>
+                          </div>
+                          
+                          <div class="flex items-center">
+                            <input 
+                              id="action-message" 
+                              type="radio" 
+                              value="message" 
+                              v-model="idleConfig.action"
+                              class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                            >
+                            <label for="action-message" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                              Kirim Pesan Follow Up
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div v-if="idleConfig.action === 'message'" class="animate-fadeIn">
+                        <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
+                          Pesan Idle
+                        </label>
+                        <textarea 
+                          v-model="idleConfig.message"
+                          rows="3"
+                          placeholder="Halo, apakah Anda masih di sana? Sesi ini akan segera berakhir jika tidak ada respon."
+                          class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out"
+                        ></textarea>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Follow Up Section -->
+                  <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
+                    <div class="flex items-center justify-between p-6">
+                      <div class="flex items-center">
+                        <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
+                            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                            <path d="M4 2C2.8 3.7 2 5.7 2 8" />
+                            <path d="M22 8c0-2.3-.8-4.3-2-6" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 class="font-medium text-slate-900 dark:text-slate-25">Follow Up Pesanan</h3>
+                          <p class="text-sm text-gray-500 mt-1">Kirim pesan pengingat otomatis kepada pelanggan setelah booking</p>
+                        </div>
+                      </div>
+                      
+                      <label class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" v-model="followUpConfig.enabled" class="sr-only peer">
+                        <div class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
+                        </div>
+                      </label>
+                    </div>
+                    
+                    <div 
+                      v-if="followUpConfig.enabled" 
+                      class="border-t border-gray-200 dark:border-gray-700 p-6 space-y-4 transition-all duration-200 ease-in-out"
+                    >
+                      <div>
+                        <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
+                          Waktu Follow Up (Menit)
+                        </label>
+                        <div class="relative">
+                          <input 
+                            type="number" 
+                            min="1"
+                            v-model="followUpConfig.delay"
+                            placeholder="Contoh: 30" 
+                            class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm h-10 !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out" 
+                          />
+                          <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">menit setelah booking</span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
+                          Pesan Follow Up
+                        </label>
+                        <textarea 
+                          v-model="followUpConfig.message"
+                          rows="4"
+                          placeholder="Halo kak, terima kasih sudah melakukan booking. Apakah ada kendala atau pertanyaan lain?"
+                          class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out"
+                        ></textarea>
+                        <p class="text-xs text-gray-500 mt-1">Pesan ini akan dikirimkan otomatis ke pelanggan melalui WhatsApp sesuai waktu yang ditentukan.</p>
+                      </div>
+                    </div>
+                  </div>
               </div>
             </div>
-            
-            <div v-if="bookingStep === 'sheetConfig'" class="w-[240px] flex flex-col gap-3">
-              <div class="sticky top-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
-                <div class="flex items-center gap-3 mb-4">
-                  <div class="w-10 h-10 flex-shrink-0 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">                    <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 class="font-semibold text-slate-700 dark:text-slate-300">{{ $t('AGENT_MGMT.BOOKING_BOT.GENERAL_TAB') }}</h3>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">Configure booking settings</p>
-                  </div>
+          </div>
+          <div v-if="bookingStep === 'sheetConfig'" class="w-[240px] flex flex-col gap-3">
+            <div class="sticky top-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 flex-shrink-0 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">                    <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  </svg>
                 </div>
-                
-                <Button
-                  class="w-full"
-                  :is-loading="isSaving"
-                  :disabled="isSaving"
-                  @click="() => save()"
-                >
-                  <span class="flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    {{ $t('AGENT_MGMT.BOOKING_BOT.SAVE_BTN') }}
-                  </span>
-                </Button>
+                <div>
+                  <h3 class="font-semibold text-slate-700 dark:text-slate-300">{{ $t('AGENT_MGMT.BOOKING_BOT.CONFIGURE') }}</h3>
+                  <p class="text-sm text-slate-500 dark:text-slate-400">{{ $t('AGENT_MGMT.BOOKING_BOT.CONFIGURE_DESC') }}</p>
+                </div>
               </div>
+              
+              <Button
+                class="w-full"
+                :is-loading="isSaving"
+                :disabled="isSaving"
+                @click="() => save()"
+              >
+                <span class="flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  {{ $t('AGENT_MGMT.BOOKING_BOT.SAVE_BTN') }}
+                </span>
+              </Button>
             </div>
           </div>
         </div>
@@ -627,6 +839,7 @@ onMounted(async () => {
           <CustomNumberingTab :data="data" />
         </div>
       </div>
+    </div>
     </div>
   </div>
 </template>

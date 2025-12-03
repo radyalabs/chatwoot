@@ -226,21 +226,232 @@
           </div>
         </div>
 
-        <!-- Tab 1: File Knowledge Sources -->
+        <!-- Tab 1: Bot Configuration -->
         <div v-show="activeIndex === 1" class="w-full min-w-0">
+          <div class="flex flex-row gap-4">
+            <div class="flex-1 min-w-0 flex flex-col justify-stretch gap-6">
+              
+              <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
+                <div class="flex items-start justify-between p-6">
+                  <div class="flex items-center">
+                    <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
+                        <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="font-medium text-slate-900 dark:text-slate-25">Tingkat Kreativitas</h3>
+                      <p class="text-sm text-gray-500 mt-1">Tentukan seberapa kreatif bot dalam merespons percakapan</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="border-t border-gray-200 dark:border-gray-700 p-6">
+                  <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">Skala Kreativitas</label>
+                  <div class="relative">
+                    <select 
+                      v-model="creativityLevel" 
+                      class="w-full mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      <option class="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" v-for="opt in creativityOptions" :key="opt.value" :value="opt.value">
+                        {{ opt.label }}
+                      </option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500 dark:text-gray-400">
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 p-6 bg-white dark:bg-transparent">
+                <div class="flex items-center mb-6">
+                  <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="font-medium text-slate-900 dark:text-slate-25">Pengaturan Idle Chat</h3>
+                    <p class="text-sm text-gray-500 mt-1">Atur tindakan otomatis jika tidak ada aktivitas chat</p>
+                  </div>
+                </div>
+                
+                <div class="space-y-6">
+                  <div>
+                    <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
+                      Batas Waktu Idle (Menit)
+                    </label>
+                    <div class="relative">
+                      <input 
+                        type="number" 
+                        min="1"
+                        v-model="idleConfig.duration"
+                        placeholder="Contoh: 15" 
+                        class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm h-10 !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out" 
+                      />
+                      <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">menit tanpa aktivitas</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-medium mb-3 text-slate-900 dark:text-slate-25">
+                      Aksi saat Idle
+                    </label>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                      <div class="flex items-center">
+                        <input 
+                          id="action-resolve" 
+                          type="radio" 
+                          value="resolve" 
+                          v-model="idleConfig.action"
+                          class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        >
+                        <label for="action-resolve" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">
+                          Langsung Resolve Chat
+                        </label>
+                      </div>
+                      <div class="flex items-center">
+                        <input 
+                          id="action-message" 
+                          type="radio" 
+                          value="message" 
+                          v-model="idleConfig.action"
+                          class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        >
+                        <label for="action-message" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">
+                          Kirim Pesan Follow Up
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div v-if="idleConfig.action === 'message'" class="animate-fadeIn">
+                    <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
+                      Pesan Idle
+                    </label>
+                    <textarea 
+                      v-model="idleConfig.message"
+                      rows="3"
+                      placeholder="Halo, apakah Anda masih di sana? Sesi ini akan segera berakhir jika tidak ada respon."
+                      class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out"
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
+                <div class="flex items-center justify-between p-6">
+                  <div class="flex items-center">
+                    <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
+                        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                        <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                        <path d="M4 2C2.8 3.7 2 5.7 2 8" />
+                        <path d="M22 8c0-2.3-.8-4.3-2-6" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="font-medium text-slate-900 dark:text-slate-25">Follow Up Pesanan</h3>
+                      <p class="text-sm text-gray-500 mt-1">Kirim pesan pengingat otomatis kepada pelanggan</p>
+                    </div>
+                  </div>
+                  
+                  <label class="inline-flex items-center cursor-pointer">
+                    <input type="checkbox" v-model="followUpConfig.enabled" class="sr-only peer">
+                    <div class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
+                    </div>
+                  </label>
+                </div>
+                
+                <div 
+                  v-if="followUpConfig.enabled" 
+                  class="border-t border-gray-200 dark:border-gray-700 p-6 space-y-4 transition-all duration-200 ease-in-out"
+                >
+                  <div>
+                    <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
+                      Waktu Follow Up (Menit)
+                    </label>
+                    <div class="relative">
+                      <input 
+                        type="number" 
+                        min="1"
+                        v-model="followUpConfig.delay"
+                        placeholder="Contoh: 30" 
+                        class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm h-10 !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out" 
+                      />
+                      <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">menit setelah interaksi</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
+                      Pesan Follow Up
+                    </label>
+                    <textarea 
+                      v-model="followUpConfig.message"
+                      rows="4"
+                      placeholder="Halo kak, apakah ada kendala atau pertanyaan lain terkait produk kami?"
+                      class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out"
+                    ></textarea>
+                    <p class="text-xs text-gray-500 mt-1">Pesan ini akan dikirimkan otomatis ke pelanggan melalui WhatsApp sesuai waktu yang ditentukan.</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="w-[240px] flex flex-col gap-3">
+              <div class="sticky top-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="w-10 h-10 flex-shrink-0 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="font-semibold text-slate-700 dark:text-slate-300">{{ $t('AGENT_MGMT.BOOKING_BOT.CONFIGURE') }}</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ $t('AGENT_MGMT.BOOKING_BOT.CONFIGURE_DESC') }}</p>
+                  </div>
+                </div>
+                
+                <Button
+                  class="w-full"
+                  :is-loading="isSaving"
+                  :disabled="isSaving"
+                  @click="() => saveSettings()"
+                >
+                  <span class="flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    {{ $t('AGENT_MGMT.BOOKING_BOT.SAVE_BTN') }}
+                  </span>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: File Knowledge Sources -->
+        <div v-show="activeIndex === 2" class="w-full min-w-0">
           <FileKnowledgeSources 
             :data="data" 
             context="lead_generation"
           />
         </div>
 
-        <!-- Tab 2: QnA Knowledge Sources -->
-        <div v-show="activeIndex === 2" class="w-full min-w-0">
+        <!-- Tab 3: QnA Knowledge Sources -->
+        <div v-show="activeIndex === 3" class="w-full min-w-0">
           <QnaKnowledgeSources :data="data" />
         </div>
         
         <!-- Cart Configuration Tab -->
-        <div v-show="activeIndex === 3" class="w-full">
+        <div v-show="activeIndex === 4" class="w-full">
           <div class="flex flex-row gap-4">
             <div class="flex-1 min-w-0 flex flex-col justify-stretch gap-6">
               <div class="space-y-4">
@@ -345,7 +556,7 @@
           </div>
         </div>       
         <!-- Tab 4: Priorities -->
-        <div v-show="activeIndex === 4" class="w-full">
+        <div v-show="activeIndex === 5" class="w-full">
           <PrioritiesTab 
             v-if="data"
             :data="data" 
@@ -358,7 +569,7 @@
         </div>
 
         <!-- Custom Numbering Content -->
-        <div v-show="activeIndex === 5" class="w-full">
+        <div v-show="activeIndex === 6" class="w-full">
           <CustomNumberingTab :data="data" />
         </div>
 
@@ -368,7 +579,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, ref, watch, onMounted, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Button from 'dashboard/components-next/button/Button.vue';
 import FileKnowledgeSources from '../knowledge-sources/FileKnowledgeSources.vue'
@@ -418,6 +629,31 @@ const defaultLeadPriorities = [
   }
 ];
 
+// Config Tingkat Kreativitas
+const creativityLevel = ref('normal');
+const creativityOptions = [
+  { label: 'Tidak sama sekali', value: 'none' },
+  { label: 'Minim', value: 'low' },
+  { label: 'Normal', value: 'normal' },
+  { label: 'Lebih tinggi', value: 'high' },
+  { label: 'Maksimal', value: 'max' },
+];
+
+// Config Idle Chat
+const idleConfig = reactive({
+  enabled: true,
+  duration: '',      
+  action: 'resolve', 
+  message: ''        
+});
+
+// Config Follow Up
+const followUpConfig = reactive({
+  enabled: false,
+  delay: '',
+  message: ''
+});
+
 // Helper function to get agent ID by type
 function getAgentIdByType(type) {
   const flowData = props.data?.display_flow_data;
@@ -442,31 +678,37 @@ const tabs = computed(() => [
   },
   {
     key: '1',
-    index: 1,
-    name: 'File',
-    icon: 'i-lucide-folder',
+    index: 1, // Tab Baru
+    name: 'Pengaturan',
+    icon: 'i-lucide-settings',
   },
   {
     key: '2',
     index: 2,
-    name: 'QnA',
-    icon: 'i-lucide-help-circle',
+    name: 'File',
+    icon: 'i-lucide-folder',
   },
   {
     key: '3',
     index: 3,
-    name: 'Klasifikasi',
-    icon: 'i-lucide-tag',
+    name: 'QnA',
+    icon: 'i-lucide-help-circle',
   },
   {
     key: '4',
     index: 4,
-    name: 'Prioritas',
-    icon: 'i-lucide-star',
+    name: 'Klasifikasi',
+    icon: 'i-lucide-tag',
   },
   {
     key: '5',
     index: 5,
+    name: 'Prioritas',
+    icon: 'i-lucide-star',
+  },
+  {
+    key: '6',
+    index: 6,
     name: 'Penomoran Otomatis',
     icon: 'i-lucide-notebook-tabs',
   },
@@ -776,6 +1018,23 @@ function loadSavedConfiguration() {
       console.log('Loaded classification_enabled:', classificationEnabled.value);
     } else {
       console.log('classification_enabled not found in config');
+    }
+
+    if (config.creativity_level) {
+      creativityLevel.value = config.creativity_level;
+    }
+
+    if (config.idle_settings) {
+      idleConfig.enabled = config.idle_settings.enabled !== undefined ? config.idle_settings.enabled : true;
+      idleConfig.duration = config.idle_settings.duration || '';
+      idleConfig.action = config.idle_settings.action || 'resolve';
+      idleConfig.message = config.idle_settings.message || '';
+    }
+
+    if (config.follow_up) {
+      followUpConfig.enabled = config.follow_up.enabled || false;
+      followUpConfig.delay = config.follow_up.delay || '';
+      followUpConfig.message = config.follow_up.message || '';
     }
     
   } catch (error) {

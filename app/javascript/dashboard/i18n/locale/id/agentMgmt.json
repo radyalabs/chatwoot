@@ -333,7 +333,7 @@
         "OUTPUT_SHEET_TITLE": "Sheets Pelacakan Pemesanan",
         "OUTPUT_SHEET_DESC": "Menampilkan data pemesanan dan interaksi klien yang ditangani oleh EO Bot."
       },
-      "GENERAL_TAB": "Umum",
+      "GENERAL_TAB": "Pengaturan",
       "KNOWLEDGE_SOURCES_TAB": "Sumber Pengetahuan",
       "HEADER": "Konfigurasi EO Bot",
       "HEADER_DESC": "Halaman ini berisi pengaturan konfigurasi untuk Event Organizer Bot Anda.",
@@ -424,13 +424,11 @@
     "BOOKING_BOT": {
       "FILE_TAB": "File",
       "CHAR": "Kata",
-      "GENERAL_TAB": "Umum",
+      "GENERAL_TAB": "Pengaturan",
       "HEADER": "Konfigurasi Bot Booking",
       "HEADER_DESC": "Halaman ini berisi konfigurasi Sheets dan parameter untuk Bot Booking Anda.",
-      "TEMPLATE_OPTIONS": {
-        "KLINIK": "Klinik",
-        "LAPANGAN": "Lapangan"
-      },
+      "CONFIGURE": "Simpan Perubahan",
+      "CONFIGURE_DESC": "Update konfigurasi bot",
       "AUTH_LABEL": "Autentikasi",
       "AUTH_DESC": "Autentikasi dengan Google untuk membuat spreadsheet otomatis yang berisi data dari AI Agent Anda. Setelah autentikasi berhasil, sistem akan langsung membuat spreadsheet baru di akun Google Anda.",
       "AUTH_BTN": "Mulai Autentikasi dengan Google",
@@ -447,7 +445,6 @@
       "OUTPUT_SHEET_LABEL": "Output Sheet",
       "OUTPUT_SHEET_DESC": "Sheet untuk menyimpan hasil booking",
       "OPEN_SHEET_BTN": "Buka Sheet",
-      "TEMPLATE_LABEL": "Pilih jenis template industri untuk penjadwalan:",
       "RESOURCE_LABEL": "Resource",
       "RESOURCE_PLACEHOLDER": "Dokter, Lapangan, Ruangan, dll",
       "LOCATION_LABEL": "Lokasi",
@@ -460,7 +457,7 @@
       "SYNC_BUTTON": "Sinkron data dari Sheet"
     },
     "RESTAURANT_BOT": {
-      "GENERAL_TAB": "Umum",
+      "GENERAL_TAB": "Pengaturan",
       "ORDERS_COSTS_TAB": "Pesanan & Biaya",
       "HEADER": "Konfigurasi Bot Restoran",
       "HEADER_DESC": "Halaman ini berisi konfigurasi menu dan pengaturan biaya untuk Bot Restoran Anda.",

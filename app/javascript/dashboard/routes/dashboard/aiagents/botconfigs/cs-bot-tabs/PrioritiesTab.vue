@@ -164,6 +164,7 @@ async function save() {
     });
     
     const agentIndex = flowData.enabled_agents.indexOf(props.agentType);
+    console.log('Agent Index:', agentIndex);
     
     if (agentIndex === -1) {
       useAlert('Agent not found in flow');

@@ -39,6 +39,7 @@ class KnowledgeSourceQna < ApplicationRecord
     new_qna = create!(
       question: qna_param[:question],
       answer: qna_param[:answer],
+      ai_agent_name_id: qna_param[:agent_id],
       loader_id: document_loader['docId'],
       total_chars: document_loader.dig('file', 'totalChars'),
       total_chunks: document_loader.dig('file', 'totalChunks')
@@ -56,6 +57,7 @@ class KnowledgeSourceQna < ApplicationRecord
     knowledge_source_qna.update!(
       question: qna_param[:question],
       answer: qna_param[:answer],
+      ai_agent_name_id: qna_param[:agent_id],
       loader_id: document_loader['docId'],
       total_chars: document_loader.dig('file', 'totalChars'),
       total_chunks: document_loader.dig('file', 'totalChunks')

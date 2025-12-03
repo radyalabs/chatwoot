@@ -22,8 +22,6 @@
           {{ welcomeTagline }}
         </p>
       </div>
-      <!-- NEW CHAT LABEL -->
-      <p class="text-sm text-slate-700 mb-2">{{ $t('CONVERSATION_HISTORY.START') }}</p>
       <!-- START NEW CHAT BOX -->
       <div 
         class="bg-slate-50 rounded-xl p-4 mb-6 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition"

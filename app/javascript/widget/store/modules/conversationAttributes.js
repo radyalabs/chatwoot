@@ -39,8 +39,10 @@ export const mutations = {
     $state.status = data.status;
   },
   [UPDATE_CONVERSATION_ATTRIBUTES]($state, data) {
-    if (data.id === $state.id) {
+    if (data.id) {
       $state.id = data.id;
+    }
+    if (data.status) {
       $state.status = data.status;
     }
   },

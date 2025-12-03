@@ -5,6 +5,7 @@ import FluentIcon from 'shared/components/FluentIcon/Index.vue';
 import HeaderActions from './HeaderActions.vue';
 import routerMixin from 'widget/mixins/routerMixin';
 import { useDarkMode } from 'widget/composables/useDarkMode';
+import { mapGetters } from 'vuex';
 
 export default {
   name: 'ChatHeader',
@@ -40,19 +41,33 @@ export default {
     return { getThemeClass };
   },
   computed: {
-    isOnline() {
-      const { workingHoursEnabled } = this.channelConfig;
-      const anyAgentOnline = this.availableAgents.length > 0;
-
-      if (workingHoursEnabled) {
-        return this.isInBetweenTheWorkingHours;
-      }
-      return anyAgentOnline;
+    ...mapGetters({
+      widgetColor: 'appConfig/getWidgetColor',
+    }),
+    computedAvatarUrl() {
+      if (this.avatarUrl) return this.avatarUrl.replace('0.0.0.0', '127.0.0.1');
+      const url = window.chatwootWebChannel?.avatarUrl || '';
+      return url.replace('0.0.0.0', '127.0.0.1');
     },
   },
   methods: {
     onBackButtonClick() {
-      this.replaceRoute('home');
+      try {
+        if (this.$store && this.$store.state && this.$store.state.conversation) {
+          this.$store.state.conversation.__list_loaded__ = false;
+        }
+      } catch (e) {
+        // ignore if state shape differs
+        console.warn('[ChatHeader] failed to reset __list_loaded__ flag', e);
+      }
+
+      // navigate back to conversation list
+      this.replaceRoute('conversation-list');
+
+      // optionally trigger an immediate fetch (harmless if ConversationList also fetches on mount)
+      if (this.$store && this.$store.dispatch) {
+       this.$store.dispatch('conversation/fetchAllConversations');
+      }
     },
   },
 };
@@ -60,8 +75,8 @@ export default {
 
 <template>
   <header
-    class="flex justify-between w-full p-5"
-    :class="getThemeClass('bg-white', 'dark:bg-slate-900')"
+    class="flex justify-between w-full px-5 py-4"
+    :style="{ backgroundColor: widgetColor }"
   >
     <div class="flex items-center">
       <button
@@ -72,7 +87,7 @@ export default {
         <FluentIcon
           icon="chevron-left"
           size="24"
-          :class="getThemeClass('text-black-900', 'dark:text-slate-50')"
+          :class="getThemeClass('text-white', 'dark:text-slate-50')"
         />
       </button>
       <img
@@ -81,25 +96,17 @@ export default {
         :src="avatarUrl"
         alt="avatar"
       />
-      <div>
+      <div class="flex flex-col justify-center ml-2">
         <div
-          class="flex items-center text-base font-medium leading-4"
-          :class="getThemeClass('text-black-900', 'dark:text-slate-50')"
+          class="text-base font-medium leading-4"
+          :class="getThemeClass('text-white', 'dark:text-slate-50')"
         >
           <span v-dompurify-html="title" class="mr-1" />
-          <div
-            :class="`h-2 w-2 rounded-full
-              ${isOnline ? 'bg-green-500' : 'hidden'}`"
-          />
-        </div>
-        <div
-          class="mt-1 text-xs leading-3"
-          :class="getThemeClass('text-black-700', 'dark:text-slate-400')"
-        >
-          {{ replyWaitMessage }}
+          <div class="text-xs text-white mt-1 font-medium">
+            Online
+          </div>
         </div>
       </div>
     </div>
-    <HeaderActions :show-popout-button="showPopoutButton" />
   </header>
 </template>

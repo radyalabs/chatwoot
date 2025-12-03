@@ -29,7 +29,6 @@ export default {
     onSubmit({
       fullName,
       emailAddress,
-      message,
       activeCampaignId,
       phoneNumber,
       contactCustomAttributes,
@@ -40,28 +39,28 @@ export default {
           campaignId: activeCampaignId,
           customAttributes: conversationCustomAttributes,
         });
-        this.$store.dispatch('contacts/update', {
-          user: {
-            email: emailAddress,
-            name: fullName,
-            phone_number: phoneNumber,
-          },
-        });
-      } else {
-        this.$store.dispatch('conversation/createConversation', {
-          fullName: fullName,
-          emailAddress: emailAddress,
-          message: message,
-          phoneNumber: phoneNumber,
-          customAttributes: conversationCustomAttributes,
-        });
       }
+      this.$store.dispatch('contacts/update', {
+        user: {
+          email: emailAddress,
+          name: fullName,
+          phone_number: phoneNumber,
+        },
+      });
       if (!isEmptyObject(contactCustomAttributes)) {
         this.$store.dispatch(
           'contacts/setCustomAttributes',
           contactCustomAttributes
         );
       }
+
+      if (!isEmptyObject(conversationCustomAttributes)) {
+        this.$store.dispatch(
+          'conversationAttributes/set',
+          conversationCustomAttributes
+        );
+      }
+      this.replaceRoute('conversation-list');
     },
   },
 };

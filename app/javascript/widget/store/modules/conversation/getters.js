@@ -4,58 +4,78 @@ import { groupConversationBySender } from './helpers';
 import { formatUnixDate } from 'shared/helpers/DateHelper';
 
 export const getters = {
+  getCurrentMessages: (_state) => {
+    const id = _state.selectedConversationId;
+    if (!id) return [];
+    return _state.conversations[id]?.messages || [];
+  },
   getAllMessagesLoaded: _state => _state.uiFlags.allMessagesLoaded,
   getIsCreating: _state => _state.uiFlags.isCreating,
   getIsAgentTyping: _state => _state.uiFlags.isAgentTyping,
+  getConversationMeta: state => ({
+    disable_branding: state.meta?.disable_branding ?? false,
+    userLastSeenAt: state.meta?.userLastSeenAt
+  }),
   getConversation: _state => _state.conversations,
   getConversationSize: _state => Object.keys(_state.conversations).length,
-  getEarliestMessage: _state => {
-    const conversation = Object.values(_state.conversations);
-    if (conversation.length) {
-      return conversation[0];
-    }
-    return {};
+  // Mengambil List Percakapan (Header chat history)
+  getConversationsList: _state => {
+    if (!_state.conversationsList) return [];
+    return _state.conversationsList.slice(0, 4); // Ambil 4 paling akhir
   },
-  getLastMessage: _state => {
-    const conversation = Object.values(_state.conversations);
-    if (conversation.length) {
-      return conversation[conversation.length - 1];
-    }
-    return {};
+  // Mengambil ID percakapan yang sedang dibuka sekarang
+  getSelectedConversationId: _state => _state.selectedConversationId,
+  getEarliestMessage: (_state, getters) => {
+    const messages = getters.getCurrentMessages;
+    return messages.length ? messages[0] : {};
   },
-  getGroupedConversation: _state => {
-    const conversationGroupedByDate = groupBy(
-      Object.values(_state.conversations),
-      message => formatUnixDate(message.created_at)
+  getLastMessage: (_state, getters) => {
+    const messages = getters.getCurrentMessages;
+    return messages.length ? messages[messages.length - 1] : {};
+  },
+  getGroupedConversation: (_state, getters) => {
+    const messages = [...getters.getCurrentMessages];
+
+    messages.sort((a, b) => a.created_at - b.created_at);
+
+    const visible = messages.filter(m => {
+      const hasContent = m.content && m.content !== '';
+      const hasAttachment =
+        m.attachments && m.attachments.length > 0;
+      return hasContent || hasAttachment;
+    });
+
+    const groupedByDate = groupBy(
+      visible,
+      m => formatUnixDate(m.created_at)
     );
-    return Object.keys(conversationGroupedByDate).map(date => ({
+
+    return Object.keys(groupedByDate).map(date => ({
       date,
-      messages: groupConversationBySender(conversationGroupedByDate[date]),
+      messages: groupConversationBySender(groupedByDate[date]),
     }));
   },
   getIsFetchingList: _state => _state.uiFlags.isFetchingList,
-  getMessageCount: _state => {
-    return Object.values(_state.conversations).length;
+  getMessageCount: (_state, getters) => {
+    return getters.getCurrentMessages.length;
   },
-  getUnreadMessageCount: _state => {
+  getUnreadMessageCount: (_state, getters) => {
     const { userLastSeenAt } = _state.meta;
-    return Object.values(_state.conversations).filter(chat => {
-      const { created_at: createdAt, message_type: messageType } = chat;
-      const isOutGoing = messageType === MESSAGE_TYPE.OUTGOING;
-      const hasNotSeen = userLastSeenAt
-        ? createdAt * 1000 > userLastSeenAt * 1000
+    const messages = getters.getCurrentMessages;
+
+    return messages.filter(msg => {
+      const isOutgoing = msg.message_type === MESSAGE_TYPE.OUTGOING;
+      const notSeen = userLastSeenAt
+        ? msg.created_at * 1000 > userLastSeenAt * 1000
         : true;
-      return hasNotSeen && isOutGoing;
+      return notSeen && isOutgoing;
     }).length;
   },
-  getUnreadTextMessages: (_state, _getters) => {
-    const unreadCount = _getters.getUnreadMessageCount;
-    const allMessages = [...Object.values(_state.conversations)];
-    const unreadAgentMessages = allMessages.filter(message => {
-      const { message_type: messageType } = message;
-      return messageType === MESSAGE_TYPE.OUTGOING;
-    });
-    const maxUnreadCount = Math.min(unreadCount, 3);
-    return unreadAgentMessages.splice(-maxUnreadCount);
+  getUnreadTextMessages: (_state, getters) => {
+    const messages = getters.getCurrentMessages;
+    const unread = messages.filter(
+      m => m.message_type === MESSAGE_TYPE.OUTGOING
+    );
+    return unread.slice(-3);
   },
 };

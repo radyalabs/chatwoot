@@ -3,6 +3,8 @@ import { actions } from './actions';
 import { mutations } from './mutations';
 
 const state = {
+  conversationsList: [],
+  selectedConversationId: null,
   conversations: {},
   meta: {
     userLastSeenAt: undefined,

@@ -111,7 +111,7 @@ const tabs = computed(() => [
   {
     key: '0',
     index: 0,
-    name: t('AGENT_MGMT.CSBOT.TICKET.GENERAL_SETTINGS'),
+    name: t('AGENT_MGMT.CSBOT.GENERAL_TAB'),
     icon: 'i-lucide-settings',
   },
   {

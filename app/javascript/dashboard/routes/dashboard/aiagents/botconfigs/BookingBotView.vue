@@ -51,6 +51,21 @@ const tabs = computed(() => [
   },
 ]);
 
+// follow-up
+const followUpConfig = reactive({
+  enabled: false,
+  delay: 60,
+  message: ''
+});
+
+// follow-up options
+const followUpTimeOptions = [
+  { label: '30 Menit', value: 30 },
+  { label: '1 Jam', value: 60 },
+  { label: '4 Jam', value: 240 },
+  { label: '12 Jam', value: 720 },
+];
+
 // Steps: 'auth', 'connected', 'sheetConfig'
 const step = computed(() => props.googleSheetsAuth.step);
 const loading = computed(() => props.googleSheetsAuth.loading);
@@ -89,6 +104,44 @@ watch(bookingAuthError, (newError) => {
     notification.value = null;
   }
 }, { immediate: true });
+
+watch(
+  () => props.data,
+  (newData) => {
+    // Cek apakah data sudah valid dan memiliki display_flow_data
+    if (newData && newData.display_flow_data) {
+      loadSavedConfiguration();
+    }
+  },
+  { deep: true, immediate: true }
+);
+
+function loadSavedConfiguration() {
+  const flowData = props.data?.display_flow_data;
+  
+  if (flowData?.agents_config) {
+    const agent_index = flowData.enabled_agents.indexOf('booking');
+    
+    if (agent_index !== -1) {
+      const config = flowData.agents_config[agent_index].configurations;
+      
+      // Load konfigurasi umum
+      if (config?.minimum_duration) {
+        minDuration.value = config.minimum_duration;
+      }
+      if (config?.industry) {
+        selectedTemplate.value = config.industry;
+      }
+
+      // Load konfigurasi Follow Up
+      if (config?.follow_up) {
+        followUpConfig.enabled = config.follow_up.enabled || false;
+        followUpConfig.delay = config.follow_up.delay || 60;
+        followUpConfig.message = config.follow_up.message || '';
+      }
+    }
+  }
+}
 
 function retryAuthentication() {
   connectGoogle();
@@ -245,8 +298,12 @@ async function syncScheduleColumns() {
 async function save() {
   if (isSaving.value) return; // Prevent multiple calls
   const configData = {
-    selectedTemplate: selectedTemplate.value,
     minDuration: minDuration.value,
+    follow_up: {
+      enabled: followUpConfig.enabled,
+      delay: followUpConfig.delay, 
+      message: followUpConfig.message
+    }
   };
   try {
     isSaving.value = true;
@@ -260,9 +317,8 @@ async function save() {
 
     flowData.agents_config[agent_index].configurations.minimum_duration =
       configData.minDuration;
-    flowData.agents_config[agent_index].configurations.industry =
-      configData.selectedTemplate;
-    
+    flowData.agents_config[agent_index].configurations.follow_up = configData.follow_up;
+
     const payload = {
       flow_data: flowData,
     };
@@ -305,20 +361,7 @@ async function save() {
 
 // Load configuration data on mount
 onMounted(async () => {
-  // Load existing configuration if available
-  const flowData = props.data?.display_flow_data;
-  if (flowData?.agents_config) {
-    const agent_index = flowData.enabled_agents.indexOf('booking');
-    if (agent_index !== -1) {
-      const config = flowData.agents_config[agent_index].configurations;
-      if (config?.minimum_duration) {
-        minDuration.value = config.minimum_duration;
-      }
-      if (config?.industry) {
-        selectedTemplate.value = config.industry;
-      }
-    }
-  }
+  loadSavedConfiguration();
 });
 </script>
 
@@ -570,6 +613,72 @@ onMounted(async () => {
                           </svg>
                           {{ $t('AGENT_MGMT.BOOKING_BOT.OPEN_SHEET_BTN') }}
                         </a>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
+                    <div class="flex items-center justify-between p-6">
+                      <div class="flex items-center">
+                        <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
+                            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                            <path d="M4 2C2.8 3.7 2 5.7 2 8" />
+                            <path d="M22 8c0-2.3-.8-4.3-2-6" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 class="font-medium text-slate-900 dark:text-slate-25">Follow Up Pesanan</h3>
+                          <p class="text-sm text-gray-500 mt-1">Kirim pesan pengingat otomatis kepada pelanggan setelah booking</p>
+                        </div>
+                      </div>
+                      
+                      <label class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" v-model="followUpConfig.enabled" class="sr-only peer">
+                        <div class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
+                        </div>
+                      </label>
+                    </div>
+                    
+                    <div 
+                      v-if="followUpConfig.enabled" 
+                      class="border-t border-gray-200 dark:border-gray-700 p-6 space-y-4 transition-all duration-200 ease-in-out"
+                    >
+                      <div>
+                        <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
+                          Waktu Follow Up
+                        </label>
+                        <div class="relative">
+                          <select 
+                            v-model="followUpConfig.delay"
+                            class="w-full mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                          > 
+                            <option 
+                              class="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" 
+                              v-for="opt in followUpTimeOptions" 
+                              :key="opt.value" 
+                              :value="opt.value"
+                            >
+                              {{ opt.label }}
+                            </option>
+                          </select>
+                          <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm pointer-events-none">
+                            sebelum waktu booking
+                          </span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Pilih waktu untuk mengirimkan pesan follow up.</p>
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
+                          Pesan Follow Up
+                        </label>
+                        <textarea 
+                          v-model="followUpConfig.message"
+                          rows="4"
+                          placeholder="Halo kak, terima kasih sudah melakukan booking. Apakah ada kendala atau pertanyaan lain?"
+                          class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out"
+                        ></textarea>
+                        <p class="text-xs text-gray-500 mt-1">Pesan ini akan dikirimkan otomatis ke pelanggan melalui WhatsApp sesuai waktu yang ditentukan.</p>
                       </div>
                     </div>
                   </div>

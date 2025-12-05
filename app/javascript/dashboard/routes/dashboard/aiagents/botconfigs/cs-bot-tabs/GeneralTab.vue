@@ -26,6 +26,24 @@ const props = defineProps({
   },
 });
 
+// temperature bot
+const creativityLevel = ref(0.3); // Default value
+const creativityOptions = [
+  { label: 'Tidak sama sekali', value: 0 },
+  { label: 'Minim', value: 0.1 },
+  { label: 'Normal', value: 0.3 },
+  { label: 'Lebih tinggi', value: 0.6 },
+  { label: 'Maksimal', value: 1 },
+];
+
+// idle time
+const idleConfig = reactive({
+  enabled: true,
+  duration: 30,      
+  action: 'resolve', 
+  message: ''        
+});
+
 console.log('=== googleSheetsAuth in GeneralTab.vue', props.googleSheetsAuth);
 const { t } = useI18n();
 // Watch for props.data and extract ticket system settings
@@ -46,9 +64,10 @@ watch(
       return;
     }
 
-    const ticketSystem = flowData.agents_config?.[agentIndex]?.configurations?.ticket_system;
+    const config = flowData.agents_config?.[agentIndex]?.configurations;
 
     // Map backend value to UI
+    const ticketSystem = config?.ticket_system;
     if (ticketSystem === 'always') {
       // eslint-disable-next-line vue/no-mutating-props
       props.config.ticketSystemActive = true;
@@ -65,6 +84,18 @@ watch(
       // Optionally keep last value or reset
       // eslint-disable-next-line vue/no-mutating-props
       props.config.ticketCreateWhen = 'always';
+    }
+
+    if (config) {
+      if (config.creativity_level) {
+        creativityLevel.value = config.creativity_level;
+      }
+      if (config.idle_settings) {
+        idleConfig.enabled = config.idle_settings.enabled !== undefined ? config.idle_settings.enabled : true;
+        idleConfig.duration = config.idle_settings.duration || 30;
+        idleConfig.action = config.idle_settings.action || 'resolve';
+        idleConfig.message = config.idle_settings.message || '';
+      }
     }
   },
   { immediate: true }  // ← Runs as soon as component mounts
@@ -210,6 +241,13 @@ async function save() {
     const agent_index = flowData.enabled_agents.indexOf('customer_service');
     flowData.agents_config[agent_index].configurations.ticket_system =
       ticketSystem;
+    flowData.agents_config[agent_index].configurations.creativity_level = creativityLevel.value;
+    flowData.agents_config[agent_index].configurations.idle_settings = {
+      enabled: true,
+      duration: idleConfig.duration,
+      action: idleConfig.action,
+      message: idleConfig.message
+    };
     // console.log(flowData);
     // console.log(props.config);
     const payload = {
@@ -489,6 +527,116 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
               </div>
             </div>
             </div>
+        </div>
+        <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
+          <div class="flex items-start justify-between p-6">
+            <div class="flex items-center">
+              <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
+                  <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="font-medium text-slate-900 dark:text-slate-25">Tingkat Kreativitas</h3>
+                <p class="text-sm text-gray-500 mt-1">Tentukan seberapa kreatif bot dalam merespons percakapan</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="border-t border-gray-200 dark:border-gray-700 p-6">
+            <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">Skala Kreativitas</label>
+            <div class="relative">
+              <select 
+                v-model="creativityLevel" 
+                class="w-full mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option class="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" v-for="opt in creativityOptions" :key="opt.value" :value="opt.value">
+                  {{ opt.label }}
+                </option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500 dark:text-gray-400">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
+          <div class="flex items-center p-6">
+            <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="font-medium text-slate-900 dark:text-slate-25">Pengaturan Idle Chat</h3>
+              <p class="text-sm text-gray-500 mt-1">Atur tindakan otomatis jika tidak ada aktivitas chat</p>
+            </div>
+          </div>
+          
+          <div class="border-t border-gray-200 dark:border-gray-700 p-6">
+            <div>
+              <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
+                Batas Waktu Idle (Menit)
+              </label>
+              <div class="relative">
+                <input 
+                  type="number" 
+                  min="1"
+                  v-model="idleConfig.duration"
+                  placeholder="Contoh: 15" 
+                  class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm h-10 !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out" 
+                />
+                <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">menit tanpa aktivitas</span>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium mb-3 text-slate-900 dark:text-slate-25">
+                Aksi saat Idle
+              </label>
+              <div class="flex flex-col sm:flex-row gap-4">
+                <div class="flex items-center">
+                  <input 
+                    id="action-resolve" 
+                    type="radio" 
+                    value="resolve" 
+                    v-model="idleConfig.action"
+                    class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                  >
+                  <label for="action-resolve" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">
+                    Langsung Resolve Chat
+                  </label>
+                </div>
+                <div class="flex items-center">
+                  <input 
+                    id="action-message" 
+                    type="radio" 
+                    value="message" 
+                    v-model="idleConfig.action"
+                    class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                  >
+                  <label for="action-message" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">
+                    Kirim Pesan Follow Up
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="idleConfig.action === 'message'" class="animate-fadeIn">
+              <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
+                Pesan Idle
+              </label>
+              <textarea 
+                v-model="idleConfig.message"
+                rows="3"
+                placeholder="Halo, apakah Anda masih di sana? Sesi ini akan segera berakhir jika tidak ada respon."
+                class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out"
+              ></textarea>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -176,8 +176,20 @@ function getAgentIdByType(type) {
   return agent?.agent_id || null;
 }
 
+function getCollectionNameByAgentType(type) {
+  const flowData = props.data?.display_flow_data;
+  if (!flowData?.agents_config) return null;
+
+  const agent = flowData.agents_config.find(config => config.type === type);
+  return agent?.collection_name || null;
+}
+
 const agentId = computed(() => {
   return getAgentIdByType('booking');
+});
+
+const collectionName = computed(() => {
+  return getCollectionNameByAgentType('booking');
 });
 
 async function connectGoogle() {
@@ -214,6 +226,7 @@ async function syncScheduleColumns() {
       account_id: parseInt(flowData.account_id, 10),
       agent_id: agentId.value,
       type: 'booking',
+      collection_name: collectionName.value,
     }
 
     const result = await googleSheetsExportAPI.syncSpreadsheet(payload);

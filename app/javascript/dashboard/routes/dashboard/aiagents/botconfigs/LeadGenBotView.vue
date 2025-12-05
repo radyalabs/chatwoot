@@ -317,9 +317,21 @@ function getAgentIdByType(type) {
   return agent?.agent_id || null;
 }
 
+function getCollectionNameByAgentType(type) {
+  const flowData = props.data?.display_flow_data;
+  if (!flowData?.agents_config) return null;
+
+  const agent = flowData.agents_config.find(config => config.type === type);
+  return agent?.collection_name || null;
+}
+
 // Computed property to get leadgen agent ID
 const leadgenAgentId = computed(() => {
   return getAgentIdByType('lead_generation');
+});
+
+const collectionName = computed(() => {
+  return getCollectionNameByAgentType('lead_generation');
 });
 
 // Define all tabs for LeadGen Bot
@@ -508,6 +520,7 @@ async function syncProductColumns() {
       account_id: parseInt(flowData.account_id, 10),
       agent_id: leadgenAgentId.value,
       type: 'lead_generation',
+      collection_name: collectionName.value,
     };
     
     const syncDataResponse = await googleSheetsExportAPI.syncSpreadsheet(payload);

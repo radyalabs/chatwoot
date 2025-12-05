@@ -355,80 +355,38 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     end
   end
 
-  def sync # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
-    # Extract and validate payload
-    payload = {
-      account_id: params[:account_id],
-      agent_id: params[:agent_id],
-      type: params[:type]
-    }
-
-    # Validate required fields
-    unless payload[:account_id] && payload[:agent_id] && payload[:type]
-      return render json: { error: 'Missing required parameters: account_id, agent_id, or type', payload: payload }, status: :bad_request
+  def sync # rubocop:disable Metrics/MethodLength,Metrics/AbcSize
+    unless params[:account_id] && params[:agent_id] && params[:type] && params[:collection_name]
+      return render json: {
+        error: 'Missing required parameters: account_id, agent_id, or type',
+        payload: payload
+      }, status: :bad_request
     end
 
-    # Build external API URL
-    base_api_url = GlobalConfigService.load('EXTERNAL_TOKEN_API_URL', nil)
-    return render json: { error: 'EXTERNAL_TOKEN_API_URL not configured' }, status: :service_unavailable unless base_api_url
+    base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
+    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
 
-    # Replace the base path and append `/create`
-    # Example: http://0.0.0.0:8080/v2/oauth/google/credentials → http://0.0.0.0:8080/v2/oauth/google/spreadsheet/create
-    target_url = base_api_url.gsub(%r{/v2/oauth/google/.*}, '/v2/oauth/google/spreadsheet/sync')
+    return render json: { error: 'JANGKAU_AGENT_API_URL not configured' }, status: :service_unavailable unless base_url
 
-    begin
-      response = HTTParty.post(
-        target_url,
-        headers: { 'Content-Type' => 'application/json' },
-        body: payload.to_json,
-        timeout: 30
-      )
+    endpoint = "#{base_url}v2/knowledge-management/sync-from-google-sheets"
+    response = HTTParty.post(
+      endpoint,
+      body: {
+        'account_id' => params[:account_id],
+        'spreadsheet_id' => params[:agent_id],
+        'index_name' => params[:collection_name],
+        'sheet_type' => params[:type]
+      }.to_json,
+      headers: {
+        'Content-Type' => 'application/json',
+        'X-API-Key' => api_key
+      }
+    )
 
-      if response.success?
-        json_response = response.parsed_response
-
-        message = json_response['message']
-        data = json_response['data']
-
-        render json: {
-          message: message,
-          data: data
-        }, status: :ok
-
-      else
-        # Map external API errors to appropriate status codes
-        error_status = case response.code
-                       when 400
-                         :bad_request
-                       when 401
-                         :unauthorized
-                       when 403
-                         :forbidden
-                       when 404
-                         :not_found
-                       when 409
-                         :conflict
-                       when 422
-                         :unprocessable_entity
-                       when 429
-                         :too_many_requests
-                       when 500, 501, 502, 503, 504
-                         :service_unavailable
-                       else
-                         :service_unavailable
-                       end
-
-        render json: {
-          error: 'Failed to sync spreadsheet',
-          status: response.code,
-          message: response.parsed_response
-        }, status: error_status
-      end
-    rescue StandardError => e
-      render json: {
-        error: 'Failed to connect to external service',
-        message: e.message
-      }, status: :service_unavailable
+    if response.success?
+      render json: { message: 'success', data: response.parsed_response }, status: :ok
+    else
+      render json: { error: response.parsed_response }, status: :unprocessable_entity
     end
   end
 

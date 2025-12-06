@@ -3,7 +3,7 @@
 
     <!-- HEADER -->
     <div class="p-4 text-white flex justify-between items-center shadow-md z-10 shrink-0" :style="{ backgroundColor: widgetColor }">
-      <h1 class="text-lg">{{ $t('CONVERSATION_HISTORY.TITLE') }}</h1>
+      <h1 class="text-lg">{{ widgetHeading }}</h1>
       <img 
         v-if="avatarUrl"
         :src="avatarUrl" 
@@ -132,6 +132,9 @@ export default {
     welcomeTitle() {
       return window.chatwootWebChannel?.welcomeTitle || '';
     },
+    widgetHeading() {
+      return window.chatwootWebChannel?.widgetHeading || '';
+    },
     avatarUrl() {
       const url = window.chatwootWebChannel?.avatarUrl || '';
       return url.replace('0.0.0.0', '127.0.0.1');
@@ -231,6 +234,7 @@ export default {
     }
   },
   async mounted() {
+    console.log(window.chatwootWebChannel);
     console.log('[ConversationList] mounted');
 
     // clear selected conversation

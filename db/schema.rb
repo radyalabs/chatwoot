@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2025_11_19_074500) do
+ActiveRecord::Schema[7.0].define(version: 2025_12_06_054644) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -59,6 +59,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_19_074500) do
     t.integer "status", default: 0
     t.bigint "active_subscription_id"
     t.string "subscription_status", default: "free_trial"
+    t.jsonb "internal_attributes", default: {}, null: false
     t.index ["active_subscription_id"], name: "index_accounts_on_active_subscription_id"
     t.index ["status"], name: "index_accounts_on_status"
   end
@@ -223,9 +224,13 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_19_074500) do
     t.string "slug", null: false
     t.integer "position"
     t.string "locale", default: "en", null: false
+    t.index ["account_id"], name: "index_articles_on_account_id"
     t.index ["associated_article_id"], name: "index_articles_on_associated_article_id"
     t.index ["author_id"], name: "index_articles_on_author_id"
+    t.index ["portal_id"], name: "index_articles_on_portal_id"
     t.index ["slug"], name: "index_articles_on_slug", unique: true
+    t.index ["status"], name: "index_articles_on_status"
+    t.index ["views"], name: "index_articles_on_views"
   end
 
   create_table "attachments", id: :serial, force: :cascade do |t|
@@ -239,6 +244,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_19_074500) do
     t.datetime "updated_at", precision: nil, null: false
     t.string "fallback_title"
     t.string "extension"
+    t.jsonb "meta", default: {}
     t.index ["account_id"], name: "index_attachments_on_account_id"
     t.index ["message_id"], name: "index_attachments_on_message_id"
   end
@@ -276,6 +282,66 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_19_074500) do
     t.datetime "updated_at", precision: nil, null: false
     t.boolean "active", default: true, null: false
     t.index ["account_id"], name: "index_automation_rules_on_account_id"
+  end
+
+  create_table "booking_records", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "ai_agent_id", null: false
+    t.string "spreadsheet_id", null: false
+    t.string "booking_reference", null: false
+    t.string "customer_name"
+    t.string "customer_phone"
+    t.string "resource"
+    t.string "service"
+    t.string "location"
+    t.integer "party_size"
+    t.string "status"
+    t.text "notes"
+    t.date "booking_date"
+    t.time "start_time"
+    t.datetime "booking_datetime_utc"
+    t.string "timezone", default: "Asia/Jakarta"
+    t.datetime "synced_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "ai_agent_id"], name: "idx_booking_records_account_agent"
+    t.index ["booking_datetime_utc"], name: "idx_booking_records_datetime_active", where: "((status)::text <> 'cancelled'::text)"
+    t.index ["booking_reference"], name: "idx_booking_reference_unique", unique: true
+    t.index ["customer_phone"], name: "idx_booking_records_phone"
+    t.index ["status"], name: "idx_booking_records_status"
+  end
+
+  create_table "booking_reminder_configs", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "ai_agent_id", null: false
+    t.boolean "enabled", default: true, null: false
+    t.text "message_template"
+    t.bigint "whatsapp_channel_id"
+    t.string "timezone", default: "Asia/Jakarta"
+    t.string "spreadsheet_id"
+    t.datetime "last_synced_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.jsonb "follow_up", default: [], null: false
+    t.index ["account_id"], name: "idx_reminder_configs_account"
+    t.index ["ai_agent_id"], name: "idx_reminder_configs_agent_unique", unique: true
+    t.index ["enabled"], name: "idx_reminder_configs_enabled"
+  end
+
+  create_table "booking_reminder_logs", force: :cascade do |t|
+    t.bigint "booking_record_id", null: false
+    t.integer "reminder_offset_minutes", null: false
+    t.datetime "scheduled_at", null: false
+    t.datetime "sent_at"
+    t.string "status", default: "pending", null: false
+    t.string "whatsapp_message_id"
+    t.text "error_message"
+    t.integer "retry_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["booking_record_id", "reminder_offset_minutes"], name: "idx_reminder_logs_unique", unique: true
+    t.index ["booking_record_id"], name: "idx_reminder_logs_booking"
+    t.index ["status", "scheduled_at"], name: "idx_reminder_logs_status_scheduled"
   end
 
   create_table "campaigns", force: :cascade do |t|
@@ -517,6 +583,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_19_074500) do
     t.jsonb "pre_chat_form_options", default: {}
     t.boolean "hmac_mandatory", default: false
     t.boolean "continuity_via_email", default: true, null: false
+    t.string "widget_heading"
     t.index ["hmac_token"], name: "index_channel_web_widgets_on_hmac_token", unique: true
     t.index ["website_token"], name: "index_channel_web_widgets_on_website_token", unique: true
   end
@@ -1028,15 +1095,6 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_19_074500) do
     t.datetime "updated_at", precision: nil, null: false
   end
 
-  create_table "portal_members", force: :cascade do |t|
-    t.bigint "portal_id"
-    t.bigint "user_id"
-    t.datetime "created_at", precision: nil, null: false
-    t.datetime "updated_at", precision: nil, null: false
-    t.index ["portal_id", "user_id"], name: "index_portal_members_on_portal_id_and_user_id", unique: true
-    t.index ["user_id", "portal_id"], name: "index_portal_members_on_user_id_and_portal_id", unique: true
-  end
-
   create_table "portals", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "name", null: false
@@ -1455,6 +1513,12 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_19_074500) do
   add_foreign_key "ai_agent_followups", "ai_agents"
   add_foreign_key "ai_agent_selected_labels", "ai_agents"
   add_foreign_key "ai_agent_selected_labels", "labels"
+  add_foreign_key "booking_records", "accounts", on_delete: :cascade
+  add_foreign_key "booking_records", "ai_agents", on_delete: :cascade
+  add_foreign_key "booking_reminder_configs", "accounts", on_delete: :cascade
+  add_foreign_key "booking_reminder_configs", "ai_agents", on_delete: :cascade
+  add_foreign_key "booking_reminder_configs", "channel_whatsapp_unofficials", column: "whatsapp_channel_id", on_delete: :nullify
+  add_foreign_key "booking_reminder_logs", "booking_records", on_delete: :cascade
   add_foreign_key "inboxes", "portals"
   add_foreign_key "knowledge_source_files", "knowledge_sources"
   add_foreign_key "knowledge_source_qnas", "knowledge_sources"

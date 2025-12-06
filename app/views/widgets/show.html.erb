@@ -13,6 +13,7 @@
         websiteToken: '<%= @web_widget.website_token %>',
         welcomeTagline: '<%= @web_widget.welcome_tagline %>',
         welcomeTitle: '<%= @web_widget.welcome_title %>',
+        widgetHeading: "<%= @web_widget.widget_heading %>",
         widgetColor: '<%= @web_widget.widget_color %>',
         portal: <%= @web_widget.inbox.portal.to_json.html_safe %>,
         enabledFeatures: <%= @web_widget.selected_feature_flags.to_json.html_safe %>,

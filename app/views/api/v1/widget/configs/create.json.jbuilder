@@ -6,7 +6,7 @@ json.website_channel_config do
   json.csat_survey_enabled @web_widget.inbox.csat_survey_enabled
   active_transaction = @web_widget.inbox.account.transactions.where(package_type: 'subscription', status: 'success').order(expiry_date: :desc).first
   package_name = active_transaction&.package_name
-  premium_plans = ['Pertamax', 'Pertamax Turbo', 'Premium']
+  premium_plans = ['Pertamax', 'Pertamax Turbo', 'Custom']
   has_premium_plan = premium_plans.include?(package_name)
   json.disable_branding @web_widget.inbox.account.feature_enabled?('disable_branding') || has_premium_plan
   json.enabled_features @web_widget.selected_feature_flags
@@ -23,6 +23,7 @@ json.website_channel_config do
   json.website_token @web_widget.website_token
   json.welcome_tagline @web_widget.welcome_tagline
   json.welcome_title @web_widget.welcome_title
+  json.widget_heading @web_widget.widget_heading
   json.widget_color @web_widget.widget_color
   json.working_hours @web_widget.inbox.working_hours
   json.working_hours_enabled @web_widget.inbox.working_hours_enabled

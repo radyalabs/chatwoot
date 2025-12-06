@@ -17,6 +17,7 @@ export default {
       channelWidgetColor: '#52964D',
       channelWelcomeTitle: '',
       channelWelcomeTagline: '',
+      channelWidgetHeading: '',
       greetingEnabled: false,
       greetingMessage: '',
     };
@@ -50,6 +51,7 @@ export default {
               widget_color: this.channelWidgetColor,
               welcome_title: this.channelWelcomeTitle,
               welcome_tagline: this.channelWelcomeTagline,
+              widget_heading: this.channelWidgetHeading,
             },
           }
         );
@@ -107,6 +109,17 @@ export default {
             :placeholder="
               $t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_DOMAIN.PLACEHOLDER')
             "
+          />
+        </label>
+      </div>
+
+      <div class="w-full">
+        <label>
+          Judul Widget
+          <input
+            v-model="channelWidgetHeading"
+            type="text"
+            placeholder="Contoh: Riwayat Pesan / Bantuan Pelanggan"
           />
         </label>
       </div>

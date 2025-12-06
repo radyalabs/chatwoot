@@ -59,6 +59,7 @@ export default {
       webhookUrl: '',
       channelWelcomeTitle: '',
       channelWelcomeTagline: '',
+      channelWidgetHeading: '',
       selectedFeatureFlags: [],
       replyTime: '',
       selectedTabIndex: 0,
@@ -286,6 +287,7 @@ export default {
         this.channelWebsiteUrl = this.inbox.website_url;
         this.channelWelcomeTitle = this.inbox.welcome_title;
         this.channelWelcomeTagline = this.inbox.welcome_tagline;
+        this.channelWidgetHeading = this.inbox.widget_heading;
         this.selectedFeatureFlags = this.inbox.selected_feature_flags || [];
         this.replyTime = this.inbox.reply_time;
         this.locktoSingleConversation = this.inbox.lock_to_single_conversation;
@@ -318,6 +320,7 @@ export default {
             webhook_url: this.webhookUrl,
             welcome_title: this.channelWelcomeTitle || '',
             welcome_tagline: this.channelWelcomeTagline || '',
+            widget_heading: this.channelWidgetHeading || '',
             selectedFeatureFlags: this.selectedFeatureFlags,
             reply_time: this.replyTime || 'in_a_few_minutes',
             continuity_via_email: this.continuityViaEmail,
@@ -471,6 +474,15 @@ export default {
             $t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_DOMAIN.PLACEHOLDER')
           "
         />
+
+        <woot-input
+          v-if="isAWebWidgetInbox"
+          v-model="channelWidgetHeading"
+          class="w-3/4 pb-4"
+          label="Judul Widget"
+          placeholder="Contoh: Riwayat Pesan / Bantuan Pelanggan"
+        />
+
         <woot-input
           v-if="isAWebWidgetInbox"
           v-model="channelWelcomeTitle"
@@ -499,6 +511,7 @@ export default {
           "
         />
 
+        
         <label v-if="isAWebWidgetInbox" class="w-3/4 pb-4">
           {{ $t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.WIDGET_COLOR.LABEL') }}
           <woot-color-picker v-model="inbox.widget_color" />

@@ -19,6 +19,18 @@ export const mutations = {
 
   setActiveConversation($state, conversationId) {
     $state.selectedConversationId = conversationId;
+    if ($state.conversationsList && $state.conversationsList.length > 0) {
+      const index = $state.conversationsList.findIndex(c => c.id === conversationId);
+      
+      if (index !== -1) {
+        const updatedChat = { 
+          ...$state.conversationsList[index], 
+          unread_count: 0 
+        };
+        
+        $state.conversationsList.splice(index, 1, updatedChat);
+      }
+    }
   },
 
   setAllMessagesLoaded(state, isLoaded) {
@@ -44,51 +56,88 @@ export const mutations = {
     }
   },
   pushMessageToConversation($state, message) {
-    console.log('%c[MUTATION] addOrUpdateMessage:', 'color: purple', message);
-    const conversationId = $state.selectedConversationId;
-    if (!conversationId) return;
-
-    if (!$state.conversations[conversationId]) {
-      $state.conversations[conversationId] = { messages: [], meta: {} };
+    console.log('%c[MUTATION] pushMessageToConversation:', 'color: purple', message);
+    
+    // 1. AMBIL ID DARI PESAN, JANGAN DARI STATE SELECTED
+    const conversationId = message.conversation_id || $state.selectedConversationId;
+    
+    if (!conversationId) {
+      console.warn('Message has no conversation_id provided');
+      return;
     }
 
-    const messages = $state.conversations[conversationId].messages;
-    if (message.id && !message.is_temp) {
-      const duplicateTempIndex = messages.findIndex(
-        m => m.is_temp && m.content === message.content
-      );
-      
-      if (duplicateTempIndex !== -1) {
-        console.log('[MUTATION] Menghapus pesan temp duplikat:', messages[duplicateTempIndex]);
-        messages.splice(duplicateTempIndex, 1);
+    // --- BAGIAN A: UPDATE DETAIL CHAT (Hanya jika chat tersebut sudah dimuat di memori) ---
+    // Cek apakah detail percakapan ini ada di store ($state.conversations)
+    if ($state.conversations[conversationId]) {
+      const messages = $state.conversations[conversationId].messages;
+
+      // Hapus duplikat temp message (logika asli Anda)
+      if (message.id && !message.is_temp) {
+        const duplicateTempIndex = messages.findIndex(
+          m => m.is_temp && m.content === message.content
+        );
+        if (duplicateTempIndex !== -1) {
+          messages.splice(duplicateTempIndex, 1);
+        }
       }
-    }
 
-    // Update by ID
-    if (message.id) {
-      const index = messages.findIndex(m => m.id === message.id);
-      if (index !== -1) {
-        this._vm.$set(messages, index, {
-          ...messages[index],
-          ...message,
-        });
+      // Update atau Push Message
+      if (message.id) {
+        const index = messages.findIndex(m => m.id === message.id);
+        if (index !== -1) {
+          // Gunakan Vue.set / spread agar reaktif
+          messages.splice(index, 1, { ...messages[index], ...message });
+        } else {
+          messages.push(message);
+        }
       } else {
+        // Handle echo message (optimistic update)
+        const echoIndex = messages.findIndex(m => !m.id && m.content === message.content);
+        if (echoIndex !== -1) messages.splice(echoIndex, 1);
         messages.push(message);
       }
-    } else {
-      // Remove echo message
-      const echoIndex = messages.findIndex(m => !m.id && m.content === message.content);
-      if (echoIndex !== -1) {
-        messages.splice(echoIndex, 1);
-      }
-      messages.push(message);
+
+      // Sort pesan
+      messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      $state.conversations[conversationId].messages = [...messages];
     }
 
-    // Sort
-    messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    // --- BAGIAN B: UPDATE LIST PERCAKAPAN (TAMPILAN DEPAN) ---
+    // Ini yang membuat kartu di halaman depan berubah
+    if ($state.conversationsList && $state.conversationsList.length > 0) {
+      
+      const listIndex = $state.conversationsList.findIndex(c => c.id === conversationId);
 
-    // FORCE rerender
-    $state.conversations[conversationId].messages = [...messages];
+      if (listIndex !== -1) {
+        // Clone item untuk dimodifikasi
+        const chatItem = { ...$state.conversationsList[listIndex] };
+        
+        // Update teks preview dan waktu
+        chatItem.last_message = message.content;
+        chatItem.timestamp = message.created_at;
+
+        // Logika Unread Count (Badge)
+        // Jika pesan masuk (type 0 atau 2) DAN user sedang TIDAK membuka chat ini
+        const isIncoming = message.message_type === 0 || message.message_type === 2; 
+        const isNotActive = $state.selectedConversationId !== conversationId;
+
+        if (isIncoming && isNotActive) {
+          chatItem.unread_count = (chatItem.unread_count || 0) + 1;
+        }
+
+        // Hapus item dari posisi lama
+        $state.conversationsList.splice(listIndex, 1);
+        
+        // Masukkan ke posisi paling atas (index 0)
+        $state.conversationsList.unshift(chatItem);
+        
+        console.log('[MUTATION] List updated for conversation:', conversationId);
+      } else {
+        // Jika percakapan belum ada di list (kasus baru), Anda bisa menambahkannya di sini
+        // Tapi biasanya perlu fetch data percakapan lengkap dulu.
+        console.log('[MUTATION] Conversation ID not found in list:', conversationId);
+      }
+    }
   },
 
   removeMessageById($state, id) {

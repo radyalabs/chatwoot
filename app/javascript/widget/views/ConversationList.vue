@@ -89,7 +89,7 @@
 
           <!-- RIGHT: unread bubble -->
           <div v-if="chat.unread_count > 0">
-            <span class="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+            <span class="bg-green-500 text-white text-[10px] px-1.5 py-1 rounded-full">
               {{ chat.unread_count }}
             </span>
           </div>
@@ -146,12 +146,27 @@ export default {
     formatTime(timestamp) {
       if (!timestamp) return '';
       const date = new Date(timestamp * 1000);
+      const now = new Date();
 
-      return new Intl.DateTimeFormat('id-ID', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false // Pakai format 24 jam (14:00), ubah ke true jika ingin AM/PM
-      }).format(date);
+      // Cek apakah tanggal pesannya adalah "Hari Ini"
+      const isToday = date.getDate() === now.getDate() &&
+                      date.getMonth() === now.getMonth() &&
+                      date.getFullYear() === now.getFullYear();
+
+      if (isToday) {
+        // Jika Hari Ini: Tampilkan Jam (Contoh: 14:30)
+        return new Intl.DateTimeFormat('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        }).format(date);
+      } else {
+        // Jika Beda Hari: Tampilkan Tanggal & Bulan (Contoh: 07 Des)
+        return new Intl.DateTimeFormat('id-ID', {
+          day: '2-digit',
+          month: 'short'
+        }).format(date);
+      }
     },
 
     getStatusLabel(status) {
@@ -185,7 +200,6 @@ export default {
       }
 
       const lower = msg.toLowerCase();
-
       const activityMap = [
         { match: 'conversation was marked resolved', key: 'LAST_MESSAGE.CONVERSATION_RESOLVED' },
         { match: 'conversation was reopened', key: 'LAST_MESSAGE.CONVERSATION_REOPENED' },
@@ -200,6 +214,7 @@ export default {
       if (detected) {
         return this.$t(detected.key);
       }
+
       return msg;
     },
 
@@ -234,7 +249,6 @@ export default {
     }
   },
   async mounted() {
-    console.log(window.chatwootWebChannel);
     console.log('[ConversationList] mounted');
 
     // clear selected conversation

@@ -146,6 +146,7 @@ export const actions = {
     }, { root: true });
     commit('clearMessages');
     await dispatch('fetchOldConversations');
+    dispatch('setUserLastSeen');
     return conversationId;
   },
 

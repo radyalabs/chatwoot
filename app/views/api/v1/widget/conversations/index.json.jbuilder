@@ -6,7 +6,15 @@ json.payload do
     last_message = conversation.messages.last
     json.last_message last_message&.content
     json.timestamp conversation.updated_at.to_i
-    # json.unread_count conversation.unread_messages_count
+    unread_count = 0
+    
+    if conversation.contact_last_seen_at
+      unread_count = conversation.messages.where("created_at > ?", conversation.contact_last_seen_at).where.not(message_type: 1).count
+    else
+      unread_count = conversation.messages.where.not(message_type: 1).count
+    end
+
+    json.unread_count unread_count
   end
 end
 json.website_channel_config do

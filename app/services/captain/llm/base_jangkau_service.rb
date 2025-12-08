@@ -48,7 +48,8 @@ class Captain::Llm::BaseJangkauService
     {
       'question' => @question,
       'overrideConfig' => {
-        'sessionId' => @session_id.to_s,
+        'session_id' => @session_id.to_s,
+        'agent_id' => @ai_agent.id,
         'vars' => {
           'account_id' => @account_id.to_s,
           'customer_name' => @additional_attributes['name'] || '',

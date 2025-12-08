@@ -51,7 +51,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     end
   end
 
-  def generate
+  def generate # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/MethodLength,Metrics/PerceivedComplexity
     # Extract and validate payload
     payload = {
       account_id: params[:account_id],
@@ -65,19 +65,23 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     end
 
     # Build external API URL
-    base_api_url = GlobalConfigService.load('EXTERNAL_TOKEN_API_URL', nil)
-    return render json: { error: 'EXTERNAL_TOKEN_API_URL not configured' }, status: :service_unavailable unless base_api_url
+    base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
+    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
+
+    return render json: { error: 'JANGKAU_AGENT_API_URL not configured' }, status: :service_unavailable unless base_url
 
     # Replace the base path and append `/create`
     # Example: http://0.0.0.0:8080/v2/oauth/google/credentials → http://0.0.0.0:8080/v2/oauth/google/spreadsheet/create
-    target_url = base_api_url.gsub(%r{/v2/oauth/google/.*}, '/v2/oauth/google/spreadsheet/create')
+    endpoint = "#{base_url}v2/oauth/google/spreadsheet/create"
 
     begin
       response = HTTParty.post(
-        target_url,
-        headers: { 'Content-Type' => 'application/json' },
+        endpoint,
         body: payload.to_json,
-        timeout: 30
+        headers: {
+          'Content-Type' => 'application/json',
+          'X-API-Key' => api_key
+        }
       )
 
       if response.success?

@@ -226,21 +226,125 @@
           </div>
         </div>
 
-        <!-- Tab 1: File Knowledge Sources -->
+        <!-- Tab 1: Bot Configuration -->
         <div v-show="activeIndex === 1" class="w-full min-w-0">
+          <div class="flex flex-row gap-4">
+            <div class="flex-1 min-w-0 flex flex-col justify-stretch gap-6">
+              <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
+                <div class="flex items-center justify-between p-6">
+                  <div class="flex items-center">
+                    <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
+                        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                        <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                        <path d="M4 2C2.8 3.7 2 5.7 2 8" />
+                        <path d="M22 8c0-2.3-.8-4.3-2-6" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="font-medium text-slate-900 dark:text-slate-25">Pesan Follow Up</h3>
+                      <p class="text-sm text-gray-500 mt-1">Kirim pesan pengingat otomatis kepada pelanggan setelah booking</p>
+                    </div>
+                  </div>
+                  
+                  <label class="inline-flex items-center cursor-pointer">
+                    <input type="checkbox" v-model="followUpConfig.enabled" class="sr-only peer">
+                    <div class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
+                    </div>
+                  </label>
+                </div>
+                
+                <div 
+                  v-if="followUpConfig.enabled" 
+                  class="border-t border-gray-200 dark:border-gray-700 p-6 space-y-4 transition-all duration-200 ease-in-out"
+                >
+                  <div>
+                    <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
+                      Waktu Follow Up
+                    </label>
+                    <div class="relative">
+                      <select 
+                        v-model="followUpConfig.delay"
+                        class="w-full mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      > 
+                        <option 
+                          class="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" 
+                          v-for="opt in followUpTimeOptions" 
+                          :key="opt.value" 
+                          :value="opt.value"
+                        >
+                          {{ opt.label }}
+                        </option>
+                      </select>                      
+                      <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm pointer-events-none">
+                        sebelum waktu booking
+                      </span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 italic">Pilih waktu untuk mengirimkan pesan follow up.</p>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
+                      Pesan Follow Up
+                    </label>
+                    <textarea 
+                      v-model="followUpConfig.message"
+                      rows="4"
+                      placeholder="Halo kak, terima kasih sudah melakukan booking. Apakah ada kendala atau pertanyaan lain?"
+                      class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out"
+                    ></textarea>
+                    <p class="text-xs text-gray-500 mt-1 italic">Pesan ini akan dikirimkan otomatis ke pelanggan melalui WhatsApp sesuai waktu yang ditentukan.</p>
+                  </div>
+                </div>
+              </div>
+            </div> 
+            <div class="w-[240px] flex flex-col gap-3">
+              <div class="sticky top-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="w-10 h-10 flex-shrink-0 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">                    
+                    <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="font-semibold text-slate-700 dark:text-slate-300">{{ $t('AGENT_MGMT.BOOKING_BOT.CONFIGURE') }}</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ $t('AGENT_MGMT.BOOKING_BOT.CONFIGURE_DESC') }}</p>
+                  </div>
+                </div>
+                
+                <Button
+                  class="w-full"
+                  :is-loading="isSaving"
+                  :disabled="isSaving"
+                  @click="() => saveSettings()"
+                >
+                  <span class="flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    {{ $t('AGENT_MGMT.BOOKING_BOT.SAVE_BTN') }}
+                  </span>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: File Knowledge Sources -->
+        <div v-show="activeIndex === 2" class="w-full min-w-0">
           <FileKnowledgeSources 
             :data="data" 
             context="lead_generation"
           />
         </div>
 
-        <!-- Tab 2: QnA Knowledge Sources -->
-        <div v-show="activeIndex === 2" class="w-full min-w-0">
+        <!-- Tab 3: QnA Knowledge Sources -->
+        <div v-show="activeIndex === 3" class="w-full min-w-0">
           <QnaKnowledgeSources :data="data" context="lead_generation"/>
         </div>
         
-        <!-- Tab 3: Priorities -->
-        <div v-show="activeIndex === 3" class="w-full">
+        <!-- Tab 4: Priorities -->
+        <div v-show="activeIndex === 4" class="w-full">
           <PrioritiesTab 
             v-if="data"
             :data="data" 
@@ -252,8 +356,8 @@
           </div>
         </div>
 
-        <!-- Custom Numbering Content -->
-        <div v-show="activeIndex === 4" class="w-full">
+        <!-- Tab 5: Custom Numbering Content -->
+        <div v-show="activeIndex === 5" class="w-full">
           <CustomNumberingTab :data="data" />
         </div>
 
@@ -263,7 +367,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, ref, watch, onMounted, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Button from 'dashboard/components-next/button/Button.vue';
 import FileKnowledgeSources from '../knowledge-sources/FileKnowledgeSources.vue'
@@ -308,6 +412,20 @@ const defaultLeadPriorities = [
   }
 ];
 
+const followUpConfig = reactive({
+  enabled: false,
+  delay: 60,
+  message: ''
+});
+
+// follow-up options
+const followUpTimeOptions = [
+  { label: '30 Menit', value: 30 },
+  { label: '1 Jam', value: 60 },
+  { label: '4 Jam', value: 240 },
+  { label: '12 Jam', value: 720 },
+];
+
 // Helper function to get agent ID by type
 function getAgentIdByType(type) {
   const flowData = props.data?.display_flow_data;
@@ -345,24 +463,30 @@ const tabs = computed(() => [
   {
     key: '1',
     index: 1,
-    name: 'File',
-    icon: 'i-lucide-folder',
+    name: 'Pengaturan',
+    icon: 'i-lucide-settings',
   },
   {
     key: '2',
     index: 2,
-    name: 'QnA',
-    icon: 'i-lucide-help-circle',
+    name: 'File',
+    icon: 'i-lucide-folder',
   },
   {
     key: '3',
     index: 3,
-    name: 'Klasifikasi',
-    icon: 'i-lucide-tag',
+    name: 'QnA',
+    icon: 'i-lucide-help-circle',
   },
   {
     key: '4',
     index: 4,
+    name: 'Klasifikasi',
+    icon: 'i-lucide-tag',
+  },
+  {
+    key: '5',
+    index: 5,
     name: 'Penomoran Otomatis',
     icon: 'i-lucide-notebook-tabs',
   },
@@ -416,6 +540,17 @@ watch(leadgenAuthError, (newError) => {
   }
 }, { immediate: true });
 
+// Watch data
+watch(
+  () => props.data,
+  (newData) => {
+    if (newData && newData.display_flow_data) {
+      loadSavedConfiguration();
+    }
+  },
+  { deep: true, immediate: true }
+);
+
 function showNotification(message, type = 'success') {
   notification.value = { message, type };
   setTimeout(() => {
@@ -457,6 +592,63 @@ function disconnectGoogle() {
       console.error('Disconnect failed:', error);
       showNotification('Failed to disconnect', 'error');
     });
+}
+
+function loadSavedConfiguration() {
+  const flowData = props.data?.display_flow_data;
+  
+  if (flowData?.agents_config) {
+    const agentIndex = flowData.enabled_agents.indexOf('lead_generation');
+    
+    if (agentIndex !== -1) {
+      const config = flowData.agents_config[agentIndex].configurations;
+
+      if (config?.follow_up) {
+        followUpConfig.enabled = config.follow_up.enabled || false;
+        followUpConfig.delay = config.follow_up.delay || 60;
+        followUpConfig.message = config.follow_up.message || '';
+      }
+    }
+  }
+}
+
+async function saveSettings() {
+  if (isSaving.value) return;
+
+  try {
+    isSaving.value = true;
+    let flowData = props.data.display_flow_data;
+    const agentIndex = flowData.enabled_agents.indexOf('lead_generation');
+
+    if (agentIndex === -1) {
+      useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.AGENT_NOT_FOUND'));
+      return;
+    }
+
+    if (!flowData.agents_config[agentIndex].configurations) {
+      flowData.agents_config[agentIndex].configurations = {};
+    }
+
+    // Update data Follow Up ke payload
+    flowData.agents_config[agentIndex].configurations.follow_up = {
+      enabled: followUpConfig.enabled,
+      delay: followUpConfig.delay,
+      message: followUpConfig.message
+    };
+
+    const payload = {
+      flow_data: flowData,
+    };
+
+    await aiAgents.updateAgent(props.data.id, payload);
+
+    showNotification(t('AGENT_MGMT.CSBOT.TICKET.SAVE_SUCCESS'), 'success');
+  } catch (e) {
+    console.error('Save error:', e);
+    showNotification(t('AGENT_MGMT.CSBOT.TICKET.SAVE_ERROR'), 'error');
+  } finally {
+    isSaving.value = false;
+  }
 }
 
 async function createSheets() {
@@ -586,6 +778,10 @@ async function syncProductColumns() {
     syncingColumns.value = false;
   }
 }
+
+onMounted(() => {
+  loadSavedConfiguration();
+});
 
 </script>
 

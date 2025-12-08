@@ -628,7 +628,7 @@ onMounted(async () => {
                           </svg>
                         </div>
                         <div>
-                          <h3 class="font-medium text-slate-900 dark:text-slate-25">Follow Up Pesanan</h3>
+                          <h3 class="font-medium text-slate-900 dark:text-slate-25">Pesan Follow Up</h3>
                           <p class="text-sm text-gray-500 mt-1">Kirim pesan pengingat otomatis kepada pelanggan setelah booking</p>
                         </div>
                       </div>
@@ -666,7 +666,7 @@ onMounted(async () => {
                             sebelum waktu booking
                           </span>
                         </div>
-                        <p class="text-xs text-gray-500 mt-1">Pilih waktu untuk mengirimkan pesan follow up.</p>
+                        <p class="text-xs text-gray-500 mt-1 italic">Pilih waktu untuk mengirimkan pesan follow up.</p>
                       </div>
                       <div>
                         <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
@@ -678,7 +678,7 @@ onMounted(async () => {
                           placeholder="Halo kak, terima kasih sudah melakukan booking. Apakah ada kendala atau pertanyaan lain?"
                           class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out"
                         ></textarea>
-                        <p class="text-xs text-gray-500 mt-1">Pesan ini akan dikirimkan otomatis ke pelanggan melalui WhatsApp sesuai waktu yang ditentukan.</p>
+                        <p class="text-xs text-gray-500 mt-1 italic">Pesan ini akan dikirimkan otomatis ke pelanggan melalui WhatsApp sesuai waktu yang ditentukan.</p>
                       </div>
                     </div>
                   </div>

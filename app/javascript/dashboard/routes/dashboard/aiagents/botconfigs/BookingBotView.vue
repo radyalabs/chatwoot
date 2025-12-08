@@ -147,18 +147,6 @@ async function createSheets() {
 
 // Save state
 const isSaving = ref(false);
-
-const templates = [
-  {
-    label: t('AGENT_MGMT.BOOKING_BOT.TEMPLATE_OPTIONS.KLINIK'),
-    value: 'klinik',
-  },
-  {
-    label: t('AGENT_MGMT.BOOKING_BOT.TEMPLATE_OPTIONS.LAPANGAN'),
-    value: 'lapangan',
-  },
-];
-const selectedTemplate = ref(templates[0].value);
 const minDuration = ref('');
 
 // New fields for resource and location columns
@@ -505,15 +493,6 @@ onMounted(async () => {
                               v-model="minDuration" 
                             />
                           </div>
-                          <div class="flex-1">
-                            <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.BOOKING_BOT.INDUSTRY_TEMPLATE') }}</label>
-                            <select 
-                              v-model="selectedTemplate" 
-                              class="w-full mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                            >
-                              <option v-for="tpl in templates" :key="tpl.value" :value="tpl.value">{{ tpl.label }}</option>
-                            </select>
-                          </div>
                         </div>
 
                       <!-- Sync Button for Resource and Location Lists -->
@@ -537,24 +516,24 @@ onMounted(async () => {
                         </div>
                       </div>
 
-                        <div class="text-red-600 text-sm flex items-center gap-2">
-                          <button
+                      <div class="text-red-600 text-sm flex items-center gap-2">
+                        <button
                           @click="retryAuthentication"
                           class="btn-retryauth inline-flex items-center space-x-2 px-4 py-2 rounded-md font-medium transition-colors bg-transparent"
                           :disabled="loading"
                         >
-                        <span>{{ $t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_BTN') }}</span>
+                          <span>{{ $t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_BTN') }}</span>
+                        </button>
+                        <button
+                        @click="disconnectGoogle"
+                        class="inline-flex items-center space-x-2 border-2 border-red-600 hover:border-red-700 dark:border-red-400 dark:hover:border-red-500 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500 px-4 py-2 rounded-md font-medium transition-colors bg-transparent hover:bg-red-50 dark:hover:bg-red-900/20"
+                        :disabled="loading"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-ban-icon lucide-ban"><path d="M4.929 4.929 19.07 19.071"/><circle cx="12" cy="12" r="10"/></svg>
+                          <span>{{ $t('AGENT_MGMT.BOOKING_BOT.DISC_BTN') }}</span>
                       </button>
-                      <button
-                      @click="disconnectGoogle"
-                      class="inline-flex items-center space-x-2 border-2 border-red-600 hover:border-red-700 dark:border-red-400 dark:hover:border-red-500 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500 px-4 py-2 rounded-md font-medium transition-colors bg-transparent hover:bg-red-50 dark:hover:bg-red-900/20"
-                      :disabled="loading"
-                      >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-ban-icon lucide-ban"><path d="M4.929 4.929 19.07 19.071"/><circle cx="12" cy="12" r="10"/></svg>
-                      <span>{{ $t('AGENT_MGMT.BOOKING_BOT.DISC_BTN') }}</span>
-                    </button>
-                </div>
-              </div>
+                    </div>
+                  </div>
                     </div>
                   </div>
 
@@ -599,8 +578,8 @@ onMounted(async () => {
                     </svg>
                   </div>
                   <div>
-                    <h3 class="font-semibold text-slate-700 dark:text-slate-300">{{ $t('AGENT_MGMT.BOOKING_BOT.GENERAL_TAB') }}</h3>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">Configure booking settings</p>
+                    <h3 class="font-semibold text-slate-700 dark:text-slate-300">{{ $t('AGENT_MGMT.BOOKING_BOT.CONFIGURE') }}</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ $t('AGENT_MGMT.BOOKING_BOT.CONFIGURE_DESC') }}</p>
                   </div>
                 </div>
                 

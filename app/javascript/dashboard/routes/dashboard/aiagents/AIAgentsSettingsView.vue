@@ -382,7 +382,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="w-full px-8 py-8 bg-n-background dark:bg-gray-900 overflow-auto">
+  <div class="w-full h-full px-8 py-8 bg-n-background dark:bg-gray-900 overflow-y-auto">
     <div>
       <div v-if="loadingData" class="text-center">
         <span class="mt-4 mb-4 spinner" />

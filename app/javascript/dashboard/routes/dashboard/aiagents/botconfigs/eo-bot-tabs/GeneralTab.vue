@@ -358,7 +358,7 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
                 </div>
 
                 <div class="border-t border-blue-200 dark:border-blue-700 pt-6">
-                  <div class="flex justify-end">
+                  <div class="flex items-center justify-between gap-2">
                     <div v-if="eventSheets.input && !salesAuthError">
                       <button
                         @click="syncProductColumns"
@@ -375,7 +375,7 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
                         {{ syncingColumns ? $t('AGENT_MGMT.EOBOT.CATALOG.SYNC_BUTTON_LOADING') : $t('AGENT_MGMT.EOBOT.CATALOG.SYNC_BUTTON') }}
                       </button>
                     </div>
-                    <div v-else class="text-red-600 text-sm flex items-center gap-2">
+                    <div class="text-red-600 text-sm flex items-center gap-2">
                       <button
                         @click="retryAuthentication"
                         class="btn-retryauth inline-flex items-center space-x-2 px-4 py-2 rounded-md font-medium transition-colors bg-transparent"
@@ -384,8 +384,6 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
                         <span v-if="loading">{{ $t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_LOADING') }}</span>
                         <span>{{ t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_BTN') }}</span>
                       </button>
-                    </div>
-                    <div class="gap-2 items-center">
                       <button
                         @click="disconnectGoogle"
                         class="inline-flex items-center space-x-2 border-2 border-red-600 hover:border-red-700 dark:border-red-400 dark:hover:border-red-500 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500 px-4 py-2 rounded-md font-medium transition-colors bg-transparent hover:bg-red-50 dark:hover:bg-red-900/20 ml-3"
@@ -442,8 +440,8 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
             </svg>
           </div>
           <div>
-            <h3 class="font-semibold text-slate-700 dark:text-slate-300">{{ $t('AGENT_MGMT.CSBOT.TICKET.GENERAL_SETTINGS') }}</h3>
-            <p class="text-sm text-slate-500 dark:text-slate-400">{{ $t('AGENT_MGMT.CSBOT.TICKET.SYSTEM_SETTINGS') }}</p>
+            <h3 class="font-semibold text-slate-700 dark:text-slate-300">{{ $t('AGENT_MGMT.BOOKING_BOT.CONFIGURE') }}</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400">{{ $t('AGENT_MGMT.BOOKING_BOT.CONFIGURE_DESC') }}</p>
           </div>
         </div>
         

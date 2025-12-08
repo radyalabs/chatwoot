@@ -503,8 +503,8 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
             </svg>
           </div>
           <div>
-            <h3 class="font-semibold text-slate-700 dark:text-slate-300">{{ $t('AGENT_MGMT.CSBOT.TICKET.GENERAL_SETTINGS') }}</h3>
-            <p class="text-sm text-slate-500 dark:text-slate-400">{{ $t('AGENT_MGMT.CSBOT.TICKET.SYSTEM_SETTINGS') }}</p>
+            <h3 class="font-semibold text-slate-700 dark:text-slate-300">{{ $t('AGENT_MGMT.BOOKING_BOT.CONFIGURE') }}</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400">{{ $t('AGENT_MGMT.BOOKING_BOT.CONFIGURE_DESC') }}</p>
           </div>
         </div>
         

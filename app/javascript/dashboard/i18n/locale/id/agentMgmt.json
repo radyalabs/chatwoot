@@ -397,7 +397,9 @@
       "ROUTING_CONDITION": "Kondisi Pengalihan",
       "ROUTING_CONDITION_PLACEHOLDER": "Tentukan kapan Bot AI harus meneruskan chat ke agen. Setelah itu, status chat akan berubah menjadi Open dan tampil di tab Chat Ditugaskan.",
       "CUSTOM_FLOW_LINK": "Link Bot",
-      "CUSTOM_FLOW_LINK_PLACEHOLDER": "Masukkan link endpoint Bot Anda..."
+      "CUSTOM_FLOW_LINK_PLACEHOLDER": "Masukkan link endpoint Bot Anda...",
+      "ENABLE_HANDOVER": "Aktifkan Pengalihan",
+      "HANDOVER_INSTRUCTION": "Saat diaktifkan, Bot AI akan meneruskan chat ke agen manusia berdasarkan kondisi pengalihan yang ditentukan."
     },
     "TEXT_KNOWLEDGE_PLACEHOLDER": "Tulis informasi penting tentang bisnis, produk, layanan, atau kebijakan Anda di sini.<br><br>Contoh: Toko kami buka setiap hari Senin-Sabtu, pukul 08.00-17.00 WIB. Untuk pengembalian barang, pelanggan wajib menyertakan bukti transaksi dalam 7 hari.",
     "QUESTION_LABEL": "Pertanyaan",

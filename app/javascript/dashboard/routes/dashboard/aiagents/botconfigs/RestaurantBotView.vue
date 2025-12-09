@@ -50,6 +50,24 @@ const tabs = computed(() => [
   },
 ]);
 
+// temperature bot
+const creativityLevel = ref(0.3); // Default value
+const creativityOptions = [
+  { label: 'Tidak sama sekali', value: 0 },
+  { label: 'Minim', value: 0.1 },
+  { label: 'Normal', value: 0.3 },
+  { label: 'Lebih tinggi', value: 0.6 },
+  { label: 'Maksimal', value: 1 },
+];
+
+// idle time
+const idleConfig = reactive({
+  enabled: true,
+  duration: 30,      
+  action: 'resolve', 
+  message: ''        
+});
+
 // General Tab - Google Sheets Integration (centralized from parent)
 const step = computed(() => props.googleSheetsAuth.step);
 const loading = computed(() => props.googleSheetsAuth.loading);
@@ -95,7 +113,6 @@ watch(restaurantAuthError, (newError) => {
 function retryAuthentication() {
   connectGoogle();
 }
-
 
 function disconnectGoogle() {
   console.log('Disconnect Google account clicked');
@@ -203,6 +220,94 @@ async function createSheets() {
     props.googleSheetsAuth.loading = false;
   }
 }
+
+watch(
+  () => props.data,
+  (newData) => {
+    if (newData && newData.display_flow_data) {
+      loadSavedConfiguration();
+    }
+  },
+  { deep: true, immediate: true }
+);
+
+function loadSavedConfiguration() {
+  const flowData = props.data?.display_flow_data;
+  
+  if (flowData?.agents_config) {
+    const agentIndex = flowData.enabled_agents.indexOf('restaurant');
+    
+    if (agentIndex !== -1) {
+      const config = flowData.agents_config[agentIndex].configurations;
+      
+      if (config.url_menu) menuBookLink.value = config.url_menu;
+      if (config.tax !== undefined) {
+        orderSettings.taxEnabled = config.tax > 0;
+        orderSettings.taxPercent = config.tax;
+      }
+      if (config.service_charge !== undefined) {
+        orderSettings.serviceChargeEnabled = config.service_charge > 0;
+        orderSettings.serviceChargePercent = config.service_charge;
+      }
+      if (config.order_settings) {
+        if (config.order_settings.minTimeBeforeOrder) orderSettings.minTimeBeforeOrder = config.order_settings.minTimeBeforeOrder;
+        if (config.order_settings.minOrderTotal) orderSettings.minOrderTotal = config.order_settings.minOrderTotal;
+      }
+      if (config.creativity_level !== undefined) {
+        creativityLevel.value = config.creativity_level;
+      }
+      if (config.idle_settings) {
+        idleConfig.enabled = config.idle_settings.enabled !== undefined ? config.idle_settings.enabled : true;
+        idleConfig.duration = config.idle_settings.duration || 30;
+        idleConfig.action = config.idle_settings.action || 'resolve';
+        idleConfig.message = config.idle_settings.message || '';
+      }
+    }
+  }
+}
+
+async function saveGeneralSettings() {
+  if (isSaving.value) return;
+
+  try {
+    isSaving.value = true;
+    let flowData = props.data.display_flow_data;
+    const agentIndex = flowData.enabled_agents.indexOf('restaurant');
+
+    if (agentIndex === -1) {
+      useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.AGENT_NOT_FOUND'));
+      return;
+    }
+
+    if (!flowData.agents_config[agentIndex].configurations) {
+      flowData.agents_config[agentIndex].configurations = {};
+    }
+
+    // Update Creativity & Idle Settings
+    flowData.agents_config[agentIndex].configurations.creativity_level = creativityLevel.value;
+    
+    flowData.agents_config[agentIndex].configurations.idle_settings = {
+      enabled: true,
+      duration: idleConfig.duration,
+      action: idleConfig.action,
+      message: idleConfig.message
+    };
+
+    const payload = {
+      flow_data: flowData,
+    };
+
+    await aiAgents.updateAgent(props.data.id, payload);
+
+    useAlert(t('AGENT_MGMT.CSBOT.TICKET.SAVE_SUCCESS'));
+  } catch (e) {
+    console.error('Save error:', e);
+    useAlert(t('AGENT_MGMT.CSBOT.TICKET.SAVE_ERROR'));
+  } finally {
+    isSaving.value = false;
+  }
+}
+
 async function save() {
   if (isSaving.value) return; // Prevent multiple calls
   const configData = {
@@ -272,6 +377,9 @@ function saveOrderSettings() {
   save();
 }
 
+onMounted(async () => {
+  loadSavedConfiguration();
+});
 
 </script>
 
@@ -401,30 +509,104 @@ function saveOrderSettings() {
 
           <!-- Step 3: Sheet Configuration -->
           <div v-else-if="restaurantStep === 'sheetConfig'">
-            <div class="space-y-6">
-              <!-- Input Sheet Section - Restaurant Data -->
-              <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-6 mb-6 border border-blue-200 dark:border-blue-800">
-                <div class="flex items-center justify-between">
-                  <div class="flex-1">
-                    <div class="flex items-center mb-3">
+            <div class="flex flex-row gap-4">
+              <div class="flex-1 min-w-0 flex flex-col justify-stretch gap-6">
+                <!-- Input Sheet Section - Restaurant Data -->
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-6 mb-6 border border-blue-200 dark:border-blue-800">
+                  <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                      <div class="flex items-center mb-3">
+                        <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                          <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 class="font-medium text-slate-900 dark:text-slate-25">
+                            {{ $t('AGENT_MGMT.RESTAURANT_BOT.INPUT_SHEET_TITLE') }}
+                          </h3>
+                          <p class="text-sm text-slate-600 dark:text-slate-400">
+                            {{ $t('AGENT_MGMT.RESTAURANT_BOT.INPUT_SHEET_DESC') }}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div v-if="!ticketAuthError" class="flex flex-col gap-2">
+                      <a 
+                        :href="sheets.input" 
+                        target="_blank" 
+                        class="inline-flex items-center space-x-2 border-2 border-green-600 hover:border-green-700 dark:border-green-600 text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-500 px-4 py-2 rounded-md font-medium transition-colors bg-transparent hover:bg-green-50 dark:hover:bg-green-900/20"
+                      >
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                        </svg>
+                        {{ $t('AGENT_MGMT.RESTAURANT_BOT.OPEN_SHEET_BTN') }}
+                      </a>
+                    </div>
+                  </div>
+
+                  <div class="border-t border-blue-200 dark:border-blue-700 pt-6">
+                    <div class="flex justify-between items-center">
+                      <div>
+                        <div v-if="!restaurantAuthError">
+                          <button
+                        @click="syncScheduleColumns"
+                        :disabled="syncingColumns"
+                        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 h-10"
+                      >
+                        <svg v-if="syncingColumns" class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"/>
+                          <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" class="opacity-75"/>
+                        </svg>
+                        <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        {{ syncingColumns ? 'Syncing...' : $t('AGENT_MGMT.BOOKING_BOT.SYNC_BUTTON') }}
+                      </button>
+                    </div>
+                  </div>
+                  <div class="flex flex-row">
+                    <div class="text-red-600 text-sm flex items-center gap-2">
+                      <button
+                          @click="retryAuthentication"
+                          class="btn-retryauth inline-flex items-center space-x-2 px-4 py-2 rounded-md font-medium transition-colors bg-transparent"
+                          :disabled="loading"
+                        >
+                          <span v-if="loading">{{ $t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_LOADING') }}</span>
+                          <span>{{ t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_BTN') }}</span>
+                        </button>
+                      </div>
+                      <div class="gap-2 items-center">
+                        <button
+                        @click="disconnectGoogle"
+                        class="inline-flex items-center space-x-2 border-2 border-red-600 hover:border-red-700 dark:border-red-400 dark:hover:border-red-500 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500 px-4 py-2 rounded-md font-medium transition-colors bg-transparent hover:bg-red-50 dark:hover:bg-red-900/20 ml-3"
+                          :disabled="loading"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-ban-icon lucide-ban"><path d="M4.929 4.929 19.07 19.071"/><circle cx="12" cy="12" r="10"/></svg>
+                          <span>{{ $t('AGENT_MGMT.BOOKING_BOT.DISC_BTN') }}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                </div>
+                
+                <!-- Output Sheet Section - Order Results -->
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-6 mb-6 border border-blue-200 dark:border-blue-800">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center">
                       <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
                         <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
                         </svg>
                       </div>
                       <div>
-                        <h3 class="font-medium text-slate-900 dark:text-slate-25">
-                          {{ $t('AGENT_MGMT.RESTAURANT_BOT.INPUT_SHEET_TITLE') }}
-                        </h3>
-                        <p class="text-sm text-slate-600 dark:text-slate-400">
-                          {{ $t('AGENT_MGMT.RESTAURANT_BOT.INPUT_SHEET_DESC') }}
-                        </p>
+                        <h4 class="font-medium text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.RESTAURANT_BOT.OUTPUT_SHEET_TITLE') }}</h4>
+                        <p class="text-sm text-slate-600 dark:text-slate-400">{{ $t('AGENT_MGMT.RESTAURANT_BOT.OUTPUT_SHEET_DESC') }}</p>
                       </div>
                     </div>
-                  </div>
-                  <div v-if="!ticketAuthError" class="flex flex-col gap-2">
                     <a 
-                      :href="sheets.input" 
+                      :href="sheets.output" 
                       target="_blank" 
                       class="inline-flex items-center space-x-2 border-2 border-green-600 hover:border-green-700 dark:border-green-600 text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-500 px-4 py-2 rounded-md font-medium transition-colors bg-transparent hover:bg-green-50 dark:hover:bg-green-900/20"
                     >
@@ -435,77 +617,145 @@ function saveOrderSettings() {
                     </a>
                   </div>
                 </div>
-
-                <div class="border-t border-blue-200 dark:border-blue-700 pt-6">
-                  <div class="flex justify-between items-center">
-                    <div>
-                      <div v-if="!restaurantAuthError">
-                        <button
-                      @click="syncScheduleColumns"
-                      :disabled="syncingColumns"
-                      class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 h-10"
-                    >
-                      <svg v-if="syncingColumns" class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"/>
-                        <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" class="opacity-75"/>
-                      </svg>
-                      <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                      </svg>
-                      {{ syncingColumns ? 'Syncing...' : $t('AGENT_MGMT.BOOKING_BOT.SYNC_BUTTON') }}
-                    </button>
-                  </div>
-                </div>
-                <div class="flex flex-row">
-                  <div class="text-red-600 text-sm flex items-center gap-2">
-                    <button
-                        @click="retryAuthentication"
-                        class="btn-retryauth inline-flex items-center space-x-2 px-4 py-2 rounded-md font-medium transition-colors bg-transparent"
-                        :disabled="loading"
-                      >
-                        <span v-if="loading">{{ $t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_LOADING') }}</span>
-                        <span>{{ t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_BTN') }}</span>
-                      </button>
+                <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
+                  <div class="flex items-start justify-between p-6">
+                    <div class="flex items-center">
+                      <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
+                          <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 class="font-medium text-slate-900 dark:text-slate-25">Tingkat Kreativitas</h3>
+                        <p class="text-sm text-gray-500 mt-1">Tentukan seberapa kreatif bot dalam merespons percakapan</p>
+                      </div>
                     </div>
-                    <div class="gap-2 items-center">
-                      <button
-                      @click="disconnectGoogle"
-                      class="inline-flex items-center space-x-2 border-2 border-red-600 hover:border-red-700 dark:border-red-400 dark:hover:border-red-500 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500 px-4 py-2 rounded-md font-medium transition-colors bg-transparent hover:bg-red-50 dark:hover:bg-red-900/20 ml-3"
-                        :disabled="loading"
+                  </div>
+                  
+                  <div class="border-t border-gray-200 dark:border-gray-700 p-6">
+                    <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">Skala Kreativitas</label>
+                    <div class="relative">
+                      <select 
+                        v-model="creativityLevel" 
+                        class="w-full mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-ban-icon lucide-ban"><path d="M4.929 4.929 19.07 19.071"/><circle cx="12" cy="12" r="10"/></svg>
-                        <span>{{ $t('AGENT_MGMT.BOOKING_BOT.DISC_BTN') }}</span>
-                      </button>
+                        <option class="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" v-for="opt in creativityOptions" :key="opt.value" :value="opt.value">
+                          {{ opt.label }}
+                        </option>
+                      </select>
+                      <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500 dark:text-gray-400">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              </div>
-              
-              <!-- Output Sheet Section - Order Results -->
-              <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-6 mb-6 border border-blue-200 dark:border-blue-800">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center">
+                <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
+                  <div class="flex items-center p-6">
                     <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
-                      <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
                       </svg>
                     </div>
                     <div>
-                      <h4 class="font-medium text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.RESTAURANT_BOT.OUTPUT_SHEET_TITLE') }}</h4>
-                      <p class="text-sm text-slate-600 dark:text-slate-400">{{ $t('AGENT_MGMT.RESTAURANT_BOT.OUTPUT_SHEET_DESC') }}</p>
+                      <h3 class="font-medium text-slate-900 dark:text-slate-25">Pengaturan Idle Chat</h3>
+                      <p class="text-sm text-gray-500 mt-1">Atur tindakan otomatis jika tidak ada aktivitas chat</p>
                     </div>
                   </div>
-                  <a 
-                    :href="sheets.output" 
-                    target="_blank" 
-                    class="inline-flex items-center space-x-2 border-2 border-green-600 hover:border-green-700 dark:border-green-600 text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-500 px-4 py-2 rounded-md font-medium transition-colors bg-transparent hover:bg-green-50 dark:hover:bg-green-900/20"
+                  
+                  <div class="border-t border-gray-200 dark:border-gray-700 p-6">
+                    <div>
+                      <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
+                        Batas Waktu Idle (Menit)
+                      </label>
+                      <div class="relative">
+                        <input 
+                          type="number" 
+                          min="1"
+                          v-model="idleConfig.duration"
+                          placeholder="Contoh: 15" 
+                          class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm h-10 !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out" 
+                        />
+                        <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">menit tanpa aktivitas</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium mb-3 text-slate-900 dark:text-slate-25">
+                        Aksi saat Idle
+                      </label>
+                      <div class="flex flex-col sm:flex-row gap-4">
+                        <div class="flex items-center">
+                          <input 
+                            id="action-resolve" 
+                            type="radio" 
+                            value="resolve" 
+                            v-model="idleConfig.action"
+                            class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                          >
+                          <label for="action-resolve" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">
+                            Langsung Resolve Chat
+                          </label>
+                        </div>
+                        <div class="flex items-center">
+                          <input 
+                            id="action-message" 
+                            type="radio" 
+                            value="message" 
+                            v-model="idleConfig.action"
+                            class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                          >
+                          <label for="action-message" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">
+                            Kirim Pesan Follow Up
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div v-if="idleConfig.action === 'message'" class="animate-fadeIn">
+                      <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
+                        Pesan Idle
+                      </label>
+                      <textarea 
+                        v-model="idleConfig.message"
+                        rows="3"
+                        placeholder="Halo, apakah Anda masih di sana? Sesi ini akan segera berakhir jika tidak ada respon."
+                        class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out"
+                      ></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="w-[240px] flex flex-col gap-3">
+                <div class="sticky top-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
+                  <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 flex-shrink-0 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                      <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="font-semibold text-slate-700 dark:text-slate-300">{{ $t('AGENT_MGMT.BOOKING_BOT.CONFIGURE') }}</h3>
+                      <p class="text-sm text-slate-500 dark:text-slate-400">{{ $t('AGENT_MGMT.BOOKING_BOT.CONFIGURE_DESC') }}</p>
+                    </div>
+                  </div>
+                  
+                  <Button
+                    class="w-full"
+                    :is-loading="isSaving"
+                    :disabled="isSaving"
+                    @click="() => saveGeneralSettings()"
                   >
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                    </svg>
-                    {{ $t('AGENT_MGMT.RESTAURANT_BOT.OPEN_SHEET_BTN') }}
-                  </a>
+                    <span class="flex items-center gap-2">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                      </svg>
+                      {{ $t('AGENT_MGMT.BOOKING_BOT.SAVE_BTN') }}
+                    </span>
+                  </Button>
                 </div>
               </div>
             </div>

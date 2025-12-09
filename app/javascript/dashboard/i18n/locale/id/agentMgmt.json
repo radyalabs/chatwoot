@@ -431,6 +431,8 @@
       "CONFIGURE_DESC": "Update konfigurasi bot",
       "CONNECTED_HEADER": "Berhasil Terhubung!",
       "CONNECTED_DESC": "Akun Google Anda telah terhubung.",
+      "CONFIGURE": "Simpan Perubahan",
+      "CONFIGURE_DESC": "Update konfigurasi bot",
       "RETRY_AUTH_BTN": "Coba dan Buat Ulang Sheets",
       "RETRY_AUTH_LOADING": "Membuat Ulang Sheets...",
       "DISC_BTN": "Putuskan Koneksi",

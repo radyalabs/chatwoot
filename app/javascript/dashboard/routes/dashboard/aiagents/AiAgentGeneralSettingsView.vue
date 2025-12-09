@@ -55,6 +55,7 @@ const state = reactive({
   business_info: '',
   welcoming_message: '',
   routing_conditions: '',
+  enable_handover: true,
   has_website: '', // 'yes' or 'no'
   website_url: '',
   full_prompt: '',
@@ -86,16 +87,20 @@ watch(
     
     const flowData = v.display_flow_data;
     console.log("flowData:", flowData);
-    if (flowData?.agents_config) {
-      flowData.agents_config.forEach(agent_config => {
-        if (agent_config.bot_prompt) {
-          state.welcoming_message = agent_config.bot_prompt.persona || '';
-          state.routing_conditions = agent_config.bot_prompt.handover_conditions || '';
-          state.instructions = agent_config.bot_prompt.instructions || '';
-          state.business_info = agent_config.bot_prompt.business_info || '';
-        }
-      });
-    }
+      if (flowData?.agents_config) {
+        // Initialize enable_handover from the first agent's configurations if present
+        const firstAgent = flowData.agents_config[0];
+        state.enable_handover = firstAgent?.configurations?.enable_handover ?? true;
+
+        flowData.agents_config.forEach(agent_config => {
+          if (agent_config.bot_prompt) {
+            state.welcoming_message = agent_config.bot_prompt.persona || '';
+            state.routing_conditions = agent_config.bot_prompt.handover_conditions || '';
+            state.instructions = agent_config.bot_prompt.instructions || '';
+            state.business_info = agent_config.bot_prompt.business_info || '';
+          }
+        });
+      }
   },
   { immediate: true }
 );
@@ -116,7 +121,7 @@ async function submit() {
     // Deep clone flowData to avoid mutating props
     const flowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
 
-    // Update bot_prompt for every agent
+    // Update bot_prompt and configuration for every agent
     flowData.agents_config.forEach(agent_config => {
       if (agent_config.bot_prompt) {
         agent_config.bot_prompt.persona = state.welcoming_message || agent_config.bot_prompt.persona;
@@ -124,6 +129,11 @@ async function submit() {
         agent_config.bot_prompt.instructions = state.instructions || '';
         agent_config.bot_prompt.business_info = state.business_info || '';
       }
+
+      // Ensure configurations exists and set enable_handover according to toggle
+      agent_config.configurations = agent_config.configurations || {};
+      // Use boolean (true/false) and default to true when undefined
+      agent_config.configurations.enable_handover = !!state.enable_handover;
     });
 
     const payload = {
@@ -276,7 +286,21 @@ function resetChat() {
           </div>
           </div>
 
-          <div>
+          <div class="mb-6">
+            <label class="block font-medium mb-2">{{ t('AGENT_MGMT.FORM_CREATE.ENABLE_HANDOVER') }}</label>
+            <p class="text-sm text-gray-500 mb-3">{{ t('AGENT_MGMT.FORM_CREATE.HANDOVER_INSTRUCTION') }}</p>
+            <label class="inline-flex items-center cursor-pointer">
+              <input type="checkbox" v-model="state.enable_handover" :disabled="isDebugMode" class="sr-only peer">
+              <div
+                class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
+              </div>
+              <span class="ml-3 text-sm text-slate-700 dark:text-slate-300">
+                {{ state.enable_handover ? 'Aktif' : 'Tidak Aktif' }}
+              </span>
+            </label>
+          </div>
+
+          <div v-if="state.enable_handover">
             <label for="routing_conditions">{{ t('AGENT_MGMT.FORM_CREATE.ROUTING_CONDITION') }}</label>
             <TextArea
               id="routing_conditions"

@@ -209,6 +209,74 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     end
   end
 
+  def regenerate
+    # Extract and validate payload
+    payload = {
+      account_id: params[:account_id],
+      agent_id: params[:agent_id],
+      type: params[:type]
+    }
+
+    # Validate required fields
+    unless payload[:account_id] && payload[:agent_id] && payload[:type]
+      return render json: { error: 'Missing required parameters: account_id, agent_id, or type', payload: payload }, status: :bad_request
+    end
+
+    # Build external API URL
+    base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
+    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
+
+    return render json: { error: 'JANGKAU_AGENT_API_URL not configured' }, status: :service_unavailable unless base_url
+
+    # Endpoint ke Python Backend
+    # Example: http://0.0.0.0:8080/v2/oauth/google/spreadsheet/regenerate
+    endpoint = "#{base_url}/v2/oauth/google/spreadsheet/regenerate"
+
+    begin
+      response = HTTParty.post(
+        endpoint,
+        body: payload.to_json,
+        headers: {
+          'Content-Type' => 'application/json',
+          'X-API-Key' => api_key
+        }
+      )
+
+      if response.success?
+        json_response = response.parsed_response
+        
+        # Karena regenerate hanya mengubah input, tapi controller python mengembalikan result dari create()
+        # Kita ambil URL terbaru
+        input_url = json_response['input_spreadsheet_url']
+        output_url = json_response['output_spreadsheet_url'] # Output url mungkin sama, tapi tetap dikembalikan
+
+        if input_url
+          render json: {
+            message: 'Spreadsheet regenerated successfully',
+            input_spreadsheet_url: input_url,
+            output_spreadsheet_url: output_url
+          }, status: :ok
+        else
+          render json: {
+            error: 'Missing input spreadsheet URL in response',
+            response: json_response
+          }, status: :unprocessable_entity
+        end
+      else
+        render json: {
+          error: 'Failed to regenerate spreadsheet',
+          status: response.code,
+          message: response.parsed_response
+        }, status: :service_unavailable
+      end
+    rescue StandardError => e
+      render json: {
+        error: 'Failed to connect to external service',
+        message: e.message
+      }, status: :service_unavailable
+    end
+  end
+
   def spreadsheet_url
     # Extract and validate payload
     payload = {

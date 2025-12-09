@@ -493,6 +493,7 @@ Rails.application.routes.draw do
               post :spreadsheet_url
               post :sync
               delete :disconnect
+              post :regenerate
             end
           end
         end

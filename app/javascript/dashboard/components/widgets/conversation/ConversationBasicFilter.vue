@@ -7,6 +7,7 @@ import NextButton from 'dashboard/components-next/button/Button.vue';
 
 const CHAT_STATUS_FILTER_ITEMS = Object.freeze([
   'open',
+  'assigned',
   'resolved',
   'pending',
   'snoozed',

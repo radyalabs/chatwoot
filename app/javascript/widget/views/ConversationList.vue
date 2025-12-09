@@ -3,13 +3,26 @@
 
     <!-- HEADER -->
     <div class="p-4 text-white flex justify-between items-center shadow-md z-10 shrink-0" :style="{ backgroundColor: widgetColor }">
-      <h1 class="text-lg">{{ $t('CONVERSATION_HISTORY.TITLE') }}</h1>
-      <img 
-        v-if="avatarUrl"
-        :src="avatarUrl" 
-        alt="Logo" 
-        class="w-8 h-8 rounded-full bg-white object-contain p-0.5"
-      />
+      <div class="flex items-center gap-3">
+        <img 
+          v-if="avatarUrl"
+          :src="avatarUrl" 
+          alt="Logo" 
+          class="w-8 h-8 rounded-full bg-white object-contain p-0.5"
+        />
+        <h1 class="text-lg font-semibold">{{ $t('CONVERSATION_HISTORY.TITLE') }}</h1>
+      </div>
+      <button 
+        v-if="isMobileDevice"
+        class="text-white hover:bg-white/20 rounded-full p-1 transition"
+        @click="closeWidget"
+        type="button"
+        aria-label="Close Widget"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
     </div>
 
     <div class="px-4 pt-4 pb-0 shrink-0 z-10 bg-white border-b border-slate-50">
@@ -110,6 +123,7 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
+import { IFrameHelper } from 'widget/helpers/utils';
 
 export default {
   name: 'ConversationList',
@@ -139,6 +153,13 @@ export default {
   },
   methods: {
     ...mapActions('conversation', ['fetchAllConversations', 'loadConversation', 'createConversation']),
+
+    closeWidget() {
+      // Mengirim sinyal ke website utama untuk menutup widget
+      if (IFrameHelper.isIFrame()) {
+        IFrameHelper.sendMessage({ event: 'closeWindow' });
+      }
+    },
     
     formatTime(timestamp) {
       if (!timestamp) return '';
@@ -232,6 +253,16 @@ export default {
   },
   async mounted() {
     console.log('[ConversationList] mounted');
+
+    const ua = navigator.userAgent || navigator.vendor || window.opera;
+    const isAndroidOrIos = /android|iphone|ipod|blackberry|iemobile|opera mini/i.test(ua);
+    const isIpadOS = (ua.includes('Mac') && navigator.maxTouchPoints > 1);
+
+    if (isAndroidOrIos || isIpadOS) {
+        this.isMobileDevice = true;
+    } else {
+        this.isMobileDevice = false;
+    }
 
     // clear selected conversation
     this.$store.commit('conversation/clearSelectedConversation');

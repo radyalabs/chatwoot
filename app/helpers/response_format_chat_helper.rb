@@ -5,8 +5,9 @@ module ResponseFormatChatHelper
     raw_message = response&.dig('response')
     message = normalize_utf8(raw_message)
     is_handover = response&.dig('is_handover_human') || false
+    is_end_state = response&.dig('is_end_state') || false
 
-    [message, is_handover]
+    [message, is_handover, is_end_state]
   end
 
   def json_response(response, is_custom_agent: false)

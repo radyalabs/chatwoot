@@ -1,4 +1,4 @@
-class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
+class Captain::Copilot::ChatService
   include SwitchLocale
   include ResponseFormatChatHelper
 
@@ -45,7 +45,7 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
     nil
   end
 
-  def send_messages
+  def send_messages # rubocop:disable Metrics/MethodLength
     send_message = Captain::Llm::AssistantChatService.new(
       @message,
       @context.conversation.id,
@@ -58,12 +58,23 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
     @context.usage.increment_ai_responses
     parsed = send_message.parsed_response
     response = json_response(parsed, is_custom_agent: @context.ai_agent.custom_agent?)
-    message, is_handover = parsed_response(response)
-    send_reply(message, is_handover: is_handover, additional_attributes: { message_type: 1, sender_type: 'AiAgent' })
+    message, is_handover, is_end_state = parsed_response(response)
+
+    send_reply(
+      message,
+      is_handover: is_handover,
+      is_end_state: is_end_state,
+      additional_attributes: {
+        message_type: 1,
+        sender_type: 'AiAgent'
+      }
+    )
   end
 
-  def send_reply(content, is_handover: false, additional_attributes: {})
+  def send_reply(content, is_handover: false, is_end_state: false, additional_attributes: {})
     message_content = is_handover ? handover_processing(content) : content
+
+    end_state_processing if is_end_state && !is_handover
 
     message_created(message_content, additional_attributes.except(:reservation_details))
     send_log_reply(is_handover: is_handover)
@@ -86,6 +97,12 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
 
     @context.conversation.update!(assignee_id: agent_available.id, is_reminded: false, is_handover_reminded: true) if agent_available
     agent_available ? content : I18n.t('conversations.bot.not_available_agent')
+  end
+
+  def end_state_processing
+    @context.conversation.update!(
+      status: :resolved
+    )
   end
 
   def send_log_reply(is_handover: false)

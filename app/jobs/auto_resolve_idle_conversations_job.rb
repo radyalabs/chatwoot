@@ -3,7 +3,7 @@ class AutoResolveIdleConversationsJob < ApplicationJob
 
   RESOLUTION_MESSAGE = 'Karena belum ada respon, sesi chat ini akan kami akhiri. Jika Anda membutuhkan bantuan di lain waktu, jangan ragu untuk menghubungi kami kembali. Terima kasih.'
 
-  STATUS_OPEN = 1
+  STATUS_RESOLVED = 1
   MESSAGE_TYPE_TEMPLATE = 3
   CONTENT_TYPE_TEXT = 0
   SENDER_TYPE_USER = 'User'.freeze
@@ -16,7 +16,7 @@ class AutoResolveIdleConversationsJob < ApplicationJob
       scope: conversations_to_resolve,
       action: :resolve,
       message: RESOLUTION_MESSAGE,
-      update_attrs: { status: STATUS_OPEN, assignee_id: nil, is_reminded: false }
+      update_attrs: { status: STATUS_RESOLVED, assignee_id: nil, is_reminded: false }
     )
   end
 

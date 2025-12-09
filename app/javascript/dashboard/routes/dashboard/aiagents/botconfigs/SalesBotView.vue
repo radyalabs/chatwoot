@@ -3159,10 +3159,10 @@ async function saveSettings() {
       flowData.agents_config[agentIndex].configurations = {};
     }
 
-    // 1. Simpan Tingkat Kreativitas
-    flowData.agents_config[agentIndex].configurations.creativity_level = creativityLevel.value;
+    // Simpan Tingkat Kreativitas
+    flowData.agents_config[agentIndex].temperature = creativityLevel.value;
 
-    // 2. Simpan Pengaturan Idle Chat
+    // Simpan Pengaturan Idle Chat
     flowData.agents_config[agentIndex].configurations.idle_settings = {
       enabled: true, // Selalu aktif sesuai desain UI
       duration: idleConfig.duration,
@@ -3204,15 +3204,16 @@ function loadSavedConfiguration() {
       return;
     }
     
-    const config = flowData.agents_config[agentIndex]?.configurations;
+    const agentData = flowData.agents_config[agentIndex];
+    const config = agentData?.configurations;
     
     if (!config) {
       return;
     }
 
     // Load Creativity Level
-    if (config.creativity_level !== undefined) {
-      creativityLevel.value = config.creativity_level;
+    if (agentData.temperature !== undefined) {
+      creativityLevel.value = agentData.temperature;
     }
 
     // Load Idle Settings

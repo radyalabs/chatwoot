@@ -62,7 +62,8 @@ watch(
       return;
     }
 
-    const config = flowData.agents_config?.[agentIndex]?.configurations;
+    const agentData = flowData.agents_config?.[agentIndex];
+    const config = agentData?.configurations;
 
     // Map backend value to UI
     const ticketSystem = config?.ticket_system;
@@ -84,10 +85,11 @@ watch(
       props.config.ticketCreateWhen = 'always';
     }
 
+    if (agentData && agentData.temperature !== undefined) {
+      creativityLevel.value = agentData.temperature;
+    }
+
     if (config) {
-      if (config.creativity_level !== undefined) {
-        creativityLevel.value = config.creativity_level;
-      }
       if (config.idle_settings) {
         idleConfig.enabled = config.idle_settings.enabled !== undefined ? config.idle_settings.enabled : true;
         idleConfig.duration = config.idle_settings.duration || '';
@@ -240,6 +242,7 @@ async function save() {
     let flowData = props.data.display_flow_data;
     // console.log(flowData)
     const agent_index = flowData.enabled_agents.indexOf('event_organizer');
+    flowData.agents_config[agent_index].temperature = creativityLevel.value;
     flowData.agents_config[agent_index].configurations.ticket_system =
       ticketSystem;
     flowData.agents_config[agent_index].configurations.idle_settings = {
@@ -247,11 +250,6 @@ async function save() {
       duration: idleConfig.duration,
       action: idleConfig.action,
       message: idleConfig.message
-    };
-    flowData.agents_config[agent_index].configurations.follow_up = {
-      enabled: followUpConfig.enabled,
-      delay: followUpConfig.delay,
-      message: followUpConfig.message
     };
     // console.log(flowData);
     // console.log(props.config);

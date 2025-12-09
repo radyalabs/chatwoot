@@ -238,8 +238,12 @@ function loadSavedConfiguration() {
     const agentIndex = flowData.enabled_agents.indexOf('restaurant');
     
     if (agentIndex !== -1) {
-      const config = flowData.agents_config[agentIndex].configurations;
+      const agentData = flowData.agents_config[agentIndex];
+      const config = agentData.configurations;
       
+      if (agentData.temperature !== undefined) {
+        creativityLevel.value = agentData.temperature;
+      }
       if (config.url_menu) menuBookLink.value = config.url_menu;
       if (config.tax !== undefined) {
         orderSettings.taxEnabled = config.tax > 0;
@@ -252,9 +256,6 @@ function loadSavedConfiguration() {
       if (config.order_settings) {
         if (config.order_settings.minTimeBeforeOrder) orderSettings.minTimeBeforeOrder = config.order_settings.minTimeBeforeOrder;
         if (config.order_settings.minOrderTotal) orderSettings.minOrderTotal = config.order_settings.minOrderTotal;
-      }
-      if (config.creativity_level !== undefined) {
-        creativityLevel.value = config.creativity_level;
       }
       if (config.idle_settings) {
         idleConfig.enabled = config.idle_settings.enabled !== undefined ? config.idle_settings.enabled : true;
@@ -284,7 +285,7 @@ async function saveGeneralSettings() {
     }
 
     // Update Creativity & Idle Settings
-    flowData.agents_config[agentIndex].configurations.creativity_level = creativityLevel.value;
+    flowData.agents_config[agentIndex].temperature = creativityLevel.value;
     
     flowData.agents_config[agentIndex].configurations.idle_settings = {
       enabled: true,

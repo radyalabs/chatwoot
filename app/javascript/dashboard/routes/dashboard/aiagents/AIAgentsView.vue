@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref, watch, watchEffect } from 'vue';
 import InputRadioGroup from 'dashboard/routes/dashboard/settings/inbox/components/InputRadioGroup.vue';
 import aiAgents from '../../../api/aiAgents';
+import googleSheetsExportAPI from '../../../api/googleSheetsExport';
 import { useAccount } from 'dashboard/composables/useAccount';
 import WootSubmitButton from 'dashboard/components/buttons/FormSubmitButton.vue';
 import BaseSettingsHeader from '../settings/components/BaseSettingsHeader.vue';
@@ -88,17 +89,27 @@ async function deleteData() {
   if (!dataToDelete.value) {
     return;
   }
-
   const aiAgentId = dataToDelete.value.id;
+  const accountIdValue = accountId?.value || accountId; // Get account ID
+  console.log('Account ID:', accountIdValue);
+  console.log('Agent ID:', aiAgentId);
   try {
     loadingCards.value[aiAgentId] = true;
     await aiAgents.removeAiAgent(aiAgentId);
+    const payload = {
+      account_id: parseInt(accountIdValue, 10),
+      agent_id: aiAgentId,
+      type: '', // or get from dataToDelete.value.type
+    };
+    // Call your sync function
+    const deleteDataResponse = await googleSheetsExportAPI.deleteSpreadsheet(payload);
+    console.log('Delete response:', deleteDataResponse);
     aiAgentsRef.value = aiAgentsRef.value?.filter(v => v.id !== aiAgentId);
   } finally {
     loadingCards.value[aiAgentId] = false;
   }
 }
-
+ 
 // Create AI Agent modal
 const showCreateAgentModal = ref(false);
 const state = reactive({

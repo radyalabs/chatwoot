@@ -31,9 +31,22 @@ class GoogleSheetsExportAPI extends ApiClient {
   syncSpreadsheet(payload) {
     return axios.post(`${this.url}/sync`, payload);
   }
+  
+  deleteSpreadsheet(payload) {
+    return axios.post(`${this.url}/delete`, payload);
+  }
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
   regenerateSpreadsheet(payload) {
     return this.post('regenerate', payload);
+  
+  deleteSpreadsheet(payload) {
+    return axios.post(`${this.url}/delete`, payload);
   }
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 }
 
 export default new GoogleSheetsExportAPI()

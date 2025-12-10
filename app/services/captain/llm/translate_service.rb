@@ -12,10 +12,10 @@ class Captain::Llm::TranslateService < Captain::Llm::BaseAzureOpenAiService
 
     messages = [system_message, user_message]
     
+    # For Azure OpenAI, we don't specify model in parameters
     response = @client.chat(
       parameters: {
         messages: messages,
-        temperature: 0.3
       }
     )
 

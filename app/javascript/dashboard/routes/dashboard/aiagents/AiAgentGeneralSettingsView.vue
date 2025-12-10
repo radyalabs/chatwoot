@@ -15,6 +15,7 @@ import useVuelidate from '@vuelidate/core';
 import { useAlert } from 'dashboard/composables';
 import { useI18n } from 'vue-i18n';
 import aiAgents from '../../../api/aiAgents';
+import captainTranslator from '../../../api/captainTranslator';
 import MarkdownIt from 'markdown-it';
 import { useRoute } from 'vue-router';
 
@@ -107,6 +108,18 @@ watch(
 
 const loadingSave = ref(false);
 
+async function translateToEnglish(text) {
+  if (!text || text.trim() === '') return text;
+  
+  try {
+    const response = await captainTranslator.translate(text, 'en');
+    return response.data.translated_text;
+  } catch (error) {
+    console.error('Translation error:', error);
+    return text; // Return original text if translation fails
+  }
+}
+
 async function submit() {
   if (loadingSave.value) return;
 
@@ -118,16 +131,24 @@ async function submit() {
 
     const agentId = props.data.id;
     
+    // Translate all fields to English before saving
+    const [translatedInstructions, translatedPersona, translatedRoutingConditions, translatedBusinessInfo] = await Promise.all([
+      translateToEnglish(state.instructions),
+      translateToEnglish(state.welcoming_message),
+      translateToEnglish(state.routing_conditions),
+      translateToEnglish(state.business_info),
+    ]);
+    
     // Deep clone flowData to avoid mutating props
     const flowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
 
-    // Update bot_prompt and configuration for every agent
+    // Update bot_prompt and configuration for every agent with translated text
     flowData.agents_config.forEach(agent_config => {
       if (agent_config.bot_prompt) {
-        agent_config.bot_prompt.persona = state.welcoming_message || agent_config.bot_prompt.persona;
-        agent_config.bot_prompt.handover_conditions = state.routing_conditions || '';
-        agent_config.bot_prompt.instructions = state.instructions || '';
-        agent_config.bot_prompt.business_info = state.business_info || '';
+        agent_config.bot_prompt.persona = translatedPersona || agent_config.bot_prompt.persona;
+        agent_config.bot_prompt.handover_conditions = translatedRoutingConditions || '';
+        agent_config.bot_prompt.instructions = translatedInstructions || '';
+        agent_config.bot_prompt.business_info = translatedBusinessInfo || '';
       }
 
       // Ensure configurations exists and set enable_handover according to toggle

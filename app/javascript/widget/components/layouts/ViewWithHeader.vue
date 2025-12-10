@@ -53,10 +53,13 @@ export default {
       return ['article-viewer'].includes(this.$route.name);
     },
     isOnHomeView() {
+      return ['home'].includes(this.$route.name);
+    },
+    isOnConvListView() {
       return ['conversation-list'].includes(this.$route.name);
     },
     shouldShowHeader() {
-      return !this.isOnHomeView && !this.isOnPrechatView;
+      return !this.isOnHomeView && !this.isOnPrechatView && !this.isOnConvListView;
     },
     opacityClass() {
       if (this.isHeaderCollapsed) {

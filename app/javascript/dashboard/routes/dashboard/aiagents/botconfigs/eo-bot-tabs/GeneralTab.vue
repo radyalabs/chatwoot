@@ -224,6 +224,49 @@ async function createTicketSheet() {
   }
 }
 
+const showRegenerateModal = ref(false);
+const isRegenerating = ref(false);
+
+function openRegenerateModal() {
+  showRegenerateModal.value = true;
+}
+
+async function regenerateSheetsInput() {
+  showRegenerateModal.value = false;
+
+  try {
+    isRegenerating.value = true;
+    const flowData = props.data.display_flow_data;
+
+    const payload = {
+      account_id: parseInt(flowData.account_id, 10),
+      agent_id: agentId.value,
+      type: 'event_organizer',
+    };
+
+    // Memanggil API wrapper yang baru kita perbaiki
+    const response = await googleSheetsExportAPI.regenerateSpreadsheet(payload);
+
+    if (response.data && response.data.input_spreadsheet_url) {
+        props.googleSheetsAuth.spreadsheetUrls.event_organizer.input = response.data.input_spreadsheet_url;
+
+        if (response.data.output_spreadsheet_url) {
+            props.googleSheetsAuth.spreadsheetUrls.event_organizer.output = response.data.output_spreadsheet_url;
+        }
+
+        showNotification('Input spreadsheet berhasil dibuat ulang!', 'success');
+    } else {
+        throw new Error("Respon server tidak memiliki URL spreadsheet baru.");
+    }
+
+  } catch (error) {
+    console.error('Failed to regenerate sheet:', error);
+    showNotification('Gagal membuat ulang spreadsheet. Silakan coba lagi.', 'error');
+  } finally {
+    isRegenerating.value = false;
+  }
+}
+
 async function save() {
   if (isSaving.value) return; // Prevent multiple calls
   let ticketSystem = 'off';
@@ -417,12 +460,12 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
                     </div>
                     <div class="text-red-600 text-sm flex items-center gap-2">
                       <button
-                        @click="retryAuthentication"
+                        @click="openRegenerateModal"
                         class="btn-retryauth inline-flex items-center space-x-2 px-4 py-2 rounded-md font-medium transition-colors bg-transparent"
-                        :disabled="loading"
+                        :disabled="isRegenerating"
                       >
-                        <span v-if="loading">{{ $t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_LOADING') }}</span>
-                        <span>{{ t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_BTN') }}</span>
+                        <span v-if="isRegenerating">{{ $t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_LOADING') }}</span>
+                        <span v-else>{{ t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_BTN') }}</span>
                       </button>
                       <button
                         @click="disconnectGoogle"
@@ -473,14 +516,14 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
                       </svg>
                     </div>
                     <div>
-                      <h3 class="font-medium text-slate-900 dark:text-slate-25">Tingkat Kreativitas</h3>
-                      <p class="text-sm text-gray-500 mt-1">Tentukan seberapa kreatif bot dalam merespons percakapan</p>
+                      <h3 class="font-medium text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.EOBOT.CREATIVITY') }}</h3>
+                      <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.EOBOT.CREATIVITY_DESC') }}</p>
                     </div>
                   </div>
                 </div>
                 
                 <div class="border-t border-gray-200 dark:border-gray-700 p-6">
-                  <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">Skala Kreativitas</label>
+                  <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.EOBOT.CREATIVITY_SCALE') }}</label>
                   <div class="relative">
                     <select 
                       v-model="creativityLevel" 
@@ -507,31 +550,31 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
                     </svg>
                   </div>
                   <div>
-                    <h3 class="font-medium text-slate-900 dark:text-slate-25">Pengaturan Idle Chat</h3>
-                    <p class="text-sm text-gray-500 mt-1">Atur tindakan otomatis jika tidak ada aktivitas chat</p>
+                    <h3 class="font-medium text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.EOBOT.IDLE_STATE') }}</h3>
+                    <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.EOBOT.IDLE_STATE_DESC') }}</p>
                   </div>
                 </div>
                 
                 <div class="border-t border-gray-200 dark:border-gray-700 p-6">
-                  <div>
+                  <div class="py-2">
                     <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
-                      Batas Waktu Idle (Menit)
+                      {{ $t('AGENT_MGMT.EOBOT.IDLE_TIME') }}
                     </label>
-                    <div class="relative">
+                    <div class="flex items-center gap-3">
                       <input 
                         type="number" 
-                        min="1"
+                        min="5"
                         v-model="idleConfig.duration"
-                        placeholder="Contoh: 15" 
-                        class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm h-10 !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out" 
+                        placeholder="30" 
+                        class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block !w-16 reset-base text-sm h-10 !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out" 
                       />
-                      <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">menit tanpa aktivitas</span>
+                      <span class="text-gray-500 dark:text-gray-400 text-sm">{{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_DESC') }}</span>
                     </div>
                   </div>
 
-                  <div>
+                  <div class="py-2">
                     <label class="block text-sm font-medium mb-3 text-slate-900 dark:text-slate-25">
-                      Aksi saat Idle
+                      {{ $t('AGENT_MGMT.EOBOT.IDLE_ACTION') }}
                     </label>
                     <div class="flex flex-col sm:flex-row gap-4">
                       <div class="flex items-center">
@@ -543,7 +586,7 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
                           class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                         >
                         <label for="action-resolve" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">
-                          Langsung Resolve Chat
+                          {{ $t('AGENT_MGMT.EOBOT.IDLE_RESOLVE') }}
                         </label>
                       </div>
                       <div class="flex items-center">
@@ -555,15 +598,15 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
                           class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                         >
                         <label for="action-message" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">
-                          Kirim Pesan Follow Up
+                          {{ $t('AGENT_MGMT.EOBOT.IDLE_SENT_MSG') }}
                         </label>
                       </div>
                     </div>
                   </div>
 
-                  <div v-if="idleConfig.action === 'message'" class="animate-fadeIn">
+                  <div v-if="idleConfig.action === 'message'" class="animate-fadeIn py-2">
                     <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
-                      Pesan Idle
+                      {{ $t('AGENT_MGMT.EOBOT.IDLE_MSG') }}
                     </label>
                     <textarea 
                       v-model="idleConfig.message"
@@ -610,6 +653,46 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
         </Button>
 
       </div>
+      </div>
+    </div>
+  </div>
+  <div v-if="showRegenerateModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6" role="dialog">
+    <div class="fixed inset-0 bg-slate-900/50 transition-opacity" @click="showRegenerateModal = false"></div>
+
+    <div class="relative w-full max-w-md transform overflow-hidden rounded-xl bg-white dark:bg-slate-800 p-6 text-left shadow-xl transition-all border border-slate-200 dark:border-slate-700">
+      
+      <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/20 mb-4">
+        <svg class="h-6 w-6 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+        </svg>
+      </div>
+
+      <div class="text-center">
+        <h3 class="text-lg font-semibold leading-6 text-slate-900 dark:text-white" id="modal-title">
+          {{ $t('AGENT_MGMT.EOBOT.REGENERATE_SHEETS') }}
+        </h3>
+        <div class="mt-2">
+          <p class="text-sm text-slate-500 dark:text-slate-400">
+            {{ $t('AGENT_MGMT.EOBOT.REGENERATE_SHEETS_DESC') }}
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-6 flex flex-col sm:flex-row-reverse gap-3">
+        <button 
+          type="button" 
+          class="inline-flex w-full justify-center bg-green-600 text-white rounded-md hover:bg-green-700 px-3 py-2 text-sm font-semibold shadow-sm sm:w-auto transition-colors"
+          @click="regenerateSheetsInput"
+        >
+          {{ $t('AGENT_MGMT.EOBOT.REGENERATE_SHEETS_BTN') }}
+        </button>
+        <button 
+          type="button" 
+          class="inline-flex w-full justify-center rounded-lg bg-white dark:bg-transparent px-3 py-2 text-sm font-semibold text-slate-900 dark:text-slate-300 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 sm:w-auto transition-colors"
+          @click="showRegenerateModal = false"
+        >
+          {{ $t('AGENT_MGMT.EOBOT.REGENERATE_SHEETS_CANCEL') }}
+        </button>
       </div>
     </div>
   </div>

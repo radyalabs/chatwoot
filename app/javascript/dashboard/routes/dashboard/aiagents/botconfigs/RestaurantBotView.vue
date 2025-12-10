@@ -511,7 +511,7 @@ onMounted(async () => {
           <!-- Step 3: Sheet Configuration -->
           <div v-else-if="restaurantStep === 'sheetConfig'">
             <div class="flex flex-row gap-4">
-              <div class="flex-1 min-w-0 flex flex-col justify-stretch gap-6">
+              <div class="flex-1 min-w-0 flex flex-col justify-stretch">
                 <!-- Input Sheet Section - Restaurant Data -->
                 <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-6 mb-6 border border-blue-200 dark:border-blue-800">
                   <div class="flex items-center justify-between">

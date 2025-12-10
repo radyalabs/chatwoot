@@ -233,7 +233,7 @@
           <!-- Bot Config Tab -->
           <div v-show="activeTabIndex === 1" class="w-full min-w-0">
             <div class="flex flex-row gap-4">
-              <div class="flex-1 min-w-0 flex flex-col justify-stretch gap-6">
+              <div class="flex-1 min-w-0 flex flex-col justify-stretch">
                 
                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
                   <div class="flex items-start justify-between p-6">
@@ -349,7 +349,7 @@
               </div>
 
               <div class="w-[240px] flex flex-col gap-3">
-                <div class="sticky top-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
+                <div class="sticky bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
                   <div class="flex items-center gap-3 mb-4">
                     <div class="w-10 h-10 flex-shrink-0 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
                       <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

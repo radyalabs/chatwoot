@@ -84,13 +84,19 @@
              class="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 cursor-pointer transition relative group"
            >
             <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center shrink-0 text-slate-400 group-hover:bg-white group-hover:shadow-sm transition">
-                <svg class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                <!-- <svg class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-                </svg>
+                </svg> -->
+              <img 
+                :src="getChatAvatar(chat)" 
+                alt="Avatar"
+                class="w-full h-full object-cover"
+              />
             </div>
 
             <div class="flex-1 min-w-0">
                <div class="flex justify-between items-center mb-1">
+                  <h4 class="text-sm font-bold text-slate-800">Assistant</h4>
                   <span class="text-[10px] text-slate-400">{{ formatTime(chat.timestamp) }}</span>
                </div>
                
@@ -180,6 +186,10 @@ export default {
         snoozed: 'Ditunda'
       };
       return map[status] || status;
+    },
+
+    getChatAvatar(chat) {
+      return '/assets/images/chatwoot_bot.png';
     },
 
     getStatusClasses(status) {

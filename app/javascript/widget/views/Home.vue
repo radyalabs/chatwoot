@@ -1,9 +1,8 @@
 <script>
-import TeamAvailability from 'widget/components/TeamAvailability.vue';
+import { mapActions, mapGetters } from 'vuex';
 import ArticleHero from 'widget/components/ArticleHero.vue';
 import ArticleCardSkeletonLoader from 'widget/components/ArticleCardSkeletonLoader.vue';
 import { IFrameHelper } from 'widget/helpers/utils';
-import { mapGetters } from 'vuex';
 import { useDarkMode } from 'widget/composables/useDarkMode';
 import routerMixin from 'widget/mixins/routerMixin';
 import configMixin from 'widget/mixins/configMixin';
@@ -12,7 +11,6 @@ export default {
   name: 'Home',
   components: {
     ArticleHero,
-    TeamAvailability,
     ArticleCardSkeletonLoader,
   },
   mixins: [configMixin, routerMixin],
@@ -92,21 +90,16 @@ export default {
     }
   },
   methods: {
+    ...mapActions('conversation', ['loadConversation', 'createConversation']),
     async onNewConversation() {
       try {
         this.isLoading = true;
-        
-        // Membuat percakapan baru dengan pesan awal default (misal "Halo")
-        // Atau biarkan kosong jika backend mendukungnya
         const newConversationId = await this.createConversation({ 
           message: 'Halo', 
         });
 
         if (newConversationId) {
-          // Load data percakapan agar siap ditampilkan
           await this.loadConversation(newConversationId);
-          
-          // Redirect langsung ke halaman chat
           this.$router.push({ 
             name: 'conversation-chat', 
             params: { conversationId: newConversationId } 
@@ -120,7 +113,6 @@ export default {
       }
     },
 
-    // Fungsi 2: Ke Halaman List
     goToConversationList() {
       this.$router.push({ name: 'conversation-list' });
     },

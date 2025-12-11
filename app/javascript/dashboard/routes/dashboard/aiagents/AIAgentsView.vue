@@ -420,8 +420,8 @@ function getAgentTypeLabel(agent) {
       }
     "
     :on-confirm="() => deleteData()"
-    title="Apakah kamu akan menghapus data ini?"
-    message="You cannot undo this action"
+    :title="$t('AGENT_MGMT.DELETE.CONFIRM.MESSAGE')"
+    :message="$t('AGENT_MGMT.DELETE.CONFIRM.DESC')"
     :confirm-text="$t('CONVERSATION.CONTEXT_MENU.DELETE_CONFIRMATION.DELETE')"
     :reject-text="$t('CONVERSATION.CONTEXT_MENU.DELETE_CONFIRMATION.CANCEL')"
   />

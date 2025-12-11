@@ -7,6 +7,7 @@
 #  custom_attributes      :jsonb
 #  domain                 :string(100)
 #  feature_flags          :bigint           default(0), not null
+#  internal_attributes    :jsonb            not null
 #  limits                 :jsonb
 #  locale                 :integer          default("en")
 #  name                   :string           not null
@@ -87,6 +88,7 @@ class Account < ApplicationRecord
   has_many :ai_agents, dependent: :destroy_async
   has_many :subscriptions
   has_many :quick_replies
+  has_many :reminder_configs, dependent: :destroy_async
 
   has_one_attached :contacts_export
 

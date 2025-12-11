@@ -1768,18 +1768,18 @@ async function regenerateSheetsInput() {
 
     const payload = {
       account_id: parseInt(flowData.account_id, 10),
-      agent_id: agentId.value,
-      type: 'event_organizer',
+      agent_id: salesAgentId.value,
+      type: 'sales',
     };
 
     // Memanggil API wrapper yang baru kita perbaiki
     const response = await googleSheetsExportAPI.regenerateSpreadsheet(payload);
 
     if (response.data && response.data.input_spreadsheet_url) {
-        props.googleSheetsAuth.spreadsheetUrls.event_organizer.input = response.data.input_spreadsheet_url;
+        props.googleSheetsAuth.spreadsheetUrls.sales.input = response.data.input_spreadsheet_url;
 
         if (response.data.output_spreadsheet_url) {
-            props.googleSheetsAuth.spreadsheetUrls.event_organizer.output = response.data.output_spreadsheet_url;
+            props.googleSheetsAuth.spreadsheetUrls.sales.output = response.data.output_spreadsheet_url;
         }
 
         showNotification('Input spreadsheet berhasil dibuat ulang!', 'success');

@@ -13,10 +13,10 @@ class Captain::Llm::BaseAzureOpenAiService
   private
 
   def setup_azure_client
-    azure_endpoint = InstallationConfig.find_by(name: 'AZURE_OPENAI_ENDPOINT')&.value.presence || DEFAULT_ENDPOINT
-    subscription_key = InstallationConfig.find_by(name: 'AZURE_OPENAI_SUBSCRIPTION_KEY')&.value.presence
-    api_version = InstallationConfig.find_by(name: 'AZURE_OPENAI_API_VERSION')&.value.presence || DEFAULT_API_VERSION
-    @deployment_name = InstallationConfig.find_by(name: 'AZURE_OPENAI_DEPLOYMENT_NAME')&.value.presence || DEFAULT_DEPLOYMENT
+    azure_endpoint = ENV.fetch('AZURE_OPENAI_ENDPOINT', DEFAULT_ENDPOINT).presence || DEFAULT_ENDPOINT
+    subscription_key = ENV.fetch('AZURE_OPENAI_SUBSCRIPTION_KEY', '').presence
+    api_version = ENV.fetch('AZURE_OPENAI_API_VERSION', DEFAULT_API_VERSION).presence || DEFAULT_API_VERSION
+    @deployment_name = ENV.fetch('AZURE_OPENAI_DEPLOYMENT_NAME', DEFAULT_DEPLOYMENT).presence || DEFAULT_DEPLOYMENT
 
     raise 'AZURE_OPENAI_SUBSCRIPTION_KEY is missing' unless subscription_key.present?
 

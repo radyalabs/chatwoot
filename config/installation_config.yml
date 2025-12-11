@@ -248,25 +248,4 @@
   description: 'JANGKAU.AI VERSION'
   value: '1.0.0'
   locked: false
-## ------ Azure OpenAI Configuration for Translator ------ ##
-- name: AZURE_OPENAI_ENDPOINT
-  display_title: 'Azure OpenAI Endpoint'
-  description: 'Azure OpenAI endpoint URL for translator service'
-  value: 'https://jangkau.openai.azure.com/'
-  locked: false
-- name: AZURE_OPENAI_SUBSCRIPTION_KEY
-  display_title: 'Azure OpenAI Subscription Key'
-  description: 'Azure OpenAI API key/subscription key for authentication'
-  value: ''
-  locked: false
-- name: AZURE_OPENAI_API_VERSION
-  display_title: 'Azure OpenAI API Version'
-  description: 'Azure OpenAI API version'
-  value: '2024-12-01-preview'
-  locked: false
-- name: AZURE_OPENAI_DEPLOYMENT_NAME
-  display_title: 'Azure OpenAI Deployment Name'
-  description: 'Azure OpenAI deployment/model name (e.g., gpt-5-nano)'
-  value: 'gpt-5-nano'
-  locked: false
-## ------ End of Azure OpenAI Configuration ------ ##
+## ------ End of Installation Config ------ ##

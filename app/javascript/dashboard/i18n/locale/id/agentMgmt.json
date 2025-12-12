@@ -56,7 +56,8 @@
       },
       "CONFIRM": {
         "TITLE": "Konfirmasi Penghapusan",
-        "MESSAGE": "Apakah Anda yakin untuk menghapus ",
+        "MESSAGE": "Apakah anda yakin ingin menghapus bot AI ini?",
+        "DESC": "Aksi ini tidak dapat dibatalkan",
         "YES": "Ya, Hapus ",
         "NO": "Tidak, Simpan "
       }

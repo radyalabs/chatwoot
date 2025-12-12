@@ -109,11 +109,12 @@ async function deleteData() {
       if (agent.id === aiAgentId && agent.agents_config) {
         for (const config of agent.agents_config) {
           const agent_id = config.agent_id;
+          const collection_name = config.collection_name;
           if (agent_id) {
             const payload = {
               account_id: parseInt(accountIdValue, 10),
               agent_id: agent_id,
-              type: '-', // or get from dataToDelete.value.type
+              collection_name: collection_name, // fill with colection name
             };
             console.log('Deleting spreadsheet with payload:', payload);
             // Call your sync function

@@ -233,7 +233,7 @@
           <!-- Bot Config Tab -->
           <div v-show="activeTabIndex === 1" class="w-full min-w-0">
             <div class="flex flex-row gap-4">
-              <div class="flex-1 min-w-0 flex flex-col justify-stretch gap-6">
+              <div class="flex-1 min-w-0 flex flex-col justify-stretch">
                 
                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
                   <div class="flex items-start justify-between p-6">
@@ -349,7 +349,7 @@
               </div>
 
               <div class="w-[240px] flex flex-col gap-3">
-                <div class="sticky top-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
+                <div class="sticky bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
                   <div class="flex items-center gap-3 mb-4">
                     <div class="w-10 h-10 flex-shrink-0 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
                       <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1768,18 +1768,18 @@ async function regenerateSheetsInput() {
 
     const payload = {
       account_id: parseInt(flowData.account_id, 10),
-      agent_id: agentId.value,
-      type: 'event_organizer',
+      agent_id: salesAgentId.value,
+      type: 'sales',
     };
 
     // Memanggil API wrapper yang baru kita perbaiki
     const response = await googleSheetsExportAPI.regenerateSpreadsheet(payload);
 
     if (response.data && response.data.input_spreadsheet_url) {
-        props.googleSheetsAuth.spreadsheetUrls.event_organizer.input = response.data.input_spreadsheet_url;
+        props.googleSheetsAuth.spreadsheetUrls.sales.input = response.data.input_spreadsheet_url;
 
         if (response.data.output_spreadsheet_url) {
-            props.googleSheetsAuth.spreadsheetUrls.event_organizer.output = response.data.output_spreadsheet_url;
+            props.googleSheetsAuth.spreadsheetUrls.sales.output = response.data.output_spreadsheet_url;
         }
 
         showNotification('Input spreadsheet berhasil dibuat ulang!', 'success');
@@ -3242,10 +3242,10 @@ async function saveSettings() {
       flowData.agents_config[agentIndex].configurations = {};
     }
 
-    // 1. Simpan Tingkat Kreativitas
-    flowData.agents_config[agentIndex].configurations.creativity_level = creativityLevel.value;
+    // Simpan Tingkat Kreativitas
+    flowData.agents_config[agentIndex].temperature = creativityLevel.value;
 
-    // 2. Simpan Pengaturan Idle Chat
+    // Simpan Pengaturan Idle Chat
     flowData.agents_config[agentIndex].configurations.idle_settings = {
       enabled: true, // Selalu aktif sesuai desain UI
       duration: idleConfig.duration,
@@ -3287,15 +3287,16 @@ function loadSavedConfiguration() {
       return;
     }
     
-    const config = flowData.agents_config[agentIndex]?.configurations;
+    const agentData = flowData.agents_config[agentIndex];
+    const config = agentData?.configurations;
     
     if (!config) {
       return;
     }
 
     // Load Creativity Level
-    if (config.creativity_level !== undefined) {
-      creativityLevel.value = config.creativity_level;
+    if (agentData.temperature !== undefined) {
+      creativityLevel.value = agentData.temperature;
     }
 
     // Load Idle Settings

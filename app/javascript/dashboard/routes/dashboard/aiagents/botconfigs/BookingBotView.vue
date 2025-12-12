@@ -3,6 +3,7 @@ import { ref, reactive, onMounted, computed, watch } from 'vue';
 import googleSheetsExportAPI from '../../../../api/googleSheetsExport';
 import FileKnowledgeSources from '../knowledge-sources/FileKnowledgeSources.vue';
 import aiAgents from '../../../../api/aiAgents';
+import remindersAPI from '../../../../api/reminders';
 import QnaKnowledgeSources from '../knowledge-sources/QnaKnowledgeSources.vue'
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -64,7 +65,26 @@ const followUpTimeOptions = [
   { label: '1 Jam', value: 60 },
   { label: '4 Jam', value: 240 },
   { label: '12 Jam', value: 720 },
+  { label: '24 Jam', value: 1440 },
 ];
+
+// temperature bot
+const creativityLevel = ref(0.3);
+const creativityOptions = [
+  { label: 'Tidak sama sekali', value: 0 },
+  { label: 'Minim', value: 0.1 },
+  { label: 'Normal', value: 0.3 },
+  { label: 'Lebih tinggi', value: 0.6 },
+  { label: 'Maksimal', value: 1 },
+];
+
+// idle time
+const idleConfig = reactive({
+  enabled: true,
+  duration: 30,      
+  action: 'resolve', 
+  message: ''        
+});
 
 // Steps: 'auth', 'connected', 'sheetConfig'
 const step = computed(() => props.googleSheetsAuth.step);
@@ -123,14 +143,16 @@ function loadSavedConfiguration() {
     const agent_index = flowData.enabled_agents.indexOf('booking');
     
     if (agent_index !== -1) {
-      const config = flowData.agents_config[agent_index].configurations;
+      const agentData = flowData.agents_config[agent_index];
+      const config = agentData.configurations;
+
+      if (agentData.temperature !== undefined) {
+        creativityLevel.value = agentData.temperature;
+      }
       
       // Load konfigurasi umum
       if (config?.minimum_duration) {
         minDuration.value = config.minimum_duration;
-      }
-      if (config?.industry) {
-        selectedTemplate.value = config.industry;
       }
 
       // Load konfigurasi Follow Up
@@ -138,6 +160,14 @@ function loadSavedConfiguration() {
         followUpConfig.enabled = config.follow_up.enabled || false;
         followUpConfig.delay = config.follow_up.delay || 60;
         followUpConfig.message = config.follow_up.message || '';
+      }
+
+      // Load Idle Settings
+      if (config?.idle_settings) {
+        idleConfig.enabled = config.idle_settings.enabled !== undefined ? config.idle_settings.enabled : true;
+        idleConfig.duration = config.idle_settings.duration || '';
+        idleConfig.action = config.idle_settings.action || 'resolve';
+        idleConfig.message = config.idle_settings.message || '';
       }
     }
   }
@@ -345,7 +375,7 @@ async function save() {
     minDuration: minDuration.value,
     follow_up: {
       enabled: followUpConfig.enabled,
-      delay: followUpConfig.delay, 
+      delay: followUpConfig.delay,
       message: followUpConfig.message
     }
   };
@@ -359,15 +389,31 @@ async function save() {
       return;
     }
 
+    flowData.agents_config[agent_index].temperature = creativityLevel.value;
+
     flowData.agents_config[agent_index].configurations.minimum_duration =
       configData.minDuration;
     flowData.agents_config[agent_index].configurations.follow_up = configData.follow_up;
+
+    flowData.agents_config[agent_index].configurations.idle_settings = {
+      enabled: true,
+      duration: idleConfig.duration,
+      action: idleConfig.action,
+      message: idleConfig.message
+    };
 
     const payload = {
       flow_data: flowData,
     };
 
     await aiAgents.updateAgent(props.data.id, payload);
+
+    // Update reminder config in database
+    await remindersAPI.updateConfig(props.data.id, {
+      enabled: followUpConfig.enabled,
+      minutes_before_booking: followUpConfig.delay,
+      message_template: followUpConfig.message
+    });
 
     useAlert(t('AGENT_MGMT.CSBOT.TICKET.SAVE_SUCCESS'));
   } catch (e) {
@@ -464,7 +510,7 @@ onMounted(async () => {
         <!-- General Tab Content -->
         <div v-show="activeIndex === 0" class="w-full">
           <div class="flex flex-row gap-4">
-            <div class="flex-1 min-w-0 flex flex-col justify-stretch gap-6">
+            <div class="flex-1 min-w-0 flex flex-col justify-stretch">
               <!-- Step 1: Google Auth -->
               <div v-if="bookingStep === 'auth'" class="w-full mx-auto">
                 <div>
@@ -608,7 +654,8 @@ onMounted(async () => {
                           class="btn-retryauth inline-flex items-center space-x-2 px-4 py-2 rounded-md font-medium transition-colors bg-transparent"
                           :disabled="isRegenerating"
                         >
-                          <span>{{ $t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_BTN') }}</span>
+                          <span v-if="isRegenerating">{{ $t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_LOADING') }}</span>
+                          <span v-else>{{ t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_BTN') }}</span>
                         </button>
                         <button
                         @click="disconnectGoogle"
@@ -683,10 +730,10 @@ onMounted(async () => {
                         <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
                           Waktu Follow Up
                         </label>
-                        <div class="relative">
+                        <div class="flex items-center gap-3">
                           <select 
                             v-model="followUpConfig.delay"
-                            class="w-full mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            class="text-center w-24 mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-slate-900 dark:border-slate-700 dark:text-white"
                           > 
                             <option 
                               class="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" 
@@ -696,8 +743,9 @@ onMounted(async () => {
                             >
                               {{ opt.label }}
                             </option>
-                          </select>
-                          <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm pointer-events-none">
+                          </select>                   
+                          
+                          <span class="text-gray-500 text-sm">
                             sebelum waktu booking
                           </span>
                         </div>
@@ -717,12 +765,123 @@ onMounted(async () => {
                       </div>
                     </div>
                   </div>
+                  <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
+                    <div class="flex items-start justify-between p-6">
+                      <div class="flex items-center">
+                        <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
+                            <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 class="font-medium text-slate-900 dark:text-slate-25">Tingkat Kreativitas</h3>
+                          <p class="text-sm text-gray-500 mt-1">Tentukan seberapa kreatif bot dalam merespons percakapan</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="border-t border-gray-200 dark:border-gray-700 p-6">
+                      <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">Skala Kreativitas</label>
+                      <div class="relative">
+                        <select 
+                          v-model="creativityLevel" 
+                          class="w-full mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-slate-900 dark:border-slate-700 dark:text-white"
+                        >
+                          <option class="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" v-for="opt in creativityOptions" :key="opt.value" :value="opt.value">
+                            {{ opt.label }}
+                          </option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500 dark:text-gray-400">
+                          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
+                    <div class="flex items-center p-6">
+                      <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
+                          <circle cx="12" cy="12" r="10"/>
+                          <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 class="font-medium text-slate-900 dark:text-slate-25">Pengaturan Idle Chat</h3>
+                        <p class="text-sm text-gray-500 mt-1">Atur tindakan otomatis jika tidak ada aktivitas chat</p>
+                      </div>
+                    </div>
+                    
+                    <div class="border-t border-gray-200 dark:border-gray-700 p-6">
+                      <div>
+                        <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
+                          Batas Waktu Idle (Menit)
+                        </label>
+                        <div class="relative">
+                          <input 
+                            type="number" 
+                            min="1"
+                            v-model="idleConfig.duration"
+                            placeholder="Contoh: 15" 
+                            class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm h-10 !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out" 
+                          />
+                          <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">menit tanpa aktivitas</span>
+                        </div>
+                      </div>
+
+                      <div class="mt-4">
+                        <label class="block text-sm font-medium mb-3 text-slate-900 dark:text-slate-25">
+                          Aksi saat Idle
+                        </label>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                          <div class="flex items-center">
+                            <input 
+                              id="action-resolve-booking" 
+                              type="radio" 
+                              value="resolve" 
+                              v-model="idleConfig.action"
+                              class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                            >
+                            <label for="action-resolve-booking" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">
+                              Langsung Resolve Chat
+                            </label>
+                          </div>
+                          <div class="flex items-center">
+                            <input 
+                              id="action-message-booking" 
+                              type="radio" 
+                              value="message" 
+                              v-model="idleConfig.action"
+                              class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                            >
+                            <label for="action-message-booking" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">
+                              Kirim Pesan Follow Up
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div v-if="idleConfig.action === 'message'" class="mt-4 animate-fadeIn">
+                        <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
+                          Pesan Idle
+                        </label>
+                        <textarea 
+                          v-model="idleConfig.message"
+                          rows="3"
+                          placeholder="Halo, apakah Anda masih di sana? Sesi ini akan segera berakhir jika tidak ada respon."
+                          class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out"
+                        ></textarea>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
             
             <div v-if="bookingStep === 'sheetConfig'" class="w-[240px] flex flex-col gap-3">
-              <div class="sticky top-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
+              <div class="sticky bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
                 <div class="flex items-center gap-3 mb-4">
                   <div class="w-10 h-10 flex-shrink-0 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">                    <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>

@@ -21,7 +21,7 @@ export const getters = {
   // Mengambil List Percakapan (Header chat history)
   getConversationsList: _state => {
     if (!_state.conversationsList) return [];
-    return _state.conversationsList.slice(0, 4); // Ambil 4 paling akhir
+    return _state.conversationsList.slice(0, 7); // Ambil 4 paling akhir
   },
   // Mengambil ID percakapan yang sedang dibuka sekarang
   getSelectedConversationId: _state => _state.selectedConversationId,

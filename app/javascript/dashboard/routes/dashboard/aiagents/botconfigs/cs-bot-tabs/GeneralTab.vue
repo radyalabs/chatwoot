@@ -64,7 +64,8 @@ watch(
       return;
     }
 
-    const config = flowData.agents_config?.[agentIndex]?.configurations;
+    const agentData = flowData.agents_config?.[agentIndex];
+    const config = agentData?.configurations;
 
     // Map backend value to UI
     const ticketSystem = config?.ticket_system;
@@ -86,10 +87,11 @@ watch(
       props.config.ticketCreateWhen = 'always';
     }
 
+    if (agentData && agentData.temperature !== undefined) {
+      creativityLevel.value = agentData.temperature;
+    }
+
     if (config) {
-      if (config.creativity_level) {
-        creativityLevel.value = config.creativity_level;
-      }
       if (config.idle_settings) {
         idleConfig.enabled = config.idle_settings.enabled !== undefined ? config.idle_settings.enabled : true;
         idleConfig.duration = config.idle_settings.duration || 30;
@@ -284,7 +286,7 @@ async function save() {
     const agent_index = flowData.enabled_agents.indexOf('customer_service');
     flowData.agents_config[agent_index].configurations.ticket_system =
       ticketSystem;
-    flowData.agents_config[agent_index].configurations.creativity_level = creativityLevel.value;
+    flowData.agents_config[agent_index].temperature = creativityLevel.value;
     flowData.agents_config[agent_index].configurations.idle_settings = {
       enabled: true,
       duration: idleConfig.duration,
@@ -555,7 +557,8 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
                 class="btn-retryauth inline-flex items-center space-x-2 px-4 py-2 rounded-md font-medium transition-colors bg-transparent"
                 :disabled="isRegenerating"
                 >
-                <span>{{ $t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_BTN') }}</span>
+                  <span v-if="isRegenerating">{{ $t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_LOADING') }}</span>
+                  <span v-else>{{ t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_BTN') }}</span>
                 </button>
                 
                 <button

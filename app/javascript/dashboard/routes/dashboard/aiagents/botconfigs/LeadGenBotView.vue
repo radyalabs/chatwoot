@@ -912,6 +912,18 @@ async function createSheets() {
 
 // Helper function to split text into chunks
 function splitTextIntoChunks(text, maxChunkSize = 19000) {
+  if (!text) return [];
+  
+  // Jika text bukan string (misal Object atau Number), paksa ubah jadi String
+  if (typeof text !== 'string') {
+    // Jika object/array, gunakan JSON.stringify agar datanya terbaca rapi
+    if (typeof text === 'object') {
+      text = JSON.stringify(text, null, 2); 
+    } else {
+      text = String(text);
+    }
+  }
+
   const chunks = [];
   let currentChunk = '';
   const lines = text.split('\n');
@@ -973,7 +985,15 @@ async function syncProductColumns() {
     }
     
     // Split content into chunks
-    const rawData = syncDataResponse.data.data;
+    let rawData = syncDataResponse.data.data;
+
+    console.log('Tipe data rawData:', typeof rawData); 
+    console.log('Isi rawData:', rawData);
+
+    if (rawData && typeof rawData === 'object') {
+        rawData = JSON.stringify(rawData, null, 2);
+    }
+
     const chunks = splitTextIntoChunks(rawData, 19000);
     
     console.log(`Splitting product data into ${chunks.length} chunks`);

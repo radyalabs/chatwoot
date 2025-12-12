@@ -15,6 +15,9 @@ class Captain::Copilot::ChatService
       failure_reason = pre_check_failure_reason
       return send_reply_failure(failure_reason) if failure_reason
 
+      return unless @context.inbox
+      return unless @context.ai_agent
+
       send_messages
     end
   end
@@ -33,9 +36,9 @@ class Captain::Copilot::ChatService
   private
 
   def pre_check_failure_reason
-    return I18n.t('conversations.bot.not_available_ai_agent') unless @context.inbox
+    # return I18n.t('conversations.bot.not_available_ai_agent') unless @context.inbox
 
-    return I18n.t('conversations.bot.not_available_ai_agent') unless @context.ai_agent
+    # return I18n.t('conversations.bot.not_available_ai_agent') unless @context.ai_agent
 
     return I18n.t('subscriptions.limit_reached') unless @context.subscription
     return I18n.t('subscriptions.limit_reached') unless @context.usage

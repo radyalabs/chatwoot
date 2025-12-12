@@ -56,7 +56,8 @@
       },
       "CONFIRM": {
         "TITLE": "Confirm Deletion",
-        "MESSAGE": "Are you sure to delete ",
+        "MESSAGE": "Are you sure want to delete this AI Bot?",
+        "DESC": "This action cannot be undo",
         "YES": "Yes, Delete ",
         "NO": "No, Keep "
       }

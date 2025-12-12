@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref, watch, watchEffect } from 'vue';
 import InputRadioGroup from 'dashboard/routes/dashboard/settings/inbox/components/InputRadioGroup.vue';
 import aiAgents from '../../../api/aiAgents';
+import googleSheetsExportAPI from '../../../api/googleSheetsExport';
 import { useAccount } from 'dashboard/composables/useAccount';
 import WootSubmitButton from 'dashboard/components/buttons/FormSubmitButton.vue';
 import BaseSettingsHeader from '../settings/components/BaseSettingsHeader.vue';
@@ -43,6 +44,7 @@ async function fetchAiAgents() {
     aiAgentsLoading.value = true;
 
     const resp = await aiAgents.getAiAgents();
+    console.log('AI Agents response:', resp);
     aiAgentsRef.value = resp?.data;
     
     // Fetch additional details for each agent (description and type)
@@ -51,6 +53,7 @@ async function fetchAiAgents() {
         aiAgentsRef.value.map(async (agent) => {
           try {
             const detailResp = await aiAgents.detailAgent(agent.id);
+            console.log(`Details for agent ${agent.id}:`, detailResp);
             const agentData = detailResp?.data;
             
             // Get type from display_flow_data.type (multi_agent or single_agent)
@@ -66,6 +69,11 @@ async function fetchAiAgents() {
             // Get description/instructions from agents_config
             if (agentData?.display_flow_data?.agents_config?.[0]?.bot_prompt?.instructions) {
               agent.description = agentData.display_flow_data.agents_config[0].bot_prompt.instructions;
+            }
+
+            // Get agents_config
+            if (agentData?.display_flow_data?.agents_config) {
+              agent.agents_config = agentData.display_flow_data.agents_config;
             }
           } catch (err) {
             console.error(`Failed to fetch details for agent ${agent.id}:`, err);
@@ -88,17 +96,40 @@ async function deleteData() {
   if (!dataToDelete.value) {
     return;
   }
-
   const aiAgentId = dataToDelete.value.id;
+  const accountIdValue = accountId?.value || accountId; // Get account ID
+  console.log('Account ID:', accountIdValue);
+  console.log('Agent ID:', aiAgentId);
   try {
     loadingCards.value[aiAgentId] = true;
     await aiAgents.removeAiAgent(aiAgentId);
+    // for each aiAgentsRef.value, if id matches aiAgentId, for each of the agent_id inside agents_config, construct payload & remove it from the list
+    // complete it:
+    for (const agent of aiAgentsRef.value) {
+      if (agent.id === aiAgentId && agent.agents_config) {
+        for (const config of agent.agents_config) {
+          const agent_id = config.agent_id;
+          const collection_name = config.collection_name;
+          if (agent_id) {
+            const payload = {
+              account_id: parseInt(accountIdValue, 10),
+              agent_id: agent_id,
+              collection_name: collection_name, // fill with colection name
+            };
+            console.log('Deleting spreadsheet with payload:', payload);
+            // Call your sync function
+            const deleteDataResponse = await googleSheetsExportAPI.deleteSpreadsheet(payload);
+            console.log('Delete response for agent_id', agent_id, ':', deleteDataResponse);
+          }
+        }
+      }
+    }
     aiAgentsRef.value = aiAgentsRef.value?.filter(v => v.id !== aiAgentId);
   } finally {
     loadingCards.value[aiAgentId] = false;
   }
 }
-
+ 
 // Create AI Agent modal
 const showCreateAgentModal = ref(false);
 const state = reactive({
@@ -420,8 +451,8 @@ function getAgentTypeLabel(agent) {
       }
     "
     :on-confirm="() => deleteData()"
-    title="Apakah kamu akan menghapus data ini?"
-    message="You cannot undo this action"
+    :title="$t('AGENT_MGMT.DELETE.CONFIRM.MESSAGE')"
+    :message="$t('AGENT_MGMT.DELETE.CONFIRM.DESC')"
     :confirm-text="$t('CONVERSATION.CONTEXT_MENU.DELETE_CONFIRMATION.DELETE')"
     :reject-text="$t('CONVERSATION.CONTEXT_MENU.DELETE_CONFIRMATION.CANCEL')"
   />

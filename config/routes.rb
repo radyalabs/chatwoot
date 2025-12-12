@@ -494,6 +494,7 @@ Rails.application.routes.draw do
               post :sync
               delete :disconnect
               post :regenerate
+              post :delete
             end
           end
         end

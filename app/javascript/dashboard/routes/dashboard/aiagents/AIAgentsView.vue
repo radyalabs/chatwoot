@@ -44,6 +44,7 @@ async function fetchAiAgents() {
     aiAgentsLoading.value = true;
 
     const resp = await aiAgents.getAiAgents();
+    console.log('AI Agents response:', resp);
     aiAgentsRef.value = resp?.data;
     
     // Fetch additional details for each agent (description and type)
@@ -52,6 +53,7 @@ async function fetchAiAgents() {
         aiAgentsRef.value.map(async (agent) => {
           try {
             const detailResp = await aiAgents.detailAgent(agent.id);
+            console.log(`Details for agent ${agent.id}:`, detailResp);
             const agentData = detailResp?.data;
             
             // Get type from display_flow_data.type (multi_agent or single_agent)
@@ -67,6 +69,11 @@ async function fetchAiAgents() {
             // Get description/instructions from agents_config
             if (agentData?.display_flow_data?.agents_config?.[0]?.bot_prompt?.instructions) {
               agent.description = agentData.display_flow_data.agents_config[0].bot_prompt.instructions;
+            }
+
+            // Get agents_config
+            if (agentData?.display_flow_data?.agents_config) {
+              agent.agents_config = agentData.display_flow_data.agents_config;
             }
           } catch (err) {
             console.error(`Failed to fetch details for agent ${agent.id}:`, err);
@@ -96,14 +103,26 @@ async function deleteData() {
   try {
     loadingCards.value[aiAgentId] = true;
     await aiAgents.removeAiAgent(aiAgentId);
-    const payload = {
-      account_id: parseInt(accountIdValue, 10),
-      agent_id: aiAgentId,
-      type: '', // or get from dataToDelete.value.type
-    };
-    // Call your sync function
-    const deleteDataResponse = await googleSheetsExportAPI.deleteSpreadsheet(payload);
-    console.log('Delete response:', deleteDataResponse);
+    // for each aiAgentsRef.value, if id matches aiAgentId, for each of the agent_id inside agents_config, construct payload & remove it from the list
+    // complete it:
+    for (const agent of aiAgentsRef.value) {
+      if (agent.id === aiAgentId && agent.agents_config) {
+        for (const config of agent.agents_config) {
+          const agent_id = config.agent_id;
+          if (agent_id) {
+            const payload = {
+              account_id: parseInt(accountIdValue, 10),
+              agent_id: agent_id,
+              type: '-', // or get from dataToDelete.value.type
+            };
+            console.log('Deleting spreadsheet with payload:', payload);
+            // Call your sync function
+            const deleteDataResponse = await googleSheetsExportAPI.deleteSpreadsheet(payload);
+            console.log('Delete response for agent_id', agent_id, ':', deleteDataResponse);
+          }
+        }
+      }
+    }
     aiAgentsRef.value = aiAgentsRef.value?.filter(v => v.id !== aiAgentId);
   } finally {
     loadingCards.value[aiAgentId] = false;

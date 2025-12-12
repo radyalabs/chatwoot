@@ -244,7 +244,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
 
       if response.success?
         json_response = response.parsed_response
-        
+
         # Karena regenerate hanya mengubah input, tapi controller python mengembalikan result dari create()
         # Kita ambil URL terbaru
         input_url = json_response['input_spreadsheet_url']
@@ -459,6 +459,64 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
       render json: { message: 'success', data: response.parsed_response }, status: :ok
     else
       render json: { error: response.parsed_response }, status: :unprocessable_entity
+    end
+  end
+
+  def delete
+    # Extract and validate payload
+    payload = {
+      account_id: params[:account_id],
+      agent_id: params[:agent_id],
+      type: params[:type]
+    }
+
+    # Validate required fields
+    unless payload[:account_id] && payload[:agent_id] && payload[:type]
+      return render json: { error: 'Missing required parameters: account_id, agent_id, or type', payload: payload }, status: :bad_request
+    end
+
+    # Build external API URL
+    base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
+    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
+
+    return render json: { error: 'JANGKAU_AGENT_API_URL not configured' }, status: :service_unavailable unless base_url
+
+    # Endpoint ke Python Backend
+    # Example: http://0.0.0.0:8080/v2/oauth/google/spreadsheet/delete
+    endpoint = "#{base_url}v2/oauth/google/spreadsheet/delete"
+
+    begin
+      response = HTTParty.post(
+        endpoint,
+        body: payload.to_json,
+        headers: {
+          'Content-Type' => 'application/json',
+          'X-API-Key' => api_key
+        }
+      )
+
+      if response.success?
+        json_response = response.parsed_response
+
+        # Karena regenerate hanya mengubah input, tapi controller python mengembalikan result dari create()
+        # Kita ambil URL terbaru
+        message = json_response['message']
+        render json: {
+          message: message
+        }, status: :ok
+
+      else
+        render json: {
+          error: 'Failed to regenerate spreadsheet',
+          status: response.code,
+          message: response.parsed_response
+        }, status: :service_unavailable
+      end
+    rescue StandardError => e
+      render json: {
+        error: 'Failed to connect to external service',
+        message: e.message
+      }, status: :service_unavailable
     end
   end
 

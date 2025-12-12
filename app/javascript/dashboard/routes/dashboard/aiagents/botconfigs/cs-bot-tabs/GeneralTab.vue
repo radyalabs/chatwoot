@@ -1,6 +1,6 @@
 <!-- eslint-disable no-console -->
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue';
+import { ref, reactive, onMounted, computed, watch, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import Button from 'dashboard/components-next/button/Button.vue';
@@ -9,7 +9,9 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import googleSheetsExportAPI from '../../../../../api/googleSheetsExport';
 // ✅ Add this line to fix the "aiAgents is not defined" error
 import aiAgents from '../../../../../api/aiAgents';
-import { watch } from 'vue';
+
+// ✅ Inject emit function from parent CSBotView
+const emitUpdate = inject('emitUpdate', () => {});
 
 const props = defineProps({
   data: {
@@ -278,8 +280,9 @@ async function save() {
   }
   try {
     isSaving.value = true;
-    // Hardcoded payload, exactly as you had it
-    let flowData = props.data.display_flow_data;
+    // Use translated flow_data, not display_flow_data (Indonesian)
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data)); 
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data)); 
     // console.log(flowData)
     const agent_index = flowData.enabled_agents.indexOf('customer_service');
     flowData.agents_config[agent_index].configurations.ticket_system =
@@ -291,13 +294,25 @@ async function save() {
       action: idleConfig.action,
       message: idleConfig.message
     };
+    displayFlowData.agents_config[agent_index].configurations.ticket_system = ticketSystem;
+    displayFlowData.agents_config[agent_index].configurations.creativity_level = creativityLevel.value;
+    displayFlowData.agents_config[agent_index].configurations.idle_settings = {
+      enabled: true,
+      duration: idleConfig.duration,
+      action: idleConfig.action,
+      message: idleConfig.message
+    };
     // console.log(flowData);
     // console.log(props.config);
     const payload = {
       flow_data: flowData,
+      display_flow_data: displayFlowData,
     };
     // ✅ Properly await the API call
     await aiAgents.updateAgent(props.data.id, payload);
+
+    // ✅ Trigger parent data refresh
+    emitUpdate();
 
     // ✅ Show success console.log after success
     useAlert(t('AGENT_MGMT.CSBOT.TICKET.SAVE_SUCCESS'));

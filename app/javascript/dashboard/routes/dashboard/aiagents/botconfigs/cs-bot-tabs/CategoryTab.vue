@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref, watch } from 'vue'
+import { reactive, ref, watch, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAlert } from 'dashboard/composables'
 import Button from 'dashboard/components-next/button/Button.vue'
@@ -13,6 +13,7 @@ const props = defineProps({
 })
 
 const { t } = useI18n()
+const emitUpdate = inject('emitUpdate', () => {})
 
 const categories = reactive([
   { name: 'Komplain', condition: '' },
@@ -117,7 +118,8 @@ async function save() {
       return;
     }
     // TODO: API call to save categories
-    let flowData = props.data.display_flow_data;
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data)); 
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data)); 
     let categoryItems = [];
     // eslint-disable-next-line no-unused-vars
     categories.forEach((item, _) => {
@@ -128,14 +130,17 @@ async function save() {
     });
     const agent_index = flowData.enabled_agents.indexOf('customer_service');
     flowData.agents_config[agent_index].configurations.category = categoryItems;
+    displayFlowData.agents_config[agent_index].configurations.category = categoryItems;
     // eslint-disable-next-line no-console
 
 
     const payload = {
       flow_data: flowData,
+      display_flow_data: displayFlowData,
     };
     // ✅ Properly await the API call
     await aiAgents.updateAgent(props.data.id, payload);
+    emitUpdate();
     useAlert(t('AGENT_MGMT.CSBOT.TICKET.SAVE_SUCCESS'))
   } catch (e) {
     useAlert(t('AGENT_MGMT.CSBOT.TICKET.SAVE_ERROR'))

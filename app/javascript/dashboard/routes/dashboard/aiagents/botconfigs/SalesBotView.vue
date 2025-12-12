@@ -1598,7 +1598,7 @@ import Input from 'dashboard/components-next/input/Input.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import provinsiJson from '../wilayah/provinsi/provinsi.json';
 import QnaKnowledgeSources from '../knowledge-sources/QnaKnowledgeSources.vue';
-import { ref, reactive, watch, onMounted, computed } from 'vue';
+import { ref, reactive, watch, onMounted, computed, provide } from 'vue';
 import { useI18n } from 'vue-i18n'
 
 // Google Sheets Auth Flow for Catalog
@@ -1621,6 +1621,9 @@ const props = defineProps({
     required: true,
   },
 });
+
+const emit = defineEmits(['update:data']);
+provide('emitUpdate', () => emit('update:data'));
 
 // temperature bot
 const creativityLevel = ref(0.3); // Default value
@@ -1693,7 +1696,8 @@ onMounted(async () => {
   }
 });
 
-// Watch for props data changes and reload configuration
+// Watch for props data changes AFTER initial mount to reload configuration
+// Note: No 'immediate: true' to avoid double-loading on mount (onMounted already calls it)
 watch(
   () => props.data,
   (newData) => {
@@ -1701,7 +1705,7 @@ watch(
       loadSavedConfiguration();
     }
   },
-  { immediate: true, deep: true }
+  { deep: true }
 );
 
 const catalogStep = computed(() => {
@@ -3071,7 +3075,9 @@ async function submitShippingConfig() {
     }
 
     // Save to backend
-    let flowData = props.data.display_flow_data;
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data));
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
+
     const agentIndex = flowData.enabled_agents.indexOf('sales');
     
     if (agentIndex === -1) {
@@ -3086,15 +3092,15 @@ async function submitShippingConfig() {
     
     // Update shipping options configuration
     flowData.agents_config[agentIndex].configurations.shipping_options = shippingConfig;
+    displayFlowData.agents_config[agentIndex].configurations.shipping_options = shippingConfig;
 
     const payload = {
       flow_data: flowData,
+      display_flow_data: displayFlowData, 
     };
 
     await aiAgents.updateAgent(props.data.id, payload);
-    
-    // Update local props data to maintain state after update
-    updateLocalPropsData('shipping_options', shippingConfig);
+    emit('update:data');
     
     useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_SUCCESS'))
   } catch (error) {
@@ -3150,7 +3156,8 @@ async function submitPaymentConfig() {
     }
 
     // Save to backend
-    let flowData = props.data.display_flow_data;
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data));
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
     const agentIndex = flowData.enabled_agents.indexOf('sales');
     
     if (agentIndex === -1) {
@@ -3165,15 +3172,15 @@ async function submitPaymentConfig() {
     
     // Update payment options configuration
     flowData.agents_config[agentIndex].configurations.payment_options = paymentConfig;
+    displayFlowData.agents_config[agentIndex].configurations.payment_options = paymentConfig;
 
     const payload = {
       flow_data: flowData,
+      display_flow_data: displayFlowData, 
     };
 
     await aiAgents.updateAgent(props.data.id, payload);
-
-    // Update local props data to maintain state after update
-    updateLocalPropsData('payment_options', paymentConfig);
+    emit('update:data');
 
     useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_SUCCESS'));
   } catch (error) {
@@ -3191,7 +3198,9 @@ async function submitCartConfig() {
     isSaving.value = true;
 
     // Save to backend
-    let flowData = props.data.display_flow_data;
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data)); 
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
+
     const agentIndex = flowData.enabled_agents.indexOf('sales');
     
     if (agentIndex === -1) {
@@ -3206,15 +3215,15 @@ async function submitCartConfig() {
     
     // Update cart configuration
     flowData.agents_config[agentIndex].configurations.cart_enabled = cartEnabled.value;
+    displayFlowData.agents_config[agentIndex].configurations.cart_enabled = cartEnabled.value;
 
     const payload = {
       flow_data: flowData,
+      display_flow_data: displayFlowData, 
     };
 
     await aiAgents.updateAgent(props.data.id, payload);
-
-    // Update local props data to maintain state after update
-    updateLocalPropsData('cart_enabled', cartEnabled.value);
+    emit('update:data');
 
     useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_SUCCESS'));
   } catch (error) {
@@ -3229,7 +3238,9 @@ async function saveSettings() {
 
   try {
     isSaving.value = true;
-    let flowData = props.data.display_flow_data;
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data));
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
+
     const agentIndex = flowData.enabled_agents.indexOf('sales');
 
     if (agentIndex === -1) {
@@ -3244,6 +3255,7 @@ async function saveSettings() {
 
     // 1. Simpan Tingkat Kreativitas
     flowData.agents_config[agentIndex].configurations.creativity_level = creativityLevel.value;
+    displayFlowData.agents_config[agentIndex].configurations.creativity_level = creativityLevel.value;
 
     // 2. Simpan Pengaturan Idle Chat
     flowData.agents_config[agentIndex].configurations.idle_settings = {
@@ -3252,16 +3264,20 @@ async function saveSettings() {
       action: idleConfig.action,
       message: idleConfig.message
     };
+    displayFlowData.agents_config[agentIndex].configurations.idle_settings = {
+      enabled: true,
+      duration: idleConfig.duration,
+      action: idleConfig.action,
+      message: idleConfig.message
+    };
 
     const payload = {
       flow_data: flowData,
+      display_flow_data: displayFlowData, 
     };
 
     await aiAgents.updateAgent(props.data.id, payload);
-
-    // Update local config (opsional, tapi bagus untuk konsistensi)
-    updateLocalPropsData('creativity_level', creativityLevel.value);
-    updateLocalPropsData('idle_settings', flowData.agents_config[agentIndex].configurations.idle_settings);
+    emit('update:data');
 
     useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_SUCCESS'));
   } catch (error) {
@@ -3573,23 +3589,8 @@ function loadSavedConfiguration() {
 }
 
 // Function to update local props data after successful save
-function updateLocalPropsData(configType, configData) {
-  try {
-    const flowData = props.data.display_flow_data;
-    const agentIndex = flowData.enabled_agents.indexOf('sales');
-    if (agentIndex === -1) return;
-    
-    // Initialize configurations if not exists
-    if (!flowData.agents_config[agentIndex].configurations) {
-      flowData.agents_config[agentIndex].configurations = {};
-    }
-    
-    // Update the specific configuration
-    flowData.agents_config[agentIndex].configurations[configType] = configData;
-    
-  } catch (error) {
-  }
-}
+// Removed updateLocalPropsData function - it was mutating props directly (Vue anti-pattern)
+// Props updates now handled cleanly via emit('update:data') and parent refresh
 </script>
 
 <style scoped>

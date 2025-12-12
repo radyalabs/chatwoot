@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onMounted, computed, watch } from 'vue';
+import { ref, reactive, onMounted, computed, watch, provide } from 'vue';
 import googleSheetsExportAPI from '../../../../api/googleSheetsExport';
 import QnaKnowledgeSources from '../knowledge-sources/QnaKnowledgeSources.vue'
 import aiAgents from '../../../../api/aiAgents';
@@ -20,6 +20,9 @@ const props = defineProps({
     required: true,
   },
 });
+
+const emit = defineEmits(['update:data']);
+provide('emitUpdate', () => emit('update:data'));
 
 // Tab management
 const activeIndex = ref(0);
@@ -314,7 +317,8 @@ async function saveGeneralSettings() {
 
   try {
     isSaving.value = true;
-    let flowData = props.data.display_flow_data;
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data)); 
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data)); 
     const agentIndex = flowData.enabled_agents.indexOf('restaurant');
 
     if (agentIndex === -1) {
@@ -328,8 +332,15 @@ async function saveGeneralSettings() {
 
     // Update Creativity & Idle Settings
     flowData.agents_config[agentIndex].configurations.creativity_level = creativityLevel.value;
+    displayFlowData.agents_config[agentIndex].configurations.creativity_level = creativityLevel.value;
     
     flowData.agents_config[agentIndex].configurations.idle_settings = {
+      enabled: true,
+      duration: idleConfig.duration,
+      action: idleConfig.action,
+      message: idleConfig.message
+    };
+    displayFlowData.agents_config[agentIndex].configurations.idle_settings = {
       enabled: true,
       duration: idleConfig.duration,
       action: idleConfig.action,
@@ -338,9 +349,11 @@ async function saveGeneralSettings() {
 
     const payload = {
       flow_data: flowData,
+      display_flow_data: displayFlowData, 
     };
 
     await aiAgents.updateAgent(props.data.id, payload);
+    emit('update:data');
 
     useAlert(t('AGENT_MGMT.CSBOT.TICKET.SAVE_SUCCESS'));
   } catch (e) {
@@ -368,7 +381,8 @@ async function save() {
   try {
     isSaving.value = true;
     // Hardcoded payload, exactly as you had it
-    let flowData = props.data.display_flow_data;
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data));
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
     // const agentsConfig = flowData.agents_config;
     // const agent_index = agentsConfig.findIndex(agent => agent.type === "restaurant");
     // const agent_index = 0;
@@ -379,12 +393,18 @@ async function save() {
     flowData.agents_config[agent_index].configurations.service_charge = serviceCharge;
     flowData.agents_config[agent_index].configurations.url_menu = configData.menuBookLink;
 
+    displayFlowData.agents_config[agent_index].configurations.tax = tax;
+    displayFlowData.agents_config[agent_index].configurations.service_charge = serviceCharge;
+    displayFlowData.agents_config[agent_index].configurations.url_menu = configData.menuBookLink;
+
     const payload = {
       flow_data: flowData,
+      display_flow_data: displayFlowData, 
     };
 
     // ✅ Properly await the API call
     await aiAgents.updateAgent(props.data.id, payload);
+    emit('update:data');
 
 
     useAlert(t('AGENT_MGMT.CSBOT.TICKET.SAVE_SUCCESS'));

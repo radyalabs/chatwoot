@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref, watch, computed } from 'vue';
+import { reactive, ref, watch, computed, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import Button from 'dashboard/components-next/button/Button.vue';
@@ -22,6 +22,7 @@ const props = defineProps({
 });
 
 const { t } = useI18n();
+const emitUpdate = inject('emitUpdate', () => {});
 
 const priorities = reactive([]);
 const expandedPriorities = ref({});
@@ -154,7 +155,9 @@ async function save() {
       return;
     }
 
-    let flowData = props.data.display_flow_data;
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data));
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
+
     let priorityItems = [];
     priorities.forEach((item,  _) => {
       priorityItems.push({
@@ -177,12 +180,15 @@ async function save() {
     }
     
     flowData.agents_config[agentIndex].configurations.priority = priorityItems;
+    displayFlowData.agents_config[agentIndex].configurations.priority = priorityItems;
 
     const payload = {
       flow_data: flowData,
+      display_flow_data: displayFlowData, 
     };
     
     await aiAgents.updateAgent(props.data.id, payload);
+    emitUpdate();
     useAlert(t(config.value.saveSuccess));
   } catch (e) {
     console.error(e);

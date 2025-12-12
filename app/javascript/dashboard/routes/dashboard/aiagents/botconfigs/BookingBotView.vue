@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onMounted, computed, watch } from 'vue';
+import { ref, reactive, onMounted, computed, watch, provide } from 'vue';
 import googleSheetsExportAPI from '../../../../api/googleSheetsExport';
 import FileKnowledgeSources from '../knowledge-sources/FileKnowledgeSources.vue';
 import aiAgents from '../../../../api/aiAgents';
@@ -21,6 +21,9 @@ const props = defineProps({
     required: true,
   },
 });
+
+const emit = defineEmits(['update:data']);
+provide('emitUpdate', () => emit('update:data'));
 
 // Tab management
 const activeIndex = ref(0);
@@ -305,7 +308,9 @@ async function syncScheduleColumns() {
     syncingColumns.value = true;
     showNotification('Syncing schedule columns from sheet...', 'info');
 
-    let flowData = props.data.display_flow_data;
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data)); // Deep clone to avoid mutation
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data)); // Deep clone to avoid mutation
+    
     const payload = {
       account_id: parseInt(flowData.account_id, 10),
       agent_id: agentId.value,
@@ -324,12 +329,22 @@ async function syncScheduleColumns() {
       result.data.data.unique_location_names;
     flowData.agents_config[agent_index].configurations.resource_types =
       result.data.data.unique_resource_types;
+
+    // Also update displayFlowData to keep in sync
+    displayFlowData.agents_config[agent_index].configurations.resource_names =
+      result.data.data.unique_resource_names;
+    displayFlowData.agents_config[agent_index].configurations.location_names =
+      result.data.data.unique_location_names;
+    displayFlowData.agents_config[agent_index].configurations.resource_types =
+      result.data.data.unique_resource_types;
     
     const updatePayload = {
       flow_data: flowData,
+      display_flow_data: displayFlowData,
     };
 
     await aiAgents.updateAgent(props.data.id, updatePayload);
+    emit('update:data');
   } catch (error) {
     console.error('Failed to sync schedule columns:', error);
     showNotification('Failed to sync schedule columns', 'error');
@@ -351,7 +366,8 @@ async function save() {
   };
   try {
     isSaving.value = true;
-    let flowData = props.data.display_flow_data;
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data));
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
     const agent_index = flowData.enabled_agents.indexOf('booking');
 
     if (agent_index === -1) {
@@ -363,11 +379,18 @@ async function save() {
       configData.minDuration;
     flowData.agents_config[agent_index].configurations.follow_up = configData.follow_up;
 
+    // Also update displayFlowData to keep in sync
+    displayFlowData.agents_config[agent_index].configurations.minimum_duration =
+      configData.minDuration;
+    displayFlowData.agents_config[agent_index].configurations.follow_up = configData.follow_up;
+
     const payload = {
       flow_data: flowData,
+      display_flow_data: displayFlowData,
     };
 
     await aiAgents.updateAgent(props.data.id, payload);
+    emit('update:data');
 
     useAlert(t('AGENT_MGMT.CSBOT.TICKET.SAVE_SUCCESS'));
   } catch (e) {

@@ -511,6 +511,11 @@ Rails.application.routes.draw do
           get :index
         end
       end
+
+      # Internal API for external services (jangkau.langgraph, etc.)
+      namespace :internal do
+        resources :reminders, only: [:create]
+      end
     end
   end
 

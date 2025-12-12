@@ -32,6 +32,7 @@ class AiAgent < ApplicationRecord
   has_many :ai_agent_followups, dependent: :destroy
   has_many :agent_bot_inboxes, dependent: :nullify
   has_one :knowledge_source, dependent: :destroy
+  has_many :reminders, dependent: :destroy
   has_one :reminder_config, dependent: :destroy
 
   validates :name, :system_prompts, :welcoming_message, presence: true

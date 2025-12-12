@@ -35,9 +35,7 @@ module Reminders
     end
 
     def build_message_content
-      @config.render_message(
-        scheduled_at: @reminder.scheduled_at
-      )
+      @config.render_message(@reminder)
     end
 
     def create_message(content)

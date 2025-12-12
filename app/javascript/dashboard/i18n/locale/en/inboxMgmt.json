@@ -688,6 +688,11 @@
     },
     "NOTE": "Note: ",
     "WIDGET_BUILDER": {
+      "START_CONVERSATION": "Create a new conversation",
+      "START_CONVERSATION_DESC": "Start conversation with our assistant",
+      "PREV_CONVERSATION": "Previous Conversations",
+      "WELCOME_MESSAGE": "Hey, is there anything i can help?",
+      "USER_QUESTION": "Hey, how about your pricing?",
       "WIDGET_OPTIONS": {
         "AVATAR": {
           "LABEL": "Website Avatar",

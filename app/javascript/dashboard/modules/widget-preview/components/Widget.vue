@@ -243,8 +243,7 @@ export default {
             </div>
             <div class="bg-white dark:bg-slate-800 p-3 rounded-tr-xl rounded-br-xl rounded-bl-xl shadow-sm max-w-[85%]">
               <p class="text-sm text-slate-700 dark:text-slate-100">
-                {{ welcomeHeading || 'Hello!' }} <br/>
-                {{ welcomeTagline || 'How can we help you today?' }}
+                {{ $t('INBOX_MGMT.WIDGET_BUILDER.WELCOME_MESSAGE') }}
               </p>
               <span class="text-[10px] text-slate-400 mt-1 block">10:00 AM</span>
             </div>
@@ -253,7 +252,7 @@ export default {
           <div class="flex gap-2 justify-end">
              <div class="p-3 rounded-tl-xl rounded-bl-xl rounded-br-xl shadow-sm max-w-[85%] text-white" :style="{ backgroundColor: color }">
               <p class="text-sm">
-                Hi, I have a question about pricing.
+                {{ $t('INBOX_MGMT.WIDGET_BUILDER.USER_QUESTION') }}
               </p>
               <span class="text-[10px] text-white/70 mt-1 block text-right">10:02 AM</span>
             </div>

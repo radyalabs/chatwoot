@@ -753,6 +753,8 @@
       "START_CONVERSATION": "Buat Percakapan Baru",
       "START_CONVERSATION_DESC": "Mulai Percakapan dengan Asisten Kami",
       "PREV_CONVERSATION": "Percakapan Sebelumnya",
+      "WELCOME_MESSAGE": "Halo, ada yang bisa saya bantu hari ini?",
+      "USER_QUESTION": "Hai, saya ingin bertanya mengenai paket penjualan",
       "WIDGET_OPTIONS": {
         "AVATAR": {
           "LABEL": "Website Avatar",

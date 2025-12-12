@@ -467,11 +467,11 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     payload = {
       account_id: params[:account_id],
       agent_id: params[:agent_id],
-      type: params[:type]
+      collection_name: params[:collection_name]
     }
 
     # Validate required fields
-    unless payload[:account_id] && payload[:agent_id] && payload[:type]
+    unless payload[:account_id] && payload[:agent_id] && payload[:collection_name]
       return render json: { error: 'Missing required parameters: account_id, agent_id, or type', payload: payload }, status: :bad_request
     end
 

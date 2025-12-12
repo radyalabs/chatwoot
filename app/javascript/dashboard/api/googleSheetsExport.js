@@ -31,7 +31,7 @@ class GoogleSheetsExportAPI extends ApiClient {
   syncSpreadsheet(payload) {
     return axios.post(`${this.url}/sync`, payload);
   }
-  
+
   deleteSpreadsheet(payload) {
     return axios.post(`${this.url}/delete`, payload);
   }

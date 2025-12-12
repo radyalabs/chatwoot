@@ -3,6 +3,7 @@ import { ref, reactive, onMounted, computed, watch } from 'vue';
 import googleSheetsExportAPI from '../../../../api/googleSheetsExport';
 import FileKnowledgeSources from '../knowledge-sources/FileKnowledgeSources.vue';
 import aiAgents from '../../../../api/aiAgents';
+import remindersAPI from '../../../../api/reminders';
 import QnaKnowledgeSources from '../knowledge-sources/QnaKnowledgeSources.vue'
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -374,7 +375,7 @@ async function save() {
     minDuration: minDuration.value,
     follow_up: {
       enabled: followUpConfig.enabled,
-      delay: followUpConfig.delay, 
+      delay: followUpConfig.delay,
       message: followUpConfig.message
     }
   };
@@ -406,6 +407,13 @@ async function save() {
     };
 
     await aiAgents.updateAgent(props.data.id, payload);
+
+    // Update reminder config in database
+    await remindersAPI.updateConfig(props.data.id, {
+      enabled: followUpConfig.enabled,
+      minutes_before_booking: followUpConfig.delay,
+      message_template: followUpConfig.message
+    });
 
     useAlert(t('AGENT_MGMT.CSBOT.TICKET.SAVE_SUCCESS'));
   } catch (e) {

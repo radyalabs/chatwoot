@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2025_12_12_000001) do
+ActiveRecord::Schema[7.0].define(version: 2025_12_12_000002) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -1128,6 +1128,8 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_12_000001) do
     t.datetime "last_sent_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "service_id"
+    t.string "message"
     t.index ["account_id", "scheduled_at"], name: "index_reminders_on_account_id_and_scheduled_at"
     t.index ["account_id"], name: "index_reminders_on_account_id"
     t.index ["ai_agent_id"], name: "index_reminders_on_ai_agent_id"

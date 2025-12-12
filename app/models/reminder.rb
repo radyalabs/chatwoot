@@ -6,6 +6,7 @@
 #  contact             :string
 #  customer_name       :string
 #  last_sent_at        :datetime
+#  message             :string
 #  scheduled_at        :datetime         not null
 #  sent_reminder_count :integer          default(0), not null
 #  service_location    :string
@@ -17,6 +18,7 @@
 #  ai_agent_id         :bigint           not null
 #  conversation_id     :bigint           not null
 #  inbox_id            :bigint           not null
+#  service_id          :string
 #
 # Indexes
 #

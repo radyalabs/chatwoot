@@ -34,7 +34,7 @@ class V2::AiAgents::AiAgentBuilder < V2::AiAgents::AiAgentBaseBuilder
 
   def update
     ActiveRecord::Base.transaction do
-      ai_agent.update!(ai_agent_params.merge(display_flow_data: ai_agent_params[:flow_data]))
+      ai_agent.update!(ai_agent_params)
     end
 
     ai_agent.as_create_json
@@ -154,7 +154,7 @@ class V2::AiAgents::AiAgentBuilder < V2::AiAgents::AiAgentBaseBuilder
       :name, :description, :template_id, :template_ids, :template_type, :agent_type,
       :system_prompts, :welcoming_message, :routing_conditions, :control_flow_rules,
       :llm_model, :history_limit, :context_limit, :message_await, :message_limit, :timezone,
-      flow_data: {}, selected_labels: %i[label_id label_condition]
+      flow_data: {}, display_flow_data: {}, selected_labels: %i[label_id label_condition]
     ).to_h.with_indifferent_access
   end
 end

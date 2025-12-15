@@ -271,6 +271,50 @@ async function createSheets() {
   }
 }
 
+// Reminder Message
+const followUpTextarea = ref(null);
+const cursorPosition = ref(0);
+const showVariableDropdown = ref(false);
+
+const AVAILABLE_VARIABLES = [
+  { label: 'Nama Pelanggan', value: '{{nama_pelanggan}}', mock: 'Budi Santoso' },
+  { label: 'Tanggal Booking', value: '{{tanggal_booking}}', mock: '25 Des 2025' },
+  { label: 'Waktu Booking', value: '{{waktu_booking}}', mock: '14:00 WIB' },
+  { label: 'Nama Layanan', value: '{{nama_layanan}}', mock: 'Konsultasi Premium' },
+  { label: 'Lokasi', value: '{{lokasi}}', mock: 'Klinik Pratama' },
+];
+
+const messagePreview = computed(() => {
+  let text = followUpConfig.message || '';
+  AVAILABLE_VARIABLES.forEach(variable => {
+    text = text.replaceAll(variable.value, `<span class="font-bold text-slate-800 dark:text-slate-100">${variable.mock}</span>`);
+  });
+  return text.replace(/\n/g, '<br>');
+});
+
+const updateCursorPosition = () => {
+  if (followUpTextarea.value) {
+    cursorPosition.value = followUpTextarea.value.selectionStart;
+  }
+};
+
+const insertVariable = (variableValue) => {
+  const currentMessage = followUpConfig.message || '';
+  const insertAt = cursorPosition.value;
+  
+  followUpConfig.message = currentMessage.substring(0, insertAt) + variableValue + currentMessage.substring(insertAt);
+  
+  cursorPosition.value = insertAt + variableValue.length; 
+  showVariableDropdown.value = false;
+  
+  if(followUpTextarea.value) {
+    followUpTextarea.value.focus();
+    setTimeout(() => {
+        followUpTextarea.value.setSelectionRange(cursorPosition.value, cursorPosition.value);
+    }, 0);
+  }
+};
+
 // Save state
 const isSaving = ref(false);
 const minDuration = ref('');
@@ -710,8 +754,8 @@ onMounted(async () => {
                           </svg>
                         </div>
                         <div>
-                          <h3 class="font-medium text-slate-900 dark:text-slate-25">Pesan Follow Up</h3>
-                          <p class="text-sm text-gray-500 mt-1">Kirim pesan pengingat otomatis kepada pelanggan setelah booking</p>
+                          <h3 class="font-medium text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.REMINDER.TITLE') }}</h3>
+                          <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.REMINDER.DESC') }}</p>
                         </div>
                       </div>
                       
@@ -728,7 +772,7 @@ onMounted(async () => {
                     >
                       <div>
                         <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
-                          Waktu Follow Up
+                          {{ $t('AGENT_MGMT.REMINDER.TIME') }}
                         </label>
                         <div class="flex items-center gap-3">
                           <select 
@@ -746,22 +790,64 @@ onMounted(async () => {
                           </select>                   
                           
                           <span class="text-gray-500 text-sm">
-                            sebelum waktu booking
+                            {{ $t('AGENT_MGMT.REMINDER.TIME_DETAIL') }}
                           </span>
                         </div>
-                        <p class="text-xs text-gray-500 mt-1 italic">Pilih waktu untuk mengirimkan pesan follow up.</p>
+                        <p class="text-xs text-gray-500 mt-1 italic">{{ $t('AGENT_MGMT.REMINDER.TIME_DESC') }}</p>
                       </div>
                       <div>
-                        <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
-                          Pesan Follow Up
-                        </label>
+                        <div class="flex justify-between items-end mb-1">
+                          <label class="block text-sm font-medium text-slate-900 dark:text-slate-25">
+                            {{ $t('AGENT_MGMT.REMINDER.MSG') }}
+                          </label>
+
+                          <div class="relative">
+                            <button 
+                              @click="showVariableDropdown = !showVariableDropdown"
+                              type="button"
+                              class="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-1 px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                              {{ $t('AGENT_MGMT.REMINDER.MSG_VARIABLE') }}
+                            </button>
+
+                            <div 
+                              v-if="showVariableDropdown"
+                              class="absolute right-0 top-full mt-1 z-20 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1"
+                            >
+                              <button
+                                v-for="(item, index) in AVAILABLE_VARIABLES"
+                                :key="index"
+                                @click="insertVariable(item.value)"
+                                class="w-full text-left px-4 py-2 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                              >
+                                {{ item.label }}
+                              </button>
+                            </div>
+                            <div v-if="showVariableDropdown" @click="showVariableDropdown = false" class="fixed inset-0 z-10 cursor-default"></div>
+                          </div>
+                        </div>
+
                         <textarea 
+                          ref="followUpTextarea"
                           v-model="followUpConfig.message"
+                          @click="updateCursorPosition"
+                          @keyup="updateCursorPosition"
+                          @blur="updateCursorPosition"
                           rows="4"
                           placeholder="Halo kak, terima kasih sudah melakukan booking. Apakah ada kendala atau pertanyaan lain?"
                           class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out"
                         ></textarea>
-                        <p class="text-xs text-gray-500 mt-1 italic">Pesan ini akan dikirimkan otomatis ke pelanggan melalui WhatsApp sesuai waktu yang ditentukan.</p>
+                        
+                        <p class="text-xs text-gray-500 mt-1 italic">{{ $t('AGENT_MGMT.REMINDER.MSG_DESC') }}</p>
+
+                        <div class="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded border border-gray-300 dark:border-slate-800 p-3">
+                          <p class="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1"></p>
+                          <div class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{{ $t('AGENT_MGMT.REMINDER.MSG_EXAMPLE') }}
+                            <span v-if="!followUpConfig.message" class="text-slate-400 italic opacity-70">Belum ada pesan yang ditulis...</span>
+                            <span v-else v-html="messagePreview"></span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>

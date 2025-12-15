@@ -62,6 +62,17 @@
         "NO": "No, Keep "
       }
     },
+    "REMINDER": {
+      "TITLE": "",
+      "DESC": "",
+      "TIME": "",
+      "TIME_DETAIL": "",
+      "TIME_DESC": "",
+      "MSG": "",
+      "MSG_VARIABLE": "",
+      "MSG_DESC": "",
+      "MSG_EXAMPLE": ""
+    },
     "CSBOT": {
       "TICKET": {
         "ERROR": "Field is required",

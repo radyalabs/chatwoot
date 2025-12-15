@@ -463,6 +463,14 @@ Rails.application.routes.draw do
                 get :download
               end
             end
+
+            # Reminders routes
+            resources :reminders, only: [:index, :create, :show, :destroy] do
+              collection do
+                get :config
+                put :config, action: :update_config
+              end
+            end
           end
 
           resources :summary_reports, only: [] do
@@ -496,6 +504,7 @@ Rails.application.routes.draw do
               post :sync
               delete :disconnect
               post :regenerate
+              post :delete
             end
           end
         end
@@ -504,6 +513,11 @@ Rails.application.routes.draw do
         collection do
           get :index
         end
+      end
+
+      # Internal API for external services (jangkau.langgraph, etc.)
+      namespace :internal do
+        resources :reminders, only: [:create]
       end
     end
   end

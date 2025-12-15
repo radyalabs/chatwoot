@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2025_11_19_074500) do
+ActiveRecord::Schema[7.0].define(version: 2025_12_12_000002) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -59,6 +59,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_19_074500) do
     t.integer "status", default: 0
     t.bigint "active_subscription_id"
     t.string "subscription_status", default: "free_trial"
+    t.jsonb "internal_attributes", default: {}, null: false
     t.index ["active_subscription_id"], name: "index_accounts_on_active_subscription_id"
     t.index ["status"], name: "index_accounts_on_status"
   end
@@ -223,9 +224,13 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_19_074500) do
     t.string "slug", null: false
     t.integer "position"
     t.string "locale", default: "en", null: false
+    t.index ["account_id"], name: "index_articles_on_account_id"
     t.index ["associated_article_id"], name: "index_articles_on_associated_article_id"
     t.index ["author_id"], name: "index_articles_on_author_id"
+    t.index ["portal_id"], name: "index_articles_on_portal_id"
     t.index ["slug"], name: "index_articles_on_slug", unique: true
+    t.index ["status"], name: "index_articles_on_status"
+    t.index ["views"], name: "index_articles_on_views"
   end
 
   create_table "attachments", id: :serial, force: :cascade do |t|
@@ -239,6 +244,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_19_074500) do
     t.datetime "updated_at", precision: nil, null: false
     t.string "fallback_title"
     t.string "extension"
+    t.jsonb "meta", default: {}
     t.index ["account_id"], name: "index_attachments_on_account_id"
     t.index ["message_id"], name: "index_attachments_on_message_id"
   end
@@ -517,6 +523,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_19_074500) do
     t.jsonb "pre_chat_form_options", default: {}
     t.boolean "hmac_mandatory", default: false
     t.boolean "continuity_via_email", default: true, null: false
+    t.string "widget_heading"
     t.index ["hmac_token"], name: "index_channel_web_widgets_on_hmac_token", unique: true
     t.index ["website_token"], name: "index_channel_web_widgets_on_website_token", unique: true
   end
@@ -1028,15 +1035,6 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_19_074500) do
     t.datetime "updated_at", precision: nil, null: false
   end
 
-  create_table "portal_members", force: :cascade do |t|
-    t.bigint "portal_id"
-    t.bigint "user_id"
-    t.datetime "created_at", precision: nil, null: false
-    t.datetime "updated_at", precision: nil, null: false
-    t.index ["portal_id", "user_id"], name: "index_portal_members_on_portal_id_and_user_id", unique: true
-    t.index ["user_id", "portal_id"], name: "index_portal_members_on_user_id_and_portal_id", unique: true
-  end
-
   create_table "portals", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "name", null: false
@@ -1100,6 +1098,44 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_19_074500) do
     t.datetime "updated_at", precision: nil, null: false
     t.index ["category_id", "related_category_id"], name: "index_related_categories_on_category_id_and_related_category_id", unique: true
     t.index ["related_category_id", "category_id"], name: "index_related_categories_on_related_category_id_and_category_id", unique: true
+  end
+
+  create_table "reminder_configs", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "ai_agent_id", null: false
+    t.boolean "enabled", default: false, null: false
+    t.integer "minutes_before_booking", default: 60, null: false
+    t.text "message_template"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "ai_agent_id"], name: "index_reminder_configs_on_account_id_and_ai_agent_id", unique: true
+    t.index ["account_id"], name: "index_reminder_configs_on_account_id"
+    t.index ["ai_agent_id"], name: "index_reminder_configs_on_ai_agent_id"
+  end
+
+  create_table "reminders", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "inbox_id", null: false
+    t.bigint "ai_agent_id", null: false
+    t.bigint "conversation_id", null: false
+    t.datetime "scheduled_at", null: false
+    t.string "contact"
+    t.string "customer_name"
+    t.string "service_name"
+    t.string "service_type"
+    t.string "service_location"
+    t.integer "sent_reminder_count", default: 0, null: false
+    t.datetime "last_sent_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "service_id"
+    t.string "message"
+    t.index ["account_id", "scheduled_at"], name: "index_reminders_on_account_id_and_scheduled_at"
+    t.index ["account_id"], name: "index_reminders_on_account_id"
+    t.index ["ai_agent_id"], name: "index_reminders_on_ai_agent_id"
+    t.index ["conversation_id", "scheduled_at"], name: "index_reminders_on_conversation_id_and_scheduled_at"
+    t.index ["conversation_id"], name: "index_reminders_on_conversation_id"
+    t.index ["inbox_id"], name: "index_reminders_on_inbox_id"
   end
 
   create_table "reporting_events", force: :cascade do |t|
@@ -1463,6 +1499,12 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_19_074500) do
   add_foreign_key "knowledge_sources", "ai_agents"
   add_foreign_key "otps", "users"
   add_foreign_key "quick_replies", "accounts"
+  add_foreign_key "reminder_configs", "accounts"
+  add_foreign_key "reminder_configs", "ai_agents"
+  add_foreign_key "reminders", "accounts"
+  add_foreign_key "reminders", "ai_agents"
+  add_foreign_key "reminders", "conversations"
+  add_foreign_key "reminders", "inboxes"
   add_foreign_key "subscription_payments", "subscriptions"
   add_foreign_key "subscription_plans", "accounts", column: "owner_account_id"
   add_foreign_key "subscription_topups", "subscriptions"

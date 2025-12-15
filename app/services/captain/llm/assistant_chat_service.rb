@@ -5,9 +5,9 @@ class Captain::Llm::AssistantChatService
 
   base_uri ENV.fetch('JANGKAU_AGENT_API_URL', 'https://agent.jangkau.ai/')
 
-  def initialize(message, session_id, ai_agent, account_id)
+  def initialize(message, conversation, ai_agent, account_id)
     @message = message
-    @session_id = session_id
+    @conversation = conversation
     @ai_agent = ai_agent
     @account_id = account_id
   end
@@ -27,16 +27,16 @@ class Captain::Llm::AssistantChatService
       ::Captain::Llm::BaseFlowiseService.new(
         @account_id,
         @ai_agent,
+        @conversation,
         question,
-        @session_id,
         additional_attributes
       ).perform
     else
       ::Captain::Llm::BaseJangkauService.new(
         @account_id,
         @ai_agent,
+        @conversation,
         question,
-        @session_id,
         additional_attributes
       ).perform
     end

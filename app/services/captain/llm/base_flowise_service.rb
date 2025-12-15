@@ -4,11 +4,12 @@ class Captain::Llm::BaseFlowiseService
   include HTTParty
   base_uri ENV.fetch('FLOWISE_API_URL', 'https://ai.radyalabs.id/api/v1')
 
-  def initialize(account_id, ai_agent, question, session_id, additional_attributes)
+  def initialize(account_id, ai_agent, conversation, question, additional_attributes)
     @account_id = account_id
     @ai_agent = ai_agent
+    @conversation = conversation
     @question = question
-    @session_id = session_id
+    @session_id = conversation.uuid
     @additional_attributes = additional_attributes
   end
 

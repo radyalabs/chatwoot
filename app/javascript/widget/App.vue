@@ -296,8 +296,11 @@ export default {
           if (message.isOpen) {
             if (this.shouldShowPreChatForm) {
               this.replaceRoute('prechat-form');
-            } else if (this.$route.name === 'conversation-list' || !this.$route.name) {
-              this.replaceRoute('conversation-list');
+            } else {
+              const currentRoute = this.$route.name;
+              if (!currentRoute || currentRoute === 'home' || currentRoute === 'conversation-list') {
+                 this.replaceRoute('home');
+              }
             }
           }
           if (!message.isOpen) {

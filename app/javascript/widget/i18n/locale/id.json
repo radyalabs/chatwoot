@@ -17,12 +17,13 @@
     "OFFLINE": "Kami sedang tidak tersedia saat ini"
   },
   "CONVERSATION_HISTORY": {
-    "TITLE": "Pesan",
-    "START":"Mulai Percakapan Baru",
-    "NEW": "Buat Percakapan",
+    "TITLE": "Histori Percakapan",
+    "START": "Percakapan Baru",
+    "NEW": "Buat Percakapan Baru",
     "NEW_DESC": "Mulai Percakapan dengan Asisten Kami",
     "LATEST": "Percakapan Sebelumnya",
-    "NEW_USER": "No conversations yet"
+    "NEW_USER": "Belum ada Percakapan",
+    "RECENT": "Terkini"
   },
   "REPLY_TIME": {
     "IN_A_FEW_MINUTES": "Chat kapan saja, Selalu siap bantu 24 jam",

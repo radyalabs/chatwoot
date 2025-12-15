@@ -750,6 +750,9 @@
     },
     "NOTE": "Catatan: ",
     "WIDGET_BUILDER": {
+      "START_CONVERSATION": "Buat Percakapan Baru",
+      "START_CONVERSATION_DESC": "Mulai Percakapan dengan Asisten Kami",
+      "PREV_CONVERSATION": "Percakapan Sebelumnya",
       "WIDGET_OPTIONS": {
         "AVATAR": {
           "LABEL": "Website Avatar",

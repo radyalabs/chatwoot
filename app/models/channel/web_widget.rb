@@ -15,6 +15,7 @@
 #  welcome_tagline       :string
 #  welcome_title         :string
 #  widget_color          :string           default("#1f93ff")
+#  widget_heading        :string
 #  created_at            :datetime         not null
 #  updated_at            :datetime         not null
 #  account_id            :integer

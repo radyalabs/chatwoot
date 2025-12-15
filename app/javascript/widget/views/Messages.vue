@@ -37,9 +37,11 @@ export default {
 
   methods: {
     ...mapActions('conversation', ['loadConversation','setUserLastSeen', 'syncLatestMessages']),
+    ...mapActions('conversationAttributes', ['getAttributes']),
 
     async fetchSpecificConversation(id) {
       await this.loadConversation(id);
+      await this.getAttributes(id);
       this.setUserLastSeen();
     },
     startPolling() {

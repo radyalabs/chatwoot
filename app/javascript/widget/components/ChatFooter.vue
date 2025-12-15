@@ -35,9 +35,9 @@ export default {
       return getContrastingTextColor(this.widgetColor);
     },
     hideReplyBox() {
-      const { allowMessagesAfterResolved } = window.chatwootWebChannel;
+      // Mengambil status dari atribut percakapan
       const { status } = this.conversationAttributes;
-      return !allowMessagesAfterResolved && status === 'resolved';
+      return status === 'resolved';
     },
     showEmailTranscriptButton() {
       return this.hasEmail;

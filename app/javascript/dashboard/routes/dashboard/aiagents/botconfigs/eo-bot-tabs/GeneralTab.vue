@@ -281,23 +281,49 @@ async function save() {
   }
   try {
     isSaving.value = true;
-    // Hardcoded payload, exactly as you had it
-    let flowData = props.data.display_flow_data;
+    // Use translated flow_data, not display_flow_data (Indonesian)
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data));
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
+
     // console.log(flowData)
     const agent_index = flowData.enabled_agents.indexOf('event_organizer');
     flowData.agents_config[agent_index].temperature = creativityLevel.value;
+    displayFlowData.agents_config[agent_index].temperature = creativityLevel.value;
+
     flowData.agents_config[agent_index].configurations.ticket_system =
       ticketSystem;
+    displayFlowData.agents_config[agent_index].configurations.ticket_system =
+      ticketSystem;
+
     flowData.agents_config[agent_index].configurations.idle_settings = {
       enabled: true,
       duration: idleConfig.duration,
       action: idleConfig.action,
       message: idleConfig.message
     };
+    displayFlowData.agents_config[agent_index].configurations.idle_settings = {
+      enabled: true,
+      duration: idleConfig.duration,
+      action: idleConfig.action,
+      message: idleConfig.message
+    };
+
+    flowData.agents_config[agent_index].configurations.follow_up = {
+      enabled: followUpConfig.enabled,
+      delay: followUpConfig.delay,
+      message: followUpConfig.message
+    };
+
+    displayFlowData.agents_config[agent_index].configurations.follow_up = {
+      enabled: followUpConfig.enabled,
+      delay: followUpConfig.delay,
+      message: followUpConfig.message
+    };
     // console.log(flowData);
     // console.log(props.config);
     const payload = {
       flow_data: flowData,
+      display_flow_data: displayFlowData,
     };
     // ✅ Properly await the API call
     await aiAgents.updateAgent(props.data.id, payload);

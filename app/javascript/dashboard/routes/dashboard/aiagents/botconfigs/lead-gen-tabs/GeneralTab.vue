@@ -204,16 +204,20 @@ async function save() {
   }
   try {
     isSaving.value = true;
-    // Hardcoded payload, exactly as you had it
-    let flowData = props.data.display_flow_data;
-    // console.log(flowData)
+    // Use translated flow_data, not display_flow_data (Indonesian)
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data)); 
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
+
     const agent_index = flowData.enabled_agents.indexOf('lead_gen');
     flowData.agents_config[agent_index].configurations.ticket_system =
+      ticketSystem;
+    displayFlowData.agents_config[agent_index].configurations.ticket_system =
       ticketSystem;
     // console.log(flowData);
     // console.log(props.config);
     const payload = {
       flow_data: flowData,
+      display_flow_data: displayFlowData,
     };
     // ✅ Properly await the API call
     await aiAgents.updateAgent(props.data.id, payload);

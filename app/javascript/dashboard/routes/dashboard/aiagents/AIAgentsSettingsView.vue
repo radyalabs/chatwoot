@@ -415,7 +415,11 @@ onMounted(() => {
     </woot-tabs>
 
     <div v-show="activeIndex === 0">
-      <AiAgentGeneralSettingsView :data="data" :bot-type="data?.display_flow_data?.type" />
+      <AiAgentGeneralSettingsView 
+        :data="data" 
+        :bot-type="data?.display_flow_data?.type"
+        @update:data="(updatedData) => data = updatedData"
+      />
     </div>
     <!-- <div v-show="activeIndex === 1">
       <AiAgentKnowledgeSources :data="data" />
@@ -430,26 +434,26 @@ onMounted(() => {
     </div>
 
     <div v-show="visibleTabs[activeIndex]?.index === 3">
-      <CSBotView :data="data" :google-sheets-auth="googleSheetsAuth" />
+      <CSBotView :data="data" :google-sheets-auth="googleSheetsAuth" @update:data="showData" />
     </div>
 
     <div v-show="visibleTabs[activeIndex]?.index === 4">
-      <RestaurantBotView :data="data" :google-sheets-auth="googleSheetsAuth" />
+      <RestaurantBotView :data="data" :google-sheets-auth="googleSheetsAuth" @update:data="showData" />
     </div>
 
     <div v-show="visibleTabs[activeIndex]?.index === 5">
-      <BookingBotView :data="data" :google-sheets-auth="googleSheetsAuth" />
+      <BookingBotView :data="data" :google-sheets-auth="googleSheetsAuth" @update:data="showData" />
     </div>
 
     <div v-show="visibleTabs[activeIndex]?.index === 6">
-      <SalesBotView :data="data" :google-sheets-auth="googleSheetsAuth" />
+      <SalesBotView :data="data" :google-sheets-auth="googleSheetsAuth" @update:data="showData" />
     </div>
 
     <div v-show="visibleTabs[activeIndex]?.index === 7">
-      <LeadGenBotView :data="data" :google-sheets-auth="googleSheetsAuth" />
+      <LeadGenBotView :data="data" :google-sheets-auth="googleSheetsAuth" @update:data="showData" />
     </div>
     <div v-show="visibleTabs[activeIndex]?.index === 8">
-      <EOBotView :data="data" :google-sheets-auth="googleSheetsAuth" />
+      <EOBotView :data="data" :google-sheets-auth="googleSheetsAuth" @update:data="showData" />
     </div>
   </div>
 </template>

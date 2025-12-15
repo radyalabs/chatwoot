@@ -406,14 +406,14 @@ async function save() {
       flow_data: flowData,
     };
 
-    await aiAgents.updateAgent(props.data.id, payload);
-
-    // Update reminder config in database
-    await remindersAPI.updateConfig(props.data.id, {
-      enabled: followUpConfig.enabled,
-      minutes_before_booking: followUpConfig.delay,
-      message_template: followUpConfig.message
-    });
+    await Promise.all([
+      aiAgents.updateAgent(props.data.id, payload),
+      remindersAPI.updateConfig(props.data.id, {
+        enabled: followUpConfig.enabled,
+        minutes_before_booking: followUpConfig.delay,
+        message_template: followUpConfig.message
+      })
+    ]);
 
     useAlert(t('AGENT_MGMT.CSBOT.TICKET.SAVE_SUCCESS'));
   } catch (e) {

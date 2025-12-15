@@ -10,7 +10,7 @@ class Api::V2::Accounts::RemindersController < Api::V1::Accounts::BaseController
 
   # PUT /api/v2/accounts/:account_id/ai_agents/:ai_agent_id/reminders/config
   def update_config
-    @reminder_config ||= @ai_agent.build_reminder_config(account: Current.account)
+    @reminder_config ||= @ai_agent.create_reminder_config(account: Current.account)
 
     if @reminder_config.update(reminder_config_params)
       render json: reminder_config_response, status: :ok

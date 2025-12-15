@@ -39,9 +39,15 @@ class Api::V1::Accounts::AiAgentsController < Api::V1::Accounts::BaseController
   end
 
   def chat
+    conversation = Conversation.new(
+      id: 0,
+      uuid: params[:session_id],
+      inbox_id: nil
+    )
+
     Captain::Llm::AssistantChatService.new(
       params[:question],
-      params[:session_id],
+      conversation,
       ai_agent,
       account.id
     ).perform.then do |response|

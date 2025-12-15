@@ -72,7 +72,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
 
     # Replace the base path and append `/create`
     # Example: http://0.0.0.0:8080/v2/oauth/google/credentials → http://0.0.0.0:8080/v2/oauth/google/spreadsheet/create
-    endpoint = "#{base_url}/v2/oauth/google/spreadsheet/create"
+    endpoint = "#{base_url}v2/oauth/google/spreadsheet/create"
 
     begin
       response = HTTParty.post(
@@ -230,7 +230,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
 
     # Endpoint ke Python Backend
     # Example: http://0.0.0.0:8080/v2/oauth/google/spreadsheet/regenerate
-    endpoint = "#{base_url}/v2/oauth/google/spreadsheet/regenerate"
+    endpoint = "#{base_url}v2/oauth/google/spreadsheet/regenerate"
 
     begin
       response = HTTParty.post(
@@ -440,7 +440,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
 
     return render json: { error: 'JANGKAU_AGENT_API_URL not configured' }, status: :service_unavailable unless base_url
 
-    endpoint = "#{base_url}/v2/knowledge-management/sync-from-google-sheets"
+    endpoint = "#{base_url}v2/knowledge-management/sync-from-google-sheets"
     response = HTTParty.post(
       endpoint,
       body: {

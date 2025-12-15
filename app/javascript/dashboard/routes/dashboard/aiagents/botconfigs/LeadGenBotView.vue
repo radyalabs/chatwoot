@@ -519,7 +519,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch, onMounted, reactive } from 'vue'
+import { computed, ref, watch, onMounted, reactive, provide } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Button from 'dashboard/components-next/button/Button.vue';
 import FileKnowledgeSources from '../knowledge-sources/FileKnowledgeSources.vue'
@@ -542,6 +542,9 @@ const props = defineProps({
     required: true,
   },
 })
+
+const emit = defineEmits(['update:data'])
+provide('emitUpdate', () => emit('update:data'))
 
 const defaultLeadPriorities = [
   { 
@@ -843,7 +846,9 @@ async function saveSettings() {
 
   try {
     isSaving.value = true;
-    let flowData = props.data.display_flow_data;
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data));
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
+
     const agentIndex = flowData.enabled_agents.indexOf('lead_generation');
 
     if (agentIndex === -1) {
@@ -856,9 +861,15 @@ async function saveSettings() {
     }
 
     flowData.agents_config[agentIndex].temperature = creativityLevel.value;
+    displayFlowData.agents_config[agentIndex].temperature = creativityLevel.value;
 
     // Update data Follow Up ke payload
     flowData.agents_config[agentIndex].configurations.follow_up = {
+      enabled: followUpConfig.enabled,
+      delay: followUpConfig.delay,
+      message: followUpConfig.message
+    };
+    displayFlowData.agents_config[agentIndex].configurations.follow_up = {
       enabled: followUpConfig.enabled,
       delay: followUpConfig.delay,
       message: followUpConfig.message
@@ -870,12 +881,20 @@ async function saveSettings() {
       action: idleConfig.action,
       message: idleConfig.message
     };
+    displayFlowData.agents_config[agentIndex].configurations.idle_settings = {
+      enabled: true,
+      duration: idleConfig.duration,
+      action: idleConfig.action,
+      message: idleConfig.message
+    };
 
     const payload = {
       flow_data: flowData,
+      display_flow_data: displayFlowData,
     };
 
     await aiAgents.updateAgent(props.data.id, payload);
+    emit('update:data');
 
     showNotification(t('AGENT_MGMT.CSBOT.TICKET.SAVE_SUCCESS'), 'success');
   } catch (e) {

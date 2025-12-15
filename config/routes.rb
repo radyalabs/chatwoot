@@ -174,6 +174,8 @@ Rails.application.routes.draw do
             resources :documents, only: [:index, :show, :create, :destroy]
             resources :assistant_responses
           end
+          
+          post :translate, to: 'translator#translate'
           resources :agent_bots, only: [:index, :create, :show, :update, :destroy] do
             delete :avatar, on: :member
           end

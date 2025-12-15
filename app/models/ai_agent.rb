@@ -134,7 +134,7 @@ class AiAgent < ApplicationRecord
   end
 
   def base_attributes
-    %i[id uid name description welcoming_message agent_type template_type display_flow_data]
+    %i[id uid name description welcoming_message agent_type template_type flow_data display_flow_data]
   end
 
   def included_associations

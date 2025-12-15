@@ -92,6 +92,12 @@ import aiAgents from '../../../../../api/aiAgents';
 
 export default {
   name: 'AutoNumbering',
+  inject: {
+    // Provided by CSBotView -> parent to trigger refresh
+    emitUpdate: {
+      default: () => () => {},
+    },
+  },
   props: {
     data: {
       type: Object,
@@ -181,7 +187,9 @@ export default {
 
       try {
         this.loading = true;
-        const flowData = JSON.parse(JSON.stringify(this.data.display_flow_data));
+        const flowData = JSON.parse(JSON.stringify(this.data.flow_data));
+        const displayFlowData = JSON.parse(JSON.stringify(this.data.display_flow_data));
+
 
         // Pastikan path-nya ada
         if (flowData.agents_config && flowData.agents_config[0]) {
@@ -190,15 +198,21 @@ export default {
           }
           // Suntikkan 'form' kita ke lokasi yang benar
           flowData.agents_config[0].configurations.number_format = this.form;
+          displayFlowData.agents_config[0].configurations.number_format = this.form;
         } else {
           throw new Error("Format data tidak ditemukan.");
         }
 
         const payload = {
           flow_data: flowData,
+          display_flow_data: displayFlowData,
         };
 
         await aiAgents.updateAgent(this.data.id, payload);
+
+        // trigger parent refresh
+        this.emitUpdate();
+
 
         this.showSuccessModal = true;
 

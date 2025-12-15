@@ -15,6 +15,7 @@ import useVuelidate from '@vuelidate/core';
 import { useAlert } from 'dashboard/composables';
 import { useI18n } from 'vue-i18n';
 import aiAgents from '../../../api/aiAgents';
+import captainTranslator from '../../../api/captainTranslator';
 import MarkdownIt from 'markdown-it';
 import { useRoute } from 'vue-router';
 
@@ -31,6 +32,8 @@ const props = defineProps({
     default: '',
   },
 });
+
+const emit = defineEmits(['update:data']);
 
 const { t } = useI18n();
 
@@ -107,6 +110,18 @@ watch(
 
 const loadingSave = ref(false);
 
+async function translateToEnglish(text) {
+  if (!text || text.trim() === '') return text;
+  
+  try {
+    const response = await captainTranslator.translate(text, 'en');
+    return response.data.translated_text;
+  } catch (error) {
+    console.error('Translation error:', error);
+    return text; // Return original text if translation fails
+  }
+}
+
 async function submit() {
   if (loadingSave.value) return;
 
@@ -118,32 +133,53 @@ async function submit() {
 
     const agentId = props.data.id;
     
-    // Deep clone flowData to avoid mutating props
-    const flowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
+    // Translate bot_prompt fields to English
+    const [translatedInstructions, translatedPersona, translatedRoutingConditions, translatedBusinessInfo] = await Promise.all([
+      translateToEnglish(state.instructions),
+      translateToEnglish(state.welcoming_message),
+      translateToEnglish(state.routing_conditions),
+      translateToEnglish(state.business_info),
+    ]);
+    
+    // flow_data: Build from existing flow_data (already translated), then update with new translations
+    const flowData = JSON.parse(JSON.stringify(props.data.flow_data || {}));
+    flowData.agents_config?.forEach(agent_config => {
+      if (agent_config.bot_prompt) {
+        agent_config.bot_prompt.persona = translatedPersona || agent_config.bot_prompt.persona;
+        agent_config.bot_prompt.handover_conditions = translatedRoutingConditions || '';
+        agent_config.bot_prompt.instructions = translatedInstructions || '';
+        agent_config.bot_prompt.business_info = translatedBusinessInfo || '';
+      }
+      agent_config.configurations = agent_config.configurations || {};
+      agent_config.configurations.enable_handover = !!state.enable_handover;
+    });
 
-    // Update bot_prompt and configuration for every agent
-    flowData.agents_config.forEach(agent_config => {
+    // display_flow_data: original user input (for display)
+    const displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data || {}));
+    displayFlowData.agents_config?.forEach(agent_config => {
       if (agent_config.bot_prompt) {
         agent_config.bot_prompt.persona = state.welcoming_message || agent_config.bot_prompt.persona;
         agent_config.bot_prompt.handover_conditions = state.routing_conditions || '';
         agent_config.bot_prompt.instructions = state.instructions || '';
         agent_config.bot_prompt.business_info = state.business_info || '';
       }
-
-      // Ensure configurations exists and set enable_handover according to toggle
       agent_config.configurations = agent_config.configurations || {};
-      // Use boolean (true/false) and default to true when undefined
       agent_config.configurations.enable_handover = !!state.enable_handover;
     });
 
     const payload = {
       flow_data: flowData,
+      display_flow_data: displayFlowData,
     };
     
     await aiAgents.updateAgent(props.data.id, payload);
 
     // Refresh agent data to get latest chat_flow_id
     const detailAgent = await aiAgents.detailAgent(agentId).then(v => v?.data);
+    
+    // ✅ Emit updated data to parent so props.data gets refreshed
+    emit('update:data', detailAgent);
+    
     chatflowId.value = undefined;
     nextTick(() => {
       chatflowId.value = detailAgent?.chat_flow_id;

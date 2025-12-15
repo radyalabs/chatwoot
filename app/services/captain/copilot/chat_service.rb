@@ -1,4 +1,4 @@
-class Captain::Copilot::ChatService
+class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
   include SwitchLocale
   include ResponseFormatChatHelper
 
@@ -51,7 +51,7 @@ class Captain::Copilot::ChatService
   def send_messages # rubocop:disable Metrics/MethodLength
     send_message = Captain::Llm::AssistantChatService.new(
       @message,
-      @context.conversation.id,
+      @context.conversation,
       @context.ai_agent,
       @current_account.id
     ).perform

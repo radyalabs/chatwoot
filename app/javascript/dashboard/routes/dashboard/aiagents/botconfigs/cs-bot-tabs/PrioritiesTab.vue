@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import Button from 'dashboard/components-next/button/Button.vue';
 import aiAgents from '../../../../../api/aiAgents';
+import captainTranslator from '../../../../../api/captainTranslator';
 
 const props = defineProps({
   data: {
@@ -158,13 +159,22 @@ async function save() {
     let flowData = JSON.parse(JSON.stringify(props.data.flow_data));
     let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
 
-    let priorityItems = [];
-    priorities.forEach((item,  _) => {
-      priorityItems.push({
-        key: item.name,
-        conditions: item.condition,
-      });
-    });
+    // Translate each priority's key and conditions to English for flow_data
+    const translatedPriorities = [];
+    for (const item of priorities) {
+      // Original (Indonesian) saved to display_flow_data below
+      let translatedKey = item.name;
+      let translatedConditions = item.condition;
+      try {
+        const keyResp = await captainTranslator.translate(item.name || '', 'en');
+        translatedKey = keyResp?.data?.translated_text || translatedKey;
+      } catch (e) {}
+      try {
+        const condResp = await captainTranslator.translate(item.condition || '', 'en');
+        translatedConditions = condResp?.data?.translated_text || translatedConditions;
+      } catch (e) {}
+      translatedPriorities.push({ key: translatedKey, conditions: translatedConditions });
+    }
     
     const agentIndex = flowData.enabled_agents.indexOf(props.agentType);
     console.log('Agent Index:', agentIndex);
@@ -179,8 +189,12 @@ async function save() {
       flowData.agents_config[agentIndex].configurations = {};
     }
     
-    flowData.agents_config[agentIndex].configurations.priority = priorityItems;
-    displayFlowData.agents_config[agentIndex].configurations.priority = priorityItems;
+    flowData.agents_config[agentIndex].configurations.priority = translatedPriorities;
+    // For display, store original Indonesian values
+    displayFlowData.agents_config[agentIndex].configurations.priority = priorities.map(p => ({
+      key: p.name,
+      conditions: p.condition,
+    }));
 
     const payload = {
       flow_data: flowData,

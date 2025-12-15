@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useAlert } from 'dashboard/composables'
 import Button from 'dashboard/components-next/button/Button.vue'
 import aiAgents from '../../../../../api/aiAgents'
+import captainTranslator from '../../../../../api/captainTranslator'
 
 const props = defineProps({
   data: {
@@ -117,20 +118,39 @@ async function save() {
       useAlert(t('AGENT_MGMT.CSBOT.TICKET.VALIDATION_ERROR'));
       return;
     }
-    // TODO: API call to save categories
+    // Build payloads
     let flowData = JSON.parse(JSON.stringify(props.data.flow_data)); 
     let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data)); 
-    let categoryItems = [];
-    // eslint-disable-next-line no-unused-vars
-    categories.forEach((item, _) => {
-      categoryItems.push({
-        key: item.name,
-        conditions: item.condition,
-      });
-    });
+
+    // Translate each category's key and conditions to English for flow_data
+    const translatedCategories = [];
+    for (const item of categories) {
+      // Keep original (Indonesian) for display_flow_data
+      const original = { key: item.name, conditions: item.condition };
+
+      // Translate to English for flow_data
+      let translatedKey = item.name;
+      let translatedConditions = item.condition;
+      try {
+        const keyResp = await captainTranslator.translate(item.name || '', 'en');
+        translatedKey = keyResp?.data?.translated_text || translatedKey;
+      } catch (e) {}
+      try {
+        const condResp = await captainTranslator.translate(item.condition || '', 'en');
+        translatedConditions = condResp?.data?.translated_text || translatedConditions;
+      } catch (e) {}
+
+      translatedCategories.push({ key: translatedKey, conditions: translatedConditions });
+
+      // Also set display (original) below
+    }
     const agent_index = flowData.enabled_agents.indexOf('customer_service');
-    flowData.agents_config[agent_index].configurations.category = categoryItems;
-    displayFlowData.agents_config[agent_index].configurations.category = categoryItems;
+    flowData.agents_config[agent_index].configurations.category = translatedCategories;
+    // For display, store original Indonesian values
+    displayFlowData.agents_config[agent_index].configurations.category = categories.map(c => ({
+      key: c.name,
+      conditions: c.condition,
+    }));
     // eslint-disable-next-line no-console
 
 

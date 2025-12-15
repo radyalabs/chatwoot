@@ -467,7 +467,7 @@ Rails.application.routes.draw do
             # Reminders routes
             resources :reminders, only: [:index, :create, :show, :destroy] do
               collection do
-                get :config
+                get :config, action: :show_config
                 put :config, action: :update_config
               end
             end

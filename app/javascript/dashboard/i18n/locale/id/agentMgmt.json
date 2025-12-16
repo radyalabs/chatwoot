@@ -70,6 +70,13 @@
       "TIME_DESC": "Pilih waktu untuk mengirimkan pesan follow up.",
       "MSG": "Isi Pesan",
       "MSG_VARIABLE": "Tambahkan Variabel",
+      "VARIABLES": {
+        "CUSTOMER_NAME": "Nama Pelanggan",
+        "BOOKING_DATE": "Tanggal Booking",
+        "BOOKING_TIME": "Waktu Booking",
+        "SERVICE_NAME": "Nama Layanan",
+        "LOCATION": "Lokasi"
+      },
       "MSG_DESC": "Pesan ini akan dikirimkan otomatis ke pelanggan melalui platform yang sesuai pada waktu yang ditentukan.",
       "MSG_EXAMPLE": "Contoh"
     },

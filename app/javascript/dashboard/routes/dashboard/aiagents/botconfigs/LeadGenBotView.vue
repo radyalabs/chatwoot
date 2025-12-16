@@ -957,17 +957,17 @@ const followUpTextarea = ref(null);
 const cursorPosition = ref(0);
 const showVariableDropdown = ref(false);
 
-const AVAILABLE_VARIABLES = [
-  { label: 'Nama Pelanggan', value: '{{nama_pelanggan}}', mock: 'Budi Santoso' },
-  { label: 'Tanggal Booking', value: '{{tanggal_booking}}', mock: '25 Des 2025' },
-  { label: 'Waktu Booking', value: '{{waktu_booking}}', mock: '14:00 WIB' },
-  { label: 'Nama Layanan', value: '{{nama_layanan}}', mock: 'Konsultasi Premium' },
-  { label: 'Lokasi', value: '{{lokasi}}', mock: 'Klinik Pratama' },
-];
+const AVAILABLE_VARIABLES = computed(() => [
+  { label: t('AGENT_MGMT.REMINDER.VARIABLES.CUSTOMER_NAME'), value: '{{nama_pelanggan}}', mock: 'Budi Santoso' },
+  { label: t('AGENT_MGMT.REMINDER.VARIABLES.BOOKING_DATE'), value: '{{tanggal_booking}}', mock: '25 Des 2025' },
+  { label: t('AGENT_MGMT.REMINDER.VARIABLES.BOOKING_TIME'), value: '{{waktu_booking}}', mock: '14:00 WIB' },
+  { label: t('AGENT_MGMT.REMINDER.VARIABLES.SERVICE_NAME'), value: '{{nama_layanan}}', mock: 'Konsultasi Premium' },
+  { label: t('AGENT_MGMT.REMINDER.VARIABLES.LOCATION'), value: '{{lokasi}}', mock: 'Klinik Pratama' },
+]);
 
 const messagePreview = computed(() => {
   let text = followUpConfig.message || '';
-  AVAILABLE_VARIABLES.forEach(variable => {
+  AVAILABLE_VARIABLES.value.forEach(variable => {
     text = text.replaceAll(variable.value, `<span class="font-bold text-slate-800 dark:text-slate-100">${variable.mock}</span>`);
   });
   return text.replace(/\n/g, '<br>');

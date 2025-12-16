@@ -10,6 +10,13 @@
       "ADMINISTRATOR": "Administrator",
       "AGENT": "Agen"
     },
+    "CREATIVITY": {
+      "DETERMINISTIC": "Deterministik",
+      "CONSERVATIVE": "Konservatif",
+      "NATURAL": "Natural",
+      "INNOVATIVE": "Inovatif",
+      "VISIONARY": "Visioner"
+    },
     "LIST": {
       "404": "Tidak ada agen yang terkait dengan akun ini",
       "TITLE": "Kelola agen di tim Anda",

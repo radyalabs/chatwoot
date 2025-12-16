@@ -1626,14 +1626,14 @@ const emit = defineEmits(['update:data']);
 provide('emitUpdate', () => emit('update:data'));
 
 // temperature bot
-const creativityLevel = ref(0.3); // Default value
-const creativityOptions = [
-  { label: 'Tidak sama sekali', value: 0 },
-  { label: 'Minim', value: 0.1 },
-  { label: 'Normal', value: 0.3 },
-  { label: 'Lebih tinggi', value: 0.6 },
-  { label: 'Maksimal', value: 1 },
-];
+const creativityLevel = ref(0.3);
+const creativityOptions = computed(() => [
+  { label: t('AGENT_MGMT.CREATIVITY.DETERMINISTIC'), value: 0 },
+  { label: t('AGENT_MGMT.CREATIVITY.CONSERVATIVE'), value: 0.1 },
+  { label: t('AGENT_MGMT.CREATIVITY.NATURAL'), value: 0.3 },
+  { label: t('AGENT_MGMT.CREATIVITY.INNOVATIVE'), value: 0.5 },
+  { label: t('AGENT_MGMT.CREATIVITY.VISIONARY'), value: 0.7 },
+]);
 
 // idle time
 const idleConfig = reactive({

@@ -30,7 +30,8 @@ class ReminderConfig < ApplicationRecord
   validates :ai_agent_id, uniqueness: { scope: :account_id }
   validates :minutes_before_booking, numericality: { greater_than: 0 }
 
-  DEFAULT_MESSAGE_TEMPLATE = 'Halo {{customer_name}}! Ini pengingat untuk jadwal Anda pada {{scheduled_at}}. Terima kasih!'
+  APP_TIMEZONE = 'Asia/Jakarta'.freeze
+  DEFAULT_MESSAGE_TEMPLATE = 'Halo {{nama_pelanggan}}! Ini adalah pengingat untuk jadwal {{nama_layanan}} di {{lokasi}} pada {{tanggal_booking}} jam {{waktu_booking}}. Terima kasih!'
 
   def message_template_with_default
     message_template.presence || DEFAULT_MESSAGE_TEMPLATE
@@ -38,20 +39,27 @@ class ReminderConfig < ApplicationRecord
 
   def render_message(reminder)
     template = message_template_with_default
+    local_scheduled_at = reminder.scheduled_at&.in_time_zone(APP_TIMEZONE)
+
     template
-      .gsub('{{scheduled_at}}', format_scheduled_at(reminder.scheduled_at))
-      .gsub('{{customer_name}}', reminder.customer_name.to_s)
-      .gsub('{{contact}}', reminder.contact.to_s)
-      .gsub('{{service_type}}', reminder.service_type.to_s)
-      .gsub('{{service_name}}', reminder.service_name.to_s)
-      .gsub('{{service_location}}', reminder.service_location.to_s)
+      .gsub('{{nama_pelanggan}}', reminder.customer_name.to_s)
+      .gsub('{{nama_layanan}}', reminder.service_name.to_s)
+      .gsub('{{lokasi}}', reminder.service_location.to_s)
+      .gsub('{{tanggal_booking}}', format_date(local_scheduled_at))
+      .gsub('{{waktu_booking}}', format_time(local_scheduled_at))
   end
 
   private
 
-  def format_scheduled_at(scheduled_at)
+  def format_date(scheduled_at)
     return '' if scheduled_at.blank?
 
-    scheduled_at.strftime('%d %B %Y %H:%M')
+    scheduled_at.strftime('%d %B %Y')
   end
-end
+
+  def format_time(scheduled_at)
+    return '' if scheduled_at.blank?
+
+    scheduled_at.strftime('%H:%M')
+  end  
+end  

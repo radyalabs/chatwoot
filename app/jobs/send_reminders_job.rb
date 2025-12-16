@@ -7,7 +7,10 @@ class SendRemindersJob < ApplicationJob
     processed_count = 0
     error_count = 0
 
-    ReminderConfig.includes(:ai_agent).where(enabled: true).find_each do |config|
+    configs = ReminderConfig.includes(:ai_agent).where(enabled: true)
+    Rails.logger.info("[SendRemindersJob] Found #{configs.count} enabled reminder configs")
+
+    configs.find_each do |config|
       result = process_reminders_for_config(config)
       processed_count += result[:processed]
       error_count += result[:errors]
@@ -21,7 +24,10 @@ class SendRemindersJob < ApplicationJob
   def process_reminders_for_config(config)
     result = { processed: 0, errors: 0 }
 
-    return result unless config.ai_agent.present?
+    unless config.ai_agent.present?
+      Rails.logger.warn("[SendRemindersJob] Config ##{config.id} has no ai_agent, skipping")
+      return result
+    end
 
     reminders = Reminder.joins(:ai_agent)
                         .where(ai_agent_id: config.ai_agent_id)

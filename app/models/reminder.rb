@@ -47,15 +47,17 @@ class Reminder < ApplicationRecord
 
   scope :pending, -> { where(sent_reminder_count: 0) }
   scope :due_for_reminder, lambda { |minutes_before|
-    where('scheduled_at <= ?', Time.current + minutes_before.minutes)
-      .where('scheduled_at > ?', Time.current)
+    local_time = Time.current.in_time_zone('Asia/Jakarta')
+    where('scheduled_at <= ?', local_time + minutes_before.minutes)
+      .where('scheduled_at > ?', local_time)
       .where(sent_reminder_count: 0)
   }
 
-  def mark_as_sent!
+  def mark_as_sent!(message_content = nil)
     update!(
       sent_reminder_count: sent_reminder_count + 1,
-      last_sent_at: Time.current
+      last_sent_at: Time.current,
+      message: message_content
     )
   end
 end

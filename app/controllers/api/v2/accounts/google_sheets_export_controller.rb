@@ -72,7 +72,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
 
     # Replace the base path and append `/create`
     # Example: http://0.0.0.0:8080/v2/oauth/google/credentials → http://0.0.0.0:8080/v2/oauth/google/spreadsheet/create
-    endpoint = "#{base_url}v2/oauth/google/spreadsheet/create"
+    endpoint = "#{base_url}/v2/oauth/google/spreadsheet/create"
 
     begin
       response = HTTParty.post(

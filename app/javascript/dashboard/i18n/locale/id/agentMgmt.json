@@ -63,15 +63,15 @@
       }
     },
     "REMINDER": {
-      "TITLE": "Pesan Follow Up",
+      "TITLE": "Pesan Pengingat",
       "DESC": "Kirim pesan pengingat otomatis kepada pelanggan setelah booking",
-      "TIME": "Waktu Follow Up",
-      "TIME_DETAIL": "sebelum waktu booking",
+      "TIME": "Kapan pesan dikirim?",
+      "TIME_DETAIL": "sebelum sesi dimulai",
       "TIME_DESC": "Pilih waktu untuk mengirimkan pesan follow up.",
       "MSG": "Isi Pesan",
       "MSG_VARIABLE": "Tambahkan Variabel",
-      "MSG_DESC": "Pesan ini akan dikirimkan otomatis ke pelanggan melalui WhatsApp sesuai waktu yang ditentukan.",
-      "MSG_EXAMPLE": "Contoh Pesan"
+      "MSG_DESC": "Pesan ini akan dikirimkan otomatis ke pelanggan melalui platform yang sesuai pada waktu yang ditentukan.",
+      "MSG_EXAMPLE": "Contoh"
     },
     "CSBOT": {
       "GENERAL_TAB": "Pengaturan",

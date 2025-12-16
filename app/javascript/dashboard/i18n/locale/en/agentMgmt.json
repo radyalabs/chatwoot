@@ -265,6 +265,8 @@
       "AUTH_LABEL": "Authentication",
       "AUTH_DESC": "Authenticate with Google to automatically create spreadsheets containing data from your AI Agent. After successful authentication, the system will immediately create a new spreadsheet in your Google account.",
       "AUTH_BTN": "Start Authentication with Google",
+      "CONFIGURE": "Save Changes",
+      "CONFIGURE_DESC": "Update bot configuration",
       "CONNECTED_HEADER": "Connected Successfully!",
       "CONNECTED_DESC": "Your Google account is connected.",
       "RETRY_AUTH_BTN": "Retry & Recreate Sheet",
@@ -516,6 +518,35 @@
       "SAVE_SUCCESS": "Successfully saved content",
       "SAVE_ERROR": "Failed to save content",
       "AGENT_NOT_FOUND": "Agent not found"
+    },
+    "NUMBERING": {
+      "TITLE": "Numbering Configuration",
+      "DESC": "Set the automatic number format for each transaction.",
+      "FORMAT": "Numbering Format",
+      "PREVIEW": "Preview: ",
+      "ADD_CODE_TITLE": "+ Add Code",
+      "OPTIONS": {
+        "NUMBER": "Serial Number (exp: 1 - 10000)",
+        "MONTH": "Month (exp: 01 - 12)",
+        "MONTH_ROMAN": "Roman Month (exph: I - XII)",
+        "MONTH_SHORT": "Month (exp: JAN - DES)",
+        "MONTH_LONG": "Month (exp: JANUARI - DESEMBER)",
+        "YEAR_SHORT": "Year (exp: 25)",
+        "YEAR": "Year (exp: 2025)"
+      },
+      "NUMBER": "Next Number",
+      "DIGIT_NUMBER": "Number of Digits",
+      "PREFIX": "Prefix (Optional)",
+      "PREFIX_EXP": "Example: ORN/",
+      "RESET_TITLE": "Number Reset Schedule",
+      "NEVER_RESET": "Never reset (Continues)",
+      "RESET_MONTHLY": "Every month (Number resets to 1 at the beginning of the month)",
+      "RESET_YEARLY": "Every year (Number returns to 1 at the beginning of the year)",
+      "SAVE_DESC": "Save numbering format",
+      "SAVING": "Saving....",
+      "SUCCESS": "Success!",
+      "SUCCESS_MESSAGE": "The numbering format data has been successfully saved.",
+      "CLOSE": "Close"
     }
   }
 }

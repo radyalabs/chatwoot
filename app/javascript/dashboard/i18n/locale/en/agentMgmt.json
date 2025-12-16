@@ -66,6 +66,13 @@
       "TITLE": "Reminder Message",
       "DESC": "Send automatic reminder messages to customers after booking",
       "TIME": "When will the message be sent?",
+      "TIME_OPTIONS": {
+        "30_MINUTES": "30 Minutes",
+        "1_HOUR": "1 Hour",
+        "4_HOURS": "4 Hours",
+        "12_HOURS": "12 Hours",
+        "24_HOURS": "24 Hours"
+      },
       "TIME_DETAIL": "before the session starts",
       "TIME_DESC": "Select a time to send a follow-up message.",
       "MSG": "Message Content",

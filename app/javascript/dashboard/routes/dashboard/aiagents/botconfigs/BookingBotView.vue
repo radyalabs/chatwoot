@@ -60,13 +60,13 @@ const followUpConfig = reactive({
 });
 
 // follow-up options
-const followUpTimeOptions = [
-  { label: '30 Menit', value: 30 },
-  { label: '1 Jam', value: 60 },
-  { label: '4 Jam', value: 240 },
-  { label: '12 Jam', value: 720 },
-  { label: '24 Jam', value: 1440 },
-];
+const followUpTimeOptions = computed(() => [
+  { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.30_MINUTES'), value: 30 },
+  { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.1_HOUR'), value: 60 },
+  { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.4_HOURS'), value: 240 },
+  { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.12_HOURS'), value: 720 },
+  { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.24_HOURS'), value: 1440 },
+]);
 
 // temperature bot
 const creativityLevel = ref(0.3);

@@ -547,6 +547,35 @@
       "SAVE_SUCCESS": "Berhasil simpan konten",
       "SAVE_ERROR": "Gagal simpan konten",
       "AGENT_NOT_FOUND": "Agen tidak ditemukan"
+    },
+    "NUMBERING": {
+      "TITLE": "Konfigurasi Penomoran",
+      "DESC": "Atur format nomor otomatis untuk setiap transaksi.",
+      "FORMAT": "Format Penomoran",
+      "PREVIEW": "Preview: ",
+      "ADD_CODE_TITLE": "+ Tambahkan Kode",
+      "OPTIONS": {
+        "NUMBER": "Nomor Urut (cth: 1 - 10000)",
+        "MONTH": "Bulan (cth: 01 - 12)",
+        "MONTH_ROMAN": "Bulan Romawi (cth: I - XII)",
+        "MONTH_SHORT": "Bulan (cth: JAN - DES)",
+        "MONTH_LONG": "Bulan (cth: JANUARI - DESEMBER)",
+        "YEAR_SHORT": "Tahun (cth: 25)",
+        "YEAR": "Tahun (cth: 2025)"
+      },
+      "NUMBER": "Nomor Berikutnya",
+      "DIGIT_NUMBER": "Jumlah Digit Angka",
+      "PREFIX": "Prefix (Opsional)",
+      "PREFIX_EXP": "Contoh: ORN/",
+      "RESET_TITLE": "Jadwal Reset Nomor",
+      "NEVER_RESET": "Tidak pernah reset (Terus berlanjut)",
+      "RESET_MONTHLY": "Setiap bulan (Nomor kembali ke 1 di awal bulan)",
+      "RESET_YEARLY": "Setiap tahun (Nomor kembali ke 1 di awal tahun)",
+      "SAVE_DESC": "Simpan format penomoran",
+      "SAVING": "Menyimpan....",
+      "SUCCESS": "Sukses!",
+      "SUCCESS_MESSAGE": "Data format penomoran berhasil disimpan.",
+      "CLOSE": "Tutup"
     }
   }
 }

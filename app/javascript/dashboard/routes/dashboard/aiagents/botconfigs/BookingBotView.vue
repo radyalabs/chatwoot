@@ -63,13 +63,13 @@ const followUpConfig = reactive({
 });
 
 // follow-up options
-const followUpTimeOptions = [
-  { label: '30 Menit', value: 30 },
-  { label: '1 Jam', value: 60 },
-  { label: '4 Jam', value: 240 },
-  { label: '12 Jam', value: 720 },
-  { label: '24 Jam', value: 1440 },
-];
+const followUpTimeOptions = computed(() => [
+  { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.30_MINUTES'), value: 30 },
+  { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.1_HOUR'), value: 60 },
+  { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.4_HOURS'), value: 240 },
+  { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.12_HOURS'), value: 720 },
+  { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.24_HOURS'), value: 1440 },
+]);
 
 // temperature bot
 const creativityLevel = ref(0.3);
@@ -871,8 +871,8 @@ onMounted(async () => {
                         <p class="text-xs text-gray-500 mt-1 italic">{{ $t('AGENT_MGMT.REMINDER.MSG_DESC') }}</p>
 
                         <div class="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded border border-gray-300 dark:border-slate-800 p-3">
-                          <p class="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1"></p>
-                          <div class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{{ $t('AGENT_MGMT.REMINDER.MSG_EXAMPLE') }}
+                          <p class="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">{{ $t('AGENT_MGMT.REMINDER.MSG_EXAMPLE') }}</p>
+                          <div class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
                             <span v-if="!followUpConfig.message" class="text-slate-400 italic opacity-70">Belum ada pesan yang ditulis...</span>
                             <span v-else v-html="messagePreview"></span>
                           </div>

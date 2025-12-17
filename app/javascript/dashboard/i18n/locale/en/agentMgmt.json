@@ -63,15 +63,29 @@
       }
     },
     "REMINDER": {
-      "TITLE": "",
-      "DESC": "",
-      "TIME": "",
-      "TIME_DETAIL": "",
-      "TIME_DESC": "",
-      "MSG": "",
-      "MSG_VARIABLE": "",
-      "MSG_DESC": "",
-      "MSG_EXAMPLE": ""
+      "TITLE": "Reminder Message",
+      "DESC": "Send automatic reminder messages to customers after booking",
+      "TIME": "When will the message be sent?",
+      "TIME_OPTIONS": {
+        "30_MINUTES": "30 Minutes",
+        "1_HOUR": "1 Hour",
+        "4_HOURS": "4 Hours",
+        "12_HOURS": "12 Hours",
+        "24_HOURS": "24 Hours"
+      },
+      "TIME_DETAIL": "before the session starts",
+      "TIME_DESC": "Select a time to send a follow-up message.",
+      "MSG": "Message Content",
+      "MSG_VARIABLE": "Add Variable(s)",
+      "VARIABLES": {
+        "CUSTOMER_NAME": "Customer Name",
+        "BOOKING_DATE": "Booking Date",
+        "BOOKING_TIME": "Booking Time",
+        "SERVICE_NAME": "Service Name",
+        "LOCATION": "Location"
+      },
+      "MSG_DESC": "This message will be sent automatically to customers via the appropriate platform at the specified time.",
+      "MSG_EXAMPLE": "Example"
     },
     "CSBOT": {
       "TICKET": {

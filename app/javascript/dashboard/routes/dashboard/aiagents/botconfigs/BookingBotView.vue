@@ -193,27 +193,27 @@ async function regenerateSheetsInput() {
     const payload = {
       account_id: parseInt(flowData.account_id, 10),
       agent_id: agentId.value,
-      type: 'event_organizer',
+      type: 'booking',
     };
 
     // Memanggil API wrapper yang baru kita perbaiki
     const response = await googleSheetsExportAPI.regenerateSpreadsheet(payload);
 
     if (response.data && response.data.input_spreadsheet_url) {
-        props.googleSheetsAuth.spreadsheetUrls.event_organizer.input = response.data.input_spreadsheet_url;
+        props.googleSheetsAuth.spreadsheetUrls.booking.input = response.data.input_spreadsheet_url;
 
         if (response.data.output_spreadsheet_url) {
-            props.googleSheetsAuth.spreadsheetUrls.event_organizer.output = response.data.output_spreadsheet_url;
+            props.googleSheetsAuth.spreadsheetUrls.booking.output = response.data.output_spreadsheet_url;
         }
 
-        showNotification('Input spreadsheet berhasil dibuat ulang!', 'success');
+        showNotification(t('AGENT_MGMT.BOOKING_BOT.ALERTS.REGENERATE_SUCCESS'), 'success');
     } else {
         throw new Error("Respon server tidak memiliki URL spreadsheet baru.");
     }
 
   } catch (error) {
     console.error('Failed to regenerate sheet:', error);
-    showNotification('Gagal membuat ulang spreadsheet. Silakan coba lagi.', 'error');
+    showNotification(t('AGENT_MGMT.BOOKING_BOT.ALERTS.REGENERATE_ERROR'), 'error');
   } finally {
     isRegenerating.value = false;
   }
@@ -232,11 +232,11 @@ function disconnectGoogle() {
       props.googleSheetsAuth.account = null;
       props.googleSheetsAuth.spreadsheetUrls.booking = { input: null, output: null };
       props.googleSheetsAuth.error = null;
-      showNotification('Disconnected from Google successfully.', 'success');
+      showNotification(t('AGENT_MGMT.BOOKING_BOT.ALERTS.DISCONNECT_SUCCESS'), 'success');
     })
     .catch((error) => {
       console.error('Failed to disconnect Google account:', error);
-      showNotification('Failed to disconnect Google account. Please try again.', 'error');
+      showNotification(t('AGENT_MGMT.BOOKING_BOT.ALERTS.DISCONNECT_ERROR'), 'error');
     });
 }
 
@@ -261,14 +261,14 @@ async function createSheets() {
       props.googleSheetsAuth.spreadsheetUrls.booking.output = response.data.output_spreadsheet_url;
       props.googleSheetsAuth.step = 'sheetConfig';
       
-      showNotification('Booking spreadsheets created successfully!', 'success');
+      showNotification(t('AGENT_MGMT.BOOKING_BOT.ALERTS.CREATE_SHEETS_SUCCESS'), 'success');
 
     } else {
       throw new Error('Missing spreadsheet URLs in response');
     }
   } catch (error) {
     console.error('🚨 Failed to create booking sheets:', error);
-    showNotification('Failed to create booking sheets. Please try again.', 'error');
+    showNotification(t('AGENT_MGMT.BOOKING_BOT.ALERTS.CREATE_SHEETS_ERROR'), 'error');
   } finally {
     props.googleSheetsAuth.loading = false;
   }
@@ -279,13 +279,13 @@ const followUpTextarea = ref(null);
 const cursorPosition = ref(0);
 const showVariableDropdown = ref(false);
 
-const AVAILABLE_VARIABLES = [
-  { label: 'Nama Pelanggan', value: '{{nama_pelanggan}}', mock: 'Budi Santoso' },
-  { label: 'Tanggal Booking', value: '{{tanggal_booking}}', mock: '25 Des 2025' },
-  { label: 'Waktu Booking', value: '{{waktu_booking}}', mock: '14:00 WIB' },
-  { label: 'Nama Layanan', value: '{{nama_layanan}}', mock: 'Konsultasi Premium' },
-  { label: 'Lokasi', value: '{{lokasi}}', mock: 'Klinik Pratama' },
-];
+const AVAILABLE_VARIABLES = computed(() => [
+  { label: t('AGENT_MGMT.REMINDER.VARIABLES.CUSTOMER_NAME'), value: '{{nama_pelanggan}}', mock: 'Budi Santoso' },
+  { label: t('AGENT_MGMT.REMINDER.VARIABLES.BOOKING_DATE'), value: '{{tanggal_booking}}', mock: '25 Des 2025' },
+  { label: t('AGENT_MGMT.REMINDER.VARIABLES.BOOKING_TIME'), value: '{{waktu_booking}}', mock: '14:00 WIB' },
+  { label: t('AGENT_MGMT.REMINDER.VARIABLES.SERVICE_NAME'), value: '{{nama_layanan}}', mock: 'Konsultasi Premium' },
+  { label: t('AGENT_MGMT.REMINDER.VARIABLES.LOCATION'), value: '{{lokasi}}', mock: 'Klinik Pratama' },
+]);
 
 const messagePreview = computed(() => {
   let text = followUpConfig.message || '';
@@ -358,13 +358,13 @@ async function connectGoogle() {
     props.googleSheetsAuth.loading = true;
     const response = await googleSheetsExportAPI.getAuthorizationUrl();
     if (response.data.authorization_url) {
-      showNotification('Redirecting to Google for authentication...', 'info');
+      showNotification(t('AGENT_MGMT.BOOKING_BOT.ALERTS.REDIRECT_AUTH'), 'info');
       window.location.href = response.data.authorization_url;
     } else {
-      showNotification('Failed to get authorization URL. Please check backend logs.', 'error');
+      showNotification(t('AGENT_MGMT.BOOKING_BOT.ALERTS.AUTH_URL_ERROR'), 'error');
     }
   } catch (error) {
-    showNotification('Authentication failed. Please try again.', 'error');
+    showNotification(t('AGENT_MGMT.BOOKING_BOT.ALERTS.AUTH_FAILED'), 'error');
   } finally {
     props.googleSheetsAuth.loading = false;
   }
@@ -380,49 +380,56 @@ function showNotification(message, type = 'success') {
 async function syncScheduleColumns() {
   try {
     syncingColumns.value = true;
-    showNotification('Syncing schedule columns from sheet...', 'info');
+    showNotification(t('AGENT_MGMT.BOOKING_BOT.ALERTS.SYNC_START'), 'info');
 
-    let flowData = JSON.parse(JSON.stringify(props.data.flow_data)); // Deep clone to avoid mutation
-    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data)); // Deep clone to avoid mutation
-    
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data)); 
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
     const payload = {
       account_id: parseInt(flowData.account_id, 10),
       agent_id: agentId.value,
       type: 'booking',
       collection_name: collectionName.value,
+      configurations: {
+        resource_column: "Service Name*",
+        location_column: "Service Category",
+        date_column: "Available Days*",
+        start_time_column: "Start Time*",
+        end_time_column: "End Time"            
+      }
     }
-
     const result = await googleSheetsExportAPI.syncSpreadsheet(payload);
-
 
     const agent_index = flowData.enabled_agents.indexOf('booking');
 
-    flowData.agents_config[agent_index].configurations.resource_names =
-      result.data.data.unique_resource_names;
-    flowData.agents_config[agent_index].configurations.location_names =
-      result.data.data.unique_location_names;
-    flowData.agents_config[agent_index].configurations.resource_types =
-      result.data.data.unique_resource_types;
+    if (result.data && result.data.data) {
+      flowData.agents_config[agent_index].configurations.resource_names =
+        result.data.data.unique_resource_names;
+      flowData.agents_config[agent_index].configurations.location_names =
+        result.data.data.unique_location_names;
+      flowData.agents_config[agent_index].configurations.resource_types =
+        result.data.data.unique_resource_types;
 
-    // Also update displayFlowData to keep in sync
-    displayFlowData.agents_config[agent_index].configurations.resource_names =
-      result.data.data.unique_resource_names;
-    displayFlowData.agents_config[agent_index].configurations.location_names =
-      result.data.data.unique_location_names;
-    displayFlowData.agents_config[agent_index].configurations.resource_types =
-      result.data.data.unique_resource_types;
-    
+      displayFlowData.agents_config[agent_index].configurations.resource_names =
+        result.data.data.unique_resource_names;
+      displayFlowData.agents_config[agent_index].configurations.location_names =
+        result.data.data.unique_location_names;
+      displayFlowData.agents_config[agent_index].configurations.resource_types =
+        result.data.data.unique_resource_types;
+    }
+
     const updatePayload = {
       flow_data: flowData,
       display_flow_data: displayFlowData,
     };
 
     await aiAgents.updateAgent(props.data.id, updatePayload);
+    
     emit('update:data');
+    showNotification(t('AGENT_MGMT.BOOKING_BOT.ALERTS.SYNC_SUCCESS'), 'success');
   } catch (error) {
     console.error('Failed to sync schedule columns:', error);
-    showNotification('Failed to sync schedule columns', 'error');
-    syncingColumns.value = false;
+    const errorMessage = error.response?.data?.message || t('AGENT_MGMT.BOOKING_BOT.ALERTS.SYNC_ERROR_DEFAULT');
+    showNotification(errorMessage, 'error');
   } finally {
     syncingColumns.value = false;
   }

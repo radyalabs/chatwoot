@@ -5,7 +5,7 @@ class Api::V1::Accounts::AiAgentsController < Api::V1::Accounts::BaseController
   before_action :check_max_ai_agents, only: [:create]
 
   def index
-    ai_agents = account.ai_agents.select(:id, :account_id, :name, :description).order(id: :desc)
+    ai_agents = account.ai_agents.select(:id, :account_id, :name, :description, :updated_at).order(id: :desc)
     render json: ai_agents, status: :ok
   end
 

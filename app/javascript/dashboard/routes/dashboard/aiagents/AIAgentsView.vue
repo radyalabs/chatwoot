@@ -75,6 +75,11 @@ async function fetchAiAgents() {
             if (agentData?.display_flow_data?.agents_config) {
               agent.agents_config = agentData.display_flow_data.agents_config;
             }
+
+            // Get updated_at timestamp
+            if (agentData?.updated_at) {
+              agent.updated_at = agentData.updated_at;
+            }
           } catch (err) {
             console.error(`Failed to fetch details for agent ${agent.id}:`, err);
           }
@@ -352,6 +357,26 @@ function getAgentTypeLabel(agent) {
   return agent.type?.replace(/_/g, ' ') || 'Agent';
 }
 
+// Format updated_at timestamp to absolute date/time string
+function formatUpdatedAt(updatedAt) {
+  if (!updatedAt) return '';
+
+  const date = new Date(updatedAt);
+  if (isNaN(date.getTime())) return '';
+
+  // Use browser locale for localized month names
+  const locale = navigator.language || 'en';
+
+  return date.toLocaleString(locale, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+}
+
 
 </script>
 
@@ -410,32 +435,37 @@ function getAgentTypeLabel(agent) {
           </div>
 
           <!-- Card Footer with Actions -->
-          <div class="px-6 pb-6 flex justify-end gap-2 border-t border-slate-100 dark:border-slate-700 pt-4">
-            <RouterLink
-              :to="`/app/accounts/${accountId}/ai-agents/${agent.id}`"
-            >
+          <div class="px-6 pb-6 flex justify-between item-center gap-2 border-t border-slate-100 dark:border-slate-700 pt-4">
+            <div v-if="agent.updated_at" class="text-xs italic text-slate-400 dark:text-slate-500">
+              {{ $t('SIDEBAR.AI_AGENTS_LAST_MODIFIED') }} {{ formatUpdatedAt(agent.updated_at) }}
+            </div>
+            <div class="flex gap-2">
+              <RouterLink
+                :to="`/app/accounts/${accountId}/ai-agents/${agent.id}`"
+              >
+                <woot-button
+                  v-tooltip.top="$t('AGENT_MGMT.EDIT.BUTTON_TEXT')"
+                  variant="smooth"
+                  color-scheme="secondary"
+                  icon="edit"
+                  class-names="grey-btn"
+                />
+              </RouterLink>
               <woot-button
-                v-tooltip.top="$t('AGENT_MGMT.EDIT.BUTTON_TEXT')"
+                v-tooltip.top="$t('AGENT_MGMT.DELETE.BUTTON_TEXT')"
                 variant="smooth"
-                color-scheme="secondary"
-                icon="edit"
+                color-scheme="alert"
+                icon="dismiss-circle"
                 class-names="grey-btn"
+                :is-loading="loadingCards[agent.id]"
+                @click="
+                  () => {
+                    dataToDelete = agent;
+                    showDeleteModal = true;
+                  }
+                "
               />
-            </RouterLink>
-            <woot-button
-              v-tooltip.top="$t('AGENT_MGMT.DELETE.BUTTON_TEXT')"
-              variant="smooth"
-              color-scheme="alert"
-              icon="dismiss-circle"
-              class-names="grey-btn"
-              :is-loading="loadingCards[agent.id]"
-              @click="
-                () => {
-                  dataToDelete = agent;
-                  showDeleteModal = true;
-                }
-              "
-            />
+            </div>
           </div>
         </div>
       </div>

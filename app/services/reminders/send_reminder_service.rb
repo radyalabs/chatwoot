@@ -12,7 +12,7 @@ module Reminders
 
       message_content = build_message_content
       create_message(message_content)
-      @reminder.mark_as_sent!
+      @reminder.mark_as_sent!(message_content)
 
       Rails.logger.info("[SendReminderService] Successfully sent reminder ##{@reminder.id}")
       true
@@ -44,7 +44,7 @@ module Reminders
         account_id: @reminder.account_id,
         inbox_id: @reminder.inbox_id,
         conversation_id: @reminder.conversation_id,
-        message_type: :template,
+        message_type: :outgoing,
         content_type: :text,
         status: :sent
       )

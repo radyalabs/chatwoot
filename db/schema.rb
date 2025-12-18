@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2025_12_12_000002) do
+ActiveRecord::Schema[7.0].define(version: 2025_12_18_155829) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -749,6 +749,20 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_12_000002) do
     t.string "name"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
+  end
+
+  create_table "idle_configs", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "ai_agent_id", null: false
+    t.boolean "enabled", default: true, null: false
+    t.integer "duration", default: 30, null: false
+    t.string "action", default: "resolve", null: false
+    t.text "message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "ai_agent_id"], name: "index_idle_configs_on_account_id_and_ai_agent_id", unique: true
+    t.index ["account_id"], name: "index_idle_configs_on_account_id"
+    t.index ["ai_agent_id"], name: "index_idle_configs_on_ai_agent_id"
   end
 
   create_table "inbox_members", id: :serial, force: :cascade do |t|
@@ -1491,6 +1505,8 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_12_000002) do
   add_foreign_key "ai_agent_followups", "ai_agents"
   add_foreign_key "ai_agent_selected_labels", "ai_agents"
   add_foreign_key "ai_agent_selected_labels", "labels"
+  add_foreign_key "idle_configs", "accounts"
+  add_foreign_key "idle_configs", "ai_agents"
   add_foreign_key "inboxes", "portals"
   add_foreign_key "knowledge_source_files", "knowledge_sources"
   add_foreign_key "knowledge_source_qnas", "knowledge_sources"

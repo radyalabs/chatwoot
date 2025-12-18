@@ -4,6 +4,7 @@ import googleSheetsExportAPI from '../../../../api/googleSheetsExport';
 import FileKnowledgeSources from '../knowledge-sources/FileKnowledgeSources.vue';
 import aiAgents from '../../../../api/aiAgents';
 import remindersAPI from '../../../../api/reminders';
+import idleConfigsAPI from '../../../../api/idleConfigs';
 import QnaKnowledgeSources from '../knowledge-sources/QnaKnowledgeSources.vue'
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -141,10 +142,10 @@ watch(
 
 function loadSavedConfiguration() {
   const flowData = props.data?.display_flow_data;
-  
+
   if (flowData?.agents_config) {
     const agent_index = flowData.enabled_agents.indexOf('booking');
-    
+
     if (agent_index !== -1) {
       const agentData = flowData.agents_config[agent_index];
       const config = agentData.configurations;
@@ -152,7 +153,7 @@ function loadSavedConfiguration() {
       if (agentData.temperature !== undefined) {
         creativityLevel.value = agentData.temperature;
       }
-      
+
       // Load konfigurasi umum
       if (config?.minimum_duration) {
         minDuration.value = config.minimum_duration;
@@ -173,6 +174,22 @@ function loadSavedConfiguration() {
         idleConfig.message = config.idle_settings.message || '';
       }
     }
+  }
+}
+
+// Load idle config from API
+async function loadIdleConfig() {
+  if (!props.data?.id) return;
+  try {
+    const response = await idleConfigsAPI.getConfig(props.data.id);
+    if (response.data) {
+      idleConfig.enabled = response.data.enabled !== undefined ? response.data.enabled : true;
+      idleConfig.duration = response.data.duration || 30;
+      idleConfig.action = response.data.action || 'resolve';
+      idleConfig.message = response.data.message || '';
+    }
+  } catch (error) {
+    console.error('Failed to load idle config:', error);
   }
 }
 
@@ -491,6 +508,12 @@ async function save() {
         enabled: followUpConfig.enabled,
         minutes_before_booking: followUpConfig.delay,
         message_template: followUpConfig.message
+      }),
+      idleConfigsAPI.updateConfig(props.data.id, {
+        enabled: idleConfig.enabled,
+        duration: idleConfig.duration,
+        action: idleConfig.action,
+        message: idleConfig.message
       })
     ]);
     emit('update:data');
@@ -532,6 +555,7 @@ async function save() {
 // Load configuration data on mount
 onMounted(async () => {
   loadSavedConfiguration();
+  loadIdleConfig();
 });
 </script>
 

@@ -3,6 +3,7 @@ import { ref, reactive, onMounted, computed, watch, provide } from 'vue';
 import googleSheetsExportAPI from '../../../../api/googleSheetsExport';
 import QnaKnowledgeSources from '../knowledge-sources/QnaKnowledgeSources.vue'
 import aiAgents from '../../../../api/aiAgents';
+import idleConfigsAPI from '../../../../api/idleConfigs';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import Button from 'dashboard/components-next/button/Button.vue';
@@ -404,7 +405,15 @@ async function save() {
     };
 
     // ✅ Properly await the API call
-    await aiAgents.updateAgent(props.data.id, payload);
+    await Promise.all([
+      aiAgents.updateAgent(props.data.id, payload),
+      idleConfigsAPI.updateConfig(props.data.id, {
+        enabled: idleConfig.enabled,
+        duration: idleConfig.duration,
+        action: idleConfig.action,
+        message: idleConfig.message
+      })
+    ]);
     emit('update:data');
 
 
@@ -441,8 +450,26 @@ function saveOrderSettings() {
   save();
 }
 
+
+// Load idle config from API
+async function loadIdleConfig() {
+  if (!props.data?.id) return;
+  try {
+    const response = await idleConfigsAPI.getConfig(props.data.id);
+    if (response.data) {
+      idleConfig.enabled = response.data.enabled !== undefined ? response.data.enabled : true;
+      idleConfig.duration = response.data.duration || 30;
+      idleConfig.action = response.data.action || 'resolve';
+      idleConfig.message = response.data.message || '';
+    }
+  } catch (error) {
+    console.error('Failed to load idle config:', error);
+  }
+}
+
 onMounted(async () => {
   loadSavedConfiguration();
+  loadIdleConfig();
 });
 
 </script>

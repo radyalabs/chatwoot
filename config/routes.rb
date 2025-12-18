@@ -471,6 +471,14 @@ Rails.application.routes.draw do
                 put :config, action: :update_config
               end
             end
+
+            # Idle configs routes
+            resources :idle_configs, only: [] do
+              collection do
+                get :config, action: :show_config
+                put :config, action: :update_config
+              end
+            end
           end
 
           resources :summary_reports, only: [] do

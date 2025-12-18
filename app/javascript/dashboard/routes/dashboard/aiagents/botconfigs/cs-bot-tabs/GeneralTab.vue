@@ -9,6 +9,7 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import googleSheetsExportAPI from '../../../../../api/googleSheetsExport';
 // ✅ Add this line to fix the "aiAgents is not defined" error
 import aiAgents from '../../../../../api/aiAgents';
+import idleConfigsAPI from '../../../../../api/idleConfigs';
 
 // ✅ Inject emit function from parent CSBotView
 const emitUpdate = inject('emitUpdate', () => {});
@@ -121,6 +122,27 @@ function getAgentIdByType(type) {
 
 const agentId = computed(() => {
   return getAgentIdByType('customer_service');
+});
+
+// Load idle config from API
+async function loadIdleConfig() {
+  if (!props.data?.id) return;
+  try {
+    const response = await idleConfigsAPI.getConfig(props.data.id);
+    if (response.data) {
+      idleConfig.enabled = response.data.enabled !== undefined ? response.data.enabled : true;
+      idleConfig.duration = response.data.duration || 30;
+      idleConfig.action = response.data.action || 'resolve';
+      idleConfig.message = response.data.message || '';
+    }
+  } catch (error) {
+    console.error('Failed to load idle config:', error);
+  }
+}
+
+// Load idle config when component mounts
+onMounted(() => {
+  loadIdleConfig();
 });
 
 // Computed properties based on parent's Google Sheets auth state
@@ -311,7 +333,15 @@ async function save() {
       display_flow_data: displayFlowData,
     };
     // ✅ Properly await the API call
-    await aiAgents.updateAgent(props.data.id, payload);
+    await Promise.all([
+      aiAgents.updateAgent(props.data.id, payload),
+      idleConfigsAPI.updateConfig(props.data.id, {
+        enabled: idleConfig.enabled,
+        duration: idleConfig.duration,
+        action: idleConfig.action,
+        message: idleConfig.message
+      })
+    ]);
 
     // ✅ Trigger parent data refresh
     emitUpdate();

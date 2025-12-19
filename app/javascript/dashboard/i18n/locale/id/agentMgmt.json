@@ -11,11 +11,11 @@
       "AGENT": "Agen"
     },
     "CREATIVITY": {
-      "DETERMINISTIC": "Deterministik",
-      "CONSERVATIVE": "Konservatif",
-      "NATURAL": "Natural",
-      "INNOVATIVE": "Inovatif",
-      "VISIONARY": "Visioner"
+      "DETERMINISTIC": "Kaku",
+      "CONSERVATIVE": "Standar",
+      "NATURAL": "Seimbang",
+      "INNOVATIVE": "Fleksibel",
+      "VISIONARY": "Kreatif"
     },
     "LIST": {
       "404": "Tidak ada agen yang terkait dengan akun ini",

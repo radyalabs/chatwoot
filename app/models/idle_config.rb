@@ -2,26 +2,18 @@
 #
 # Table name: idle_configs
 #
-#  id          :bigint           not null, primary key
-#  enabled     :boolean          default(TRUE), not null
-#  duration    :integer          default(30), not null
-#  action      :string           default("resolve"), not null
-#  message     :text
-#  created_at  :datetime         not null
-#  updated_at  :datetime         not null
-#  account_id  :bigint           not null
-#  ai_agent_id :bigint           not null
+#  id                    :bigint           not null, primary key
+#  agent_name            :string
+#  agent_type            :string
+#  idle_duration_minutes :integer          default(30)
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
+#  account_id            :integer          not null
+#  agent_id              :string           not null
 #
 # Indexes
 #
-#  index_idle_configs_on_account_id                  (account_id)
-#  index_idle_configs_on_account_id_and_ai_agent_id  (account_id,ai_agent_id) UNIQUE
-#  index_idle_configs_on_ai_agent_id                 (ai_agent_id)
-#
-# Foreign Keys
-#
-#  fk_rails_...  (account_id => accounts.id)
-#  fk_rails_...  (ai_agent_id => ai_agents.id)
+#  index_idle_configs_on_account_id_and_agent_id  (account_id,agent_id) UNIQUE
 #
 
 class IdleConfig < ApplicationRecord

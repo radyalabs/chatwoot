@@ -117,9 +117,12 @@ class User < ApplicationRecord
   end
 
   def send_devise_notification(notification, *args)
-    # Skip sending confirmation_instructions - now using OTP verification system
-    return if notification == :confirmation_instructions
-    
+    if notification == :confirmation_instructions
+      invited = account_users.where.not(inviter_id: nil).exists?
+
+      return unless invited
+    end
+
     devise_mailer.with(account: Current.account).send(notification, self, *args).deliver_later
   end
 
@@ -176,7 +179,7 @@ class User < ApplicationRecord
       otp = Otp.generate_for_user(self, purpose, expires_in_minutes, request)
       Rails.logger.info "OTP generated successfully: #{otp.id}"
       otp
-    rescue => e
+    rescue StandardError => e
       Rails.logger.error "Failed to generate OTP: #{e.class}: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
       raise e
@@ -185,36 +188,36 @@ class User < ApplicationRecord
 
   def verify_otp(code, purpose = 'email_verification')
     Rails.logger.info "Verifying OTP for user #{id}: code=#{code}, purpose=#{purpose}"
-    
+
     # Find the OTP record for this user and purpose (should be only one due to upsert)
     otp_record = otps.for_purpose(purpose).first
-    
+
     unless otp_record
       Rails.logger.warn "No OTP found for user #{id} with purpose #{purpose}"
       return { success: false, error: 'No OTP found for this user' }
     end
-    
+
     # Check if code matches
     unless otp_record.code == code
       Rails.logger.warn "OTP code mismatch for user #{id}: expected=#{otp_record.code}, provided=#{code}"
       return { success: false, error: 'Invalid OTP code' }
     end
-    
+
     # Check if already verified
     if otp_record.verified?
       Rails.logger.warn "OTP already used for user #{id}"
       return { success: false, error: 'OTP code has already been used' }
     end
-    
+
     # Check if expired
     if otp_record.expired?
       Rails.logger.warn "OTP expired for user #{id}: expires_at=#{otp_record.expires_at}, current=#{Time.current}"
       return { success: false, error: 'OTP code has expired' }
     end
-    
+
     # OTP is valid, proceed with verification
     Rails.logger.info "OTP is valid for user #{id}, proceeding with verification"
-    
+
     if purpose == 'email_verification'
       # Confirm the user when verifying email
       confirm unless confirmed?

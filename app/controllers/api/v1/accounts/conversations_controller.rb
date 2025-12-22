@@ -4,7 +4,8 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
   include HmacConcern
 
   before_action :conversation, except: [:index, :meta, :search, :create, :filter]
-  before_action :inbox, :contact, :contact_inbox, only: [:create]
+  # before_action :inbox, :contact, :contact_inbox, only: [:create]
+  before_action :inbox, :contact, only: [:create]
 
   def index
     result = conversation_finder.perform
@@ -31,6 +32,9 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
 
   def create
     ActiveRecord::Base.transaction do
+      # Ensure contact inbox exists
+      ensure_contact_inbox!
+
       @conversation = ConversationBuilder.new(params: params, contact_inbox: @contact_inbox).perform
       Messages::MessageBuilder.new(Current.user, @conversation, params[:message]).perform if params[:message].present?
     end
@@ -141,6 +145,23 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
   end
 
   private
+
+  def ensure_contact_inbox!
+    return if @contact_inbox.present?
+    return if @contact.blank? || @inbox.blank?
+
+    @contact_inbox = ContactInbox.find_or_create_by!(
+      contact_id: @contact.id,
+      inbox_id: @inbox.id
+    ) do |ci|
+      ci.source_id =
+        @contact.email.presence ||
+        @contact.phone_number.presence ||
+        "manual_#{@contact.id}_#{@inbox.id}"
+    end
+  end
+
+
 
   def permitted_update_params
     # TODO: Move the other conversation attributes to this method and remove specific endpoints for each attribute

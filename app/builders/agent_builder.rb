@@ -22,10 +22,8 @@ class AgentBuilder
 
     ActiveRecord::Base.transaction do
       existing_user = User.from_email(email)
-      if existing_user
-        raise ActiveRecord::RecordInvalid.new(existing_user), "User with email #{email} is already part of the account"
-      end
-      
+      raise ActiveRecord::RecordInvalid.new(existing_user), "User with email #{email} is already part of the account" if existing_user
+
       @user = find_or_create_user
 
       create_account_user

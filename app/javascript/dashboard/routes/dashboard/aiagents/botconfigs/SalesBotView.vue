@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full min-h-0">
+  <div class="w-full h-full flex flex-col">
     <div v-if="notification"
       :class="['fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transition-all duration-300',
         notification.type === 'success' ? 'bg-green-500 text-white' :
@@ -19,7 +19,7 @@
       </p>
       <div class="border-b border-gray-200 dark:border-gray-700"></div>
     </div>
-    <div class="overflow-y-auto min-h-0">
+    <div class="flex-1 overflow-y-auto min-h-0">
       <div class="space-y-6 pb-6">
         <!-- Sidebar Navigation (always show) -->
         <div class="flex flex-row justify-stretch gap-2">
@@ -384,8 +384,17 @@
           <div v-show="activeTabIndex === 2" class="w-full">
             <FileKnowledgeSources :data="data" context="sales"/>
           </div>
-  
+
           <!-- Shipping Tab -->
+          <div v-show="activeTabIndex === 3" class="w-full min-w-0">
+            <ShippingConfig 
+              :initial-stores="shippingStores" 
+              :is-saving="isSaving"
+              @save-config="submitShippingConfig"
+            />
+          </div>
+  
+          <!-- Shipping Tab
           <div v-show="activeTabIndex === 3" class="w-full min-w-0">
             <div class="flex flex-row gap-4">
               <div class="flex-1 min-w-0 flex flex-col justify-stretch gap-6">
@@ -393,7 +402,7 @@
                   <div>
                     <label class="block font-medium mb-1">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.METHOD_TITLE') }}</label>
                 
-                <!-- Kurir Toko -->
+                
                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
                   <div class="flex items-center justify-between p-4">
                     <div class="flex items-center">
@@ -426,7 +435,7 @@
                     v-if="shippingMethods.kurirToko" 
                     class="border-t border-gray-200 dark:border-gray-700 p-4 space-y-4 transition-all duration-200 ease-in-out"
                   >
-                    <!-- Store Address -->
+                    
                     <div>
                       <label class="block font-medium mb-1">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.STORE_ADDRESS') }}</label>
                       <input 
@@ -437,12 +446,12 @@
                       />
                     </div>
   
-                    <!-- Google Maps Integration -->
+                    
                     <div>
                       <label class="block font-medium mb-2">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.MAP_LOCATION') }}</label>
                       <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.MAP_INSTRUCTION') }}</p>
                       
-                      <!-- Map Container -->
+                      
                       <div class="relative bg-gray-100 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
                         <div 
                           ref="mapRef"
@@ -450,7 +459,7 @@
                           style="min-height: 256px;"
                         ></div>
                         
-                        <!-- Loading Overlay -->
+                        
                         <div v-if="!kurirToko.mapLoaded" class="absolute inset-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                           <div class="text-center">
                             <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto mb-2" fill="none" viewBox="0 0 24 24">
@@ -462,7 +471,7 @@
                         </div>
                       </div>
   
-                      <!-- Coordinates Display -->
+                      
                       <div class="grid grid-cols-2 gap-4 mt-3">
                         <div>
                           <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.LATITUDE') }}</label>
@@ -487,11 +496,11 @@
                       </div>
                     </div>
                     
-                    <!-- Service Area -->
+                    
                     <div>
                       <label class="block font-medium mb-3">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.SERVICE_AREA') }}</label>
                       <div class="space-y-4">
-                        <!-- Radius Option -->
+                        
                         <div class="flex items-start space-x-3">
                           <label class="inline-flex items-center cursor-pointer">
                             <input 
@@ -518,7 +527,7 @@
                           </div>
                         </div>
   
-                        <!-- Region Option -->
+                        
                         <div class="flex items-start space-x-3">
                           <label class="inline-flex items-center cursor-pointer">
                             <input 
@@ -573,7 +582,7 @@
                               </div>
                             </div>
                             
-                            <!-- City/District Dropdown for Region -->
+                            
                             <div v-if="kurirToko.serviceAreaType === 'region' && kurirToko.wilayah" class="mt-3">
                               <label class="block text-sm font-medium mb-1">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.CITY_LABEL') }}</label>
                               <div class="dropdown-container" ref="serviceAreaKotaDropdownRef">
@@ -627,13 +636,13 @@
                       </div>
                     </div>
   
-                    <!-- Shipping Cost -->
+                    
                     <div>
                       <label class="block font-medium mb-3">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.SHIPPING_COST') }}</label>
                       <div class="space-y-4">
-                        <!-- Pricing Method Selection -->
+                        
                         <div class="space-y-3">
-                          <!-- Flat Rate Option -->
+                          
                           <div class="flex items-start space-x-3">
                             <label class="inline-flex items-center cursor-pointer">
                               <input 
@@ -659,7 +668,7 @@
                             </div>
                           </div>
   
-                          <!-- Cost per Distance Option -->
+                          
                           <div class="flex items-start space-x-3">
                             <label class="inline-flex items-center cursor-pointer">
                               <input 
@@ -683,7 +692,7 @@
                           </div>
                         </div>
   
-                        <!-- Free Shipping Toggle -->
+                        
                         <div class="flex items-start space-x-3">
                           <label class="inline-flex items-center cursor-pointer">
                             <input type="checkbox" v-model="kurirToko.gratisOngkir" class="sr-only peer">
@@ -693,11 +702,11 @@
                           </label>
                           <div class="flex-1">
                             <label class="block text-sm font-medium">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.FREE_SHIPPING') }}</label>
-                            <!-- <p class="text-xs text-gray-500 mt-1">Aktifkan gratis ongkir dengan syarat minimal belanja</p> -->
+                            <p class="text-xs text-gray-500 mt-1">Aktifkan gratis ongkir dengan syarat minimal belanja</p>
                           </div>
                         </div>
   
-                        <!-- Minimum Purchase (show when free shipping is enabled) -->
+                        
                         <div v-if="kurirToko.gratisOngkir" class="ml-14 transition-all duration-200 ease-in-out">
                           <label class="block text-sm font-medium mb-1">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.MIN_PURCHASE') }}</label>
                           <div class="relative">
@@ -713,7 +722,7 @@
                         </div>
                       </div>
                     </div>
-                    <!-- estimasi pengiriman -->
+                    
                      <div>
                         <label class="block font-medium mb-1">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.DELIVERY_TIME') }}</label>
                         <input 
@@ -726,7 +735,7 @@
                   </div>
                 </div>
   
-                <!-- Kurir Biasa -->
+                
                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
                   <div class="flex items-center justify-between p-4">
                     <div class="flex items-center">
@@ -750,7 +759,7 @@
                     v-if="shippingMethods.kurirBiasa" 
                     class="border-t border-gray-200 dark:border-gray-700 p-4 space-y-4 transition-all duration-200 ease-in-out"
                   >
-                  <!-- Coming Soon Message -->
+                  
                   <div class="flex items-center justify-center py-8">
                     <div class="text-center">
                       <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -762,7 +771,8 @@
                       <h4 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Coming Soon</h4>
                       <p class="text-sm text-gray-500 dark:text-gray-400">Regular courier configuration will be available soon.</p>
                     </div>
-                  </div>
+                  </div> -->
+
                   <!-- DONT DELETE! -->
                     <!-- <div>
                       <label class="block font-medium mb-1">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.ORIGIN_ADDRESS') }}</label>
@@ -1081,11 +1091,11 @@
                           </div>
                         </div>
                       </div>
-                    </div> -->
+                    </div> 
                   </div>
-                </div>
+                </div> -->
   
-                <!-- Ambil ke Toko -->
+                <!-- Ambil ke Toko
                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
                   <div class="flex items-center justify-between p-4">
                     <div class="flex items-center">
@@ -1182,7 +1192,7 @@
                 </div>
               </div>
             </div>
-          </div>
+          </div> -->
   
           <!-- Payment Methods Tab -->
           <div v-show="activeTabIndex === 4" class="w-full min-w-0">
@@ -1608,6 +1618,7 @@ import aiAgents from '../../../../api/aiAgents';
 import idleConfigsAPI from '../../../../api/idleConfigs';
 import { useAlert } from 'dashboard/composables';
 import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue';
+import ShippingConfig from './sales-bot-tabs/ShippingConfig.vue';
 
 const { t } = useI18n()
 
@@ -1643,6 +1654,8 @@ const idleConfig = reactive({
   action: 'resolve', 
   message: ''        
 });
+
+const shippingStores = ref([]);
 
 // Helper function to get agent ID by type
 function getAgentIdByType(type) {
@@ -2967,147 +2980,29 @@ const paymentGatewayProviders = [
   { label: 'Duitku', id: 'duitku' }
 ];
 
-
-
-async function submitShippingConfig() {
+async function submitShippingConfig(updatedStores) {
   if (isSaving.value) return;
 
   try {
     isSaving.value = true;
     
-    const shippingData = {
-      kurirToko: shippingMethods.kurirToko ? {
-        alamat: kurirToko.alamat,
-        radius: kurirToko.radius,
-        wilayah: kurirToko.wilayah,
-        kotaWilayah: kurirToko.kotaWilayah,
-        serviceAreaType: kurirToko.serviceAreaType,
-        pricingMethod: kurirToko.pricingMethod,
-        flatRate: kurirToko.flatRate,
-        biayaPerJarak: kurirToko.biayaPerJarak,
-        gratisOngkir: kurirToko.gratisOngkir,
-        minimalBelanja: kurirToko.gratisOngkir ? kurirToko.minimalBelanja : null,
-        estimasi: kurirToko.estimasi,
-        coordinates: {
-          latitude: kurirToko.latitude,
-          longitude: kurirToko.longitude
-        }      
-      } : null,
-      kurirBiasa: shippingMethods.kurirBiasa ? {
-        alamat: {
-          provinsi: kurirBiasa.provinsi,
-          kota: kurirBiasa.kota,
-          kecamatan: kurirBiasa.kecamatan,
-          kelurahan: kurirBiasa.kelurahan,
-          jalan: kurirBiasa.jalan,
-          kodePos: kurirBiasa.kodePos
-        },
-        kurir: kurirBiasa.kurir
-      } : null,
-      ambilToko: shippingMethods.ambilToko ? {
-        alamat: ambilToko.alamat,
-        jamOperasional: `${ambilToko.jamBuka} - ${ambilToko.jamTutup}`,
-        estimasi: ambilToko.estimasi
-      } : null
-    };
-
-    // Generate shipping configuration
     const shippingConfig = {
-      methods: []
+      stores: updatedStores
     };
 
-    if (shippingMethods.kurirToko) {
-      shippingConfig.methods.push({
-        type: "store_courier",
-        name: "Kurir Toko",
-        store_address: {
-          address: kurirToko.alamat || "",
-          coordinates: {
-            latitude: kurirToko.latitude || -6.2088, // Default to Jakarta
-            longitude: kurirToko.longitude || 106.8456
-          }
-        },
-        // service_area: kurirToko.radius ? `Radius ${kurirToko.radius}km` : "",
-        service_area: (() => {
-          if (kurirToko.serviceAreaType === 'radius' && kurirToko.radius) {
-            return `Radius ${kurirToko.radius} km`;
-          } else if (kurirToko.serviceAreaType === 'region' && kurirToko.wilayah) {
-            let area = "Sekitar";
-            
-            // Add city name if available
-            if (kurirToko.kotaWilayah) {
-              const kotaName = selectedServiceAreaKotaName.value || `Kota-${kurirToko.kotaWilayah}`;
-              area += ` ${kotaName}`;
-            }
-            
-            // Add province name
-            const provinsiName = selectedServiceAreaProvinsiName.value || `Provinsi-${kurirToko.wilayah}`;
-            if (kurirToko.kotaWilayah) {
-              area += `, ${provinsiName}`;
-            } else {
-              area += ` ${provinsiName}`;
-            }
-            
-            return area;
-          }
-          return "";
-        })(),
-        // Generate delivery cost info based on pricing method
-        delivery_cost_info: (() => {
-          let costInfo = "";
-          if (kurirToko.pricingMethod === 'flatRate' && kurirToko.flatRate) {
-            costInfo = `Flat rate: Rp ${kurirToko.flatRate}`;
-          } else if (kurirToko.pricingMethod === 'perDistance' && kurirToko.biayaPerJarak) {
-            costInfo = `Rp ${kurirToko.biayaPerJarak}/km`;
-          }
-          
-          if (kurirToko.gratisOngkir && kurirToko.minimalBelanja) {
-            costInfo += (costInfo ? " | " : "") + `Gratis ongkir dengan minimal belanja Rp ${kurirToko.minimalBelanja}`;
-          }
-          
-          return costInfo;
-        })(),
-        estimated_delivery_time: kurirToko.estimasi || ""
-      });
-    }
-
-    if (shippingMethods.kurirBiasa) {
-      const selectedKurir = kurirBiasa.kurir || [];
-      shippingConfig.methods.push({
-        type: "regular_courier",
-        name: "Kurir Reguler",
-        store_address: `${kurirBiasa.jalan || ''}, ${selectedKecamatanName.value || ''}, ${selectedKotaName.value || ''}, ${selectedProvinsiName.value || ''} ${kurirBiasa.kodePos || ''}`.trim(),
-        available_couriers: selectedKurir
-      });
-    }
-
-    if (shippingMethods.ambilToko) {
-      shippingConfig.methods.push({
-        type: "store_pickup",
-        name: "Ambil di Toko",
-        store_address: ambilToko.alamat || "",
-        operating_hours: `${ambilToko.jamBuka} - ${ambilToko.jamTutup}`,
-        pickup_ready_time: ambilToko.estimasi || ""
-      });
-    }
-
-    // Save to backend
     let flowData = JSON.parse(JSON.stringify(props.data.flow_data));
     let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
 
     const agentIndex = flowData.enabled_agents.indexOf('sales');
-    
     if (agentIndex === -1) {
-      useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.AGENT_NOT_FOUND'))
+      useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.AGENT_NOT_FOUND'));
       return;
     }
 
-    // Initialize configurations if not exists
     if (!flowData.agents_config[agentIndex].configurations) {
       flowData.agents_config[agentIndex].configurations = {};
     }
     
-    // Update shipping options configuration
     flowData.agents_config[agentIndex].configurations.shipping_options = shippingConfig;
     displayFlowData.agents_config[agentIndex].configurations.shipping_options = shippingConfig;
 
@@ -3117,11 +3012,15 @@ async function submitShippingConfig() {
     };
 
     await aiAgents.updateAgent(props.data.id, payload);
-    emit('update:data');
     
-    useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_SUCCESS'))
+    shippingStores.value = updatedStores;
+    
+    emit('update:data');
+    useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_SUCCESS'));
+
   } catch (error) {
-    useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_ERROR'))
+    console.error(error);
+    useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_ERROR'));
   } finally {
     isSaving.value = false;
   }
@@ -3346,6 +3245,13 @@ function loadSavedConfiguration() {
       idleConfig.duration = config.idle_settings.duration || 30;
       idleConfig.action = config.idle_settings.action || 'resolve';
       idleConfig.message = config.idle_settings.message || '';
+    }
+
+    shippingStores.value = [];
+    if (config.shipping_options) {
+       if (config.shipping_options.stores && Array.isArray(config.shipping_options.stores)) {
+          shippingStores.value = config.shipping_options.stores;
+       }
     }
 
     // Reset all shipping methods first

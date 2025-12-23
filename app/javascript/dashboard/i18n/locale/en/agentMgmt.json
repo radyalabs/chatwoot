@@ -11,11 +11,11 @@
       "AGENT": "Agent"
     },
     "CREATIVITY": {
-      "DETERMINISTIC": "Rigid",
-      "CONSERVATIVE": "Standard",
-      "NATURAL": "Balanced",
-      "INNOVATIVE": "Flexible",
-      "VISIONARY": "Creative"
+      "DETERMINISTIC": "Very Low",
+      "CONSERVATIVE": "Low",
+      "NATURAL": "Normal",
+      "INNOVATIVE": "High",
+      "VISIONARY": "Very High"
     },
     "LIST": {
       "404": "There are no agents associated to this account",

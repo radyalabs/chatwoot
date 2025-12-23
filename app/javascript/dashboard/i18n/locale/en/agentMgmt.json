@@ -283,6 +283,20 @@
       "GENERAL_TAB": "General",
       "HEADER": "Booking Bot Configuration",
       "HEADER_DESC": "This page contains configuration settings for your Booking Bot.",
+      "ALERTS": {
+        "REGENERATE_SUCCESS": "Input spreadsheet regenerated successfully!",
+        "REGENERATE_ERROR": "Failed to regenerate spreadsheet. Please try again.",
+        "DISCONNECT_SUCCESS": "Disconnected from Google successfully.",
+        "DISCONNECT_ERROR": "Failed to disconnect Google account. Please try again.",
+        "CREATE_SHEETS_SUCCESS": "Booking spreadsheets created successfully!",
+        "CREATE_SHEETS_ERROR": "Failed to create booking sheets. Please try again.",
+        "REDIRECT_AUTH": "Redirecting to Google for authentication...",
+        "AUTH_URL_ERROR": "Failed to get authorization URL. Please contact our admin.",
+        "AUTH_FAILED": "Authentication failed. Please try again.",
+        "SYNC_START": "Reading sheet...",
+        "SYNC_SUCCESS": "Data on the sheet has been successfully synchronised!",
+        "SYNC_ERROR_DEFAULT": "Failed to read the sheet. Ensure that the sheet name and header on the sheet are correct."
+      },
       "TEMPLATE_OPTIONS": {
         "KLINIK": "Clinic",
         "LAPANGAN": "Field"

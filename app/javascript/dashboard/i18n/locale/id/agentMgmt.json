@@ -461,6 +461,20 @@
       "GENERAL_TAB": "Pengaturan",
       "HEADER": "Konfigurasi Bot Booking",
       "HEADER_DESC": "Halaman ini berisi konfigurasi Sheets dan parameter untuk Bot Booking Anda.",
+      "ALERTS": {
+        "REGENERATE_SUCCESS": "Input spreadsheet berhasil dibuat ulang!",
+        "REGENERATE_ERROR": "Gagal membuat ulang spreadsheet. Silakan coba lagi.",
+        "DISCONNECT_SUCCESS": "Berhasil memutuskan sambungan akun Google.",
+        "DISCONNECT_ERROR": "Gagal memutuskan sambungan akun Google. Silakan coba lagi.",
+        "CREATE_SHEETS_SUCCESS": "Spreadsheet booking berhasil dibuat!",
+        "CREATE_SHEETS_ERROR": "Gagal membuat spreadsheet booking. Silakan coba lagi.",
+        "REDIRECT_AUTH": "Mengalihkan ke Google untuk autentikasi...",
+        "AUTH_URL_ERROR": "Gagal mendapatkan URL otorisasi. Silahkan hubungi admin kami.",
+        "AUTH_FAILED": "Autentikasi gagal. Silakan coba lagi.",
+        "SYNC_START": "Sedang membaca sheet...",
+        "SYNC_SUCCESS": "Data pada sheet berhasil disinkronisasi!",
+        "SYNC_ERROR_DEFAULT": "Gagal membaca sheet. Pastikan nama sheet dan header pada sheet sudah sesuai."
+      },
       "TEMPLATE_OPTIONS": {
         "KLINIK": "Klinik",
         "LAPANGAN": "Lapangan"

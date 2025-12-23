@@ -29,7 +29,7 @@ async function fetchAiAgentTemplates() {
   }
 
 const { accountId } = useAccount();
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 onMounted(() => {
   fetchAiAgents();
@@ -357,24 +357,43 @@ function getAgentTypeLabel(agent) {
   return agent.type?.replace(/_/g, ' ') || 'Agent';
 }
 
-// Format updated_at timestamp to absolute date/time string
+// Format updated_at timestamp with relative time or absolute fallback
 function formatUpdatedAt(updatedAt) {
   if (!updatedAt) return '';
 
   const date = new Date(updatedAt);
   if (isNaN(date.getTime())) return '';
 
-  // Use browser locale for localized month names
-  const locale = navigator.language || 'en';
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMinutes = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
 
-  return date.toLocaleString(locale, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
+  if (diffMinutes < 1) {
+    return t('AGENT_MGMT.TIME_FORMAT.JUST_NOW');
+  }
+
+  if (diffMinutes < 60) {
+    if (diffMinutes === 1 && locale.value !== 'id') {
+      return t('AGENT_MGMT.TIME_FORMAT.MINUTE_AGO');
+    }
+    return t('AGENT_MGMT.TIME_FORMAT.MINUTES_AGO', { count: diffMinutes });
+  }
+
+  if (diffHours < 24) {
+    if (diffHours === 1 && locale.value !== 'id') {
+      return t('AGENT_MGMT.TIME_FORMAT.HOUR_AGO');
+    }
+    return t('AGENT_MGMT.TIME_FORMAT.HOURS_AGO', { count: diffHours });
+  }
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const monthName = t(`AGENT_MGMT.TIME_FORMAT.MONTH_${date.getMonth()}`);
+
+  return `${day} ${monthName} ${year} ${hours}:${minutes}`;
 }
 
 
@@ -435,7 +454,7 @@ function formatUpdatedAt(updatedAt) {
           </div>
 
           <!-- Card Footer with Actions -->
-          <div class="px-6 pb-6 flex justify-between item-center gap-2 border-t border-slate-100 dark:border-slate-700 pt-4">
+          <div class="px-6 pb-6 flex justify-between items-center gap-2 border-t border-slate-100 dark:border-slate-700 pt-4">
             <div v-if="agent.updated_at" class="text-xs italic text-slate-400 dark:text-slate-500">
               {{ $t('SIDEBAR.AI_AGENTS_LAST_MODIFIED') }} {{ formatUpdatedAt(agent.updated_at) }}
             </div>

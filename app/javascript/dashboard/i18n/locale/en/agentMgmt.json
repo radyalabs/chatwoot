@@ -232,6 +232,25 @@
         }
       }
     },
+    "TIME_FORMAT": {
+      "JUST_NOW": "just now",
+      "MINUTE_AGO": "1 minute ago",
+      "MINUTES_AGO": "{count} minutes ago",
+      "HOUR_AGO": "1 hour ago",
+      "HOURS_AGO": "{count} hours ago",
+      "MONTH_0": "Jan",
+      "MONTH_1": "Feb",
+      "MONTH_2": "Mar",
+      "MONTH_3": "Apr",
+      "MONTH_4": "May",
+      "MONTH_5": "Jun",
+      "MONTH_6": "Jul",
+      "MONTH_7": "Aug",
+      "MONTH_8": "Sep",
+      "MONTH_9": "Oct",
+      "MONTH_10": "Nov",
+      "MONTH_11": "Dec"
+    },
     "FORM_CREATE": {
       "AI_AGENT_NAME": "Bot AI Name",
       "AI_AGENT_TEMPLATE": "Bot AI Template",

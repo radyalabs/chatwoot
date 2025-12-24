@@ -10,6 +10,13 @@
       "ADMINISTRATOR": "Administrator",
       "AGENT": "Agent"
     },
+    "CREATIVITY": {
+      "DETERMINISTIC": "Very Low",
+      "CONSERVATIVE": "Low",
+      "NATURAL": "Normal",
+      "INNOVATIVE": "High",
+      "VISIONARY": "Very High"
+    },
     "LIST": {
       "404": "There are no agents associated to this account",
       "TITLE": "Manage agents in your team",

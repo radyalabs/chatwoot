@@ -345,7 +345,6 @@ const mapLoaded = ref(false);
 const mapInstance = ref(null);
 const markerInstance = ref(null);
 
-// State untuk input area manual (WAJIB ADA agar tidak error)
 const regionInput = ref('');
 
 const isEdit = ref(false);
@@ -382,6 +381,9 @@ const GOOGLE_MAPS_API_KEY = window.chatwootConfig?.googleMapsApiKey || '';
 const initMap = () => {
   if (!mapContainer.value || !window.google) return;
 
+  // 1. Inisialisasi Geocoder
+  const geocoder = new window.google.maps.Geocoder();
+
   const center = form.coordinates;
   
   // Create Map
@@ -402,10 +404,18 @@ const initMap = () => {
     animation: window.google.maps.Animation.DROP
   });
 
-  // Listener saat marker digeser
   markerInstance.value.addListener('dragend', (e) => {
-    form.coordinates.lat = e.latLng.lat();
-    form.coordinates.lng = e.latLng.lng();
+    const latLng = e.latLng;
+    form.coordinates.lat = latLng.lat();
+    form.coordinates.lng = latLng.lng();
+
+    geocoder.geocode({ location: latLng }, (results, status) => {
+      if (status === 'OK' && results[0]) {
+        form.address = results[0].formatted_address;
+      } else {
+        console.warn('Geocoder failed due to: ' + status);
+      }
+    });
   });
 
   // Setup Search Box
@@ -430,6 +440,10 @@ const initMap = () => {
       markerInstance.value.setPosition(place.geometry.location);
       form.coordinates.lat = place.geometry.location.lat();
       form.coordinates.lng = place.geometry.location.lng();
+
+      if (place.formatted_address) {
+        form.address = place.formatted_address;
+      }
     });
   }
   
@@ -506,7 +520,7 @@ watch(() => props.isOpen, (newVal) => {
     } else {
       // MODE TAMBAH BARU (RESET FORM)
       isEdit.value = false;
-      form.id = Date.now().toString(); 
+      form.id = null; 
       form.name = '';
       form.address = '';
       form.coordinates = { lat: -6.2088, lng: 106.8456 }; 

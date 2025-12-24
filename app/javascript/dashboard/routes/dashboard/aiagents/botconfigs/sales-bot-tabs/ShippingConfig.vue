@@ -42,7 +42,7 @@
                   </svg>
                   <span class="leading-snug">{{ store.address }}</span>
                 </div>
-                <div class="mt-1 text-xs text-gray-400 ml-6 font-mono">
+                <div class="mt-1 text-xs text-gray-400 ml-6">
                    Lat: {{ store.coordinates?.lat?.toFixed(5) }}, Long: {{ store.coordinates?.lng?.toFixed(5) }}
                 </div>
               </div>
@@ -53,7 +53,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                   </svg>
                 </button>
-                <button @click="deleteStore(index)" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Hapus">
+                <button @click="promptDelete(index)" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Hapus">
                   <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
@@ -169,11 +169,51 @@
       @close="closeModal"
       @save="handleSaveStore"
     />
+
+    <div v-if="showDeleteModal" class="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6" role="dialog">
+      <div class="fixed inset-0 bg-slate-900/50 transition-opacity backdrop-blur-sm" @click="cancelDelete"></div>
+      
+      <div class="relative w-full max-w-md transform rounded-xl bg-white dark:bg-slate-800 shadow-xl transition-all border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="p-6">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0 text-red-600 dark:text-red-400">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+                {{ $t('AGENT_MGMT.DELETE.CONFIRM.TITLE') }}
+              </h3>
+              <p class="text-sm text-gray-500 mt-1">
+                {{ $t('AGENT_MGMT.SALESBOT.SHIPPING.DELETE_CONFIRM') }}
+              </p>
+            </div>
+          </div>
+          
+          <div class="flex justify-end gap-3 mt-6">
+            <button 
+              @click="cancelDelete" 
+              class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors dark:border-gray-600 dark:text-gray-200 dark:hover:bg-slate-700"
+            >
+              {{ $t('AGENT_MGMT.ADD.CANCEL_BUTTON_TEXT') }}
+            </button>
+            <button 
+              @click="confirmDelete" 
+              class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 shadow-sm transition-colors"
+            >
+              {{ $t('AGENT_MGMT.DELETE.BUTTON_TEXT') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import StoreAddressModal from './components/StoreAddressModal.vue';
 
@@ -194,11 +234,16 @@ const showModal = ref(false);
 const selectedStore = ref(null);
 const editingIndex = ref(-1);
 
-onMounted(() => {
-  if (props.initialStores && props.initialStores.length > 0) {
-    stores.value = JSON.parse(JSON.stringify(props.initialStores));
+// State untuk Modal Hapus Custom
+const showDeleteModal = ref(false);
+const storeToDeleteIndex = ref(-1);
+
+// PERBAIKAN: Gunakan watch agar data sinkron saat fetch dari parent selesai
+watch(() => props.initialStores, (newStores) => {
+  if (newStores) {
+    stores.value = JSON.parse(JSON.stringify(newStores));
   }
-});
+}, { deep: true, immediate: true });
 
 const openAddModal = () => {
   selectedStore.value = null;
@@ -212,10 +257,25 @@ const editStore = (index) => {
   showModal.value = true;
 };
 
-const deleteStore = (index) => {
-  if (confirm(t('AGENT_MGMT.SALESBOT.SHIPPING.DELETE_CONFIRM'))) {
-    stores.value.splice(index, 1);
+// PERBAIKAN: Fungsi Prompt Hapus (Buka Modal Custom)
+const promptDelete = (index) => {
+  storeToDeleteIndex.value = index;
+  showDeleteModal.value = true;
+};
+
+// PERBAIKAN: Fungsi Konfirmasi Hapus
+const confirmDelete = () => {
+  if (storeToDeleteIndex.value > -1) {
+    stores.value.splice(storeToDeleteIndex.value, 1);
+    storeToDeleteIndex.value = -1;
   }
+  showDeleteModal.value = false;
+};
+
+// PERBAIKAN: Fungsi Batal Hapus
+const cancelDelete = () => {
+  storeToDeleteIndex.value = -1;
+  showDeleteModal.value = false;
 };
 
 const closeModal = () => {

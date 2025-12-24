@@ -1616,6 +1616,7 @@ import googleSheetsExportAPI from '../../../../api/googleSheetsExport';
 // AI Agents API
 import aiAgents from '../../../../api/aiAgents';
 import idleConfigsAPI from '../../../../api/idleConfigs';
+import shippingStoresAPI from '../../../../api/shippingStores';
 import { useAlert } from 'dashboard/composables';
 import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue';
 import ShippingConfig from './sales-bot-tabs/ShippingConfig.vue';
@@ -1654,8 +1655,6 @@ const idleConfig = reactive({
   action: 'resolve', 
   message: ''        
 });
-
-const shippingStores = ref([]);
 
 // Helper function to get agent ID by type
 function getAgentIdByType(type) {
@@ -1706,6 +1705,8 @@ onMounted(async () => {
   
   // Load provinces for address selection
   loadProvinsi();
+
+  await fetchShippingStores();
   // Pre-load Google Maps API but don't initialize map yet
   try {
     await loadGoogleMaps();
@@ -2068,6 +2069,8 @@ const activeTabIndex = ref(0);
 const catalogSheet = ref('');
 const catalogDesc = ref('');
 const cartEnabled = ref(false);
+
+const shippingStores = ref([]);
 
 const shippingMethods = reactive({
   kurirToko: false,
@@ -2980,43 +2983,28 @@ const paymentGatewayProviders = [
   { label: 'Duitku', id: 'duitku' }
 ];
 
+// Shipping
+async function fetchShippingStores() {
+  if (!props.data?.id) return;
+  try {
+    // Panggil API GET Stores dari database baru
+    const response = await shippingStoresAPI.getStores(props.data.id);
+    shippingStores.value = response.data;
+  } catch (error) {
+    console.error('Gagal memuat toko:', error);
+  }
+}
+
 async function submitShippingConfig(updatedStores) {
   if (isSaving.value) return;
 
   try {
     isSaving.value = true;
+    const response = await shippingStoresAPI.batchUpdate(props.data.id, updatedStores);
     
-    const shippingConfig = {
-      stores: updatedStores
-    };
-
-    let flowData = JSON.parse(JSON.stringify(props.data.flow_data));
-    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
-
-    const agentIndex = flowData.enabled_agents.indexOf('sales');
-    if (agentIndex === -1) {
-      useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.AGENT_NOT_FOUND'));
-      return;
-    }
-
-    if (!flowData.agents_config[agentIndex].configurations) {
-      flowData.agents_config[agentIndex].configurations = {};
-    }
+    shippingStores.value = response.data; 
     
-    flowData.agents_config[agentIndex].configurations.shipping_options = shippingConfig;
-    displayFlowData.agents_config[agentIndex].configurations.shipping_options = shippingConfig;
-
-    const payload = {
-      flow_data: flowData,
-      display_flow_data: displayFlowData, 
-    };
-
-    await aiAgents.updateAgent(props.data.id, payload);
-    
-    shippingStores.value = updatedStores;
-    
-    emit('update:data');
-    useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_SUCCESS'));
+    useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_SUCCESS')); // "Berhasil simpan"
 
   } catch (error) {
     console.error(error);

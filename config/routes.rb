@@ -479,6 +479,13 @@ Rails.application.routes.draw do
                 put :config, action: :update_config
               end
             end
+
+            # Shipping configs routes
+            resources :shipping_stores, only: [:index] do
+              collection do
+                post :batch_update
+              end
+            end
           end
 
           resources :summary_reports, only: [] do

@@ -1674,6 +1674,8 @@ watch(
   (newData) => {
     if (newData && newData.display_flow_data) {
       loadSavedConfiguration();
+      // Load idle config from API
+      loadIdleConfig();
     }
   },
   { deep: true }
@@ -3277,10 +3279,6 @@ function loadSavedConfiguration() {
       creativityLevel.value = agentData.temperature;
     }
 
-    // Load Idle Settings
-    if (config.idle_settings) {
-      idleConfig.duration = config.idle_settings.duration || 30;
-    }
 
     // Reset all shipping methods first
     shippingMethods.kurirToko = false;

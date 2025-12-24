@@ -12,9 +12,6 @@ class Api::V2::Accounts::IdleConfigsController < Api::V1::Accounts::BaseControll
   def update_config
     @idle_config = @ai_agent.idle_config || @ai_agent.build_idle_config(account: Current.account)
 
-    @idle_config.agent_name = @ai_agent.name
-    @idle_config.agent_type = @ai_agent.agent_type
-
     if @idle_config.update(idle_config_params)
       render json: idle_config_response, status: :ok
     else
@@ -36,7 +33,7 @@ class Api::V2::Accounts::IdleConfigsController < Api::V1::Accounts::BaseControll
     {
       id: @idle_config.id,
       duration: @idle_config.duration,
-      ai_agent_id: @idle_config.agent_id,
+      ai_agent_id: @idle_config.ai_agent_id,
       account_id: @idle_config.account_id,
       created_at: @idle_config.created_at,
       updated_at: @idle_config.updated_at

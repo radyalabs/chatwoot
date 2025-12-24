@@ -413,6 +413,23 @@
         }
       }
     },
+    "TIME_FORMAT": {
+      "JUST_NOW": "baru saja",
+      "MINUTES_AGO": "{count} menit yang lalu",
+      "HOURS_AGO": "{count} jam yang lalu",
+      "MONTH_0": "Januari",
+      "MONTH_1": "Februari",
+      "MONTH_2": "Maret",
+      "MONTH_3": "April",
+      "MONTH_4": "Mei",
+      "MONTH_5": "Juni",
+      "MONTH_6": "Juli",
+      "MONTH_7": "Agustus",
+      "MONTH_8": "September",
+      "MONTH_9": "Oktober",
+      "MONTH_10": "November",
+      "MONTH_11": "Desember"
+    },
     "FORM_CREATE": {
       "AI_AGENT_NAME": "Nama Bot AI",
       "AI_AGENT_TEMPLATE": "Template Bot AI",

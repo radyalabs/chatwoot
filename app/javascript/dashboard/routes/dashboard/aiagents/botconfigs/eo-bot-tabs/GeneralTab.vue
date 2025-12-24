@@ -36,10 +36,7 @@ const creativityOptions = [
 
 // idle time
 const idleConfig = reactive({
-  enabled: true,
   duration: 30,      
-  action: 'resolve', 
-  message: ''        
 });
 
 console.log('=== googleSheetsAuth in GeneralTab.vue', props.googleSheetsAuth);
@@ -91,10 +88,7 @@ watch(
 
     if (config) {
       if (config.idle_settings) {
-        idleConfig.enabled = config.idle_settings.enabled !== undefined ? config.idle_settings.enabled : true;
-        idleConfig.duration = config.idle_settings.duration || '';
-        idleConfig.action = config.idle_settings.action || 'resolve';
-        idleConfig.message = config.idle_settings.message || '';
+        idleConfig.duration = config.idle_settings.duration || 30;
       }
     }
   },
@@ -295,30 +289,6 @@ async function save() {
     displayFlowData.agents_config[agent_index].configurations.ticket_system =
       ticketSystem;
 
-    flowData.agents_config[agent_index].configurations.idle_settings = {
-      enabled: true,
-      duration: idleConfig.duration,
-      action: idleConfig.action,
-      message: idleConfig.message
-    };
-    displayFlowData.agents_config[agent_index].configurations.idle_settings = {
-      enabled: true,
-      duration: idleConfig.duration,
-      action: idleConfig.action,
-      message: idleConfig.message
-    };
-
-    flowData.agents_config[agent_index].configurations.follow_up = {
-      enabled: followUpConfig.enabled,
-      delay: followUpConfig.delay,
-      message: followUpConfig.message
-    };
-
-    displayFlowData.agents_config[agent_index].configurations.follow_up = {
-      enabled: followUpConfig.enabled,
-      delay: followUpConfig.delay,
-      message: followUpConfig.message
-    };
     // console.log(flowData);
     // console.log(props.config);
     const payload = {
@@ -326,7 +296,12 @@ async function save() {
       display_flow_data: displayFlowData,
     };
     // ✅ Properly await the API call
-    await aiAgents.updateAgent(props.data.id, payload);
+    await Promise.all([
+      aiAgents.updateAgent(props.data.id, payload),
+      idleConfigsAPI.updateConfig(props.data.id, {
+        duration: idleConfig.duration
+      })
+    ]);
 
     // ✅ Show success console.log after success
     useAlert(t('AGENT_MGMT.CSBOT.TICKET.SAVE_SUCCESS'));
@@ -580,64 +555,24 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
                 </div>
                 
                 <div class="border-t border-gray-200 dark:border-gray-700 p-6">
-                  <div class="py-2">
-                    <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
+                  <div>
+                    <label class="block text-sm font-medium mb-2 text-slate-900 dark:text-slate-25">
                       {{ $t('AGENT_MGMT.EOBOT.IDLE_TIME') }}
                     </label>
                     <div class="flex items-center gap-3">
-                      <input 
-                        type="number" 
-                        min="5"
-                        v-model="idleConfig.duration"
-                        placeholder="30" 
-                        class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block !w-16 reset-base text-sm h-10 !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out" 
-                      />
-                      <span class="text-gray-500 dark:text-gray-400 text-sm">{{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_DESC') }}</span>
-                    </div>
-                  </div>
-
-                  <div class="py-2">
-                    <label class="block text-sm font-medium mb-3 text-slate-900 dark:text-slate-25">
-                      {{ $t('AGENT_MGMT.EOBOT.IDLE_ACTION') }}
-                    </label>
-                    <div class="flex flex-col sm:flex-row gap-4">
-                      <div class="flex items-center">
+                      <div class="w-16">
                         <input 
-                          id="action-resolve" 
-                          type="radio" 
-                          value="resolve" 
-                          v-model="idleConfig.action"
-                          class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                        >
-                        <label for="action-resolve" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">
-                          {{ $t('AGENT_MGMT.EOBOT.IDLE_RESOLVE') }}
-                        </label>
+                          type="number" 
+                          min="1"
+                          v-model="idleConfig.duration"
+                          class="text-center px-2 py-2 text-sm font-medium border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                          placeholder="30" 
+                        />
                       </div>
-                      <div class="flex items-center">
-                        <input 
-                          id="action-message" 
-                          type="radio" 
-                          value="message" 
-                          v-model="idleConfig.action"
-                          class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                        >
-                        <label for="action-message" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">
-                          {{ $t('AGENT_MGMT.EOBOT.IDLE_SENT_MSG') }}
-                        </label>
-                      </div>
+                      <span class="text-slate-600 dark:text-slate-400 text-sm">
+                        {{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_DESC') }}
+                      </span>
                     </div>
-                  </div>
-
-                  <div v-if="idleConfig.action === 'message'" class="animate-fadeIn py-2">
-                    <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
-                      {{ $t('AGENT_MGMT.EOBOT.IDLE_MSG') }}
-                    </label>
-                    <textarea 
-                      v-model="idleConfig.message"
-                      rows="3"
-                      placeholder="Halo, apakah Anda masih di sana? Sesi ini akan segera berakhir jika tidak ada respon."
-                      class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out"
-                    ></textarea>
                   </div>
                 </div>
               </div>

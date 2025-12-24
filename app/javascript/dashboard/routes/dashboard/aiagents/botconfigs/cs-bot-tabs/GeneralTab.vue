@@ -30,21 +30,18 @@ const props = defineProps({
 });
 
 // temperature bot
-const creativityLevel = ref(0.3); // Default value
-const creativityOptions = [
-  { label: 'Tidak sama sekali', value: 0 },
-  { label: 'Minim', value: 0.1 },
-  { label: 'Normal', value: 0.3 },
-  { label: 'Lebih tinggi', value: 0.6 },
-  { label: 'Maksimal', value: 1 },
-];
+const creativityLevel = ref(0.3);
+const creativityOptions = computed(() => [
+  { label: t('AGENT_MGMT.CREATIVITY.DETERMINISTIC'), value: 0 },
+  { label: t('AGENT_MGMT.CREATIVITY.CONSERVATIVE'), value: 0.1 },
+  { label: t('AGENT_MGMT.CREATIVITY.NATURAL'), value: 0.3 },
+  { label: t('AGENT_MGMT.CREATIVITY.INNOVATIVE'), value: 0.5 },
+  { label: t('AGENT_MGMT.CREATIVITY.VISIONARY'), value: 0.7 },
+]);
 
 // idle time
 const idleConfig = reactive({
-  enabled: true,
-  duration: 30,      
-  action: 'resolve', 
-  message: ''        
+  duration: 30,        
 });
 
 console.log('=== googleSheetsAuth in GeneralTab.vue', props.googleSheetsAuth);
@@ -96,10 +93,7 @@ watch(
 
     if (config) {
       if (config.idle_settings) {
-        idleConfig.enabled = config.idle_settings.enabled !== undefined ? config.idle_settings.enabled : true;
         idleConfig.duration = config.idle_settings.duration || 30;
-        idleConfig.action = config.idle_settings.action || 'resolve';
-        idleConfig.message = config.idle_settings.message || '';
       }
     }
   },
@@ -130,10 +124,7 @@ async function loadIdleConfig() {
   try {
     const response = await idleConfigsAPI.getConfig(props.data.id);
     if (response.data) {
-      idleConfig.enabled = response.data.enabled !== undefined ? response.data.enabled : true;
       idleConfig.duration = response.data.duration || 30;
-      idleConfig.action = response.data.action || 'resolve';
-      idleConfig.message = response.data.message || '';
     }
   } catch (error) {
     console.error('Failed to load idle config:', error);
@@ -312,20 +303,9 @@ async function save() {
     flowData.agents_config[agent_index].configurations.ticket_system =
       ticketSystem;
     flowData.agents_config[agent_index].temperature = creativityLevel.value;
-    flowData.agents_config[agent_index].configurations.idle_settings = {
-      enabled: true,
-      duration: idleConfig.duration,
-      action: idleConfig.action,
-      message: idleConfig.message
-    };
+    
     displayFlowData.agents_config[agent_index].configurations.ticket_system = ticketSystem;
     displayFlowData.agents_config[agent_index].temperature = creativityLevel.value;
-    displayFlowData.agents_config[agent_index].configurations.idle_settings = {
-      enabled: true,
-      duration: idleConfig.duration,
-      action: idleConfig.action,
-      message: idleConfig.message
-    };
     // console.log(flowData);
     // console.log(props.config);
     const payload = {
@@ -336,10 +316,7 @@ async function save() {
     await Promise.all([
       aiAgents.updateAgent(props.data.id, payload),
       idleConfigsAPI.updateConfig(props.data.id, {
-        enabled: idleConfig.enabled,
-        duration: idleConfig.duration,
-        action: idleConfig.action,
-        message: idleConfig.message
+        duration: idleConfig.duration
       })
     ]);
 
@@ -662,70 +639,30 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
               </svg>
             </div>
             <div>
-              <h3 class="font-medium text-slate-900 dark:text-slate-25">Pengaturan Idle Chat</h3>
-              <p class="text-sm text-gray-500 mt-1">Atur tindakan otomatis jika tidak ada aktivitas chat</p>
+              <h3 class="font-medium text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.EOBOT.IDLE_STATE') }}</h3>
+              <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.EOBOT.IDLE_STATE_DESC') }}</p>
             </div>
           </div>
           
           <div class="border-t border-gray-200 dark:border-gray-700 p-6">
             <div>
-              <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
-                Batas Waktu Idle (Menit)
+              <label class="block text-sm font-medium mb-2 text-slate-900 dark:text-slate-25">
+                {{ $t('AGENT_MGMT.EOBOT.IDLE_TIME') }}
               </label>
-              <div class="relative">
-                <input 
-                  type="number" 
-                  min="1"
-                  v-model="idleConfig.duration"
-                  placeholder="Contoh: 15" 
-                  class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm h-10 !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out" 
-                />
-                <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">menit tanpa aktivitas</span>
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium mb-3 text-slate-900 dark:text-slate-25">
-                Aksi saat Idle
-              </label>
-              <div class="flex flex-col sm:flex-row gap-4">
-                <div class="flex items-center">
+              <div class="flex items-center gap-3">
+                <div class="w-16">
                   <input 
-                    id="action-resolve" 
-                    type="radio" 
-                    value="resolve" 
-                    v-model="idleConfig.action"
-                    class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                  >
-                  <label for="action-resolve" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">
-                    Langsung Resolve Chat
-                  </label>
+                    type="number" 
+                    min="1"
+                    v-model="idleConfig.duration"
+                    class="text-center px-2 py-2 text-sm font-medium border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                    placeholder="30" 
+                  />
                 </div>
-                <div class="flex items-center">
-                  <input 
-                    id="action-message" 
-                    type="radio" 
-                    value="message" 
-                    v-model="idleConfig.action"
-                    class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                  >
-                  <label for="action-message" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">
-                    Kirim Pesan Follow Up
-                  </label>
-                </div>
+                <span class="text-slate-600 dark:text-slate-400 text-sm">
+                  {{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_DESC') }}
+                </span>
               </div>
-            </div>
-
-            <div v-if="idleConfig.action === 'message'" class="animate-fadeIn">
-              <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
-                Pesan Idle
-              </label>
-              <textarea 
-                v-model="idleConfig.message"
-                rows="3"
-                placeholder="Halo, apakah Anda masih di sana? Sesi ini akan segera berakhir jika tidak ada respon."
-                class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out"
-              ></textarea>
             </div>
           </div>
         </div>

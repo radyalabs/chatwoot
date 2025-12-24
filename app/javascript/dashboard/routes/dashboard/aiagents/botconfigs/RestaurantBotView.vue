@@ -330,6 +330,16 @@ async function saveGeneralSettings() {
     flowData.agents_config[agentIndex].temperature = creativityLevel.value;
     displayFlowData.agents_config[agentIndex].temperature = creativityLevel.value;
 
+    // Update idle_settings in flow_data to keep it in sync with idle_configs table
+    flowData.agents_config[agentIndex].configurations.idle_settings = {
+      ...flowData.agents_config[agentIndex].configurations.idle_settings,
+      duration: idleConfig.duration
+    };
+    displayFlowData.agents_config[agentIndex].configurations.idle_settings = {
+      ...displayFlowData.agents_config[agentIndex].configurations.idle_settings,
+      duration: idleConfig.duration
+    };
+
     const payload = {
       flow_data: flowData,
       display_flow_data: displayFlowData, 

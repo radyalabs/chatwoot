@@ -1674,6 +1674,8 @@ watch(
   (newData) => {
     if (newData && newData.display_flow_data) {
       loadSavedConfiguration();
+      // Load idle config from API
+      loadIdleConfig();
     }
   },
   { deep: true }
@@ -3228,16 +3230,6 @@ async function saveSettings() {
     flowData.agents_config[agentIndex].temperature = creativityLevel.value;
     displayFlowData.agents_config[agentIndex].temperature = creativityLevel.value;
 
-    // Update idle_settings in flow_data to keep it in sync with idle_configs table
-    flowData.agents_config[agentIndex].configurations.idle_settings = {
-      ...flowData.agents_config[agentIndex].configurations.idle_settings,
-      duration: idleConfig.duration
-    };
-    displayFlowData.agents_config[agentIndex].configurations.idle_settings = {
-      ...displayFlowData.agents_config[agentIndex].configurations.idle_settings,
-      duration: idleConfig.duration
-    };
-
     const payload = {
       flow_data: flowData,
       display_flow_data: displayFlowData, 
@@ -3287,10 +3279,6 @@ function loadSavedConfiguration() {
       creativityLevel.value = agentData.temperature;
     }
 
-    // Load Idle Settings
-    if (config.idle_settings) {
-      idleConfig.duration = config.idle_settings.duration || 30;
-    }
 
     // Reset all shipping methods first
     shippingMethods.kurirToko = false;

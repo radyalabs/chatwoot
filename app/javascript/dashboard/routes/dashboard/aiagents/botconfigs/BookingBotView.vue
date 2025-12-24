@@ -132,6 +132,8 @@ watch(
     // Cek apakah data sudah valid dan memiliki display_flow_data
     if (newData && newData.display_flow_data) {
       loadSavedConfiguration();
+      // Load idle config from API
+      loadIdleConfig();
     }
   },
   { deep: true, immediate: true }
@@ -163,10 +165,6 @@ function loadSavedConfiguration() {
         followUpConfig.message = config.follow_up.message || '';
       }
 
-      // Load Idle Settings
-      if (config?.idle_settings) {
-        idleConfig.duration = config.idle_settings.duration || '';
-      }
     }
   }
 }
@@ -474,16 +472,6 @@ async function save() {
 
     flowData.agents_config[agent_index].configurations.follow_up = configData.follow_up;
     displayFlowData.agents_config[agent_index].configurations.follow_up = configData.follow_up;
-
-    // Update idle_settings in flow_data to keep it in sync with idle_configs table
-    flowData.agents_config[agent_index].configurations.idle_settings = {
-      ...flowData.agents_config[agent_index].configurations.idle_settings,
-      duration: idleConfig.duration
-    };
-    displayFlowData.agents_config[agent_index].configurations.idle_settings = {
-      ...displayFlowData.agents_config[agent_index].configurations.idle_settings,
-      duration: idleConfig.duration
-    };
 
     const payload = {
       flow_data: flowData,

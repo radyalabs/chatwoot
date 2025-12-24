@@ -91,11 +91,8 @@ watch(
       creativityLevel.value = agentData.temperature;
     }
 
-    if (config) {
-      if (config.idle_settings) {
-        idleConfig.duration = config.idle_settings.duration || 30;
-      }
-    }
+    // Load idle config from API
+    loadIdleConfig();
   },
   { immediate: true }  // ← Runs as soon as component mounts
 );
@@ -306,16 +303,6 @@ async function save() {
     
     displayFlowData.agents_config[agent_index].configurations.ticket_system = ticketSystem;
     displayFlowData.agents_config[agent_index].temperature = creativityLevel.value;
-
-    // Update idle_settings in flow_data to keep it in sync with idle_configs table
-    flowData.agents_config[agent_index].configurations.idle_settings = {
-      ...flowData.agents_config[agent_index].configurations.idle_settings,
-      duration: idleConfig.duration
-    };
-    displayFlowData.agents_config[agent_index].configurations.idle_settings = {
-      ...displayFlowData.agents_config[agent_index].configurations.idle_settings,
-      duration: idleConfig.duration
-    };
 
     const payload = {
       flow_data: flowData,

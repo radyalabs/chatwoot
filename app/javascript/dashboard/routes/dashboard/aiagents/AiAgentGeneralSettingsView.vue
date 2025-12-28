@@ -89,7 +89,7 @@ watch(
     state.name = v.name || '';
     
     const flowData = v.display_flow_data;
-    console.log("flowData:", flowData);
+
       if (flowData?.agents_config) {
         // Initialize enable_handover from the first agent's configurations if present
         const firstAgent = flowData.agents_config[0];
@@ -133,19 +133,38 @@ async function submit() {
 
     const agentId = props.data.id;
     
-    // Translate bot_prompt fields to English
-    const [translatedInstructions, translatedPersona, translatedRoutingConditions, translatedBusinessInfo] = await Promise.all([
-      translateToEnglish(state.instructions),
-      translateToEnglish(state.welcoming_message),
-      translateToEnglish(state.routing_conditions),
-      translateToEnglish(state.business_info),
-    ]);
+    // Translate all bot_prompt fields at once using JSON translation
+    const jsonToTranslate = {
+      instructions: state.instructions,
+      welcoming_message: state.welcoming_message,
+      routing_conditions: state.routing_conditions,
+      business_info: state.business_info,
+    };
+    
+    let translatedInstructions = jsonToTranslate.instructions;
+    let translatedPersona = jsonToTranslate.welcoming_message;
+    let translatedRoutingConditions = jsonToTranslate.routing_conditions;
+    let translatedBusinessInfo = jsonToTranslate.business_info;
+
+    try {
+      const response = await captainTranslator.translateJson(jsonToTranslate, 'en');
+      const translated = response?.data?.translated_json;
+      if (translated && typeof translated === 'object') {
+        translatedInstructions = translated.instructions ?? translatedInstructions;
+        translatedPersona = translated.welcoming_message ?? translatedPersona;
+        translatedRoutingConditions = translated.routing_conditions ?? translatedRoutingConditions;
+        translatedBusinessInfo = translated.business_info ?? translatedBusinessInfo;
+      }
+    } catch (err) {
+      console.error('JSON translation error, using original Indonesian text:', err);
+      // falls back to original jsonToTranslate values
+    }
     
     // flow_data: Build from existing flow_data (already translated), then update with new translations
     const flowData = JSON.parse(JSON.stringify(props.data.flow_data || {}));
     flowData.agents_config?.forEach(agent_config => {
       if (agent_config.bot_prompt) {
-        agent_config.bot_prompt.persona = translatedPersona || agent_config.bot_prompt.persona;
+        agent_config.bot_prompt.persona = translatedPersona || '';
         agent_config.bot_prompt.handover_conditions = translatedRoutingConditions || '';
         agent_config.bot_prompt.instructions = translatedInstructions || '';
         agent_config.bot_prompt.business_info = translatedBusinessInfo || '';
@@ -158,7 +177,7 @@ async function submit() {
     const displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data || {}));
     displayFlowData.agents_config?.forEach(agent_config => {
       if (agent_config.bot_prompt) {
-        agent_config.bot_prompt.persona = state.welcoming_message || agent_config.bot_prompt.persona;
+        agent_config.bot_prompt.persona = state.welcoming_message || '';
         agent_config.bot_prompt.handover_conditions = state.routing_conditions || '';
         agent_config.bot_prompt.instructions = state.instructions || '';
         agent_config.bot_prompt.business_info = state.business_info || '';

@@ -122,27 +122,24 @@ async function save() {
     let flowData = JSON.parse(JSON.stringify(props.data.flow_data)); 
     let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data)); 
 
-    // Translate each category's key and conditions to English for flow_data
-    const translatedCategories = [];
-    for (const item of categories) {
-      // Keep original (Indonesian) for display_flow_data
-      const original = { key: item.name, conditions: item.condition };
-
-      // Translate to English for flow_data
-      let translatedKey = item.name;
-      let translatedConditions = item.condition;
-      try {
-        const keyResp = await captainTranslator.translate(item.name || '', 'en');
-        translatedKey = keyResp?.data?.translated_text || translatedKey;
-      } catch (e) {}
-      try {
-        const condResp = await captainTranslator.translate(item.condition || '', 'en');
-        translatedConditions = condResp?.data?.translated_text || translatedConditions;
-      } catch (e) {}
-
-      translatedCategories.push({ key: translatedKey, conditions: translatedConditions });
-
-      // Also set display (original) below
+    // Translate categories to English in one JSON call with fallback to originals
+    let translatedCategories = categories.map(item => ({ key: item.name, conditions: item.condition }));
+    try {
+      const jsonToTranslate = {
+        categories: categories.map(item => ({ key: item.name, conditions: item.condition })),
+      };
+      const resp = await captainTranslator.translateJson(jsonToTranslate, 'en');
+      const translated = resp?.data?.translated_json;
+      const payloadCategories = translated?.categories;
+      if (Array.isArray(payloadCategories)) {
+        translatedCategories = payloadCategories.map((item, idx) => ({
+          key: item?.key ?? categories[idx]?.name,
+          conditions: item?.conditions ?? categories[idx]?.condition,
+        }));
+      }
+    } catch (e) {
+      // Fallback: keep original Indonesian values
+      translatedCategories = categories.map(item => ({ key: item.name, conditions: item.condition }));
     }
     const agent_index = flowData.enabled_agents.indexOf('customer_service');
     flowData.agents_config[agent_index].configurations.category = translatedCategories;

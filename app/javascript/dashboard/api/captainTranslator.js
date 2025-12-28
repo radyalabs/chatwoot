@@ -7,9 +7,9 @@ class CaptainTranslator extends ApiClient {
     super('', { accountScoped: true });
   }
 
-  translate(text, targetLanguage = 'en') {
+  translateJson(jsonData, targetLanguage = 'en') {
     return axios.post(`${this.url}/translate`, {
-      text,
+      json_data: jsonData,
       target_language: targetLanguage,
     });
   }

@@ -159,21 +159,24 @@ async function save() {
     let flowData = JSON.parse(JSON.stringify(props.data.flow_data));
     let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
 
-    // Translate each priority's key and conditions to English for flow_data
-    const translatedPriorities = [];
-    for (const item of priorities) {
-      // Original (Indonesian) saved to display_flow_data below
-      let translatedKey = item.name;
-      let translatedConditions = item.condition;
-      try {
-        const keyResp = await captainTranslator.translate(item.name || '', 'en');
-        translatedKey = keyResp?.data?.translated_text || translatedKey;
-      } catch (e) {}
-      try {
-        const condResp = await captainTranslator.translate(item.condition || '', 'en');
-        translatedConditions = condResp?.data?.translated_text || translatedConditions;
-      } catch (e) {}
-      translatedPriorities.push({ key: translatedKey, conditions: translatedConditions });
+    // Translate priorities to English in one JSON call with fallback to originals
+    let translatedPriorities = priorities.map(item => ({ key: item.name, conditions: item.condition }));
+    try {
+      const jsonToTranslate = {
+        priorities: priorities.map(item => ({ key: item.name, conditions: item.condition })),
+      };
+      const resp = await captainTranslator.translateJson(jsonToTranslate, 'en');
+      const translated = resp?.data?.translated_json;
+      const payloadPriorities = translated?.priorities;
+      if (Array.isArray(payloadPriorities)) {
+        translatedPriorities = payloadPriorities.map((item, idx) => ({
+          key: item?.key ?? priorities[idx]?.name,
+          conditions: item?.conditions ?? priorities[idx]?.condition,
+        }));
+      }
+    } catch (e) {
+      // Fallback: keep original Indonesian values
+      translatedPriorities = priorities.map(item => ({ key: item.name, conditions: item.condition }));
     }
     
     const agentIndex = flowData.enabled_agents.indexOf(props.agentType);

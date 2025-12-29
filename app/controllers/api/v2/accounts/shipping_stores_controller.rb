@@ -10,18 +10,28 @@ class Api::V2::Accounts::ShippingStoresController < Api::V1::Accounts::BaseContr
   # POST /api/v2/accounts/:account_id/ai_agents/:ai_agent_id/shipping_stores/batch_update
   def batch_update
     ActiveRecord::Base.transaction do
-      incoming_ids = params[:stores].map { |s| s[:id] }.compact.map(&:to_i)
+      raw_stores_params = params[:stores] || []
       
-      current_ids = @ai_agent.shipping_stores.pluck(:id)
-      ids_to_delete = current_ids - incoming_ids
-      @ai_agent.shipping_stores.where(id: ids_to_delete).destroy_all
+      incoming_ids = raw_stores_params.map { |s| s['id'] || s[:id] }.compact.map(&:to_i)
+      
+      if raw_stores_params.empty?
+        @ai_agent.shipping_stores.destroy_all
+      else
+        @ai_agent.shipping_stores.where.not(id: incoming_ids).destroy_all
+      end
 
-      @saved_stores = params[:stores].map do |store_params|
-        store = @ai_agent.shipping_stores.find_by(id: store_params[:id])
+      @saved_stores = raw_stores_params.map do |store_data|
+        current_data = store_data.try(:permit!) || store_data
+        
+        current_id = current_data['id'] || current_data[:id]
+        
+        store = nil
+        if current_id.present?
+          store = @ai_agent.shipping_stores.find_by(id: current_id)
+        end
         
         store ||= @ai_agent.shipping_stores.build(account: Current.account)
-        
-        store.assign_attributes(map_frontend_params(store_params))
+        store.assign_attributes(map_frontend_params(current_data))
         store.save!
         store
       end
@@ -39,13 +49,15 @@ class Api::V2::Accounts::ShippingStoresController < Api::V1::Accounts::BaseContr
   end
 
   def map_frontend_params(p)
+    coords = p[:coordinates] || p['coordinates'] || {}
+
     {
-      name: p[:name],
-      address: p[:address],
-      latitude: p.dig(:coordinates, :lat),
-      longitude: p.dig(:coordinates, :lng),
-      courier_settings: p[:store_courier] || {},
-      pickup_settings: p[:store_pickup] || {},
+      name: p[:name] || p['name'],
+      address: p[:address] || p['address'],
+      latitude: coords[:lat] || coords['lat'],
+      longitude: coords[:lng] || coords['lng'],
+      courier_settings: p[:store_courier] || p['store_courier'] || {},
+      pickup_settings: p[:store_pickup] || p['store_pickup'] || {},
       is_enabled: true
     }
   end

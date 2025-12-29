@@ -3000,14 +3000,49 @@ async function submitShippingConfig(updatedStores) {
 
   try {
     isSaving.value = true;
-    const response = await shippingStoresAPI.batchUpdate(props.data.id, updatedStores);
+    const storeResponse = await shippingStoresAPI.batchUpdate(props.data.id, updatedStores);
+    const savedStoresWithIds = storeResponse.data;
+    shippingStores.value = savedStoresWithIds;
+
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data));
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
+
+    const agentIndex = flowData.enabled_agents.indexOf('sales');
     
-    shippingStores.value = response.data; 
+    if (agentIndex === -1) {
+      useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.AGENT_NOT_FOUND'));
+      return;
+    }
+
+    if (!flowData.agents_config[agentIndex].configurations) {
+      flowData.agents_config[agentIndex].configurations = {};
+    }
+    if (!displayFlowData.agents_config[agentIndex].configurations) {
+      displayFlowData.agents_config[agentIndex].configurations = {};
+    }
+
+    flowData.agents_config[agentIndex].configurations.shipping_options = {
+      ...flowData.agents_config[agentIndex].configurations.shipping_options,
+      stores: savedStoresWithIds 
+    };
+
+    displayFlowData.agents_config[agentIndex].configurations.shipping_options = {
+      ...displayFlowData.agents_config[agentIndex].configurations.shipping_options,
+      stores: savedStoresWithIds 
+    };
+
+    const agentPayload = {
+      flow_data: flowData,
+      display_flow_data: displayFlowData, 
+    };
+
+    await aiAgents.updateAgent(props.data.id, agentPayload);
     
-    useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_SUCCESS')); // "Berhasil simpan"
+    emit('update:data');
+    useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_SUCCESS')); 
 
   } catch (error) {
-    console.error(error);
+    console.error('Error saving shipping config:', error);
     useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_ERROR'));
   } finally {
     isSaving.value = false;
@@ -3233,13 +3268,6 @@ function loadSavedConfiguration() {
       idleConfig.duration = config.idle_settings.duration || 30;
       idleConfig.action = config.idle_settings.action || 'resolve';
       idleConfig.message = config.idle_settings.message || '';
-    }
-
-    shippingStores.value = [];
-    if (config.shipping_options) {
-       if (config.shipping_options.stores && Array.isArray(config.shipping_options.stores)) {
-          shippingStores.value = config.shipping_options.stores;
-       }
     }
 
     // Reset all shipping methods first

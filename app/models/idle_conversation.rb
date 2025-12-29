@@ -35,8 +35,11 @@ class IdleConversation < ApplicationRecord
                                        }
 
   def mark_as_sent!
+    new_step = step + 1
+
     update!(
-      step: step + 1,
+      step: new_step,
+      status: new_step == 2 ? :completed : status,
       last_sent_at: Time.current
     )
   end

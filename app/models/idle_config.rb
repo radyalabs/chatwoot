@@ -32,4 +32,8 @@ class IdleConfig < ApplicationRecord
   validates :duration, numericality: { greater_than: 0 }
 
   VALID_ACTIONS = %w[resolve message].freeze
+
+  scope :duration_for_ai_agent, lambda { |ai_agent_id|
+                                  where(ai_agent_id: ai_agent_id).pick(:duration)
+                                }
 end

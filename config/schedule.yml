@@ -33,20 +33,20 @@ remove_stale_redis_keys_job.rb:
   class: 'Internal::RemoveStaleRedisKeysJob'
   queue: scheduled_jobs
 
-notify_waiting_for_customer_reply_job:
-  cron: '*/2 * * * *'
-  class: 'NotifyWaitingForCustomerReplyJob'
-  queue: scheduled_jobs
+# notify_waiting_for_customer_reply_job:
+#   cron: '*/2 * * * *'
+#   class: 'NotifyWaitingForCustomerReplyJob'
+#   queue: scheduled_jobs
 
-auto_resolve_idle_conversations_job:
-  cron: '*/2 * * * *'
-  class: 'AutoResolveIdleConversationsJob'
-  queue: scheduled_jobs
+# auto_resolve_idle_conversations_job:
+#   cron: '*/2 * * * *'
+#   class: 'AutoResolveIdleConversationsJob'
+#   queue: scheduled_jobs
 
-notify_waiting_for_agent_reply_job:
-  cron: '*/2 * * * *'
-  class: 'NotifyWaitingForAgentReplyJob'
-  queue: scheduled_jobs
+# notify_waiting_for_agent_reply_job:
+#   cron: '*/2 * * * *'
+#   class: 'NotifyWaitingForAgentReplyJob'
+#   queue: scheduled_jobs
 
 transaction_timeout_job:
   cron: "59 16 * * *"  # setiap hari jam 23:59 WIB
@@ -68,4 +68,9 @@ notify_upcoming_expiry_user:
 send_reminders_job:
   cron: '*/5 * * * *'
   class: 'SendRemindersJob'
+  queue: scheduled_jobs
+
+process_idle_conversations_job:
+  cron: '*/2 * * * *'
+  class: 'NotifyIdleConversationJob'
   queue: scheduled_jobs

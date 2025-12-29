@@ -28,6 +28,7 @@
 #  index_reminders_on_conversation_id                   (conversation_id)
 #  index_reminders_on_conversation_id_and_scheduled_at  (conversation_id,scheduled_at)
 #  index_reminders_on_inbox_id                          (inbox_id)
+#  reminders_unique_idx                                 (account_id,inbox_id,ai_agent_id,conversation_id,service_id) UNIQUE
 #
 # Foreign Keys
 #

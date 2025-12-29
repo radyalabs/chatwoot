@@ -4,9 +4,12 @@ class Conversations::AddIdleConversationJob < ApplicationJob
   def perform(ai_response, idle_conversation_params)
     record = IdleConversation.find_or_initialize_by(idle_conversation_params)
 
+    step = determine_step(ai_response)
+    status = determine_status(ai_response)
+
     record.assign_attributes(
-      status: determine_status(ai_response),
-      step: determine_step(ai_response),
+      step: step,
+      status: step == 2 ? :completed : status,
       last_sent_at: Time.current
     )
     record.save!

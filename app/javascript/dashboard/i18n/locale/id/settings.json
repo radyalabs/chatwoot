@@ -260,7 +260,7 @@
     "MENTIONED_CONVERSATIONS": "Disebutkan",
     "PARTICIPATING_CONVERSATIONS": "Berpartisipasi",
     "UNATTENDED_CONVERSATIONS": "Belum Ditangani",
-    "REPORTS": "Laporan",
+    "REPORTS": "Analisis",
     "SETTINGS": "Pengaturan",
     "CONTACTS": "Kontak",
     "CAPTAIN": "Captain",
@@ -307,7 +307,7 @@
     "SLA": "SLA",
     "CUSTOM_ROLES": "Custom Roles",
     "BETA": "Beta",
-    "REPORTS_OVERVIEW": "Gambaran",
+    "REPORTS_OVERVIEW": "Ringkasan",
     "REAUTHORIZE": "Your inbox connection has expired, please reconnect\n to continue receiving and sending messages",
     "HELP_CENTER": {
       "TITLE": "Pusat Bantuan",

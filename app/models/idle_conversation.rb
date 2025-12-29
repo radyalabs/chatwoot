@@ -34,13 +34,15 @@ class IdleConversation < ApplicationRecord
                                          joins(:conversation).where(conversations: { assignee_id: nil })
                                        }
 
-  def mark_as_sent!
-    new_step = step + 1
+  before_save :auto_complete_on_step_two
 
-    update!(
-      step: new_step,
-      status: new_step == 2 ? :completed : status,
-      last_sent_at: Time.current
-    )
+  def mark_as_sent!
+    self.step += 1
+    self.last_sent_at = Time.current
+    save!
+  end
+
+  def auto_complete_on_step_two
+    self.status = :completed if step == 2
   end
 end

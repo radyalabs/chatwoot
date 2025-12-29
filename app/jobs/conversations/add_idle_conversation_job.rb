@@ -17,7 +17,7 @@ class Conversations::AddIdleConversationJob < ApplicationJob
   def determine_status(ai_response)
     return :completed if ai_response[:is_end_state] && !ai_response[:is_conversation_success]
 
-    :waiting
+    :idle
   end
 
   def determine_step(ai_response)

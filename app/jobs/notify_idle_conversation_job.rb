@@ -40,23 +40,25 @@ class NotifyIdleConversationJob < ApplicationJob
   end
 
   def idle_conversation_processor(idle_conversation)
-    Rails.logger.info("[NotifyIdleConversationJob] Processing idle conversation ##{idle_conversation.id}")
+    message = Captain::Llm::GenerateIdleMessage.new.perform(idle_conversation.conversation)
 
-    create_message(idle_conversation)
-
-    idle_conversation.update!(
-      step: idle_conversation.step + 1,
-      status: :executing,
-      last_sent_at: Time.current
+    create_message(
+      message, {
+        account_id: idle_conversation.account_id,
+        inbox_id: idle_conversation.inbox_id,
+        conversation_id: idle_conversation.conversation_id
+      }
     )
+
+    idle_conversation.mark_as_sent!
   end
 
-  def create_message(idle_conversation)
+  def create_message(message, conversation_attr)
     Message.create!(
-      content: "Test idle conversation notification. [STEP] #{idle_conversation.step + 1}",
-      account_id: idle_conversation.account_id,
-      inbox_id: idle_conversation.inbox_id,
-      conversation_id: idle_conversation.conversation_id,
+      content: message,
+      account_id: conversation_attr[:account_id],
+      inbox_id: conversation_attr[:inbox_id],
+      conversation_id: conversation_attr[:conversation_id],
       message_type: MESSAGE_TYPE_TEMPLATE,
       content_type: CONTENT_TYPE_TEXT,
       status: MESSAGE_STATUS_SENT

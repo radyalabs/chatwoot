@@ -33,4 +33,11 @@ class IdleConversation < ApplicationRecord
   scope :with_unassigned_conversation, lambda {
                                          joins(:conversation).where(conversations: { assignee_id: nil })
                                        }
+
+  def mark_as_sent!
+    update!(
+      step: step + 1,
+      last_sent_at: Time.current
+    )
+  end
 end

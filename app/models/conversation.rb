@@ -79,10 +79,10 @@ class Conversation < ApplicationRecord
   scope :resolved, -> { where(status: 1) }
   scope :assigned_to, ->(agent) { where(assignee_id: agent.id) }
   scope :unattended, -> { where(first_reply_created_at: nil).or(where.not(waiting_since: nil)) }
-  scope :resolvable, lambda { |auto_resolve_duration|
-    return none if auto_resolve_duration.to_i.zero?
+  scope :resolvable, lambda { |auto_resolve_duration = nil|
+    duration = auto_resolve_duration.to_i.zero? ? 1 : auto_resolve_duration.to_i
 
-    open.where('last_activity_at < ? ', Time.now.utc - auto_resolve_duration.days)
+    open.where('last_activity_at < ? ', Time.now.utc - duration.days.ago)
   }
 
   scope :last_user_message_at, lambda {

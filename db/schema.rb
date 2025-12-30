@@ -1190,6 +1190,23 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_24_120000) do
     t.index ["user_id"], name: "index_reporting_events_on_user_id"
   end
 
+  create_table "shipping_stores", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "ai_agent_id", null: false
+    t.string "name", null: false
+    t.text "address", null: false
+    t.decimal "latitude", precision: 10, scale: 6
+    t.decimal "longitude", precision: 10, scale: 6
+    t.jsonb "courier_settings", default: {}, null: false
+    t.jsonb "pickup_settings", default: {}, null: false
+    t.boolean "is_enabled", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_shipping_stores_on_account_id"
+    t.index ["ai_agent_id", "is_enabled"], name: "index_shipping_stores_on_ai_agent_id_and_is_enabled"
+    t.index ["ai_agent_id"], name: "index_shipping_stores_on_ai_agent_id"
+  end
+
   create_table "sla_events", force: :cascade do |t|
     t.bigint "applied_sla_id", null: false
     t.bigint "conversation_id", null: false
@@ -1539,6 +1556,8 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_24_120000) do
   add_foreign_key "reminders", "ai_agents"
   add_foreign_key "reminders", "conversations"
   add_foreign_key "reminders", "inboxes"
+  add_foreign_key "shipping_stores", "accounts"
+  add_foreign_key "shipping_stores", "ai_agents"
   add_foreign_key "subscription_payments", "subscriptions"
   add_foreign_key "subscription_plans", "accounts", column: "owner_account_id"
   add_foreign_key "subscription_topups", "subscriptions"

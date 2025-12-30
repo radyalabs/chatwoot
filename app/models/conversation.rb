@@ -81,8 +81,9 @@ class Conversation < ApplicationRecord
   scope :unattended, -> { where(first_reply_created_at: nil).or(where.not(waiting_since: nil)) }
   scope :resolvable, lambda { |auto_resolve_duration = nil|
     duration = auto_resolve_duration.to_i.zero? ? 1 : auto_resolve_duration.to_i
+    unit = ENV.fetch('AUTO_RESOLVE_CONVERSATION_UNIT', 'days') # default: days
 
-    open.where('last_activity_at < ? ', Time.now.utc - duration.days.ago)
+    open.where('last_activity_at < ? ', duration.send(unit).ago)
   }
 
   scope :last_user_message_at, lambda {

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2025_12_18_155829) do
+ActiveRecord::Schema[7.0].define(version: 2025_12_24_120000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -758,6 +758,20 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_18_155829) do
     t.index ["ai_agent_id"], name: "index_idle_configs_on_ai_agent_id"
   end
 
+  create_table "idle_conversations", force: :cascade do |t|
+    t.bigint "conversation_id", null: false
+    t.integer "inbox_id", null: false
+    t.integer "account_id", null: false
+    t.integer "ai_agent_id", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "step", default: 0, null: false
+    t.datetime "last_sent_at"
+    t.jsonb "additional_attributes", default: {}
+    t.index ["conversation_id"], name: "index_idle_conversations_on_conversation_id"
+  end
+
   create_table "inbox_members", id: :serial, force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "inbox_id", null: false
@@ -1146,6 +1160,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_18_155829) do
     t.datetime "updated_at", null: false
     t.string "service_id"
     t.string "message"
+    t.index ["account_id", "inbox_id", "ai_agent_id", "conversation_id", "service_id"], name: "reminders_unique_idx", unique: true
     t.index ["account_id", "scheduled_at"], name: "index_reminders_on_account_id_and_scheduled_at"
     t.index ["account_id"], name: "index_reminders_on_account_id"
     t.index ["ai_agent_id"], name: "index_reminders_on_ai_agent_id"
@@ -1173,6 +1188,23 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_18_155829) do
     t.index ["inbox_id"], name: "index_reporting_events_on_inbox_id"
     t.index ["name"], name: "index_reporting_events_on_name"
     t.index ["user_id"], name: "index_reporting_events_on_user_id"
+  end
+
+  create_table "shipping_stores", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "ai_agent_id", null: false
+    t.string "name", null: false
+    t.text "address", null: false
+    t.decimal "latitude", precision: 10, scale: 6
+    t.decimal "longitude", precision: 10, scale: 6
+    t.jsonb "courier_settings", default: {}, null: false
+    t.jsonb "pickup_settings", default: {}, null: false
+    t.boolean "is_enabled", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_shipping_stores_on_account_id"
+    t.index ["ai_agent_id", "is_enabled"], name: "index_shipping_stores_on_ai_agent_id_and_is_enabled"
+    t.index ["ai_agent_id"], name: "index_shipping_stores_on_ai_agent_id"
   end
 
   create_table "sla_events", force: :cascade do |t|
@@ -1509,6 +1541,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_18_155829) do
   add_foreign_key "ai_agent_selected_labels", "labels"
   add_foreign_key "idle_configs", "accounts"
   add_foreign_key "idle_configs", "ai_agents"
+  add_foreign_key "idle_conversations", "conversations"
   add_foreign_key "inboxes", "portals"
   add_foreign_key "knowledge_source_files", "knowledge_sources"
   add_foreign_key "knowledge_source_qnas", "knowledge_sources"
@@ -1523,6 +1556,8 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_18_155829) do
   add_foreign_key "reminders", "ai_agents"
   add_foreign_key "reminders", "conversations"
   add_foreign_key "reminders", "inboxes"
+  add_foreign_key "shipping_stores", "accounts"
+  add_foreign_key "shipping_stores", "ai_agents"
   add_foreign_key "subscription_payments", "subscriptions"
   add_foreign_key "subscription_plans", "accounts", column: "owner_account_id"
   add_foreign_key "subscription_topups", "subscriptions"

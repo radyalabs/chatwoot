@@ -720,6 +720,8 @@ watch(
   (newData) => {
     if (newData && newData.display_flow_data) {
       loadSavedConfiguration();
+      // Load idle config from API
+      loadIdleConfig();
     }
   },
   { deep: true, immediate: true }
@@ -831,9 +833,6 @@ function loadSavedConfiguration() {
         followUpConfig.message = config.follow_up.message || '';
       }
 
-      if (config?.idle_settings) {
-        idleConfig.duration = config.idle_settings.duration || 30;
-      }
     }
   }
 }

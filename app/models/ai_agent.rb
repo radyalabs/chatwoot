@@ -34,7 +34,8 @@ class AiAgent < ApplicationRecord
   has_one :knowledge_source, dependent: :destroy
   has_many :reminders, dependent: :destroy
   has_one :reminder_config, dependent: :destroy
-  has_one :idle_config, class_name: 'IdleConfig', foreign_key: 'agent_id', dependent: :destroy
+  has_one :idle_config, dependent: :destroy
+  has_many :shipping_stores, dependent: :destroy
 
   validates :name, :system_prompts, :welcoming_message, presence: true
   validates :timezone, presence: true, inclusion: { in: ActiveSupport::TimeZone.all.map(&:name) }

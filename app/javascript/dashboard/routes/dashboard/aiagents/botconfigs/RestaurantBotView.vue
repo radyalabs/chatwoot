@@ -270,6 +270,8 @@ watch(
   (newData) => {
     if (newData && newData.display_flow_data) {
       loadSavedConfiguration();
+      // Load idle config from API
+      loadIdleConfig();
     }
   },
   { deep: true, immediate: true }
@@ -300,9 +302,6 @@ function loadSavedConfiguration() {
       if (config.order_settings) {
         if (config.order_settings.minTimeBeforeOrder) orderSettings.minTimeBeforeOrder = config.order_settings.minTimeBeforeOrder;
         if (config.order_settings.minOrderTotal) orderSettings.minOrderTotal = config.order_settings.minOrderTotal;
-      }
-      if (config.idle_settings) {
-        idleConfig.duration = config.idle_settings.duration || 30;
       }
     }
   }

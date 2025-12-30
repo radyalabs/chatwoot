@@ -132,6 +132,8 @@ watch(
     // Cek apakah data sudah valid dan memiliki display_flow_data
     if (newData && newData.display_flow_data) {
       loadSavedConfiguration();
+      // Load idle config from API
+      loadIdleConfig();
     }
   },
   { deep: true, immediate: true }
@@ -163,10 +165,6 @@ function loadSavedConfiguration() {
         followUpConfig.message = config.follow_up.message || '';
       }
 
-      // Load Idle Settings
-      if (config?.idle_settings) {
-        idleConfig.duration = config.idle_settings.duration || '';
-      }
     }
   }
 }

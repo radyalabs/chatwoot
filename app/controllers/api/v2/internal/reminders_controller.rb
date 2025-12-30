@@ -92,28 +92,28 @@ class Api::V2::Internal::RemindersController < ActionController::API
   end
 
   # DELETE /api/v2/internal/reminders/delete
-  # Deletes reminder(s) by constraint fields (batch deletion supported)
+  # Deletes a single reminder by constraint fields (index_elements)
   #
   # Required params:
-  #   - records: Array of objects, each containing:
-  #     - account_id, inbox_id, ai_agent_id, conversation_id, service_id
+  #   - account_id, inbox_id, ai_agent_id, conversation_id, service_id
   #
   def delete
-    Rails.logger.info("[Internal::RemindersController] Deleting reminders with params: #{delete_params.inspect}")
+    Rails.logger.info("[Internal::RemindersController] Deleting reminder with params: #{delete_params.inspect}")
 
-    records = delete_params[:records]
-    if records.blank?
-      Rails.logger.warn('[Internal::RemindersController] No records provided for deletion')
-      return render json: { error: 'No records provided' }, status: :bad_request
+    reminder = Reminder.find_by(delete_params.to_h)
+
+    if reminder.nil?
+      Rails.logger.warn('[Internal::RemindersController] Reminder not found for deletion')
+      return render json: { error: 'Reminder not found' }, status: :not_found
     end
 
-    deleted_count = Reminders::BatchDeleteService.new(records).perform
+    reminder.destroy!
 
-    Rails.logger.info("[Internal::RemindersController] Deleted #{deleted_count} reminder(s)")
-    render json: { deleted_count: deleted_count, status: 'deleted' }, status: :ok
-  rescue ArgumentError => e
-    Rails.logger.error("[Internal::RemindersController] Delete validation failed: #{e.message}")
-    render json: { error: e.message }, status: :bad_request
+    Rails.logger.info("[Internal::RemindersController] Deleted reminder: id=#{reminder.id}")
+    render json: { id: reminder.id, status: 'deleted' }, status: :ok
+  rescue ActiveRecord::RecordNotDestroyed => e
+    Rails.logger.error("[Internal::RemindersController] Delete failed: #{e.message}")
+    render json: { error: 'Failed to delete reminder' }, status: :unprocessable_entity
   end
 
   private
@@ -161,9 +161,7 @@ class Api::V2::Internal::RemindersController < ActionController::API
   end
 
   def delete_params
-    params.permit(
-      records: [:account_id, :inbox_id, :ai_agent_id, :conversation_id, :service_id]
-    )
+    params.permit(:account_id, :inbox_id, :ai_agent_id, :conversation_id, :service_id)
   end
 
   def parse_scheduled_at(scheduled_at_str)

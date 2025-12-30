@@ -76,8 +76,8 @@
       "TIME_OPTIONS": {
         "30_MINUTES": "30 Menit",
         "1_HOUR": "1 Jam",
+        "2_HOURS": "2 Jam",
         "4_HOURS": "4 Jam",
-        "12_HOURS": "12 Jam",
         "24_HOURS": "24 Jam"
       },
       "TIME_DETAIL": "sebelum sesi dimulai",

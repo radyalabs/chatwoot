@@ -67,8 +67,8 @@ const followUpConfig = reactive({
 const followUpTimeOptions = computed(() => [
   { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.30_MINUTES'), value: 30 },
   { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.1_HOUR'), value: 60 },
+  { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.2_HOURS'), value: 120 },
   { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.4_HOURS'), value: 240 },
-  { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.12_HOURS'), value: 720 },
   { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.24_HOURS'), value: 1440 },
 ]);
 

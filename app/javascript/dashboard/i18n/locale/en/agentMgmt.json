@@ -76,8 +76,8 @@
       "TIME_OPTIONS": {
         "30_MINUTES": "30 Minutes",
         "1_HOUR": "1 Hour",
+        "2_HOURS": "2 Hours",
         "4_HOURS": "4 Hours",
-        "12_HOURS": "12 Hours",
         "24_HOURS": "24 Hours"
       },
       "TIME_DETAIL": "before the session starts",

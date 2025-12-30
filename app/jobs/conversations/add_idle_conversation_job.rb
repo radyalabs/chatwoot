@@ -16,8 +16,8 @@ class Conversations::AddIdleConversationJob < ApplicationJob
   private
 
   def determine_step(ai_response)
-    return 2 if ai_response[:is_end_state] && !ai_response[:is_conversation_success]
-    return 1 if ai_response[:is_conversation_success]
+    return 2 if ai_response[:is_end_state] && !ai_response[:has_domain_change]
+    return 1 if ai_response[:has_domain_change]
 
     0
   end

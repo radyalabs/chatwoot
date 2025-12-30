@@ -2,14 +2,15 @@
 #
 # Table name: idle_configs
 #
-#  id                    :bigint           not null, primary key
-#  agent_name            :string
-#  agent_type            :string
-#  idle_duration_minutes :integer          default(30)
-#  created_at            :datetime         not null
-#  updated_at            :datetime         not null
-#  account_id            :integer          not null
-#  agent_id              :string           not null
+#  id          :bigint           not null, primary key
+#  action      :string           default("resolve"), not null
+#  duration    :integer          default(30), not null
+#  enabled     :boolean          default(TRUE), not null
+#  message     :text
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
+#  account_id  :bigint           not null
+#  ai_agent_id :bigint           not null
 #
 # Indexes
 #
@@ -22,7 +23,10 @@ class IdleConfig < ApplicationRecord
 
   validates :ai_agent_id, uniqueness: { scope: :account_id }
   validates :duration, numericality: { greater_than: 0 }
-  validates :action, inclusion: { in: %w[resolve message] }
 
   VALID_ACTIONS = %w[resolve message].freeze
+
+  scope :duration_for_ai_agent, lambda { |ai_agent_id|
+                                  where(ai_agent_id: ai_agent_id).pick(:duration)
+                                }
 end

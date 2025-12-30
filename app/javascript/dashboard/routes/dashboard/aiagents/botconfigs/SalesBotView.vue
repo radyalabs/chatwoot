@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full min-h-0">
+  <div class="w-full h-full flex flex-col">
     <div v-if="notification"
       :class="['fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transition-all duration-300',
         notification.type === 'success' ? 'bg-green-500 text-white' :
@@ -19,7 +19,7 @@
       </p>
       <div class="border-b border-gray-200 dark:border-gray-700"></div>
     </div>
-    <div class="overflow-y-auto min-h-0">
+    <div class="flex-1 overflow-y-auto min-h-0">
       <div class="space-y-6 pb-6">
         <!-- Sidebar Navigation (always show) -->
         <div class="flex flex-row justify-stretch gap-2">
@@ -279,70 +279,30 @@
                       </svg>
                     </div>
                     <div>
-                      <h3 class="font-medium text-slate-900 dark:text-slate-25">Pengaturan Idle Chat</h3>
-                      <p class="text-sm text-gray-500 mt-1">Atur tindakan otomatis jika tidak ada aktivitas chat</p>
+                      <h3 class="font-medium text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.EOBOT.IDLE_STATE') }}</h3>
+                      <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.EOBOT.IDLE_STATE_DESC') }}</p>
                     </div>
                   </div>
                   
                   <div class="border-t border-gray-200 dark:border-gray-700 p-6">
                     <div>
-                      <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
-                        Batas Waktu Idle (Menit)
+                      <label class="block text-sm font-medium mb-2 text-slate-900 dark:text-slate-25">
+                        {{ $t('AGENT_MGMT.EOBOT.IDLE_TIME') }}
                       </label>
-                      <div class="relative">
-                        <input 
-                          type="number" 
-                          min="1"
-                          v-model="idleConfig.duration"
-                          placeholder="Contoh: 15" 
-                          class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm h-10 !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out" 
-                        />
-                        <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">menit tanpa aktivitas</span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label class="block text-sm font-medium mb-3 text-slate-900 dark:text-slate-25">
-                        Aksi saat Idle
-                      </label>
-                      <div class="flex flex-col sm:flex-row gap-4">
-                        <div class="flex items-center">
+                      <div class="flex items-center gap-3">
+                        <div class="w-16">
                           <input 
-                            id="action-resolve" 
-                            type="radio" 
-                            value="resolve" 
-                            v-model="idleConfig.action"
-                            class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                          >
-                          <label for="action-resolve" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">
-                            Langsung Resolve Chat
-                          </label>
+                            type="number" 
+                            min="1"
+                            v-model="idleConfig.duration"
+                            class="text-center px-2 py-2 text-sm font-medium border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                            placeholder="30" 
+                          />
                         </div>
-                        <div class="flex items-center">
-                          <input 
-                            id="action-message" 
-                            type="radio" 
-                            value="message" 
-                            v-model="idleConfig.action"
-                            class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                          >
-                          <label for="action-message" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">
-                            Kirim Pesan Follow Up
-                          </label>
-                        </div>
+                        <span class="text-slate-600 dark:text-slate-400 text-sm">
+                          {{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_DESC') }}
+                        </span>
                       </div>
-                    </div>
-
-                    <div v-if="idleConfig.action === 'message'" class="animate-fadeIn">
-                      <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
-                        Pesan Idle
-                      </label>
-                      <textarea 
-                        v-model="idleConfig.message"
-                        rows="3"
-                        placeholder="Halo, apakah Anda masih di sana? Sesi ini akan segera berakhir jika tidak ada respon."
-                        class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out"
-                      ></textarea>
                     </div>
                   </div>
                 </div>
@@ -384,8 +344,17 @@
           <div v-show="activeTabIndex === 2" class="w-full">
             <FileKnowledgeSources :data="data" context="sales"/>
           </div>
-  
+
           <!-- Shipping Tab -->
+          <div v-show="activeTabIndex === 3" class="w-full min-w-0">
+            <ShippingConfig 
+              :initial-stores="shippingStores" 
+              :is-saving="isSaving"
+              @save-config="submitShippingConfig"
+            />
+          </div>
+  
+          <!-- Shipping Tab
           <div v-show="activeTabIndex === 3" class="w-full min-w-0">
             <div class="flex flex-row gap-4">
               <div class="flex-1 min-w-0 flex flex-col justify-stretch gap-6">
@@ -393,7 +362,7 @@
                   <div>
                     <label class="block font-medium mb-1">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.METHOD_TITLE') }}</label>
                 
-                <!-- Kurir Toko -->
+                
                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
                   <div class="flex items-center justify-between p-4">
                     <div class="flex items-center">
@@ -426,7 +395,7 @@
                     v-if="shippingMethods.kurirToko" 
                     class="border-t border-gray-200 dark:border-gray-700 p-4 space-y-4 transition-all duration-200 ease-in-out"
                   >
-                    <!-- Store Address -->
+                    
                     <div>
                       <label class="block font-medium mb-1">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.STORE_ADDRESS') }}</label>
                       <input 
@@ -437,12 +406,12 @@
                       />
                     </div>
   
-                    <!-- Google Maps Integration -->
+                    
                     <div>
                       <label class="block font-medium mb-2">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.MAP_LOCATION') }}</label>
                       <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.MAP_INSTRUCTION') }}</p>
                       
-                      <!-- Map Container -->
+                      
                       <div class="relative bg-gray-100 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
                         <div 
                           ref="mapRef"
@@ -450,7 +419,7 @@
                           style="min-height: 256px;"
                         ></div>
                         
-                        <!-- Loading Overlay -->
+                        
                         <div v-if="!kurirToko.mapLoaded" class="absolute inset-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                           <div class="text-center">
                             <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto mb-2" fill="none" viewBox="0 0 24 24">
@@ -462,7 +431,7 @@
                         </div>
                       </div>
   
-                      <!-- Coordinates Display -->
+                      
                       <div class="grid grid-cols-2 gap-4 mt-3">
                         <div>
                           <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.LATITUDE') }}</label>
@@ -487,11 +456,11 @@
                       </div>
                     </div>
                     
-                    <!-- Service Area -->
+                    
                     <div>
                       <label class="block font-medium mb-3">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.SERVICE_AREA') }}</label>
                       <div class="space-y-4">
-                        <!-- Radius Option -->
+                        
                         <div class="flex items-start space-x-3">
                           <label class="inline-flex items-center cursor-pointer">
                             <input 
@@ -518,7 +487,7 @@
                           </div>
                         </div>
   
-                        <!-- Region Option -->
+                        
                         <div class="flex items-start space-x-3">
                           <label class="inline-flex items-center cursor-pointer">
                             <input 
@@ -573,7 +542,7 @@
                               </div>
                             </div>
                             
-                            <!-- City/District Dropdown for Region -->
+                            
                             <div v-if="kurirToko.serviceAreaType === 'region' && kurirToko.wilayah" class="mt-3">
                               <label class="block text-sm font-medium mb-1">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.CITY_LABEL') }}</label>
                               <div class="dropdown-container" ref="serviceAreaKotaDropdownRef">
@@ -627,13 +596,13 @@
                       </div>
                     </div>
   
-                    <!-- Shipping Cost -->
+                    
                     <div>
                       <label class="block font-medium mb-3">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.SHIPPING_COST') }}</label>
                       <div class="space-y-4">
-                        <!-- Pricing Method Selection -->
+                        
                         <div class="space-y-3">
-                          <!-- Flat Rate Option -->
+                          
                           <div class="flex items-start space-x-3">
                             <label class="inline-flex items-center cursor-pointer">
                               <input 
@@ -659,7 +628,7 @@
                             </div>
                           </div>
   
-                          <!-- Cost per Distance Option -->
+                          
                           <div class="flex items-start space-x-3">
                             <label class="inline-flex items-center cursor-pointer">
                               <input 
@@ -683,7 +652,7 @@
                           </div>
                         </div>
   
-                        <!-- Free Shipping Toggle -->
+                        
                         <div class="flex items-start space-x-3">
                           <label class="inline-flex items-center cursor-pointer">
                             <input type="checkbox" v-model="kurirToko.gratisOngkir" class="sr-only peer">
@@ -693,11 +662,11 @@
                           </label>
                           <div class="flex-1">
                             <label class="block text-sm font-medium">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.FREE_SHIPPING') }}</label>
-                            <!-- <p class="text-xs text-gray-500 mt-1">Aktifkan gratis ongkir dengan syarat minimal belanja</p> -->
+                            <p class="text-xs text-gray-500 mt-1">Aktifkan gratis ongkir dengan syarat minimal belanja</p>
                           </div>
                         </div>
   
-                        <!-- Minimum Purchase (show when free shipping is enabled) -->
+                        
                         <div v-if="kurirToko.gratisOngkir" class="ml-14 transition-all duration-200 ease-in-out">
                           <label class="block text-sm font-medium mb-1">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.MIN_PURCHASE') }}</label>
                           <div class="relative">
@@ -713,7 +682,7 @@
                         </div>
                       </div>
                     </div>
-                    <!-- estimasi pengiriman -->
+                    
                      <div>
                         <label class="block font-medium mb-1">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.DELIVERY_TIME') }}</label>
                         <input 
@@ -726,7 +695,7 @@
                   </div>
                 </div>
   
-                <!-- Kurir Biasa -->
+                
                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
                   <div class="flex items-center justify-between p-4">
                     <div class="flex items-center">
@@ -750,7 +719,7 @@
                     v-if="shippingMethods.kurirBiasa" 
                     class="border-t border-gray-200 dark:border-gray-700 p-4 space-y-4 transition-all duration-200 ease-in-out"
                   >
-                  <!-- Coming Soon Message -->
+                  
                   <div class="flex items-center justify-center py-8">
                     <div class="text-center">
                       <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -762,7 +731,8 @@
                       <h4 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Coming Soon</h4>
                       <p class="text-sm text-gray-500 dark:text-gray-400">Regular courier configuration will be available soon.</p>
                     </div>
-                  </div>
+                  </div> -->
+
                   <!-- DONT DELETE! -->
                     <!-- <div>
                       <label class="block font-medium mb-1">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.ORIGIN_ADDRESS') }}</label>
@@ -1081,11 +1051,11 @@
                           </div>
                         </div>
                       </div>
-                    </div> -->
+                    </div> 
                   </div>
-                </div>
+                </div> -->
   
-                <!-- Ambil ke Toko -->
+                <!-- Ambil ke Toko
                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
                   <div class="flex items-center justify-between p-4">
                     <div class="flex items-center">
@@ -1182,7 +1152,7 @@
                 </div>
               </div>
             </div>
-          </div>
+          </div> -->
   
           <!-- Payment Methods Tab -->
           <div v-show="activeTabIndex === 4" class="w-full min-w-0">
@@ -1606,8 +1576,10 @@ import googleSheetsExportAPI from '../../../../api/googleSheetsExport';
 // AI Agents API
 import aiAgents from '../../../../api/aiAgents';
 import idleConfigsAPI from '../../../../api/idleConfigs';
+import shippingStoresAPI from '../../../../api/shippingStores';
 import { useAlert } from 'dashboard/composables';
 import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue';
+import ShippingConfig from './sales-bot-tabs/ShippingConfig.vue';
 
 const { t } = useI18n()
 
@@ -1627,21 +1599,18 @@ const emit = defineEmits(['update:data']);
 provide('emitUpdate', () => emit('update:data'));
 
 // temperature bot
-const creativityLevel = ref(0.3); // Default value
-const creativityOptions = [
-  { label: 'Tidak sama sekali', value: 0 },
-  { label: 'Minim', value: 0.1 },
-  { label: 'Normal', value: 0.3 },
-  { label: 'Lebih tinggi', value: 0.6 },
-  { label: 'Maksimal', value: 1 },
-];
+const creativityLevel = ref(0.3);
+const creativityOptions = computed(() => [
+  { label: t('AGENT_MGMT.CREATIVITY.DETERMINISTIC'), value: 0 },
+  { label: t('AGENT_MGMT.CREATIVITY.CONSERVATIVE'), value: 0.1 },
+  { label: t('AGENT_MGMT.CREATIVITY.NATURAL'), value: 0.3 },
+  { label: t('AGENT_MGMT.CREATIVITY.INNOVATIVE'), value: 0.5 },
+  { label: t('AGENT_MGMT.CREATIVITY.VISIONARY'), value: 0.7 },
+]);
 
 // idle time
 const idleConfig = reactive({
-  enabled: true,
-  duration: 30,      
-  action: 'resolve', 
-  message: ''        
+  duration: 30,       
 });
 
 // Helper function to get agent ID by type
@@ -1676,10 +1645,7 @@ async function loadIdleConfig() {
   try {
     const response = await idleConfigsAPI.getConfig(props.data.id);
     if (response.data) {
-      idleConfig.enabled = response.data.enabled !== undefined ? response.data.enabled : true;
       idleConfig.duration = response.data.duration || 30;
-      idleConfig.action = response.data.action || 'resolve';
-      idleConfig.message = response.data.message || '';
     }
   } catch (error) {
     console.error('Failed to load idle config:', error);
@@ -1693,6 +1659,8 @@ onMounted(async () => {
   
   // Load provinces for address selection
   loadProvinsi();
+
+  await fetchShippingStores();
   // Pre-load Google Maps API but don't initialize map yet
   try {
     await loadGoogleMaps();
@@ -1720,6 +1688,8 @@ watch(
   (newData) => {
     if (newData && newData.display_flow_data) {
       loadSavedConfiguration();
+      // Load idle config from API
+      loadIdleConfig();
     }
   },
   { deep: true }
@@ -2055,6 +2025,8 @@ const activeTabIndex = ref(0);
 const catalogSheet = ref('');
 const catalogDesc = ref('');
 const cartEnabled = ref(false);
+
+const shippingStores = ref([]);
 
 const shippingMethods = reactive({
   kurirToko: false,
@@ -2967,161 +2939,67 @@ const paymentGatewayProviders = [
   { label: 'Duitku', id: 'duitku' }
 ];
 
+// Shipping
+async function fetchShippingStores() {
+  if (!props.data?.id) return;
+  try {
+    // Panggil API GET Stores dari database baru
+    const response = await shippingStoresAPI.getStores(props.data.id);
+    shippingStores.value = response.data;
+  } catch (error) {
+    console.error('Gagal memuat toko:', error);
+  }
+}
 
-
-async function submitShippingConfig() {
+async function submitShippingConfig(updatedStores) {
   if (isSaving.value) return;
 
   try {
     isSaving.value = true;
-    
-    const shippingData = {
-      kurirToko: shippingMethods.kurirToko ? {
-        alamat: kurirToko.alamat,
-        radius: kurirToko.radius,
-        wilayah: kurirToko.wilayah,
-        kotaWilayah: kurirToko.kotaWilayah,
-        serviceAreaType: kurirToko.serviceAreaType,
-        pricingMethod: kurirToko.pricingMethod,
-        flatRate: kurirToko.flatRate,
-        biayaPerJarak: kurirToko.biayaPerJarak,
-        gratisOngkir: kurirToko.gratisOngkir,
-        minimalBelanja: kurirToko.gratisOngkir ? kurirToko.minimalBelanja : null,
-        estimasi: kurirToko.estimasi,
-        coordinates: {
-          latitude: kurirToko.latitude,
-          longitude: kurirToko.longitude
-        }      
-      } : null,
-      kurirBiasa: shippingMethods.kurirBiasa ? {
-        alamat: {
-          provinsi: kurirBiasa.provinsi,
-          kota: kurirBiasa.kota,
-          kecamatan: kurirBiasa.kecamatan,
-          kelurahan: kurirBiasa.kelurahan,
-          jalan: kurirBiasa.jalan,
-          kodePos: kurirBiasa.kodePos
-        },
-        kurir: kurirBiasa.kurir
-      } : null,
-      ambilToko: shippingMethods.ambilToko ? {
-        alamat: ambilToko.alamat,
-        jamOperasional: `${ambilToko.jamBuka} - ${ambilToko.jamTutup}`,
-        estimasi: ambilToko.estimasi
-      } : null
-    };
+    const storeResponse = await shippingStoresAPI.batchUpdate(props.data.id, updatedStores);
+    const savedStoresWithIds = storeResponse.data;
+    shippingStores.value = savedStoresWithIds;
 
-    // Generate shipping configuration
-    const shippingConfig = {
-      methods: []
-    };
-
-    if (shippingMethods.kurirToko) {
-      shippingConfig.methods.push({
-        type: "store_courier",
-        name: "Kurir Toko",
-        store_address: {
-          address: kurirToko.alamat || "",
-          coordinates: {
-            latitude: kurirToko.latitude || -6.2088, // Default to Jakarta
-            longitude: kurirToko.longitude || 106.8456
-          }
-        },
-        // service_area: kurirToko.radius ? `Radius ${kurirToko.radius}km` : "",
-        service_area: (() => {
-          if (kurirToko.serviceAreaType === 'radius' && kurirToko.radius) {
-            return `Radius ${kurirToko.radius} km`;
-          } else if (kurirToko.serviceAreaType === 'region' && kurirToko.wilayah) {
-            let area = "Sekitar";
-            
-            // Add city name if available
-            if (kurirToko.kotaWilayah) {
-              const kotaName = selectedServiceAreaKotaName.value || `Kota-${kurirToko.kotaWilayah}`;
-              area += ` ${kotaName}`;
-            }
-            
-            // Add province name
-            const provinsiName = selectedServiceAreaProvinsiName.value || `Provinsi-${kurirToko.wilayah}`;
-            if (kurirToko.kotaWilayah) {
-              area += `, ${provinsiName}`;
-            } else {
-              area += ` ${provinsiName}`;
-            }
-            
-            return area;
-          }
-          return "";
-        })(),
-        // Generate delivery cost info based on pricing method
-        delivery_cost_info: (() => {
-          let costInfo = "";
-          if (kurirToko.pricingMethod === 'flatRate' && kurirToko.flatRate) {
-            costInfo = `Flat rate: Rp ${kurirToko.flatRate}`;
-          } else if (kurirToko.pricingMethod === 'perDistance' && kurirToko.biayaPerJarak) {
-            costInfo = `Rp ${kurirToko.biayaPerJarak}/km`;
-          }
-          
-          if (kurirToko.gratisOngkir && kurirToko.minimalBelanja) {
-            costInfo += (costInfo ? " | " : "") + `Gratis ongkir dengan minimal belanja Rp ${kurirToko.minimalBelanja}`;
-          }
-          
-          return costInfo;
-        })(),
-        estimated_delivery_time: kurirToko.estimasi || ""
-      });
-    }
-
-    if (shippingMethods.kurirBiasa) {
-      const selectedKurir = kurirBiasa.kurir || [];
-      shippingConfig.methods.push({
-        type: "regular_courier",
-        name: "Kurir Reguler",
-        store_address: `${kurirBiasa.jalan || ''}, ${selectedKecamatanName.value || ''}, ${selectedKotaName.value || ''}, ${selectedProvinsiName.value || ''} ${kurirBiasa.kodePos || ''}`.trim(),
-        available_couriers: selectedKurir
-      });
-    }
-
-    if (shippingMethods.ambilToko) {
-      shippingConfig.methods.push({
-        type: "store_pickup",
-        name: "Ambil di Toko",
-        store_address: ambilToko.alamat || "",
-        operating_hours: `${ambilToko.jamBuka} - ${ambilToko.jamTutup}`,
-        pickup_ready_time: ambilToko.estimasi || ""
-      });
-    }
-
-    // Save to backend
     let flowData = JSON.parse(JSON.stringify(props.data.flow_data));
     let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
 
     const agentIndex = flowData.enabled_agents.indexOf('sales');
     
     if (agentIndex === -1) {
-      useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.AGENT_NOT_FOUND'))
+      useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.AGENT_NOT_FOUND'));
       return;
     }
 
-    // Initialize configurations if not exists
     if (!flowData.agents_config[agentIndex].configurations) {
       flowData.agents_config[agentIndex].configurations = {};
     }
-    
-    // Update shipping options configuration
-    flowData.agents_config[agentIndex].configurations.shipping_options = shippingConfig;
-    displayFlowData.agents_config[agentIndex].configurations.shipping_options = shippingConfig;
+    if (!displayFlowData.agents_config[agentIndex].configurations) {
+      displayFlowData.agents_config[agentIndex].configurations = {};
+    }
 
-    const payload = {
+    flowData.agents_config[agentIndex].configurations.shipping_options = {
+      ...flowData.agents_config[agentIndex].configurations.shipping_options,
+      stores: savedStoresWithIds 
+    };
+
+    displayFlowData.agents_config[agentIndex].configurations.shipping_options = {
+      ...displayFlowData.agents_config[agentIndex].configurations.shipping_options,
+      stores: savedStoresWithIds 
+    };
+
+    const agentPayload = {
       flow_data: flowData,
       display_flow_data: displayFlowData, 
     };
 
-    await aiAgents.updateAgent(props.data.id, payload);
-    emit('update:data');
+    await aiAgents.updateAgent(props.data.id, agentPayload);
     
-    useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_SUCCESS'))
+    emit('update:data');
+    useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_SUCCESS')); 
+
   } catch (error) {
-    useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_ERROR'))
+    console.error('Error saving shipping config:', error);
+    useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_ERROR'));
   } finally {
     isSaving.value = false;
   }
@@ -3274,20 +3152,6 @@ async function saveSettings() {
     flowData.agents_config[agentIndex].temperature = creativityLevel.value;
     displayFlowData.agents_config[agentIndex].temperature = creativityLevel.value;
 
-    // Simpan Pengaturan Idle Chat
-    flowData.agents_config[agentIndex].configurations.idle_settings = {
-      enabled: true, // Selalu aktif sesuai desain UI
-      duration: idleConfig.duration,
-      action: idleConfig.action,
-      message: idleConfig.message
-    };
-    displayFlowData.agents_config[agentIndex].configurations.idle_settings = {
-      enabled: true,
-      duration: idleConfig.duration,
-      action: idleConfig.action,
-      message: idleConfig.message
-    };
-
     const payload = {
       flow_data: flowData,
       display_flow_data: displayFlowData, 
@@ -3296,10 +3160,7 @@ async function saveSettings() {
     await Promise.all([
       aiAgents.updateAgent(props.data.id, payload),
       idleConfigsAPI.updateConfig(props.data.id, {
-        enabled: idleConfig.enabled,
         duration: idleConfig.duration,
-        action: idleConfig.action,
-        message: idleConfig.message
       })
     ]);
     emit('update:data');
@@ -3340,13 +3201,6 @@ function loadSavedConfiguration() {
       creativityLevel.value = agentData.temperature;
     }
 
-    // Load Idle Settings
-    if (config.idle_settings) {
-      idleConfig.enabled = config.idle_settings.enabled !== undefined ? config.idle_settings.enabled : true;
-      idleConfig.duration = config.idle_settings.duration || 30;
-      idleConfig.action = config.idle_settings.action || 'resolve';
-      idleConfig.message = config.idle_settings.message || '';
-    }
 
     // Reset all shipping methods first
     shippingMethods.kurirToko = false;

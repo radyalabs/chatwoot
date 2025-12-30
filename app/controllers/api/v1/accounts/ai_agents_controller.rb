@@ -5,7 +5,7 @@ class Api::V1::Accounts::AiAgentsController < Api::V1::Accounts::BaseController
   before_action :check_max_ai_agents, only: [:create]
 
   def index
-    ai_agents = account.ai_agents.select(:id, :account_id, :name, :description).order(id: :desc)
+    ai_agents = account.ai_agents.select(:id, :account_id, :name, :description, :updated_at).order(id: :desc)
     render json: ai_agents, status: :ok
   end
 
@@ -52,8 +52,8 @@ class Api::V1::Accounts::AiAgentsController < Api::V1::Accounts::BaseController
       account.id
     ).perform.then do |response|
       if response.success?
-        parsed = response.parsed_response
-        json_data = json_response(parsed, is_custom_agent: ai_agent.custom_agent?)
+        response = response.parsed_response
+        json_data = parsed_response(response, is_custom_agent: ai_agent.custom_agent?)
         render json: json_data, status: :ok
       else
         handle_error('Failed to generate AI response', status: :unprocessable_entity, exception: response)

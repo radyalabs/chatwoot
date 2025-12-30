@@ -10,7 +10,7 @@ class Api::V2::Accounts::IdleConfigsController < Api::V1::Accounts::BaseControll
 
   # PUT /api/v2/accounts/:account_id/ai_agents/:ai_agent_id/idle_configs/config
   def update_config
-    @idle_config ||= @ai_agent.create_idle_config(account: Current.account)
+    @idle_config = @ai_agent.idle_config || @ai_agent.build_idle_config(account: Current.account)
 
     if @idle_config.update(idle_config_params)
       render json: idle_config_response, status: :ok
@@ -32,10 +32,7 @@ class Api::V2::Accounts::IdleConfigsController < Api::V1::Accounts::BaseControll
   def idle_config_response
     {
       id: @idle_config.id,
-      enabled: @idle_config.enabled,
       duration: @idle_config.duration,
-      action: @idle_config.action,
-      message: @idle_config.message,
       ai_agent_id: @idle_config.ai_agent_id,
       account_id: @idle_config.account_id,
       created_at: @idle_config.created_at,
@@ -46,9 +43,7 @@ class Api::V2::Accounts::IdleConfigsController < Api::V1::Accounts::BaseControll
   def idle_config_params
     params.require(:idle_config).permit(
       :enabled,
-      :duration,
-      :action,
-      :message
+      :duration
     )
   end
 end

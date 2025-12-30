@@ -74,8 +74,18 @@ class Api::V1::Accounts::ContactsController < Api::V1::Accounts::BaseController
   end
 
   def contactable_inboxes
-    @all_contactable_inboxes = Contacts::ContactableInboxesService.new(contact: @contact).get
-    @contactable_inboxes = @all_contactable_inboxes.select { |contactable_inbox| policy(contactable_inbox[:inbox]).show? }
+    @all_contactable_inboxes =
+      Contacts::ContactableInboxesService.new(contact: @contact).get
+
+    if @all_contactable_inboxes.blank?
+      @all_contactable_inboxes =
+        Current.account.inboxes.map { |inbox| { inbox: inbox } }
+    end
+
+    @contactable_inboxes =
+      @all_contactable_inboxes.select do |contactable_inbox|
+        policy(contactable_inbox[:inbox]).show?
+      end
   end
 
   # TODO : refactor this method into dedicated contacts/custom_attributes controller class and routes

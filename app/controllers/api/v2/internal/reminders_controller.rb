@@ -61,6 +61,61 @@ class Api::V2::Internal::RemindersController < ActionController::API
     end
   end
 
+  # PUT /api/v2/internal/reminders/upsert
+  # Creates or updates a reminder based on unique constraint (index_elements)
+  #
+  # Required params (index_elements):
+  #   - account_id, inbox_id, ai_agent_id, conversation_id, service_id
+  #
+  # Optional params (updatable):
+  #   - scheduled_at, customer_name, contact, service_type, service_name, service_location
+  #
+  # Behavior:
+  #   - If reminder with matching index_elements exists, update it
+  #   - If no match, create new reminder
+  #   - Null values in payload do NOT overwrite existing values
+  #
+  def upsert
+    Rails.logger.info("[Internal::RemindersController] Upserting reminder with params: #{upsert_params.inspect}")
+
+    result = Reminders::UpsertService.new(upsert_params).perform
+    was_new_record = result.previous_changes.key?('id')
+
+    Rails.logger.info("[Internal::RemindersController] Reminder upserted successfully: id=#{result.id}, status=#{was_new_record ? 'created' : 'updated'}")
+    render json: { id: result.id, status: was_new_record ? 'created' : 'updated' }, status: :ok
+  rescue ActiveRecord::RecordInvalid => e
+    Rails.logger.error("[Internal::RemindersController] Upsert failed: #{e.message}")
+    render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
+  rescue ArgumentError => e
+    Rails.logger.error("[Internal::RemindersController] Upsert validation failed: #{e.message}")
+    render json: { error: e.message }, status: :bad_request
+  end
+
+  # DELETE /api/v2/internal/reminders/delete
+  # Deletes reminder(s) by constraint fields (batch deletion supported)
+  #
+  # Required params:
+  #   - records: Array of objects, each containing:
+  #     - account_id, inbox_id, ai_agent_id, conversation_id, service_id
+  #
+  def delete
+    Rails.logger.info("[Internal::RemindersController] Deleting reminders with params: #{delete_params.inspect}")
+
+    records = delete_params[:records]
+    if records.blank?
+      Rails.logger.warn('[Internal::RemindersController] No records provided for deletion')
+      return render json: { error: 'No records provided' }, status: :bad_request
+    end
+
+    deleted_count = Reminders::BatchDeleteService.new(records).perform
+
+    Rails.logger.info("[Internal::RemindersController] Deleted #{deleted_count} reminder(s)")
+    render json: { deleted_count: deleted_count, status: 'deleted' }, status: :ok
+  rescue ArgumentError => e
+    Rails.logger.error("[Internal::RemindersController] Delete validation failed: #{e.message}")
+    render json: { error: e.message }, status: :bad_request
+  end
+
   private
 
   def authenticate_api_key!
@@ -76,14 +131,38 @@ class Api::V2::Internal::RemindersController < ActionController::API
   def reminder_params
     params.permit(
       :account_id,
+      :inbox_id,
       :ai_agent_id,
       :conversation_id,
+      :service_id,
       :scheduled_at,
       :customer_name,
       :contact,
       :service_type,
       :service_name,
       :service_location
+    )
+  end
+
+  def upsert_params
+    params.permit(
+      :account_id,
+      :inbox_id,
+      :ai_agent_id,
+      :conversation_id,
+      :service_id,
+      :scheduled_at,
+      :customer_name,
+      :contact,
+      :service_type,
+      :service_name,
+      :service_location
+    )
+  end
+
+  def delete_params
+    params.permit(
+      records: [:account_id, :inbox_id, :ai_agent_id, :conversation_id, :service_id]
     )
   end
 

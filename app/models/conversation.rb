@@ -85,6 +85,10 @@ class Conversation < ApplicationRecord
 
     open.where('last_activity_at < ? ', duration.send(unit).ago)
   }
+  scope :with_completed_idle, lambda {
+                                joins(:idle_conversation)
+                                  .where(idle_conversations: { status: :completed })
+                              }
 
   scope :last_user_message_at, lambda {
     joins(

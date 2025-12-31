@@ -1,18 +1,24 @@
 class Api::V2::Internal::SheetNumberingConfigsController < ActionController::API
   before_action :authenticate_api_key!
 
-  # POST /api/v2/internal/sheet_numbering_configs/next_number
+  # GET /api/v2/internal/sheet_numbering_configs/config
   #
-  # Atomically generates the next formatted ID and increments counter.
-  # Uses pessimistic locking (SELECT FOR UPDATE) to prevent race conditions.
+  # Returns the numbering configuration for a given account, ai_agent, and numbering_key.
+  # This endpoint is read-only - counter increment happens in jangkau.langgraph.
   #
   # Required params:
   #   - account_id: The account ID
   #   - ai_agent_id: The AI agent ID
+  #   - numbering_key: The numbering key (e.g., "booking", "invoice")
   #
   # Response (200 OK):
-  #   - formatted_id: The generated ID (e.g., "ORN/001/12/2025")
-  #   - current_value: The new current_value after increment
+  #   {
+  #     "id": 1,
+  #     "prefix": "ORN/",
+  #     "format_pattern": "[NUMBER]/[MONTH]/[YEAR]",
+  #     "number_padding": 3,
+  #     "numbering_key": "booking"
+  #   }
   #
   # Response (404 Not Found):
   #   - error: "Sheet numbering config not found"
@@ -20,16 +26,24 @@ class Api::V2::Internal::SheetNumberingConfigsController < ActionController::API
   # Response (401 Unauthorized):
   #   - error: "Unauthorized"
   #
-  def next_number
-    Rails.logger.info("[Internal::SheetNumberingConfigs] Generating next number: #{number_params.inspect}")
+  def config
+    Rails.logger.info("[Internal::SheetNumberingConfigs] Fetching config: #{config_params.inspect}")
 
-    result = SheetNumbering::GenerateNextNumberService.new(
-      account_id: number_params[:account_id],
-      ai_agent_id: number_params[:ai_agent_id]
-    ).perform
+    sheet_config = SheetNumberingConfig.find_by!(
+      account_id: config_params[:account_id],
+      ai_agent_id: config_params[:ai_agent_id],
+      numbering_key: config_params[:numbering_key] || 'default'
+    )
 
-    Rails.logger.info("[Internal::SheetNumberingConfigs] Generated: #{result[:formatted_id]}, new current_value: #{result[:current_value]}")
-    render json: result, status: :ok
+    Rails.logger.info("[Internal::SheetNumberingConfigs] Found config id=#{sheet_config.id}")
+
+    render json: {
+      id: sheet_config.id,
+      prefix: sheet_config.prefix,
+      format_pattern: sheet_config.format_pattern,
+      number_padding: sheet_config.number_padding,
+      numbering_key: sheet_config.numbering_key
+    }, status: :ok
   rescue ActiveRecord::RecordNotFound => e
     Rails.logger.error("[Internal::SheetNumberingConfigs] Config not found: #{e.message}")
     render json: { error: 'Sheet numbering config not found' }, status: :not_found
@@ -50,7 +64,7 @@ class Api::V2::Internal::SheetNumberingConfigsController < ActionController::API
     end
   end
 
-  def number_params
-    params.permit(:account_id, :ai_agent_id)
+  def config_params
+    params.permit(:account_id, :ai_agent_id, :numbering_key)
   end
 end

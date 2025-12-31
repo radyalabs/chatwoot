@@ -549,7 +549,7 @@ Rails.application.routes.draw do
 
         resources :sheet_numbering_configs, only: [] do
           collection do
-            post :next_number
+            get :config
           end
         end
       end

@@ -86,6 +86,20 @@ class Api::V1::Accounts::ContactsController < Api::V1::Accounts::BaseController
       @all_contactable_inboxes.select do |contactable_inbox|
         policy(contactable_inbox[:inbox]).show?
       end
+
+    # FILTER WHATSAPP INBOXES ONLY
+    @contactable_inboxes.select! do |contactable_inbox|
+      inbox = contactable_inbox[:inbox]
+      channel = inbox.channel
+
+      # WhatsApp Official / Unofficial
+      channel.class.name == 'Channel::WhatsappUnofficial' ||
+        (
+          channel.class.name == 'Channel::TwilioSms' &&
+          channel.respond_to?(:medium) &&
+          channel.medium == 'whatsapp'
+        )
+    end
   end
 
   # TODO : refactor this method into dedicated contacts/custom_attributes controller class and routes

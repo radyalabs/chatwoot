@@ -1863,36 +1863,6 @@ async function createSheets() {
   }
 }
 
-// Helper function to split text into chunks
-function splitTextIntoChunks(text, maxChunkSize = 19000) {
-  const chunks = [];
-  let currentChunk = '';
-  const lines = text.split('\n');
-  
-  for (const line of lines) {
-    // If adding this line would exceed the limit, save current chunk and start a new one
-    if (currentChunk.length + line.length + 1 > maxChunkSize) {
-      if (currentChunk.trim()) {
-        chunks.push(currentChunk.trim());
-        currentChunk = line;
-      } else {
-        // Single line is too long, truncate it
-        chunks.push(line.substring(0, maxChunkSize - 100) + '...[truncated]');
-        currentChunk = '';
-      }
-    } else {
-      currentChunk += (currentChunk ? '\n' : '') + line;
-    }
-  }
-  
-  // Add the last chunk if it exists
-  if (currentChunk.trim()) {
-    chunks.push(currentChunk.trim());
-  }
-  
-  return chunks;
-}
-
 async function syncProductColumns() {
   try {
     syncingColumns.value = true;
@@ -1905,62 +1875,13 @@ async function syncProductColumns() {
       collection_name: collectionName.value,
     };
     const syncDataResponse = await googleSheetsExportAPI.syncSpreadsheet(payload);
-    
-    // Get existing knowledge sources for this agent
-    let knowledgeSources = [];
-    try {
-      const knowledgeResponse = await aiAgents.getKnowledgeSources(props.data.id);
-      knowledgeSources = knowledgeResponse.data?.knowledge_source_texts || [];
-    } catch (error) {
-      // If fetching fails, we'll create a new one
-      knowledgeSources = [];
+    // console.log('Sync response:', syncDataResponse.data.data);
+
+    if (!syncDataResponse.data.data.success) {
+      showNotification(t('AGENT_MGMT.SALESBOT.CATALOG.SYNC_ERROR'), 'error');
+      return;
     }
-    
-    // Find all knowledge sources with tab = 4 (sales bot product)
-    let existingKnowledgeTab4 = knowledgeSources.filter(k => k.tab === 4);
-    
-    // Delete all existing knowledge sources for tab 4 to replace with new chunked data
-    for (const knowledge of existingKnowledgeTab4) {
-      try {
-        await aiAgents.deleteKnowledgeText(props.data.id, knowledge.id);
-      } catch (error) {
-        console.warn('Failed to delete existing knowledge:', error);
-      }
-    }
-    
-    // Split the content into chunks to handle the 20,000 character limit
-    const rawData = syncDataResponse.data.data;
-    const chunks = splitTextIntoChunks(rawData, 19000); // 19K to leave safety margin
-    
-    console.log(`Splitting product data into ${chunks.length} chunks`);
-    
-    // Create knowledge sources for each chunk
-    for (let i = 0; i < chunks.length; i++) {
-      const chunkText = chunks.length > 1 
-        ? `[Product Catalog - Part ${i + 1}/${chunks.length}]\n\n${chunks[i]}`
-        : chunks[i];
-      
-      try {
-        const createRequest = {
-          id: null,
-          tab: 4,
-          text: chunkText,
-        };
-        await aiAgents.addKnowledgeText(props.data.id, createRequest);
-        
-        // Small delay between chunks to avoid overwhelming the server
-        if (i < chunks.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-      } catch (error) {
-        console.error(`Failed to create knowledge chunk ${i + 1}:`, error);
-        showNotification(`Failed to save product data chunk ${i + 1}. Some data may be missing.`, 'error');
-      }
-    }
-    
-    const message = chunks.length > 1 
-      ? `${t('AGENT_MGMT.SALESBOT.CATALOG.SYNC_SUCCESS')} (${chunks.length} chunks created)`
-      : t('AGENT_MGMT.SALESBOT.CATALOG.SYNC_SUCCESS');
+    const message = t('AGENT_MGMT.SALESBOT.CATALOG.SYNC_SUCCESS');
     
     showNotification(message, 'success');
   } catch (error) {

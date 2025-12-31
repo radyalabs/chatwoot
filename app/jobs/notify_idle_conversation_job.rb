@@ -6,7 +6,8 @@ class NotifyIdleConversationJob < ApplicationJob
   MESSAGE_TYPE_TEMPLATE = 3
   CONTENT_TYPE_TEXT = 0
   MESSAGE_STATUS_SENT = 0
-  DEFAULT_DURATION = ENV.fetch('IDLE_CONVERSATIONS_DURATION', 5).to_i
+  DEFAULT_DURATION = ENV.fetch('IDLE_CONVERSATION_DURATION', 5).to_i
+  DEFAULT_UNIT = ENV.fetch('IDLE_CONVERSATION_UNIT', 'minutes')
 
   def perform
     Rails.logger.info('[NotifyIdleConversationJob] Starting processing idle conversations')
@@ -36,7 +37,7 @@ class NotifyIdleConversationJob < ApplicationJob
   end
 
   def idle_since?(last_activity_at, duration)
-    last_activity_at <= duration.minutes.ago
+    last_activity_at <= duration.send(DEFAULT_UNIT).ago
   end
 
   def idle_conversation_processor(idle_conversation)

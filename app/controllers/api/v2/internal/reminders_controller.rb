@@ -61,6 +61,61 @@ class Api::V2::Internal::RemindersController < ActionController::API
     end
   end
 
+  # PUT /api/v2/internal/reminders/upsert
+  # Creates or updates a reminder based on unique constraint (index_elements)
+  #
+  # Required params (index_elements):
+  #   - account_id, inbox_id, ai_agent_id, conversation_id, service_id
+  #
+  # Optional params (updatable):
+  #   - scheduled_at, customer_name, contact, service_type, service_name, service_location
+  #
+  # Behavior:
+  #   - If reminder with matching index_elements exists, update it
+  #   - If no match, create new reminder
+  #   - Null values in payload do NOT overwrite existing values
+  #
+  def upsert
+    Rails.logger.info("[Internal::RemindersController] Upserting reminder with params: #{upsert_params.inspect}")
+
+    result = Reminders::UpsertService.new(upsert_params).perform
+    was_new_record = result.previous_changes.key?('id')
+
+    Rails.logger.info("[Internal::RemindersController] Reminder upserted successfully: id=#{result.id}, status=#{was_new_record ? 'created' : 'updated'}")
+    render json: { id: result.id, status: was_new_record ? 'created' : 'updated' }, status: :ok
+  rescue ActiveRecord::RecordInvalid => e
+    Rails.logger.error("[Internal::RemindersController] Upsert failed: #{e.message}")
+    render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
+  rescue ArgumentError => e
+    Rails.logger.error("[Internal::RemindersController] Upsert validation failed: #{e.message}")
+    render json: { error: e.message }, status: :bad_request
+  end
+
+  # DELETE /api/v2/internal/reminders/delete
+  # Deletes a single reminder by constraint fields (index_elements)
+  #
+  # Required params:
+  #   - account_id, inbox_id, ai_agent_id, conversation_id, service_id
+  #
+  def delete
+    Rails.logger.info("[Internal::RemindersController] Deleting reminder with params: #{delete_params.inspect}")
+
+    reminder = Reminder.find_by(delete_params.to_h)
+
+    if reminder.nil?
+      Rails.logger.warn('[Internal::RemindersController] Reminder not found for deletion')
+      return render json: { error: 'Reminder not found' }, status: :not_found
+    end
+
+    reminder.destroy!
+
+    Rails.logger.info("[Internal::RemindersController] Deleted reminder: id=#{reminder.id}")
+    render json: { id: reminder.id, status: 'deleted' }, status: :ok
+  rescue ActiveRecord::RecordNotDestroyed => e
+    Rails.logger.error("[Internal::RemindersController] Delete failed: #{e.message}")
+    render json: { error: 'Failed to delete reminder' }, status: :unprocessable_entity
+  end
+
   private
 
   def authenticate_api_key!
@@ -76,8 +131,10 @@ class Api::V2::Internal::RemindersController < ActionController::API
   def reminder_params
     params.permit(
       :account_id,
+      :inbox_id,
       :ai_agent_id,
       :conversation_id,
+      :service_id,
       :scheduled_at,
       :customer_name,
       :contact,
@@ -85,6 +142,26 @@ class Api::V2::Internal::RemindersController < ActionController::API
       :service_name,
       :service_location
     )
+  end
+
+  def upsert_params
+    params.permit(
+      :account_id,
+      :inbox_id,
+      :ai_agent_id,
+      :conversation_id,
+      :service_id,
+      :scheduled_at,
+      :customer_name,
+      :contact,
+      :service_type,
+      :service_name,
+      :service_location
+    )
+  end
+
+  def delete_params
+    params.permit(:account_id, :inbox_id, :ai_agent_id, :conversation_id, :service_id)
   end
 
   def parse_scheduled_at(scheduled_at_str)

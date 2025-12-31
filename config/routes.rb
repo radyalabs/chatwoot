@@ -540,7 +540,12 @@ Rails.application.routes.draw do
 
       # Internal API for external services (jangkau.langgraph, etc.)
       namespace :internal do
-        resources :reminders, only: [:create]
+        resources :reminders, only: [:create] do
+          collection do
+            put :upsert
+            delete :delete
+          end
+        end
       end
     end
   end

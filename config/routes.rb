@@ -546,6 +546,12 @@ Rails.application.routes.draw do
             delete :delete
           end
         end
+
+        resources :sheet_numbering_configs, only: [] do
+          collection do
+            post :next_number
+          end
+        end
       end
     end
   end

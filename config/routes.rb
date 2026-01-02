@@ -500,6 +500,11 @@ Rails.application.routes.draw do
               get :conversation_traffic
               get :bot_metrics
               get :credit_usage
+              get :funnel_metrics
+              get :trend_metrics
+              get :handover_metrics
+              get :agents_daily_metrics
+              get :agent_performance_metrics
               get :ai_agent_metrics
             end
           end

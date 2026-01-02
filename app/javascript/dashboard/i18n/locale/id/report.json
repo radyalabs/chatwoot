@@ -143,11 +143,18 @@
     }
   },
   "AGENT_REPORTS": {
-    "HEADER": "Gambaran Agen",
+    "HEADER": "Percakapan Agen",
     "LOADING_CHART": "Memuat data grafik...",
     "NO_ENOUGH_DATA": "Kami belum menerima cukup data untuk membuat laporan, Silakan coba lagi nanti.",
     "DOWNLOAD_AGENT_REPORTS": "Unduh laporan agen",
     "FILTER_DROPDOWN_LABEL": "Pilih Agen",
+    "HANDOVER_REPORT": {
+      "TITLE": "Statistik Pengalihan",
+      "TOTAL": "Total Pengalihan",
+      "RATE": "Persentase Pengalihan",
+      "TOP_AGENT": "Agen Teratas",
+      "DISTRIBUTION": "Sebaran Alasan Pengalihan"
+    },
     "AGENT_PERFORMANCE_TABLE": {
       "HEADER": "Percakapan oleh Agen",
       "LOADING_MESSAGE": "Memuat metrik agen...",
@@ -223,10 +230,11 @@
     }
   },
   "LABEL_REPORTS": {
-    "HEADER": "Gambaran Label",
+    "HEADER": "Analitik Chat",
     "LOADING_CHART": "Memuat data grafik...",
     "NO_ENOUGH_DATA": "Kami belum menerima cukup data untuk membuat laporan, Silakan coba lagi nanti.",
     "DOWNLOAD_LABEL_REPORTS": "Unduh laporan label",
+    "TOTAL": "Total Percakapan",
     "TOPICS_TREND": {
       "HEADER": "Analisis Tren Topik",
       "NO_LABELS": "Tidak ada data tersedia"
@@ -571,7 +579,7 @@
     }
   },
   "OVERVIEW_REPORTS": {
-    "HEADER": "Gambaran",
+    "HEADER": "Ringkasan",
     "LIVE": "Langsung",
     "DOWNLOAD": "Ekspor",
     "EXPORT_TO_CSV": "Ekspor CSV",
@@ -586,6 +594,14 @@
       "UNATTENDED": "Tidak Ditangani",
       "UNASSIGNED": "Belum Ditugaskan",
       "PENDING": "Ditunda"
+    },
+    "CONVERSATION_FUNNEL": {
+      "HEADER": "Alur Percakapan",
+      "TOTAL_STARTER": "Total Memulai Chat",
+      "ENGAGE_USER": "User Terlibat",
+      "HIGH_INTENT": "Niat Tinggi",
+      "ASSISTED_USER": "User Terbantu",
+      "REPEAT_BUYER": "Pembeli Berulang"
     },
     "CONVERSATION_HEATMAP": {
       "HEADER": "Lalu Lintas Percakapan",

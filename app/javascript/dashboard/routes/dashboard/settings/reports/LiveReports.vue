@@ -56,6 +56,8 @@ export default {
       accountConversationHeatmap: 'getAccountConversationHeatmapData',
       uiFlags: 'getOverviewUIFlags',
       creditUsageMetric: 'getCreditUsageMetric',
+      funnelData: 'getFunnelData',
+      trendData: 'getTrendData',
     }),
     // User tier based on subscription plan
     userTier() {
@@ -75,6 +77,9 @@ export default {
         ];
       }
       return [];
+    },
+    hasFunnelData() {
+      return this.funnelData && Number(this.funnelData.total_starter) > 0;
     },
     requestPayload() {
       return {
@@ -105,60 +110,91 @@ export default {
       return metric;
     },
     conversationTrendData() {
-      // Dummy data for demonstration - replace with real data from store
-      const dummyTimestamps = [];
-      const totalChats = [];
-      const agentChats = [];
-      const botChats = [];
-      
-      // Use filter dates if available, otherwise default to last 7 days
-      const endDate = this.to ? new Date(this.to * 1000) : new Date();
-      const startDate = this.from ? new Date(this.from * 1000) : new Date(Date.now() - 6 * 24 * 60 * 60 * 1000);
-      
-      // Calculate number of days between start and end date
-      const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-      const numDays = Math.max(1, Math.min(daysDiff, 30)); // Limit to 30 days max
-      
-      // Generate dummy data for the date range
-      for (let i = numDays - 1; i >= 0; i--) {
-        const date = new Date(endDate);
-        date.setDate(date.getDate() - i);
-        // Convert to Unix timestamp (seconds)
-        const timestamp = Math.floor(date.getTime() / 1000);
-        dummyTimestamps.push(timestamp);
-        
-        const total = Math.floor(Math.random() * 100) + 50;
-        const bot = Math.floor(total * 0.6); // 60% handled by bot
-        const agent = total - bot; // Rest handled by agent
-        
-        totalChats.push(total);
-        botChats.push(bot);
-        agentChats.push(agent);
+      const rawData = Array.isArray(this.trendData) ? this.trendData : [];
+
+      if (rawData.length === 0) {
+        return { data1: {}, data2: {}, data3: {} };
       }
-      
+
       return {
         data1: {
           label: 'OVERVIEW_REPORTS.CONVERSATION_TRENDS_LINE_CHART.TOTAL_CHATS',
-          data: totalChats.map((value, index) => ({
-            timestamp: dummyTimestamps[index],
-            value: value
-          }))
+          data: rawData.map(d => ({ timestamp: d.timestamp, value: d.total || 0 }))
         },
         data2: {
           label: 'OVERVIEW_REPORTS.CONVERSATION_TRENDS_LINE_CHART.BOT_CHATS', 
-          data: botChats.map((value, index) => ({
-            timestamp: dummyTimestamps[index],
-            value: value
-          }))
+          data: rawData.map(d => ({ timestamp: d.timestamp, value: d.bot || 0 }))
         },
         data3: {
           label: 'OVERVIEW_REPORTS.CONVERSATION_TRENDS_LINE_CHART.AGENT_CHATS',
-          data: agentChats.map((value, index) => ({
-            timestamp: dummyTimestamps[index], 
-            value: value
-          }))
+          data: rawData.map(d => ({ timestamp: d.timestamp, value: d.agent || 0 }))
         }
       };
+    },  
+    // Data untuk Funnel Chart
+    funnelStats() {
+      const data = this.funnelData || {};
+
+      const num = (val) => Number(val) || 0;
+      const fmt = (val) => num(val).toLocaleString();
+
+      const calcPercent = (val, total) => {
+        const v = num(val);
+        const t = num(total);
+        return t > 0 ? Math.round((v / t) * 100) : 0;
+      };
+
+      const totalStarter = num(data.total_starter);
+      const engageUser = num(data.engage_user);
+      const highIntent = num(data.high_intent);
+      const assistedBot = num(data.assisted_bot);
+      const assistedCs = num(data.assisted_cs);
+      const repeatBuyer = num(data.repeat_buyer);
+      const assistedTotal = assistedBot + assistedCs;
+
+      return [
+        { 
+          label: this.$t('OVERVIEW_REPORTS.CONVERSATION_FUNNEL.TOTAL_STARTER'),
+          count: fmt(totalStarter), 
+          percentVal: 100,
+          displayPercent: '100%',
+          icon: '💬',
+          colorClass: 'bg-yellow-500 dark:bg-yellow-600' 
+        },
+        { 
+          label: this.$t('OVERVIEW_REPORTS.CONVERSATION_FUNNEL.ENGAGE_USER'),
+          count: fmt(engageUser), 
+          percentVal: calcPercent(engageUser, totalStarter),
+          displayPercent: `${calcPercent(engageUser, totalStarter)}%`,
+          icon: '👥',
+          colorClass: 'bg-indigo-500 dark:bg-indigo-600'
+        },
+        { 
+          label: this.$t('OVERVIEW_REPORTS.CONVERSATION_FUNNEL.HIGH_INTENT'),
+          count: fmt(highIntent), 
+          percentVal: calcPercent(highIntent, totalStarter),
+          displayPercent: `${calcPercent(highIntent, totalStarter)}%`,
+          icon: '📋',
+          colorClass: 'bg-purple-500 dark:bg-purple-600'
+        },
+        { 
+          label: this.$t('OVERVIEW_REPORTS.CONVERSATION_FUNNEL.ASSISTED_USER'),
+          count: fmt(assistedTotal), 
+          percentVal: calcPercent(assistedTotal, totalStarter), 
+          displayPercent: '',
+          icon: '🤖',
+          isSpecial: true,
+          colorClass: 'bg-pink-600 dark:bg-pink-700'
+        },
+        { 
+          label: this.$t('OVERVIEW_REPORTS.CONVERSATION_FUNNEL.REPEAT_BUYER'),
+          count: fmt(repeatBuyer), 
+          percentVal: calcPercent(repeatBuyer, totalStarter),
+          displayPercent: `${calcPercent(repeatBuyer, totalStarter)}%`,
+          icon: '✅',
+          colorClass: 'bg-green-500 dark:bg-green-600'
+        },
+      ];
     },
   },
   mounted() {
@@ -189,6 +225,13 @@ export default {
       this.fetchAgentConversationMetric();
       this.fetchHeatmapData();
       this.fetchCreditUsageMetric();
+      const reportObj = {
+        id: this.$route.params.accountId,
+        from: this.from,
+        to: this.to
+      };
+      this.$store.dispatch('fetchFunnelData', reportObj);
+      this.$store.dispatch('fetchTrendData', reportObj);
     },
     downloadHeatmapData() {
       let to = endOfDay(new Date());
@@ -201,13 +244,6 @@ export default {
       if (this.uiFlags.isFetchingAccountConversationsHeatmap) {
         return;
       }
-
-      // the data for the last 6 days won't ever change,
-      // so there's no need to fetch it again
-      // but we can write some logic to check if the data is already there
-      // if it is there, we can refetch data only for today all over again
-      // and reconcile it with the rest of the data
-      // this will reduce the load on the server doing number crunching
       let to = endOfDay(new Date());
       let from = startOfDay(subDays(to, 6));
 
@@ -240,21 +276,19 @@ export default {
         type: 'account',
       });
     },
-    // Method to fetch conversation trend data - commented for now
-    // fetchConversationTrendData() {
-    //   this.$store.dispatch('fetchConversationTrendData', {
-    //     from: getUnixTime(startOfDay(subDays(new Date(), 6))),
-    //     to: getUnixTime(endOfDay(new Date())),
-    //     groupBy: 'day'
-    //   });
-    // },
     onFilterChange({ from, to, groupBy, businessHours }) {
+      if (
+        this.from === from && 
+        this.to === to && 
+        this.groupBy?.period === groupBy?.period && 
+        this.businessHours === businessHours
+      ) {
+        return;
+      }
       this.from = from;
       this.to = to;
       this.groupBy = groupBy;
       this.businessHours = businessHours;
-      
-      // Refresh all data with new filters
       this.fetchAllData();
     },
     onPageNumberChange(pageIndex) {
@@ -268,7 +302,6 @@ export default {
       this.dropdownOpen = false;
     },
     exportData(format) {
-      // Check if user has permission for this export type
       const hasPermission = this.availableExportOptions.some(option => option.key === format);
       if (!hasPermission) {
         this.$bus.$emit('newToastMessage', {
@@ -278,9 +311,7 @@ export default {
         this.closeDropdown();
         return;
       }
-      
       console.log(`Exporting data to ${format}`);
-      // TODO: Implement actual export functionality
       this.closeDropdown();
     },
     closeDropdownOnOutsideClick(event) {
@@ -296,54 +327,53 @@ export default {
 
 <template>
   <div class="flex flex-col gap-4 pb-6">
-    <ReportHeader :header-title="$t('OVERVIEW_REPORTS.HEADER')" class="sticky" >
-      <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="relative inline-block text-left" ref="dropdownContainer">
-        <button
-          @click="toggleDropdown"
-          class="inline-flex justify-center w-full rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 text-white hover:opacity-90 transition-opacity"
-          style="background-color: #389947"
-        >
-          {{ $t('OVERVIEW_REPORTS.DOWNLOAD') }}
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="-mr-1 ml-2 h-5 w-5"
-            viewBox="0 0 20 20"
-            fill="currentColor"
+    <ReportHeader :header-title="$t('OVERVIEW_REPORTS.HEADER')" class="sticky">
+      <div class="flex flex-row items-center gap-2">
+        
+        <ReportFilterSelector
+          :show-agents-filter="false"
+          :show-group-by-filter="false"
+          :show-business-hours-switch="false"
+          :show-labels-filter="false"
+          :show-inbox-filter="false"
+          :show-rating-filter="false"
+          :show-team-filter="false"
+          @filter-change="onFilterChange"
+          class="m-0"
+        />
+
+        <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="relative inline-block text-left" ref="dropdownContainer">
+          <button
+            @click="toggleDropdown"
+            class="inline-flex justify-center w-full rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 text-white hover:opacity-90 transition-opacity"
+            style="background-color: #389947"
           >
-            <path
-              fill-rule="evenodd"
-              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-              clip-rule="evenodd"
-            />
-          </svg>
-        </button>
-        <div
-          v-if="dropdownOpen"
-          class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-n-solid-2 dark:bg-gray-800 ring-1 ring-black dark:ring-gray-600 ring-opacity-5 focus:outline-none"
-        >
-          <div class="py-1">
-            <a
-              v-for="option in availableExportOptions"
-              :key="option.key"
-              href="#"
-              class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-green-100 dark:hover:bg-gray-700"
-              @click="exportData(option.key)"
-            >
-              {{ $t(option.label) }}
-            </a>
+            {{ $t('OVERVIEW_REPORTS.DOWNLOAD') }}
+            <svg xmlns="http://www.w3.org/2000/svg" class="-mr-1 ml-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
+          
+          <div v-if="dropdownOpen" class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-n-solid-2 dark:bg-gray-800 ring-1 ring-black dark:ring-gray-600 ring-opacity-5 focus:outline-none z-50">
+            <div class="py-1">
+              <a
+                v-for="option in availableExportOptions"
+                :key="option.key"
+                href="#"
+                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-green-100 dark:hover:bg-gray-700"
+                @click="exportData(option.key)"
+              >
+                {{ $t(option.label) }}
+              </a>
+            </div>
           </div>
         </div>
+
       </div>
-      <!-- Show upgrade message for users with insufficient tier -->
-      <!-- <div v-else-if="userTier && userTier !== 'pertamax_turbo' && userTier !== 'pertamax'" 
-           class="text-sm text-gray-500 dark:text-gray-400">
-        {{ $t('OVERVIEW_REPORTS.UPGRADE_FOR_EXPORT') }}
-      </div> -->
     </ReportHeader>
-    <div class="flex flex-col items-center md:flex-row gap-4">
-      <div
-        class="flex-1 w-full max-w-full md:w-[65%] md:max-w-[65%] conversation-metric"
-      >
+
+    <div class="flex flex-col gap-4">
+      <div class="w-full conversation-metric">
         <MetricCard
           :header="$t('OVERVIEW_REPORTS.CHAT_SUMMARY.HEADER')"
           :is-loading="uiFlags.isFetchingAccountConversationMetric"
@@ -372,7 +402,11 @@ export default {
               {{ $t('OVERVIEW_REPORTS.CHAT_SUMMARY.RESOLVED_PERCENTAGE') }}
             </h3>
             <p class="text-n-slate-12 text-3xl mb-0 mt-1">
-              {{ accountConversationMetric?.ai_responses/accountConversationMetric?.open * 100 || 0 }}%
+              {{ 
+                accountConversationMetric?.open > 0 
+                  ? ((creditUsageMetric?.ai_responses || 0) / accountConversationMetric?.open * 100).toFixed(0) 
+                  : 0 
+              }}%
             </p>
           </div>
           <div class="flex-1 min-w-0 pb-2 pr-2">
@@ -385,25 +419,86 @@ export default {
           </div>
         </MetricCard>
       </div>
-      <div class="max-h-[100%] flex-1 w-full max-w-full md:w-[35%] md:max-w-[35%]">
-        <MetricCard :header="$t('OVERVIEW_REPORTS.AGENT_STATUS.HEADER')">
-          <div
-            v-for="(metric, name, index) in agentStatusMetrics"
-            :key="index"
-            class="flex-1 min-w-0 pb-2"
-          >
-            <h3 class="text-sm">
-              {{ name }}
-            </h3>
-            <p class="text-n-slate-12 text-3xl mb-0 mt-1">
-              {{ metric }}
-            </p>
-          </div>
-        </MetricCard>
-      </div>
     </div>
     
-    <!-- Conversation Trends Chart -->
+    <div class="w-full">
+      <MetricCardFull class="w-full max-w-full">
+        <template #header>
+          <div class="flex flex-col gap-4 w-full">
+            <div class="flex items-center gap-2 flex-row">
+              <h5 class="mb-0 text-n-slate-12 font-medium text-lg">
+                {{ $t('OVERVIEW_REPORTS.CONVERSATION_FUNNEL.HEADER') }}
+              </h5>
+              <span class="flex flex-row items-center py-0.5 px-2 rounded bg-green-700 dark:bg-green-700 text-white text-xs">
+                <span class="bg-white dark:bg-white h-1 w-1 rounded-full mr-1 rtl:mr-0 rtl:ml-0"/>
+                <span class="text-xs text-grey-700 dark:text-grey-700">
+                  {{ $t('OVERVIEW_REPORTS.LIVE') }}
+                </span>
+              </span>
+            </div>
+            </div>
+        </template>
+        
+        <div class="flex flex-col w-full px-4 py-6">
+          
+          <div v-if="hasFunnelData" class="flex flex-col items-center w-full gap-2">
+            <div 
+              v-for="(item, index) in funnelStats" 
+              :key="index"
+              class="relative flex flex-col justify-center items-center group transition-all duration-500 ease-in-out"
+              :style="{ width: `${Math.max(item.percentVal, 25)}%` }" 
+            >
+               <div 
+                class="w-full relative px-4 py-3 rounded-md shadow-sm border border-white/10 flex justify-between items-center cursor-default hover:brightness-110 hover:scale-[1.01] transition-transform min-w-[320px]"
+                :class="item.colorClass"
+              >
+                <div class="flex items-center gap-3 overflow-hidden z-10 max-w-[42%]">
+                  <span class="text-lg drop-shadow-md filter flex-shrink-0">
+                    {{ item.icon }}
+                  </span>
+                  <div class="flex flex-col text-left">
+                    <span class="text-sm font-bold leading-tight whitespace-normal">
+                      {{ item.label }}
+                    </span>
+                  </div>
+
+                </div>
+
+                <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
+                  <span class="text-sm font-bold leading-tight drop-shadow-sm text-white/90">
+                    {{ item.displayPercent || '0%' }}
+                  </span>
+                </div>
+
+                <div class="text-right flex flex-col items-end pl-2 min-w-[50px] z-10">
+                  <span class="text-sm font-bold leading-tight">
+                    {{ item.count }}
+                  </span>
+                  </div>
+
+              </div>
+
+              <div v-if="item.isSpecial" class="flex gap-2 mt-1 animate-fadeIn">
+                 <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 font-semibold shadow-sm">
+                   🤖 BOT: {{ item.botPct || 0 }}%
+                 </span>
+                 <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 font-semibold shadow-sm">
+                   👨‍💻 CS: {{ item.csPct || 0 }}%
+                 </span>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="flex items-center justify-center h-40">
+            <span class="text-sm text-gray-600 dark:text-gray-400">
+              {{ $t('REPORT.NO_ENOUGH_DATA') }}
+            </span>
+          </div>
+
+        </div>
+      </MetricCardFull>
+    </div>
+
     <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo' || userTier === 'pertalite'" class="flex flex-row flex-wrap max-w-full">
       <MetricCardFull class="w-full max-w-full">
         <template #header>
@@ -412,30 +507,14 @@ export default {
               <h5 class="mb-0 text-n-slate-12 font-medium text-lg">
                 {{ $t('OVERVIEW_REPORTS.CONVERSATION_TRENDS_LINE_CHART.HEADER') }}
               </h5>
-              <span
-                  class="flex flex-row items-center py-0.5 px-2 rounded bg-green-700 dark:bg-green-700 text-white text-xs"
-              >
-                <span
-                  class="bg-white dark:bg-white h-1 w-1 rounded-full mr-1 rtl:mr-0 rtl:ml-0"
-                />
+              <span class="flex flex-row items-center py-0.5 px-2 rounded bg-green-700 dark:bg-green-700 text-white text-xs">
+                <span class="bg-white dark:bg-white h-1 w-1 rounded-full mr-1 rtl:mr-0 rtl:ml-0" />
                 <span class="text-xs text-grey-700 dark:text-grey-700">
                   {{ $t('OVERVIEW_REPORTS.LIVE') }}
                 </span>
               </span>
             </div>
-            <div class="w-full">
-              <ReportFilterSelector
-                :show-agents-filter="false"
-                :show-group-by-filter="false"
-                :show-business-hours-switch="false"
-                :show-labels-filter="false"
-                :show-inbox-filter="false"
-                :show-rating-filter="false"
-                :show-team-filter="false"
-                @filter-change="onFilterChange"
-              />
             </div>
-          </div>
         </template>
         <div class="p-4">
           <div class="h-80">
@@ -455,7 +534,6 @@ export default {
       </MetricCardFull>
     </div>
     
-    <!-- Traffic heatmap-->
     <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="flex flex-row flex-wrap max-w-full">
       <MetricCard :header="$t('OVERVIEW_REPORTS.CONVERSATION_HEATMAP.HEADER')">
         <template #control>
@@ -476,7 +554,6 @@ export default {
       </MetricCard>
     </div>
 
-    <!-- Agents Summary Table -->
     <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo' || userTier === 'pertalite'" class="flex flex-row flex-wrap max-w-full">
       <MetricCard :header="$t('OVERVIEW_REPORTS.AGENT_CONVERSATIONS.HEADER')">
         <AgentTable

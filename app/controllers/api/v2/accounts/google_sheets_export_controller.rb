@@ -20,10 +20,14 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
   def status
     # Send GET request to check authorization status
     api_endpoint = GlobalConfigService.load('EXTERNAL_TOKEN_API_URL', nil)
+    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
     status_url = "#{api_endpoint}/#{Current.account.id}/status"
 
     begin
-      response = HTTParty.get(status_url)
+      response = HTTParty.get(
+        status_url,
+        headers: { 'X-API-Key' => api_key }
+      )
 
       if response.success?
         authorized = response.parsed_response['authorized'] || false
@@ -162,6 +166,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     return render json: { error: 'Missing required parameter: account_id' }, status: :bad_request unless account_id
 
     base_api_url = GlobalConfigService.load('EXTERNAL_TOKEN_API_URL', nil)
+    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
     return render json: { error: 'EXTERNAL_TOKEN_API_URL not configured' }, status: :service_unavailable unless base_api_url
 
     # Replace base path and append `/disconnect`
@@ -172,7 +177,10 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     begin
       response = HTTParty.delete(
         target_url,
-        headers: { 'Content-Type' => 'application/json' },
+        headers: {
+          'Content-Type' => 'application/json',
+          'X-API-Key' => api_key
+        },
         timeout: 15
       )
 
@@ -299,6 +307,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
 
     # Build external API URL
     base_api_url = GlobalConfigService.load('EXTERNAL_TOKEN_API_URL', nil)
+    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
     return render json: { error: 'EXTERNAL_TOKEN_API_URL not configured' }, status: :service_unavailable unless base_api_url
 
     # Replace the base path and append `/spreadsheet`
@@ -308,7 +317,10 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     begin
       response = HTTParty.post(
         target_url,
-        headers: { 'Content-Type' => 'application/json' },
+        headers: {
+          'Content-Type' => 'application/json',
+          'X-API-Key' => api_key
+        },
         body: payload.to_json,
         timeout: 10
       )

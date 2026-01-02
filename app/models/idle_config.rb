@@ -14,7 +14,14 @@
 #
 # Indexes
 #
-#  index_idle_configs_on_account_id_and_agent_id  (account_id,agent_id) UNIQUE
+#  index_idle_configs_on_account_id                  (account_id)
+#  index_idle_configs_on_account_id_and_ai_agent_id  (account_id,ai_agent_id) UNIQUE
+#  index_idle_configs_on_ai_agent_id                 (ai_agent_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (account_id => accounts.id)
+#  fk_rails_...  (ai_agent_id => ai_agents.id)
 #
 
 class IdleConfig < ApplicationRecord

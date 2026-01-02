@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2025_12_24_120000) do
+ActiveRecord::Schema[7.0].define(version: 2025_12_31_155038) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -745,14 +745,17 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_24_120000) do
   end
 
   create_table "idle_configs", force: :cascade do |t|
-    t.integer "account_id", null: false
-    t.string "agent_id", null: false
-    t.string "agent_name"
-    t.string "agent_type"
-    t.integer "idle_duration_minutes", default: 30
+    t.bigint "account_id", null: false
+    t.bigint "ai_agent_id", null: false
+    t.boolean "enabled", default: true, null: false
+    t.integer "duration", default: 30, null: false
+    t.string "action", default: "resolve", null: false
+    t.text "message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["account_id", "agent_id"], name: "index_idle_configs_on_account_id_and_agent_id", unique: true
+    t.index ["account_id", "ai_agent_id"], name: "index_idle_configs_on_account_id_and_ai_agent_id", unique: true
+    t.index ["account_id"], name: "index_idle_configs_on_account_id"
+    t.index ["ai_agent_id"], name: "index_idle_configs_on_ai_agent_id"
   end
 
   create_table "idle_conversations", force: :cascade do |t|
@@ -1187,6 +1190,22 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_24_120000) do
     t.index ["user_id"], name: "index_reporting_events_on_user_id"
   end
 
+  create_table "sheet_numbering_configs", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "ai_agent_id", null: false
+    t.string "prefix"
+    t.string "format_pattern", default: "[NUMBER]/[MONTH]/[YEAR]", null: false
+    t.integer "current_value", default: 1, null: false
+    t.integer "number_padding", default: 3, null: false
+    t.string "reset_interval", default: "never", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "numbering_key", default: "default", null: false
+    t.index ["account_id", "ai_agent_id", "numbering_key"], name: "idx_sheet_numbering_configs_unique_key", unique: true
+    t.index ["account_id"], name: "index_sheet_numbering_configs_on_account_id"
+    t.index ["ai_agent_id"], name: "index_sheet_numbering_configs_on_ai_agent_id"
+  end
+
   create_table "shipping_stores", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.bigint "ai_agent_id", null: false
@@ -1553,6 +1572,8 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_24_120000) do
   add_foreign_key "reminders", "ai_agents"
   add_foreign_key "reminders", "conversations"
   add_foreign_key "reminders", "inboxes"
+  add_foreign_key "sheet_numbering_configs", "accounts"
+  add_foreign_key "sheet_numbering_configs", "ai_agents"
   add_foreign_key "shipping_stores", "accounts"
   add_foreign_key "shipping_stores", "ai_agents"
   add_foreign_key "subscription_payments", "subscriptions"

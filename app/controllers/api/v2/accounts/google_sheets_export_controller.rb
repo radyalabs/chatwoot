@@ -20,13 +20,13 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
   def status
     # Send GET request to check authorization status
     api_endpoint = GlobalConfigService.load('EXTERNAL_TOKEN_API_URL', nil)
-    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
+    base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
     status_url = "#{api_endpoint}/#{Current.account.id}/status"
 
     begin
       response = HTTParty.get(
         status_url,
-        headers: { 'X-API-Key' => api_key }
+        headers: { 'X-API-Key' => base_url }
       )
 
       if response.success?
@@ -70,7 +70,6 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
 
     # Build external API URL
     base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
-    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
 
     return render json: { error: 'JANGKAU_AGENT_API_URL not configured' }, status: :service_unavailable unless base_url
 
@@ -84,7 +83,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
         body: payload.to_json,
         headers: {
           'Content-Type' => 'application/json',
-          'X-API-Key' => api_key
+          'X-API-Key' => base_url
         }
       )
 
@@ -166,7 +165,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     return render json: { error: 'Missing required parameter: account_id' }, status: :bad_request unless account_id
 
     base_api_url = GlobalConfigService.load('EXTERNAL_TOKEN_API_URL', nil)
-    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
+    base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
     return render json: { error: 'EXTERNAL_TOKEN_API_URL not configured' }, status: :service_unavailable unless base_api_url
 
     # Replace base path and append `/disconnect`
@@ -179,7 +178,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
         target_url,
         headers: {
           'Content-Type' => 'application/json',
-          'X-API-Key' => api_key
+          'X-API-Key' => base_url
         },
         timeout: 15
       )
@@ -232,7 +231,6 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
 
     # Build external API URL
     base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
-    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
 
     return render json: { error: 'JANGKAU_AGENT_API_URL not configured' }, status: :service_unavailable unless base_url
 
@@ -246,7 +244,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
         body: payload.to_json,
         headers: {
           'Content-Type' => 'application/json',
-          'X-API-Key' => api_key
+          'X-API-Key' => base_url
         }
       )
 
@@ -307,7 +305,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
 
     # Build external API URL
     base_api_url = GlobalConfigService.load('EXTERNAL_TOKEN_API_URL', nil)
-    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
+    base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
     return render json: { error: 'EXTERNAL_TOKEN_API_URL not configured' }, status: :service_unavailable unless base_api_url
 
     # Replace the base path and append `/spreadsheet`
@@ -319,7 +317,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
         target_url,
         headers: {
           'Content-Type' => 'application/json',
-          'X-API-Key' => api_key
+          'X-API-Key' => base_url
         },
         body: payload.to_json,
         timeout: 10
@@ -448,7 +446,6 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     end
 
     base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
-    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
 
     return render json: { error: 'JANGKAU_AGENT_API_URL not configured' }, status: :service_unavailable unless base_url
 
@@ -463,7 +460,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
       }.to_json,
       headers: {
         'Content-Type' => 'application/json',
-        'X-API-Key' => api_key
+        'X-API-Key' => base_url
       }
     )
 
@@ -489,7 +486,6 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
 
     # Build external API URL
     base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
-    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
 
     return render json: { error: 'JANGKAU_AGENT_API_URL not configured' }, status: :service_unavailable unless base_url
 
@@ -503,7 +499,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
         body: payload.to_json,
         headers: {
           'Content-Type' => 'application/json',
-          'X-API-Key' => api_key
+          'X-API-Key' => base_url
         }
       )
 

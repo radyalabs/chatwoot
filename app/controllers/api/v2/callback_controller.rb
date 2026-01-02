@@ -89,7 +89,7 @@ class Api::V2::CallbackController < ApplicationController
     require 'json'
 
     api_endpoint = GlobalConfigService.load('EXTERNAL_TOKEN_API_URL', nil)
-    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
+    api_key = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
     return if api_endpoint.blank?
 
     begin

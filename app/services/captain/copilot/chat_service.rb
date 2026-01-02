@@ -1,4 +1,4 @@
-class Captain::Copilot::ChatService
+class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
   include SwitchLocale
   include ResponseFormatChatHelper
 
@@ -69,7 +69,13 @@ class Captain::Copilot::ChatService
 
   def send_reply_failure(reason)
     Rails.logger.error("Bot failure: #{reason}")
-    send_reply(reason, is_handover: false, additional_attributes: { message_type: 3 })
+    response = {
+      response: reason,
+      is_handover: false,
+      is_end_state: false,
+      has_domain_change: false
+    }
+    send_reply(response, additional_attributes: { message_type: 3 })
   end
 
   def handover_processing(content)

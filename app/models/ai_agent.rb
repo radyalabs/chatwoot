@@ -35,6 +35,7 @@ class AiAgent < ApplicationRecord
   has_many :reminders, dependent: :destroy
   has_one :reminder_config, dependent: :destroy
   has_one :idle_config, dependent: :destroy
+  has_many :sheet_numbering_configs, dependent: :destroy
   has_many :shipping_stores, dependent: :destroy
 
   validates :name, :system_prompts, :welcoming_message, presence: true

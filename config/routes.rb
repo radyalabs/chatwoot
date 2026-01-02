@@ -480,6 +480,14 @@ Rails.application.routes.draw do
               end
             end
 
+            # Sheet numbering configs routes
+            resources :sheet_numbering_configs, only: [] do
+              collection do
+                get :config, action: :show_config
+                put :config, action: :update_config
+              end
+            end
+            
             # Shipping configs routes
             resources :shipping_stores, only: [:index] do
               collection do
@@ -536,6 +544,12 @@ Rails.application.routes.draw do
           collection do
             put :upsert
             delete :delete
+          end
+        end
+
+        resources :sheet_numbering_configs, only: [] do
+          collection do
+            get :config
           end
         end
       end

@@ -194,6 +194,7 @@
 <script>
 import { useAlert } from 'dashboard/composables';
 import aiAgents from '../../../../../api/aiAgents';
+import sheetNumberingConfigAPI from '../../../../../api/sheetNumberingConfig';
 import Button from 'dashboard/components-next/button/Button.vue';
 
 export default {
@@ -237,9 +238,9 @@ export default {
       const longMonths = ['JANUARI','FEBRUARI','MARET','APRIL','MEI','JUNI','JULI','AGUSTUS','SEPTEMBER','OKTOBER','NOVEMBER','DESEMBER'];
 
       const now = new Date();
-      const year = now.getFullYear();                
-      const yearShort = String(year).slice(-2);      
-      const monthIndex = now.getMonth();             
+      const year = now.getFullYear();
+      const yearShort = String(year).slice(-2);
+      const monthIndex = now.getMonth();
       const monthNum = String(monthIndex + 1).padStart(2, '0');
 
       let padding = this.form.number_digits || 3;
@@ -263,18 +264,17 @@ export default {
   watch: {
     data: {
       handler(newData) {
-        // Cek jika 'number_format_config' ada di dalam flowData
-        if (newData && 
-            newData.display_flow_data && 
-            newData.display_flow_data.agents_config && 
+        // Load from flowData if number_format exists (backward compatibility)
+        if (newData &&
+            newData.display_flow_data &&
+            newData.display_flow_data.agents_config &&
             newData.display_flow_data.agents_config[0] &&
-            newData.display_flow_data.agents_config[0].configurations && 
+            newData.display_flow_data.agents_config[0].configurations &&
             newData.display_flow_data.agents_config[0].configurations.number_format
         ) {
-          // Gabungkan data dari flowData dengan data default
-          this.form = { 
-            ...this.form, 
-            ...newData.display_flow_data.agents_config[0].configurations.number_format 
+          this.form = {
+            ...this.form,
+            ...newData.display_flow_data.agents_config[0].configurations.number_format
           };
         }
       },
@@ -299,13 +299,12 @@ export default {
         const flowData = JSON.parse(JSON.stringify(this.data.flow_data));
         const displayFlowData = JSON.parse(JSON.stringify(this.data.display_flow_data));
 
-
-        // Pastikan path-nya ada
+        // Ensure path exists
         if (flowData.agents_config && flowData.agents_config[0]) {
           if (!flowData.agents_config[0].configurations) {
             flowData.agents_config[0].configurations = {};
           }
-          // Suntikkan 'form' kita ke lokasi yang benar
+          // Save to flow_data (backward compatibility)
           flowData.agents_config[0].configurations.number_format = this.form;
           displayFlowData.agents_config[0].configurations.number_format = this.form;
         } else {
@@ -317,11 +316,21 @@ export default {
           display_flow_data: displayFlowData,
         };
 
+        // Save to flow_data and display_flow_data
         await aiAgents.updateAgent(this.data.id, payload);
+
+        // Also save to sheet_numbering_configs table
+        const configPayload = {
+          prefix: this.form.prefix,
+          format_pattern: this.form.format,
+          current_value: this.form.currentNumber,
+          number_padding: this.form.number_digits,
+          reset_interval: this.form.resetEvery,
+        };
+        await sheetNumberingConfigAPI.updateConfig(this.data.id, configPayload);
 
         // trigger parent refresh
         this.emitUpdate();
-
 
         this.showSuccessModal = true;
 
@@ -331,7 +340,7 @@ export default {
         this.loading = false;
       }
     },
-    
+
     closeSuccessModal() {
       this.showSuccessModal = false;
     },

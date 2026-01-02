@@ -745,17 +745,14 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_24_120000) do
   end
 
   create_table "idle_configs", force: :cascade do |t|
-    t.bigint "account_id", null: false
-    t.bigint "ai_agent_id", null: false
-    t.boolean "enabled", default: true, null: false
-    t.integer "duration", default: 30, null: false
-    t.string "action", default: "resolve", null: false
-    t.text "message"
+    t.integer "account_id", null: false
+    t.string "agent_id", null: false
+    t.string "agent_name"
+    t.string "agent_type"
+    t.integer "idle_duration_minutes", default: 30
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["account_id", "ai_agent_id"], name: "index_idle_configs_on_account_id_and_ai_agent_id", unique: true
-    t.index ["account_id"], name: "index_idle_configs_on_account_id"
-    t.index ["ai_agent_id"], name: "index_idle_configs_on_ai_agent_id"
+    t.index ["account_id", "agent_id"], name: "index_idle_configs_on_account_id_and_agent_id", unique: true
   end
 
   create_table "idle_conversations", force: :cascade do |t|

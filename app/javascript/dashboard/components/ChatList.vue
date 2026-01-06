@@ -93,6 +93,7 @@ const showAdvancedFilters = ref(false);
 // which mirrors the conversationList.
 const chatsOnView = ref([]);
 const foldersQuery = ref({});
+const isLoadingMore = ref(false);
 const showAddFoldersModal = ref(false);
 const showDeleteFoldersModal = ref(false);
 const isContextMenuOpen = ref(false);
@@ -567,13 +568,20 @@ function resetAndFetchData() {
 }
 
 function loadMoreConversations() {
-  if (hasCurrentPageEndReached.value || chatListLoading.value) {
+  if (isLoadingMore.value || chatListLoading.value) {
     return;
   }
 
-  if (conversationListPagination.value === 1 && conversationList.value.length > 0) {
+  if (hasCurrentPageEndReached.value) {
     return;
   }
+
+  const isInitialLoadComplete = currentPage.value === 0 && conversationList.value.length > 0;
+  if (isInitialLoadComplete) {
+    return;
+  }
+
+  isLoadingMore.value = true;
 
   if (!hasAppliedFiltersOrActiveFolders.value) {
     fetchConversations();
@@ -583,6 +591,10 @@ function loadMoreConversations() {
   } else if (hasAppliedFilters.value) {
     fetchFilteredConversations(appliedFilters.value);
   }
+
+  setTimeout(() => {
+    isLoadingMore.value = false;
+  }, 500);
 }
 
 // Add a method to handle scroll events
@@ -590,7 +602,8 @@ function handleScroll() {
   const scroller = conversationDynamicScroller.value;
   if (scroller && scroller.hasScrollbar) {
     const { scrollTop, scrollHeight, clientHeight } = scroller.$el;
-    if (scrollHeight - (scrollTop + clientHeight) < 100) {
+    const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
+    if (distanceFromBottom < 100 && distanceFromBottom >= 0) {
       loadMoreConversations();
     }
   }

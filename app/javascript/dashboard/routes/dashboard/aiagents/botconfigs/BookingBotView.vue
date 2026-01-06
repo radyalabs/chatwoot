@@ -295,7 +295,7 @@ const AVAILABLE_VARIABLES = computed(() => [
 
 const messagePreview = computed(() => {
   let text = followUpConfig.message || '';
-  AVAILABLE_VARIABLES.forEach(variable => {
+  AVAILABLE_VARIABLES.value.forEach(variable => {
     text = text.replaceAll(variable.value, `<span class="font-bold text-slate-800 dark:text-slate-100">${variable.mock}</span>`);
   });
   return text.replace(/\n/g, '<br>');

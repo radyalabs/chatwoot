@@ -13,7 +13,7 @@ class CleanupNumberingCountersJob < ApplicationJob
     )
 
     base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
-    api_key = ENV.fetch('JANGKAU_INTERNAL_API_KEY', nil)
+    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
 
     unless base_url.present?
       Rails.logger.warn('[CleanupNumberingCountersJob] JANGKAU_AGENT_API_URL not configured, skipping')
@@ -21,14 +21,14 @@ class CleanupNumberingCountersJob < ApplicationJob
     end
 
     response = HTTParty.delete(
-      "#{base_url}/v2/internal/numbering/counters",
+      "#{base_url}v2/internal/numbering/counters",
       body: {
         account_id: account_id,
         ai_agent_id: ai_agent_id
       }.to_json,
       headers: {
         'Content-Type' => 'application/json',
-        'X-Internal-Api-Key' => api_key
+        'X-API-Key' => api_key
       },
       timeout: 10
     )

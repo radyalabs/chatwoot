@@ -26,12 +26,12 @@ class NotifyWaitingForCustomerReplyJob < ApplicationJob
       message: REMINDER_MESSAGE,
       update_attrs: { is_reminded: true }
     )
-    process_conversations(
-      scope: conversations_to_remind_after_assignee,
-      action: :remind_after_assignee,
-      message: REMINDER_MESSAGE,
-      update_attrs: { is_reminded: true }
-    )
+    # process_conversations(
+    #   scope: conversations_to_remind_after_assignee,
+    #   action: :remind_after_assignee,
+    #   message: REMINDER_MESSAGE,
+    #   update_attrs: { is_reminded: true }
+    # )
   end
 
   def process_conversations(scope:, action:, message:, update_attrs:)

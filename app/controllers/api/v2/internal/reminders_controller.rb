@@ -120,7 +120,7 @@ class Api::V2::Internal::RemindersController < ActionController::API
 
   def authenticate_api_key!
     api_key = request.headers['X-Internal-Api-Key'] || params[:api_key]
-    expected_key = ENV.fetch('JANGKAU_INTERNAL_API_KEY', nil)
+    expected_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
 
     unless expected_key.present? && ActiveSupport::SecurityUtils.secure_compare(api_key.to_s, expected_key)
       Rails.logger.warn('[Internal::RemindersController] Invalid API key')

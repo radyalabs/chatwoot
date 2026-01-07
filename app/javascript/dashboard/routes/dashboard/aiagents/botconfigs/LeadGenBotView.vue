@@ -530,6 +530,7 @@ import PrioritiesTab from './cs-bot-tabs/PrioritiesTab.vue'
 import googleSheetsExportAPI from '../../../../api/googleSheetsExport'
 import aiAgents from '../../../../api/aiAgents'
 import idleConfigsAPI from '../../../../api/idleConfigs';
+import remindersAPI from '../../../../api/reminders';
 import { useAlert } from 'dashboard/composables';
 import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue';
 
@@ -878,6 +879,11 @@ async function saveSettings() {
 
     await Promise.all([
       aiAgents.updateAgent(props.data.id, payload),
+      remindersAPI.updateConfig(props.data.id, {
+        enabled: followUpConfig.enabled,
+        minutes_before_booking: followUpConfig.delay,
+        message_template: followUpConfig.message
+      }),
       idleConfigsAPI.updateConfig(props.data.id, {
         duration: idleConfig.duration,
       })

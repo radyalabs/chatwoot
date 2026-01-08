@@ -143,12 +143,19 @@
     }
   },
   "AGENT_REPORTS": {
-    "HEADER": "Agents Overview",
+    "HEADER": "Agents Conversations",
     "DESCRIPTION": "Easily track agent performance with key metrics such as conversations, response times, resolution times, and resolved cases. Click an agent’s name to learn more.",
     "LOADING_CHART": "Loading chart data...",
     "NO_ENOUGH_DATA": "We've not received enough data points to generate report, Please try again later.",
     "DOWNLOAD_AGENT_REPORTS": "Download agent reports",
     "FILTER_DROPDOWN_LABEL": "Select Agent",
+    "HANDOVER_REPORT": {
+      "TITLE": "Handover Statistics",
+      "TOTAL": "Total Handovers",
+      "RATE": "Handover Rate",
+      "TOP_AGENT": "Top Agents",
+      "DISTRIBUTION": "Handover Reason Distribution"
+    },
     "AGENT_PERFORMANCE_TABLE": {
       "HEADER": "Conversations by agents",
       "LOADING_MESSAGE": "Loading agent metrics...",
@@ -164,7 +171,7 @@
     },
     "METRICS": {
       "CONVERSATIONS": {
-        "NAME": "Conversations",
+        "NAME": "Number of Conversations Completed",
         "DESC": "( Total )"
       },
       "INCOMING_MESSAGES": {
@@ -224,11 +231,12 @@
     }
   },
   "LABEL_REPORTS": {
-    "HEADER": "Labels Overview",
+    "HEADER": "Chat Analytics",
     "LOADING_CHART": "Loading chart data...",
     "NO_ENOUGH_DATA": "We've not received enough data points to generate report, Please try again later.",
     "DOWNLOAD_LABEL_REPORTS": "Download label reports",
     "FILTER_DROPDOWN_LABEL": "Select Label",
+    "TOTAL": "Total Chat",
     "TOPICS_TREND": {
       "HEADER": "Topics Trend Analysis",
       "NO_LABELS": "No data available"
@@ -580,6 +588,14 @@
       "UNATTENDED": "Unattended",
       "UNASSIGNED": "Unassigned",
       "PENDING": "Pending"
+    },
+    "CONVERSATION_FUNNEL": {
+      "HEADER": "Conversations Flow",
+      "TOTAL_STARTER": "Total Starter Chat",
+      "ENGAGE_USER": "Engage User",
+      "HIGH_INTENT": "High-Intent User",
+      "ASSISTED_USER": "Assited User",
+      "REPEAT_BUYER": "Repeat Buyer"
     },
     "CONVERSATION_HEATMAP": {
       "HEADER": "Conversation Traffic",

@@ -172,6 +172,30 @@ export default {
         },
       };
     },
+    detailedTopicStats() {
+      const rawTopics = [
+        { topic: 'Billing Issues', count: 1320, botSuccessRate: 0.87 },
+        { topic: 'Account Access', count: 850, botSuccessRate: 0.13 }, // Contoh rate rendah
+        { topic: 'Product Support', count: 640, botSuccessRate: 0.61 },
+        { topic: 'Technical Issues', count: 520, botSuccessRate: 0.45 },
+        { topic: 'Order Status', count: 480, botSuccessRate: 0.92 },
+        { topic: 'Refund Requests', count: 350, botSuccessRate: 0.30 },
+      ];
+
+      return rawTopics.map(item => {
+        const botPercent = Math.round(item.botSuccessRate * 100);
+        const agentPercent = 100 - botPercent;
+        
+        return {
+          label: item.topic,
+          total: item.count,
+          botPercent: botPercent,
+          agentPercent: agentPercent,
+          barColor: botPercent > 50 ? 'bg-green-500 dark:bg-green-600' : 'bg-emerald-500 dark:bg-emerald-600',
+          iconPath: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+        };
+      });
+    },
     sentimentChartData() {
       const data = [
         this.sentimentMetrics.positive,
@@ -640,14 +664,71 @@ export default {
             </div>
             
             <!-- Bar Chart View -->
-            <div v-if="!showWordCloud" class="h-80">
-              <BarChart
-                v-if="topicsBarChartData.datasets[0].data.length > 0"
-                :data="topicsBarChartData"
-                :options="topicsBarChartOptions"
-              />
-              <div v-else class="flex items-center justify-center h-full">
-                <span class="text-sm text-gray-600 dark:text-gray-400">
+            <div v-if="!showWordCloud" class="h-auto min-h-[20rem]">
+              <div v-if="detailedTopicStats.length > 0">
+                <div 
+                  v-for="(topic, index) in detailedTopicStats" 
+                  :key="index"
+                  class="w-full mb-4 group"
+                >
+                  <div class="flex justify-between items-end mb-2">
+                    <div class="flex items-center gap-3">
+                      <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 shadow-sm border border-green-100 dark:border-green-800">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="topic.iconPath" />
+                         </svg>
+                      </div>
+                      
+                      <div>
+                        <h4 class="text-sm font-bold text-gray-800 dark:text-gray-100 m-0">
+                          {{ topic.label }}
+                        </h4>
+                        <div class="flex gap-2 text-xs mt-0.5">
+                          <span class="text-green-600 dark:text-green-400 font-medium">
+                            🤖 Bot {{ topic.botPercent }}%
+                          </span>
+                          <span class="text-gray-400">|</span>
+                          <span class="text-gray-500 dark:text-gray-400">
+                            👨‍💻 Agen {{ topic.agentPercent }}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="text-right">
+                      <span class="block text-lg font-bold text-gray-900 dark:text-white leading-none">
+                        {{ topic.total.toLocaleString() }}
+                      </span>
+                      <span class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">{{ $t('LABEL_REPORTS.TOTAL') }}</span>
+                    </div>
+                  </div>
+
+                  <div class="relative w-full h-7 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 shadow-inner">
+                    
+                    <div 
+                      class="absolute top-0 left-0 h-full flex items-center justify-end px-3 transition-all duration-1000 ease-out shadow-sm"
+                      :class="topic.barColor"
+                      :style="{ width: `${topic.botPercent}%` }"
+                    >
+                      <span v-if="topic.botPercent > 15" class="text-xs font-bold text-white drop-shadow-md">
+                        {{ topic.botPercent }}%
+                      </span>
+                    </div>
+
+                    <div 
+                       class="absolute top-0 right-0 h-full flex items-center justify-center pointer-events-none"
+                       :style="{ width: `${topic.agentPercent}%` }"
+                    >
+                      <span v-if="topic.agentPercent > 15" class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                        {{ topic.agentPercent }}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-else class="flex items-center justify-center h-60 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
+                <span class="text-sm text-gray-500 dark:text-gray-400">
                   {{ $t('REPORT.NO_ENOUGH_DATA') }}
                 </span>
               </div>

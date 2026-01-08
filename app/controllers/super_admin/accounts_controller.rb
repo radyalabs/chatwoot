@@ -42,6 +42,9 @@ class SuperAdmin::AccountsController < SuperAdmin::ApplicationController
 
   def show
     @inboxes = requested_resource.inboxes.includes(contact_inboxes: :contact).order(:id)
+    @conversation_counts = Conversation.where(account_id: requested_resource.id)
+                                        .group(:inbox_id, :contact_id)
+                                        .count
 
     render locals: { page: Administrate::Page::Show.new(dashboard, requested_resource) }
   end

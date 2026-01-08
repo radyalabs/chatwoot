@@ -97,42 +97,185 @@ as well as a link to its edit page.
 </section>
 
 <section class="main-content__body">
+  <style>
+    .inboxes-container {
+      max-height: 70vh;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+    .inboxes-container::-webkit-scrollbar {
+      width: 8px;
+    }
+    .inboxes-container::-webkit-scrollbar-track {
+      background: #f5f5f5;
+      border-radius: 4px;
+    }
+    .inboxes-container::-webkit-scrollbar-thumb {
+      background: #ccc;
+      border-radius: 4px;
+    }
+    .inboxes-container::-webkit-scrollbar-thumb:hover {
+      background: #999;
+    }
+    .inbox-section {
+      margin-bottom: 24px;
+    }
+    .inbox-header {
+      padding: 12px 16px;
+      background: #f5f5f5;
+      border-radius: 6px 6px 0 0;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.2s;
+    }
+    .inbox-header:hover {
+      background: #efefef;
+    }
+    .inbox-header strong {
+      font-size: 14px;
+      color: #111;
+    }
+    .inbox-badge {
+      background: #0b2a4a;
+      color: #fff;
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+    .inbox-header-toggle {
+      font-size: 12px;
+      color: #667781;
+    }
+    .inbox-content {
+      padding: 16px;
+      background: #fff;
+      border-radius: 0 0 6px 6px;
+      border: 1px solid #e0e0e0;
+      border-top: none;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .inbox-content::-webkit-scrollbar {
+      width: 6px;
+    }
+    .inbox-content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .inbox-content::-webkit-scrollbar-thumb {
+      background: #ddd;
+      border-radius: 3px;
+    }
+    .inbox-content::-webkit-scrollbar-thumb:hover {
+      background: #999;
+    }
+    .contact-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .contact-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background 0.15s;
+    }
+    .contact-item:hover {
+      background: #fafafa;
+    }
+    .contact-item:last-child {
+      border-bottom: none;
+    }
+    .contact-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .contact-name {
+      font-weight: 500;
+      color: #111;
+      font-size: 13px;
+      margin-bottom: 2px;
+    }
+    .contact-identifier {
+      font-size: 12px;
+      color: #667781;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .conversation-count {
+      display: inline-block;
+      background: #e8f0fe;
+      color: #0b2a4a;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      margin-top: 4px;
+    }
+    .contact-actions {
+      margin-left: 12px;
+      flex-shrink: 0;
+    }
+    .chat-link {
+      display: inline-block;
+      padding: 6px 12px;
+      background: #0b2a4a;
+      color: #fff;
+      border-radius: 4px;
+      font-size: 12px;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .chat-link:hover {
+      background: #0a1f38;
+    }
+  </style>
+
   <h2 class="main-content__page-title">Inboxes and Contacts</h2>
-  <% if defined?(@inboxes) && @inboxes.present? %>
+  <div class="inboxes-container">
+    <% if defined?(@inboxes) && @inboxes.present? %>
     <% @inboxes.each_with_index do |inbox, idx| %>
-      <details class="panel" <%= 'open' if idx.zero? %>>
-        <summary style="cursor:pointer;">
-          <strong>Inbox:</strong> <%= inbox.name %>
-          <small class="text-muted">(Contacts: <%= inbox.contact_inboxes.size %>)</small>
-        </summary>
-        <div style="margin-top: 12px;">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Contact</th>
-                <th>Identifier</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% inbox.contact_inboxes.each do |ci| %>
-                <% c = ci.contact %>
-                <tr>
-                  <td><%= c&.name || '-' %></td>
-                  <td><%= c&.email || c&.phone_number || '-' %></td>
-                  <td>
-                    <%= link_to 'View chat history', super_admin_account_contact_conversations_path(page.resource, inbox_id: inbox.id, contact_id: c.id), class: 'button' %>
-                  </td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
-        </div>
-      </details>
+      <div class="inbox-section">
+        <details>
+          <summary class="inbox-header">
+            <div style="display: flex; gap: 12px; align-items: center; flex: 1;">
+              <strong>📧 <%= inbox.name %></strong>
+              <span class="inbox-badge"><%= inbox.contact_inboxes.size %> contact<%= inbox.contact_inboxes.size != 1 ? 's' : '' %></span>
+            </div>
+            <span class="inbox-header-toggle">▼</span>
+          </summary>
+          <div class="inbox-content">
+            <% if inbox.contact_inboxes.empty? %>
+              <p style="color: #667781; font-size: 13px; margin: 0;">No contacts in this inbox</p>
+            <% else %>
+              <ul class="contact-list">
+                <% inbox.contact_inboxes.each do |ci| %>
+                  <% c = ci.contact %>
+                  <li class="contact-item">
+                    <div class="contact-info">
+                      <div class="contact-name">👤 <%= c&.name || 'Unknown Contact' %></div>
+                      <div class="contact-identifier"><%= c&.email || c&.phone_number || 'No identifier' %></div>
+                      <div class="conversation-count"><%= pluralize(@conversation_counts[[inbox.id, c.id]] || 0, 'conversation') %></div>
+                    </div>
+                    <div class="contact-actions">
+                      <%= link_to 'View Messages', super_admin_account_contact_conversations_path(page.resource, inbox_id: inbox.id, contact_id: c.id), class: 'chat-link' %>
+                    </div>
+                  </li>
+                <% end %>
+              </ul>
+            <% end %>
+          </div>
+        </details>
+      </div>
     <% end %>
   <% else %>
-    <p>No inboxes found for this account.</p>
+    <p style="color: #667781; font-size: 14px;">No inboxes found for this account.</p>
   <% end %>
+  </div>
 </section>
 
 

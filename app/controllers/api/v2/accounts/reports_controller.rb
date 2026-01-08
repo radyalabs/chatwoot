@@ -177,6 +177,13 @@ class Api::V2::Accounts::ReportsController < Api::V1::Accounts::BaseController
     render json: data_points
   end
 
+  def conversation_traffic
+    # Ambil data dari helper
+    @report_data = generate_conversations_heatmap_report
+    
+    # Langsung kirim sebagai JSON ke frontend
+    render json: @report_data
+  end
 
   def handover_metrics
     range = Time.at(params[:since].to_i)..Time.at(params[:until].to_i)

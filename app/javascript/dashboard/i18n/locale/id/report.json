@@ -170,7 +170,7 @@
     },
     "METRICS": {
       "CONVERSATIONS": {
-        "NAME": "Percakapan",
+        "NAME": "Jumlah Percakapan yang Diselesaikan",
         "DESC": "( Total )"
       },
       "INCOMING_MESSAGES": {
@@ -597,11 +597,11 @@
     },
     "CONVERSATION_FUNNEL": {
       "HEADER": "Alur Percakapan",
-      "TOTAL_STARTER": "Total Memulai Chat",
-      "ENGAGE_USER": "User Terlibat",
-      "HIGH_INTENT": "Niat Tinggi",
-      "ASSISTED_USER": "User Terbantu",
-      "REPEAT_BUYER": "Pembeli Berulang"
+      "TOTAL_STARTER": "Interaksi Awal",
+      "ENGAGE_USER": "Pengguna Aktif",
+      "HIGH_INTENT": "Prospek Potential",
+      "ASSISTED_USER": "Pengguna Terlayani",
+      "REPEAT_BUYER": "Pelanggan Setia"
     },
     "CONVERSATION_HEATMAP": {
       "HEADER": "Lalu Lintas Percakapan",

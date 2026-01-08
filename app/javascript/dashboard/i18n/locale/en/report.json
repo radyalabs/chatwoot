@@ -171,7 +171,7 @@
     },
     "METRICS": {
       "CONVERSATIONS": {
-        "NAME": "Conversations",
+        "NAME": "Number of Conversations Completed",
         "DESC": "( Total )"
       },
       "INCOMING_MESSAGES": {
@@ -589,7 +589,7 @@
       "UNASSIGNED": "Unassigned",
       "PENDING": "Pending"
     },
-    "CONVERSATIONS_FUNNEL": {
+    "CONVERSATION_FUNNEL": {
       "HEADER": "Conversations Flow",
       "TOTAL_STARTER": "Total Starter Chat",
       "ENGAGE_USER": "Engage User",

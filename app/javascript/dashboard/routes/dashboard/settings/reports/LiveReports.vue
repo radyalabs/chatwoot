@@ -18,6 +18,7 @@ import ConversationAnalytics from './Index.vue';
 import Csat from './CsatResponses.vue';
 import AgentReports from './AgentReports.vue';
 import V4Button from 'dashboard/components-next/button/Button.vue';
+import ReportsAPI from '../../../../api/reports';
 
 export default {
   name: 'LiveReports',
@@ -45,6 +46,7 @@ export default {
       to: 0,
       groupBy: GROUP_BY_FILTER[1],
       businessHours: false,
+      heatmapData: [],
     };
   },
   computed: {
@@ -134,15 +136,8 @@ export default {
     // Data untuk Funnel Chart
     funnelStats() {
       const data = this.funnelData || {};
-
       const num = (val) => Number(val) || 0;
       const fmt = (val) => num(val).toLocaleString();
-
-      const calcPercent = (val, total) => {
-        const v = num(val);
-        const t = num(total);
-        return t > 0 ? Math.round((v / t) * 100) : 0;
-      };
 
       const totalStarter = num(data.total_starter);
       const engageUser = num(data.engage_user);
@@ -152,47 +147,53 @@ export default {
       const repeatBuyer = num(data.repeat_buyer);
       const assistedTotal = assistedBot + assistedCs;
 
+      const calcPercent = (val, total) => {
+        if (num(total) === 0) return 0;
+        return Math.round((num(val) / num(total)) * 100);
+      };
+
+      const calcWidth = (percent) => {
+        return Math.max(percent, 25) + '%'; 
+      };
+
       return [
         { 
           label: this.$t('OVERVIEW_REPORTS.CONVERSATION_FUNNEL.TOTAL_STARTER'),
+          description: "Jumlah total pengunjung unik yang memulai percakapan.",
           count: fmt(totalStarter), 
           percentVal: 100,
           displayPercent: '100%',
-          icon: '💬',
-          colorClass: 'bg-yellow-500 dark:bg-yellow-600' 
+          colorClass: 'bg-yellow-500',
+          widthStyle: '100%'
         },
         { 
           label: this.$t('OVERVIEW_REPORTS.CONVERSATION_FUNNEL.ENGAGE_USER'),
+          description: "Pengunjung yang berinteraksi lebih lanjut dengan sistem.",
           count: fmt(engageUser), 
           percentVal: calcPercent(engageUser, totalStarter),
           displayPercent: `${calcPercent(engageUser, totalStarter)}%`,
-          icon: '👥',
-          colorClass: 'bg-indigo-500 dark:bg-indigo-600'
+          colorClass: 'bg-blue',
+          widthStyle: calcWidth(calcPercent(engageUser, totalStarter))
         },
         { 
           label: this.$t('OVERVIEW_REPORTS.CONVERSATION_FUNNEL.HIGH_INTENT'),
+          description: "Pengguna yang menunjukkan ketertarikan tinggi.",
           count: fmt(highIntent), 
           percentVal: calcPercent(highIntent, totalStarter),
           displayPercent: `${calcPercent(highIntent, totalStarter)}%`,
-          icon: '📋',
-          colorClass: 'bg-purple-500 dark:bg-purple-600'
+          colorClass: 'bg-purple-600',
+          widthStyle: calcWidth(calcPercent(highIntent, totalStarter))
         },
         { 
           label: this.$t('OVERVIEW_REPORTS.CONVERSATION_FUNNEL.ASSISTED_USER'),
+          description: "Pengguna yang dibantu oleh Bot atau CS.",
           count: fmt(assistedTotal), 
           percentVal: calcPercent(assistedTotal, totalStarter), 
-          displayPercent: '',
-          icon: '🤖',
-          isSpecial: true,
-          colorClass: 'bg-pink-600 dark:bg-pink-700'
-        },
-        { 
-          label: this.$t('OVERVIEW_REPORTS.CONVERSATION_FUNNEL.REPEAT_BUYER'),
-          count: fmt(repeatBuyer), 
-          percentVal: calcPercent(repeatBuyer, totalStarter),
-          displayPercent: `${calcPercent(repeatBuyer, totalStarter)}%`,
-          icon: '✅',
-          colorClass: 'bg-green-500 dark:bg-green-600'
+          displayPercent: `${calcPercent(assistedTotal, totalStarter)}%`,
+          colorClass: 'bg-pink-500',
+          widthStyle: calcWidth(calcPercent(assistedTotal, totalStarter)),
+          botPct: calcPercent(assistedBot, assistedTotal),
+          csPct: calcPercent(assistedCs, assistedTotal)
         },
       ];
     },
@@ -233,31 +234,45 @@ export default {
       this.$store.dispatch('fetchFunnelData', reportObj);
       this.$store.dispatch('fetchTrendData', reportObj);
     },
+    async fetchHeatmapData() {
+      this.uiFlags.isFetchingAccountConversationsHeatmap = true;
+      try {
+        const response = await ReportsAPI.getConversationHeatmap();
+        
+        const rawData = response.data || [];
+
+        this.heatmapData = rawData
+          .map(item => {
+            let timeVal = item.timestamp || item.created_at || item.date;
+
+            if (typeof timeVal === 'number' && timeVal < 10000000000) {
+              timeVal = timeVal * 1000;
+            }
+
+            return {
+              ...item,
+              timestamp: timeVal 
+            };
+          })
+          // Filter: Hapus data yang tanggalnya tidak valid
+          .filter(item => {
+            const date = new Date(item.timestamp);
+            return item.timestamp && !isNaN(date.getTime());
+          });
+
+      } catch (error) {
+        console.error("Gagal mengambil data heatmap:", error);
+        // Set array kosong jika error agar UI tidak blank/crash
+        this.heatmapData = []; 
+      } finally {
+        this.uiFlags.isFetchingAccountConversationsHeatmap = false;
+      }
+    },
     downloadHeatmapData() {
       let to = endOfDay(new Date());
 
       this.$store.dispatch('downloadAccountConversationHeatmap', {
         to: getUnixTime(to),
-      });
-    },
-    fetchHeatmapData() {
-      if (this.uiFlags.isFetchingAccountConversationsHeatmap) {
-        return;
-      }
-      let to = endOfDay(new Date());
-      let from = startOfDay(subDays(to, 6));
-
-      if (this.accountConversationHeatmap.length) {
-        to = endOfDay(new Date());
-        from = startOfDay(to);
-      }
-
-      this.$store.dispatch('fetchAccountConversationHeatmap', {
-        metric: 'conversations_count',
-        from: getUnixTime(from),
-        to: getUnixTime(to),
-        groupBy: 'hour',
-        businessHours: false,
       });
     },
     fetchAccountConversationMetric() {
@@ -342,7 +357,7 @@ export default {
           class="m-0"
         />
 
-        <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="relative inline-block text-left" ref="dropdownContainer">
+        <div v-if="false" class="relative inline-block text-left" ref="dropdownContainer">
           <button
             @click="toggleDropdown"
             class="inline-flex justify-center w-full rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 text-white hover:opacity-90 transition-opacity"
@@ -377,115 +392,113 @@ export default {
         <MetricCard
           :header="$t('OVERVIEW_REPORTS.CHAT_SUMMARY.HEADER')"
           :is-loading="uiFlags.isFetchingAccountConversationMetric"
-          :loading-message="
-            $t('OVERVIEW_REPORTS.ACCOUNT_CONVERSATIONS.LOADING_MESSAGE')
-          "
+          :loading-message="$t('OVERVIEW_REPORTS.ACCOUNT_CONVERSATIONS.LOADING_MESSAGE')"
         >
-          <div class="flex-1 min-w-0 pb-2 pr-2">
-            <h3 class="text-sm">
-              {{ $t('OVERVIEW_REPORTS.CHAT_SUMMARY.CHAT_IN') }}
-            </h3>
-            <p class="text-n-slate-12 text-3xl mb-0 mt-1">
-              {{ accountConversationMetric?.open || 0 }}
-            </p>
-          </div>
-          <div class="flex-1 min-w-0 pb-2 pr-2">
-            <h3 class="text-sm">
-              {{ $t('OVERVIEW_REPORTS.CHAT_SUMMARY.CHAT_ANSWERED_BY_AI') }}
-            </h3>
-            <p class="text-n-slate-12 text-3xl mb-0 mt-1">
-              {{ creditUsageMetric?.ai_responses || 0 }}
-            </p>
-          </div>
-          <div class="flex-1 min-w-0 pb-2 pr-2">
-            <h3 class="text-sm">
-              {{ $t('OVERVIEW_REPORTS.CHAT_SUMMARY.RESOLVED_PERCENTAGE') }}
-            </h3>
-            <p class="text-n-slate-12 text-3xl mb-0 mt-1">
-              {{ 
-                accountConversationMetric?.open > 0 
-                  ? ((creditUsageMetric?.ai_responses || 0) / accountConversationMetric?.open * 100).toFixed(0) 
-                  : 0 
-              }}%
-            </p>
-          </div>
-          <div class="flex-1 min-w-0 pb-2 pr-2">
-            <h3 class="text-sm">
-              {{ $t('OVERVIEW_REPORTS.CHAT_SUMMARY.CHAT_HANDOVERED') }}
-            </h3>
-            <p class="text-n-slate-12 text-3xl mb-0 mt-1">
-              {{ accountConversationMetric?.unassigned || 0 }}
-            </p>
+          <template v-if="hasFunnelData">
+            <div class="flex-1 min-w-0 pb-2 pr-2">
+              <h3 class="text-sm">
+                {{ $t('OVERVIEW_REPORTS.CHAT_SUMMARY.CHAT_IN') }}
+              </h3>
+              <p class="text-n-slate-12 text-3xl mb-0 mt-1">
+                {{ Number(funnelData?.total_starter || 0).toLocaleString() }}
+              </p>
+            </div>
+            <div class="flex-1 min-w-0 pb-2 pr-2">
+              <h3 class="text-sm">
+                {{ $t('OVERVIEW_REPORTS.CHAT_SUMMARY.CHAT_ANSWERED_BY_AI') }}
+              </h3>
+              <p class="text-n-slate-12 text-3xl mb-0 mt-1">
+                {{ Number(funnelData?.assisted_bot || 0).toLocaleString() }}
+              </p>
+            </div>
+            <div class="flex-1 min-w-0 pb-2 pr-2">
+              <h3 class="text-sm">
+                {{ $t('OVERVIEW_REPORTS.CHAT_SUMMARY.RESOLVED_PERCENTAGE') }}
+              </h3>
+              <p class="text-n-slate-12 text-3xl mb-0 mt-1">
+                {{ 
+                  (funnelData?.total_starter && Number(funnelData.total_starter) > 0)
+                    ? Math.round((Number(funnelData?.assisted_bot || 0) / Number(funnelData.total_starter)) * 100) 
+                    : 0 
+                }}%
+              </p>
+            </div>
+            <div class="flex-1 min-w-0 pb-2 pr-2">
+              <h3 class="text-sm">
+                {{ $t('OVERVIEW_REPORTS.CHAT_SUMMARY.CHAT_HANDOVERED') }}
+              </h3>
+              <p class="text-n-slate-12 text-3xl mb-0 mt-1">
+                {{ Number(funnelData?.assisted_cs || 0).toLocaleString() }}
+              </p>
+            </div>
+          </template>
+
+          <div v-else class="flex items-center justify-center w-full py-10">
+            <span class="text-sm text-gray-600 dark:text-gray-400">
+              {{ $t('REPORT.NO_ENOUGH_DATA') }}
+            </span>
           </div>
         </MetricCard>
       </div>
     </div>
     
     <div class="w-full">
-      <MetricCardFull class="w-full max-w-full">
+      <MetricCardFull class="w-full max-w-full overflow-visible">
         <template #header>
           <div class="flex flex-col gap-4 w-full">
             <div class="flex items-center gap-2 flex-row">
               <h5 class="mb-0 text-n-slate-12 font-medium text-lg">
                 {{ $t('OVERVIEW_REPORTS.CONVERSATION_FUNNEL.HEADER') }}
               </h5>
-              <span class="flex flex-row items-center py-0.5 px-2 rounded bg-green-700 dark:bg-green-700 text-white text-xs">
-                <span class="bg-white dark:bg-white h-1 w-1 rounded-full mr-1 rtl:mr-0 rtl:ml-0"/>
-                <span class="text-xs text-grey-700 dark:text-grey-700">
-                  {{ $t('OVERVIEW_REPORTS.LIVE') }}
-                </span>
+              <span class="flex flex-row items-center py-0.5 px-2 rounded bg-green-700 text-white text-xs">
+                <span class="bg-white h-1 w-1 rounded-full mr-1"/>
+                {{ $t('OVERVIEW_REPORTS.LIVE') }}
               </span>
             </div>
-            </div>
+          </div>
         </template>
         
-        <div class="flex flex-col w-full px-4 py-6">
-          
-          <div v-if="hasFunnelData" class="flex flex-col items-center w-full gap-2">
+        <div class="flex flex-col w-full items-center justify-center px-4 py-8">
+          <div v-if="hasFunnelData" class="flex flex-col items-center w-full max-w-4xl">
+            
             <div 
               v-for="(item, index) in funnelStats" 
               :key="index"
-              class="relative flex flex-col justify-center items-center group transition-all duration-500 ease-in-out"
-              :style="{ width: `${Math.max(item.percentVal, 25)}%` }" 
+              class="relative group flex justify-center mb-0.5 transition-all duration-500 ease-in-out hover:z-50"
+              :style="{ width: item.widthStyle }"
             >
-               <div 
-                class="w-full relative px-4 py-3 rounded-md shadow-sm border border-white/10 flex justify-between items-center cursor-default hover:brightness-110 hover:scale-[1.01] transition-transform min-w-[320px]"
+              <div 
+                class="w-full h-16 sm:h-20 flex items-center justify-center shadow-sm text-white cursor-pointer relative"
                 :class="item.colorClass"
+                style="clip-path: polygon(0 0, 100% 0, 95% 100%, 5% 100%);"
               >
-                <div class="flex items-center gap-3 overflow-hidden z-10 max-w-[42%]">
-                  <span class="text-lg drop-shadow-md filter flex-shrink-0">
-                    {{ item.icon }}
+                <div class="flex flex-col items-center justify-center leading-tight p-1 transform translate-y-[-2px]">
+                  <span class="text-xl sm:text-2xl font-bold drop-shadow-md">
+                    {{ item.displayPercent }}
                   </span>
-                  <div class="flex flex-col text-left">
-                    <span class="text-sm font-bold leading-tight whitespace-normal">
-                      {{ item.label }}
-                    </span>
-                  </div>
-
-                </div>
-
-                <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
-                  <span class="text-sm font-bold leading-tight drop-shadow-sm text-white/90">
-                    {{ item.displayPercent || '0%' }}
+                  <span class="text-[10px] sm:text-xs font-semibold opacity-90 text-center uppercase tracking-wide px-2 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+                    {{ item.label }}
                   </span>
                 </div>
+              </div>
 
-                <div class="text-right flex flex-col items-end pl-2 min-w-[50px] z-10">
-                  <span class="text-sm font-bold leading-tight">
-                    {{ item.count }}
-                  </span>
+              <div class="absolute left-[95%] top-1/2 transform -translate-y-1/2 ml-4 w-64 invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 z-50">
+                <div class="bg-[#111827] text-white text-sm rounded-lg p-4 shadow-2xl border border-gray-700 relative z-50">
+                  <div class="absolute right-[100%] top-1/2 transform -translate-y-1/2 border-y-[9px] border-y-transparent border-r-[9px] border-r-gray-700"></div>
+                  
+                  <div class="font-bold text-base mb-2 border-b border-gray-700 pb-2 text-white">
+                    {{ item.label }}
                   </div>
-
+                  <p class="text-gray-300 mb-3 leading-relaxed text-xs">
+                    {{ item.description }}
+                  </p>
+                  <div class="flex justify-between items-center bg-gray-800 p-2 rounded">
+                    <span class="text-gray-400 text-xs uppercase font-bold tracking-wider">Total</span>
+                    <span class="font-mono text-green-400 font-bold text-lg">{{ item.count }}</span>
+                  </div>
+                </div>
               </div>
 
-              <div v-if="item.isSpecial" class="flex gap-2 mt-1 animate-fadeIn">
-                 <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 font-semibold shadow-sm">
-                   🤖 BOT: {{ item.botPct || 0 }}%
-                 </span>
-                 <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 font-semibold shadow-sm">
-                   👨‍💻 CS: {{ item.csPct || 0 }}%
-                 </span>
-              </div>
             </div>
           </div>
 
@@ -548,7 +561,7 @@ export default {
           </woot-button>
         </template>
         <ReportHeatmap
-          :heat-data="accountConversationHeatmap"
+          :heat-data="heatmapData" 
           :is-loading="uiFlags.isFetchingAccountConversationsHeatmap"
         />
       </MetricCard>

@@ -930,10 +930,9 @@ const showVariableDropdown = ref(false);
 
 const AVAILABLE_VARIABLES = computed(() => [
   { label: t('AGENT_MGMT.REMINDER.VARIABLES.CUSTOMER_NAME'), value: '{{nama_pelanggan}}', mock: 'Budi Santoso' },
-  { label: t('AGENT_MGMT.REMINDER.VARIABLES.BOOKING_DATE'), value: '{{tanggal_booking}}', mock: '25 Des 2025' },
-  { label: t('AGENT_MGMT.REMINDER.VARIABLES.BOOKING_TIME'), value: '{{waktu_booking}}', mock: '14:00 WIB' },
+  { label: t('AGENT_MGMT.REMINDER.VARIABLES.LEADGEN.DATE'), value: '{{tanggal_konsultasi}}', mock: '25 Des 2025' },
+  { label: t('AGENT_MGMT.REMINDER.VARIABLES.LEADGEN.TIME'), value: '{{waktu_konsultasi}}', mock: '14:00 WIB' },
   { label: t('AGENT_MGMT.REMINDER.VARIABLES.SERVICE_NAME'), value: '{{nama_layanan}}', mock: 'Konsultasi Premium' },
-  { label: t('AGENT_MGMT.REMINDER.VARIABLES.LOCATION'), value: '{{lokasi}}', mock: 'Klinik Pratama' },
 ]);
 
 const messagePreview = computed(() => {

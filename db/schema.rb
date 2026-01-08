@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2025_10_21_083150) do
+ActiveRecord::Schema[7.0].define(version: 2026_01_08_090113) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -540,6 +540,9 @@ ActiveRecord::Schema[7.0].define(version: 2025_10_21_083150) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "token"
+    t.string "provider"
+    t.string "device_id"
+    t.jsonb "provider_config", default: {}
     t.index ["account_id"], name: "index_channel_whatsapp_unofficials_on_account_id"
     t.index ["phone_number"], name: "index_channel_whatsapp_unofficials_on_phone_number", unique: true
   end

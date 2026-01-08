@@ -2,13 +2,16 @@
 #
 # Table name: channel_whatsapp_unofficials
 #
-#  id           :bigint           not null, primary key
-#  phone_number :string           not null
-#  token        :string
-#  webhook_url  :string
-#  created_at   :datetime         not null
-#  updated_at   :datetime         not null
-#  account_id   :integer          not null
+#  id              :bigint           not null, primary key
+#  phone_number    :string           not null
+#  provider        :string
+#  provider_config :jsonb
+#  token           :string
+#  webhook_url     :string
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  account_id      :integer          not null
+#  device_id       :string
 #
 # Indexes
 #
@@ -20,7 +23,10 @@ class Channel::WhatsappUnofficial < ApplicationRecord
   include Channelable
 
   self.table_name = 'channel_whatsapp_unofficials'
-  EDITABLE_ATTRS = [:token].freeze
+  EDITABLE_ATTRS = [:token, :device_id, :phone_number, :provider, { provider_config: {} }].freeze
+
+  # default at the moment is 360dialog lets change later.
+  PROVIDERS = %w[default gowa waha wapi].freeze
 
   before_destroy :clear_session_status_cache
   before_destroy :clear_rescan_attempts
@@ -42,39 +48,14 @@ class Channel::WhatsappUnofficial < ApplicationRecord
     ::Redis::Alfred.delete(session_status_cache_key)
   end
 
-  def send_message(params)
-    waha_service = Waha::WahaService.instance
+  def send_message_on_gowa(message)
+    message_id = send_message(message) if message.content.present?
+    message_id = Waha::SendOnChannelService.new(message: message).perform if message.attachments.present?
+    message_id
+  end
 
-    if params[:location].present?
-      location_data = params[:location]
-      return waha_service.send_location(
-        api_key: token,
-        phone_number: params[:to],
-        latitude: location_data[:latitude],
-        longitude: location_data[:longitude],
-        name: location_data[:name],
-        address: location_data[:address]
-      )
-    end
-
-    if params[:image_path].present?
-      return waha_service.send_image(
-        api_key: token,
-        phone_number: params[:to],
-        image_path: params[:image_path],
-        caption: params[:message] || ''
-      )
-    end
-
-    if params[:message].present?
-      return waha_service.send_text(
-        api_key: token,
-        phone_number: params[:to],
-        message: params[:message]
-      )
-    end
-
-    Rails.logger.warn "WAHA send_message called with no content for #{params[:to]}"
+  def send_message(message)
+    # TODO: refactor this method to use the new send_message method
   end
 
   def qr_code

@@ -63,26 +63,20 @@ class Api::V1::SubscriptionPaymentsController < Api::BaseController
           payment_details: response
         )
         
-        # Update subscription
+        # Update subscription (model callback syncs active_subscription_id to account)
         @subscription.update(
           status: 'active',
           payment_status: 'paid',
           amount_paid: @payment.amount
         )
-        
-        # Set as active subscription for the account
-        @account.update(
-          active_subscription_id: @subscription.id,
-          subscription_status: 'active'
-        )
       end
-      
+
       render json: {
         payment: @payment,
         duitku_status: response
       }
     end
-    
+
     def webhook
       # Validate signature
       valid_signature = validate_duitku_signature(params)
@@ -113,19 +107,13 @@ class Api::V1::SubscriptionPaymentsController < Api::BaseController
           payment_details: params.as_json
         )
         
-        # Update subscription
+        # Update subscription (model callback syncs active_subscription_id to account)
         @subscription.update(
           status: 'active',
           payment_status: 'paid',
           amount_paid: @payment.amount
         )
-        
-        # Set as active subscription for the account
-        @subscription.account.update(
-          active_subscription_id: @subscription.id,
-          subscription_status: 'active'
-        )
-        
+
         # Initialize or reset usage records
         SubscriptionUsage.find_or_create_by(subscription_id: @subscription.id).update(
           last_reset_at: Time.now

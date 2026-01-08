@@ -40,6 +40,12 @@ class SuperAdmin::AccountsController < SuperAdmin::ApplicationController
     permitted_params
   end
 
+  def show
+    @inboxes = requested_resource.inboxes.includes(contact_inboxes: :contact).order(:id)
+
+    render locals: { page: Administrate::Page::Show.new(dashboard, requested_resource) }
+  end
+
   # See https://administrate-prototype.herokuapp.com/customizing_controller_actions
   # for more information
 

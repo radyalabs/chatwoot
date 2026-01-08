@@ -96,6 +96,47 @@ as well as a link to its edit page.
 
 </section>
 
+<section class="main-content__body">
+  <h2 class="main-content__page-title">Inboxes and Contacts</h2>
+  <% if defined?(@inboxes) && @inboxes.present? %>
+    <% @inboxes.each_with_index do |inbox, idx| %>
+      <details class="panel" <%= 'open' if idx.zero? %>>
+        <summary style="cursor:pointer;">
+          <strong>Inbox:</strong> <%= inbox.name %>
+          <small class="text-muted">(Contacts: <%= inbox.contact_inboxes.size %>)</small>
+        </summary>
+        <div style="margin-top: 12px;">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Contact</th>
+                <th>Identifier</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% inbox.contact_inboxes.each do |ci| %>
+                <% c = ci.contact %>
+                <tr>
+                  <td><%= c&.name || '-' %></td>
+                  <td><%= c&.email || c&.phone_number || '-' %></td>
+                  <td>
+                    <%= link_to 'View chat history', super_admin_account_contact_conversations_path(page.resource, inbox_id: inbox.id, contact_id: c.id), class: 'button' %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </details>
+    <% end %>
+  <% else %>
+    <p>No inboxes found for this account.</p>
+  <% end %>
+</section>
+
+
+
 <%= render partial: "seed_data", locals: {page: page} %>
 
 <%= render partial: "reset_cache", locals: {page: page} %>

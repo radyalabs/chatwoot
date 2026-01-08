@@ -174,7 +174,7 @@ Rails.application.routes.draw do
             resources :documents, only: [:index, :show, :create, :destroy]
             resources :assistant_responses
           end
-          
+
           post :translate, to: 'translator#translate'
           resources :agent_bots, only: [:index, :create, :show, :update, :destroy] do
             delete :avatar, on: :member
@@ -487,7 +487,7 @@ Rails.application.routes.draw do
                 put :config, action: :update_config
               end
             end
-            
+
             # Shipping configs routes
             resources :shipping_stores, only: [:index] do
               collection do
@@ -655,6 +655,7 @@ Rails.application.routes.draw do
   get 'webhooks/instagram', to: 'webhooks/instagram#verify'
   post 'webhooks/instagram', to: 'webhooks/instagram#events'
   post 'webhooks/waha/:phone_number', to: 'webhooks/waha#process_payload'
+  post 'webhooks/gowa', to: 'webhooks/gowa#process_payload'
 
   namespace :twitter do
     resource :callback, only: [:show]

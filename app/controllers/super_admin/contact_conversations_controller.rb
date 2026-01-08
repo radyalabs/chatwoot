@@ -8,7 +8,7 @@ class SuperAdmin::ContactConversationsController < SuperAdmin::ApplicationContro
       account_id: @account.id,
       inbox_id: @inbox.id,
       contact_id: @contact.id
-    ).includes(messages: [:sender]).order(created_at: :desc)
+    ).includes(messages: [:sender]).order(created_at: :asc)
   end
 
   private

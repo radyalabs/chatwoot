@@ -45,6 +45,14 @@ class SuperAdmin::AccountsController < SuperAdmin::ApplicationController
     @conversation_counts = Conversation.where(account_id: requested_resource.id)
                                         .group(:inbox_id, :contact_id)
                                         .count
+    # Get last conversation (session) for each inbox/contact
+    latest_session = Conversation.where(account_id: requested_resource.id)
+                                     .select('inbox_id, contact_id, MAX(created_at) as latest_session')
+                                     .group('inbox_id, contact_id')
+    @latest_session = {}
+    latest_session.each do |record|
+      @latest_session[[record.inbox_id, record.contact_id]] = record.latest_session
+    end
 
     render locals: { page: Administrate::Page::Show.new(dashboard, requested_resource) }
   end

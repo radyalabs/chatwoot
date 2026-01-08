@@ -155,8 +155,13 @@ export default {
       });
     },
     onDateRangeChange(selectedRange) {
+      console.log('[FilterSelector] onDateRangeChange received:', selectedRange);
+      
       this.selectedDateRange = selectedRange;
       this.selectedGroupByFilter = this.validGroupBy;
+
+      console.log('[FilterSelector] New Offset:', this.selectedDateRange.offset);
+      
       this.emitChange();
     },
     onCustomDateRangeChange(value) {
@@ -201,7 +206,9 @@ export default {
     <div
       class="flex-grow flex gap-4"
     >
-      <ReportsFiltersDateRange @on-range-change="onDateRangeChange" />
+      <ReportsFiltersDateRange
+        :selected-date-range="selectedDateRange" 
+        @on-range-change="onDateRangeChange" />
       <WootDateRangePicker
         v-if="isDateRangeSelected"
         show-range

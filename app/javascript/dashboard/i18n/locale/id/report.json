@@ -580,7 +580,7 @@
   },
   "OVERVIEW_REPORTS": {
     "HEADER": "Ringkasan",
-    "LIVE": "Langsung",
+    "LIVE": "Live",
     "DOWNLOAD": "Ekspor",
     "EXPORT_TO_CSV": "Ekspor CSV",
     "EXPORT_TO_PDF": "Ekspor PDF",
@@ -597,11 +597,10 @@
     },
     "CONVERSATION_FUNNEL": {
       "HEADER": "Alur Percakapan",
-      "TOTAL_STARTER": "Interaksi Awal",
-      "ENGAGE_USER": "Pengguna Aktif",
-      "HIGH_INTENT": "Prospek Potential",
-      "ASSISTED_USER": "Pengguna Terlayani",
-      "REPEAT_BUYER": "Pelanggan Setia"
+      "TOTAL_STARTER": "Total Pesan Masuk",
+      "ENGAGE_USER": "Total Percakapan Aktif",
+      "HIGH_INTENT": "Total Peminat Serius",
+      "ASSISTED_USER": "Total Konversi"
     },
     "CONVERSATION_HEATMAP": {
       "HEADER": "Lalu Lintas Percakapan",

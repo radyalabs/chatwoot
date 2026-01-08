@@ -178,11 +178,11 @@ class Api::V2::Accounts::ReportsController < Api::V1::Accounts::BaseController
   end
 
   def conversation_traffic
-    # Ambil data dari helper
     @report_data = generate_conversations_heatmap_report
-    
-    # Langsung kirim sebagai JSON ke frontend
-    render json: @report_data
+    timezone_offset = (params[:timezone_offset] || 0).to_f
+    @timezone = ActiveSupport::TimeZone[timezone_offset]
+
+    generate_csv('conversation_traffic_reports', 'api/v2/accounts/reports/conversation_traffic')
   end
 
   def handover_metrics

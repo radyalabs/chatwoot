@@ -586,7 +586,7 @@ export default {
         </div>
         
         <!-- Export dropdown on the right -->
-        <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="relative inline-block text-left" ref="dropdownContainer">
+        <div v-if="false" class="relative inline-block text-left" ref="dropdownContainer">
           <button
             @click="toggleDropdown"
             class="inline-flex justify-center w-full rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 text-white hover:opacity-90 transition-opacity"

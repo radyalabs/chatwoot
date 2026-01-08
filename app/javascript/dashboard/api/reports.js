@@ -136,14 +136,6 @@ class ReportsAPI extends ApiClient {
       }
     });
   }
-
-  getConversationHeatmap() {
-    return axios.get(`${this.url}/conversation_traffic`, {
-      params: {
-        timezone_offset: -new Date().getTimezoneOffset() / 60, // Kirim offset waktu agar jamnya akurat
-      },
-    });
-  }
 }
 
 export default new ReportsAPI();

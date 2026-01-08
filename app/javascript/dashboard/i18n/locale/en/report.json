@@ -594,8 +594,7 @@
       "TOTAL_STARTER": "Total Starter Chat",
       "ENGAGE_USER": "Engage User",
       "HIGH_INTENT": "High-Intent User",
-      "ASSISTED_USER": "Assited User",
-      "REPEAT_BUYER": "Repeat Buyer"
+      "ASSISTED_USER": "Assited User"
     },
     "CONVERSATION_HEATMAP": {
       "HEADER": "Conversation Traffic",

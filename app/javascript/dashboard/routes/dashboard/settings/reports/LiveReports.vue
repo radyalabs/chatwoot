@@ -46,7 +46,7 @@ export default {
       to: 0,
       groupBy: GROUP_BY_FILTER[1],
       businessHours: false,
-      heatmapData: [],
+      // heatmapData: [],
     };
   },
   computed: {
@@ -159,7 +159,7 @@ export default {
       return [
         { 
           label: this.$t('OVERVIEW_REPORTS.CONVERSATION_FUNNEL.TOTAL_STARTER'),
-          description: "Jumlah total pengunjung unik yang memulai percakapan.",
+          description: "Jumlah total pengunjung yang memulai percakapan.",
           count: fmt(totalStarter), 
           percentVal: 100,
           displayPercent: '100%',
@@ -168,11 +168,11 @@ export default {
         },
         { 
           label: this.$t('OVERVIEW_REPORTS.CONVERSATION_FUNNEL.ENGAGE_USER'),
-          description: "Pengunjung yang berinteraksi lebih lanjut dengan sistem.",
+          description: "Pengunjung yang berinteraksi lebih lanjut.",
           count: fmt(engageUser), 
           percentVal: calcPercent(engageUser, totalStarter),
           displayPercent: `${calcPercent(engageUser, totalStarter)}%`,
-          colorClass: 'bg-blue',
+          colorClass: 'bg-orange-500',
           widthStyle: calcWidth(calcPercent(engageUser, totalStarter))
         },
         { 
@@ -186,7 +186,7 @@ export default {
         },
         { 
           label: this.$t('OVERVIEW_REPORTS.CONVERSATION_FUNNEL.ASSISTED_USER'),
-          description: "Pengguna yang dibantu oleh Bot atau CS.",
+          description: "Pengguna yang berhasil dibantu.",
           count: fmt(assistedTotal), 
           percentVal: calcPercent(assistedTotal, totalStarter), 
           displayPercent: `${calcPercent(assistedTotal, totalStarter)}%`,
@@ -234,39 +234,25 @@ export default {
       this.$store.dispatch('fetchFunnelData', reportObj);
       this.$store.dispatch('fetchTrendData', reportObj);
     },
-    async fetchHeatmapData() {
-      this.uiFlags.isFetchingAccountConversationsHeatmap = true;
-      try {
-        const response = await ReportsAPI.getConversationHeatmap();
-        
-        const rawData = response.data || [];
-
-        this.heatmapData = rawData
-          .map(item => {
-            let timeVal = item.timestamp || item.created_at || item.date;
-
-            if (typeof timeVal === 'number' && timeVal < 10000000000) {
-              timeVal = timeVal * 1000;
-            }
-
-            return {
-              ...item,
-              timestamp: timeVal 
-            };
-          })
-          // Filter: Hapus data yang tanggalnya tidak valid
-          .filter(item => {
-            const date = new Date(item.timestamp);
-            return item.timestamp && !isNaN(date.getTime());
-          });
-
-      } catch (error) {
-        console.error("Gagal mengambil data heatmap:", error);
-        // Set array kosong jika error agar UI tidak blank/crash
-        this.heatmapData = []; 
-      } finally {
-        this.uiFlags.isFetchingAccountConversationsHeatmap = false;
+    fetchHeatmapData() {
+      if (this.uiFlags.isFetchingAccountConversationsHeatmap) {
+        return;
       }
+      let to = endOfDay(new Date());
+      let from = startOfDay(subDays(to, 6));
+
+      if (this.accountConversationHeatmap.length) {
+        to = endOfDay(new Date());
+        from = startOfDay(to);
+      }
+
+      this.$store.dispatch('fetchAccountConversationHeatmap', {
+        metric: 'conversations_count',
+        from: getUnixTime(from),
+        to: getUnixTime(to),
+        groupBy: 'hour',
+        businessHours: false,
+      });
     },
     downloadHeatmapData() {
       let to = endOfDay(new Date());
@@ -464,7 +450,7 @@ export default {
             <div 
               v-for="(item, index) in funnelStats" 
               :key="index"
-              class="relative group flex justify-center mb-0.5 transition-all duration-500 ease-in-out hover:z-50"
+              class="relative group flex justify-center mb-0 transition-all duration-500 ease-in-out hover:z-50"
               :style="{ width: item.widthStyle }"
             >
               <div 
@@ -549,7 +535,7 @@ export default {
     
     <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="flex flex-row flex-wrap max-w-full">
       <MetricCard :header="$t('OVERVIEW_REPORTS.CONVERSATION_HEATMAP.HEADER')">
-        <template #control>
+        <!-- <template #control>
           <woot-button
             icon="arrow-download"
             size="small"
@@ -559,9 +545,9 @@ export default {
           >
             {{ $t('OVERVIEW_REPORTS.CONVERSATION_HEATMAP.DOWNLOAD_REPORT') }}
           </woot-button>
-        </template>
+        </template> -->
         <ReportHeatmap
-          :heat-data="heatmapData" 
+          :heat-data="accountConversationHeatmap"
           :is-loading="uiFlags.isFetchingAccountConversationsHeatmap"
         />
       </MetricCard>

@@ -820,8 +820,6 @@ export default {
           v-if="inbox"
           :inbox-id="inbox.id"
           :account-id="accountId"
-          :auto-refresh="true"
-          :refresh-interval="10000"
           @status-changed="onWhatsAppStatusChanged"
           @status-error="onWhatsAppStatusError"
           @session-restarted="onWhatsAppSessionRestarted"

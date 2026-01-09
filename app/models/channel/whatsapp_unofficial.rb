@@ -44,18 +44,18 @@ class Channel::WhatsappUnofficial < ApplicationRecord
     'WhatsApp (Unofficial)'
   end
 
+  def provider_service
+    if provider == 'gowa'
+      WhatsappUnofficial::Providers::GowaService.new(whatsapp_channel: self)
+    elsif provider == 'wapi'
+      WhatsappUnofficial::Providers::WapiService.new(whatsapp_channel: self)
+    end
+  end
+
+  delegate :send_message, to: :provider_service
+
   def clear_session_status_cache
     ::Redis::Alfred.delete(session_status_cache_key)
-  end
-
-  def send_message_on_gowa(message)
-    message_id = send_message(message) if message.content.present?
-    message_id = Waha::SendOnChannelService.new(message: message).perform if message.attachments.present?
-    message_id
-  end
-
-  def send_message(message)
-    # TODO: refactor this method to use the new send_message method
   end
 
   def qr_code

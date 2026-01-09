@@ -6,22 +6,32 @@ class Webhooks::GowaEventJob < ApplicationJob
     message.edited
   ].freeze
 
-  def perform(payload)
-    event = payload['event']
+  def perform(params) # rubocop:disable Metrics/CyclomaticComplexity
+    event = params['event']
     return unless ALLOWED_EVENTS.include?(event)
 
-    device_id = payload['device_id']
-    data      = payload['payload']
+    phone_number = params['device_id'].split('@').first
+    channel = Channel::WhatsappUnofficial.find_by(phone_number: phone_number)
+    return unless channel
+
+    payload = params['payload'] || {}
+    return if payload.empty?
+
+    return if payload['from'] == params['device_id']
+
+    return if group_chat?(payload)
 
     case event
     when 'message'
-      handle_message(device_id, data)
+      WhatsappUnofficial::IncomingMessageService.new(inbox: channel.inbox, params: params).perform
     when 'message.edited'
-      handle_message_edited(device_id, data)
+      # WhatsappUnofficial::UpdateMessageService.new(inbox: channel.inbox, params: data).perform
     end
   end
 
   private
 
-  def handle_message(device_id, data); end
+  def group_chat?(payload)
+    payload['chat_id'].to_s.end_with?('@g.us')
+  end
 end

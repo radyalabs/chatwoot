@@ -13,7 +13,7 @@ class SendReplyJob < ApplicationJob
       'Channel::Telegram' => ::Telegram::SendOnTelegramService,
       'Channel::Whatsapp' => ::Whatsapp::SendOnWhatsappService,
       'Channel::Sms' => ::Sms::SendOnSmsService,
-      'Channel::WhatsappUnofficial' => ::Waha::SendOnChannelService,
+      'Channel::WhatsappUnofficial' => ::WhatsappUnofficial::SendOnWhatsappUnofficialService,
       'Channel::Instagram' => ::Instagram::SendOnInstagramService
     }
 

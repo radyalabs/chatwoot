@@ -15,7 +15,7 @@ export default {
     },
     autoRefresh: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     refreshInterval: {
       type: Number,

@@ -15,7 +15,7 @@ export default {
     },
     autoRefresh: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     refreshInterval: {
       type: Number,
@@ -45,11 +45,6 @@ export default {
     if (this.autoRefresh) {
       this.startAutoRefresh();
     }
-    
-    // Add a test method to manually trigger status check for debugging
-    window[`testWhatsAppStatus_${this.inboxId}`] = () => {
-      this.checkStatus();
-    };
   },
   beforeUnmount() {
     this.stopAutoRefresh();

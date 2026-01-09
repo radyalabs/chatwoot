@@ -36,47 +36,44 @@ class Gowa::GowaService
   end
 
   # Initiate QR code login for a device
+  # GOWA uses /app/login with X-Device-Id header
   # @param device_id [String] Device ID
   # @return [Hash] Response with qr_link and qr_duration
   def get_qr_login(device_id:)
-    get("/devices/#{encode_device_id(device_id)}/login")
+    get('/app/login', extra_headers: { 'X-Device-Id' => device_id })
   end
 
   # Initiate pairing code login for a device
+  # GOWA uses /app/login/code with X-Device-Id header
   # @param device_id [String] Device ID
   # @param phone [String] Phone number to pair with
   # @return [Hash] Response with pairing code
   def get_pairing_code(device_id:, phone:)
-    post("/devices/#{encode_device_id(device_id)}/login/code?phone=#{phone}")
+    post("/app/login/code?phone=#{phone}", extra_headers: { 'X-Device-Id' => device_id })
   end
 
   # Logout a device
+  # GOWA uses GET /app/logout with X-Device-Id header
   # @param device_id [String] Device ID
   # @return [Hash] Response
   def logout_device(device_id:)
-    post("/devices/#{encode_device_id(device_id)}/logout")
+    get('/app/logout', extra_headers: { 'X-Device-Id' => device_id })
   end
 
   # Reconnect a device
+  # GOWA uses /app/reconnect with X-Device-Id header
   # @param device_id [String] Device ID
   # @return [Hash] Response
   def reconnect_device(device_id:)
-    post("/devices/#{encode_device_id(device_id)}/reconnect")
+    post('/app/reconnect', extra_headers: { 'X-Device-Id' => device_id })
   end
 
   # Get device connection status
+  # GOWA uses /app/status with X-Device-Id header
   # @param device_id [String] Device ID
   # @return [Hash] Response with is_connected, is_logged_in
   def get_device_status(device_id:)
-    get("/devices/#{encode_device_id(device_id)}/status")
-  end
-
-  # Get app-level status (legacy single device)
-  # @param device_id [String, nil] Optional device ID header
-  # @return [Hash] Response with connection status
-  def get_app_status(device_id: nil)
-    headers = device_id.present? ? { 'X-Device-Id' => device_id } : {}
-    get('/app/status', extra_headers: headers)
+    get('/app/status', extra_headers: { 'X-Device-Id' => device_id })
   end
 
   def configured?

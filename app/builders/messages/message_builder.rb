@@ -17,7 +17,6 @@ class Messages::MessageBuilder
   end
 
   def perform
-    Rails.logger.info("Message params: #{message_params}")
     @message = @conversation.messages.build(message_params)
     process_attachments
     process_emails

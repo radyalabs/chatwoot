@@ -71,7 +71,7 @@
     },
     "REMINDER": {
       "TITLE": "Pesan Pengingat",
-      "DESC": "Kirim pesan pengingat otomatis kepada pelanggan setelah booking",
+      "DESC": "Kirim pesan pengingat otomatis kepada pelanggan setelah penjadwalan",
       "TIME": "Kapan pesan dikirim?",
       "TIME_OPTIONS": {
         "30_MINUTES": "30 Menit",
@@ -86,10 +86,16 @@
       "MSG_VARIABLE": "Tambahkan Variabel",
       "VARIABLES": {
         "CUSTOMER_NAME": "Nama Pelanggan",
-        "BOOKING_DATE": "Tanggal Booking",
-        "BOOKING_TIME": "Waktu Booking",
         "SERVICE_NAME": "Nama Layanan",
-        "LOCATION": "Lokasi"
+        "BOOKING": {
+          "DATE": "Tanggal Booking",
+          "TIME": "Waktu Booking",
+          "LOCATION": "Lokasi"
+        },
+        "LEADGEN": {
+          "DATE": "Tanggal Konsultasi",
+          "TIME": "Waktu Konsultasi"
+        }
       },
       "MSG_DESC": "Pesan ini akan dikirimkan otomatis ke pelanggan melalui platform yang sesuai pada waktu yang ditentukan.",
       "MSG_EXAMPLE": "Contoh"

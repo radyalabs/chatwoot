@@ -530,6 +530,7 @@ import PrioritiesTab from './cs-bot-tabs/PrioritiesTab.vue'
 import googleSheetsExportAPI from '../../../../api/googleSheetsExport'
 import aiAgents from '../../../../api/aiAgents'
 import idleConfigsAPI from '../../../../api/idleConfigs';
+import remindersAPI from '../../../../api/reminders';
 import { useAlert } from 'dashboard/composables';
 import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue';
 
@@ -878,6 +879,11 @@ async function saveSettings() {
 
     await Promise.all([
       aiAgents.updateAgent(props.data.id, payload),
+      remindersAPI.updateConfig(props.data.id, {
+        enabled: followUpConfig.enabled,
+        minutes_before_booking: followUpConfig.delay,
+        message_template: followUpConfig.message
+      }),
       idleConfigsAPI.updateConfig(props.data.id, {
         duration: idleConfig.duration,
       })
@@ -924,10 +930,9 @@ const showVariableDropdown = ref(false);
 
 const AVAILABLE_VARIABLES = computed(() => [
   { label: t('AGENT_MGMT.REMINDER.VARIABLES.CUSTOMER_NAME'), value: '{{nama_pelanggan}}', mock: 'Budi Santoso' },
-  { label: t('AGENT_MGMT.REMINDER.VARIABLES.BOOKING_DATE'), value: '{{tanggal_booking}}', mock: '25 Des 2025' },
-  { label: t('AGENT_MGMT.REMINDER.VARIABLES.BOOKING_TIME'), value: '{{waktu_booking}}', mock: '14:00 WIB' },
+  { label: t('AGENT_MGMT.REMINDER.VARIABLES.LEADGEN.DATE'), value: '{{tanggal_konsultasi}}', mock: '25 Des 2025' },
+  { label: t('AGENT_MGMT.REMINDER.VARIABLES.LEADGEN.TIME'), value: '{{waktu_konsultasi}}', mock: '14:00 WIB' },
   { label: t('AGENT_MGMT.REMINDER.VARIABLES.SERVICE_NAME'), value: '{{nama_layanan}}', mock: 'Konsultasi Premium' },
-  { label: t('AGENT_MGMT.REMINDER.VARIABLES.LOCATION'), value: '{{lokasi}}', mock: 'Klinik Pratama' },
 ]);
 
 const messagePreview = computed(() => {

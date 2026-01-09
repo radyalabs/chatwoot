@@ -73,13 +73,25 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController #
 
     begin
       qr_data = @channel.get_qr_code
-      render json: {
-        success: true,
-        qr_code: qr_data.dig('data', 'qr'),
-        qr_type: qr_data.dig('data', 'qr_type') || 'base64',
-        provider: @channel.effective_provider,
-        message: 'QR Code generated successfully'
-      }
+
+      # Handle already_connected case (GOWA returns this when session is already logged in)
+      if qr_data.dig('data', 'already_connected')
+        render json: {
+          success: true,
+          already_connected: true,
+          status: 'logged_in',
+          provider: @channel.effective_provider,
+          message: 'WhatsApp session is already connected'
+        }
+      else
+        render json: {
+          success: true,
+          qr_code: qr_data.dig('data', 'qr'),
+          qr_type: qr_data.dig('data', 'qr_type') || 'base64',
+          provider: @channel.effective_provider,
+          message: 'QR Code generated successfully'
+        }
+      end
     rescue StandardError => e
       render json: {
         success: false,
@@ -94,7 +106,13 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController #
     force_real_time = params[:real_time] == 'true'
 
     begin
-      status = if force_real_time && @channel.respond_to?(:real_time_status)
+      # For GOWA provider or when cache is empty, always use real_time_status
+      # to poll the actual API and detect when session becomes connected
+      use_real_time = force_real_time ||
+                      (@channel.respond_to?(:effective_provider) && @channel.effective_provider == 'gowa') ||
+                      @channel.read_session_status_from_cache.blank?
+
+      status = if use_real_time && @channel.respond_to?(:real_time_status)
                  @channel.real_time_status
                else
                  @channel.session_status

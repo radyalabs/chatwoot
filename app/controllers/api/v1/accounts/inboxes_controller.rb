@@ -76,6 +76,8 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController #
       render json: {
         success: true,
         qr_code: qr_data.dig('data', 'qr'),
+        qr_type: qr_data.dig('data', 'qr_type') || 'base64',
+        provider: @channel.effective_provider,
         message: 'QR Code generated successfully'
       }
     rescue StandardError => e

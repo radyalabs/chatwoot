@@ -3,6 +3,7 @@
 module WhatsappUnofficial
   class GowaAdapter < BaseAdapter
     # Returns: { qr_data: String (URL), qr_type: :url } or nil
+    # Returns :already_logged_in symbol if session is already connected
     def get_qr_code
       return nil unless channel.device_id.present?
 
@@ -20,8 +21,14 @@ module WhatsappUnofficial
       log_info "QR code URL retrieved for device #{channel.device_id}, duration: #{qr_duration}s"
       { qr_data: qr_link, qr_type: :url, qr_duration: qr_duration }
     rescue StandardError => e
-      log_error "Failed to get QR code for device #{channel.device_id}: #{e.message}"
-      nil
+      # Handle ALREADY_LOGGED_IN as a special case - session is already connected
+      if e.message.include?('ALREADY_LOGGED_IN')
+        log_info "Device #{channel.device_id} is already logged in"
+        :already_logged_in
+      else
+        log_error "Failed to get QR code for device #{channel.device_id}: #{e.message}"
+        nil
+      end
     end
 
     # Returns: { connected: Boolean, status: String }
@@ -55,19 +62,41 @@ module WhatsappUnofficial
       custom_device_id = channel.phone_number
       log_info "Creating device for phone #{channel.phone_number} with device_id: #{custom_device_id}"
 
-      result = gowa_service.create_device(device_id: custom_device_id)
+      begin
+        result = gowa_service.create_device(device_id: custom_device_id)
 
-      # GOWA may return device_id in different places
-      device_id = result.dig('results', 'device_id') ||
-                  result['device_id'] ||
-                  custom_device_id
+        # GOWA may return device_id in different places
+        device_id = result.dig('results', 'device_id') ||
+                    result['device_id'] ||
+                    custom_device_id
 
-      raise "No device_id in GOWA response: #{result}" unless device_id.present?
+        raise "No device_id in GOWA response: #{result}" unless device_id.present?
 
-      channel.update!(device_id: device_id)
-      log_info "Device created successfully, device_id saved: #{device_id}"
+        channel.update!(device_id: device_id)
+        log_info "Device created successfully, device_id saved: #{device_id}"
 
-      { device_id: device_id }
+        { device_id: device_id }
+      rescue StandardError => e
+        # Handle "device already exists" error by reusing the existing device
+        if e.message.include?('already exists')
+          log_info "Device #{custom_device_id} already exists in GOWA, reusing it"
+          channel.update!(device_id: custom_device_id)
+
+          # Logout any existing session so a fresh QR scan is required
+          # This ensures channel recreation always requires re-authentication
+          log_info "Logging out existing session for device #{custom_device_id} to require fresh QR scan"
+          begin
+            gowa_service.logout_device(device_id: custom_device_id)
+            log_info "Existing session logged out successfully"
+          rescue StandardError => logout_error
+            log_warn "Logout failed (may not have been logged in): #{logout_error.message}"
+          end
+
+          { device_id: custom_device_id, reused: true }
+        else
+          raise e
+        end
+      end
     end
 
     # GOWA doesn't require separate session initialization after device creation

@@ -227,7 +227,14 @@ export default {
 
         const response = await WhatsAppUnofficialChannels.generateQR(inboxId);
 
-        if (response.data.success && response.data.qr_code) {
+        if (response.data.success && response.data.already_connected) {
+          // Session is already connected (GOWA returns this after QR was scanned)
+          this.connectionStatus = 'connected';
+          this.clearIntervals();
+          setTimeout(() => {
+            this.redirectToInboxSettings();
+          }, 1000);
+        } else if (response.data.success && response.data.qr_code) {
           // Handle different QR types based on provider
           // WAHA returns base64, GOWA returns URL
           const qrType = response.data.qr_type || 'base64';

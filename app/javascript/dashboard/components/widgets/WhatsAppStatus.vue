@@ -2,6 +2,7 @@
 import WhatsAppUnofficialChannels from 'dashboard/api/WhatsAppUnofficialChannels';
 import { createConsumer } from '@rails/actioncable';
 import { useAlert } from 'dashboard/composables';
+import { mapGetters } from 'vuex';
 
 export default {
   props: {
@@ -34,6 +35,14 @@ export default {
     };
   },
   computed: {
+    ...mapGetters({
+      currentUser: 'getCurrentUser',
+      currentAccountId: 'getCurrentAccountId',
+      currentUserId: 'getCurrentUserID',
+    }),
+    userPubsubToken() {
+      return this.currentUser?.pubsub_token;
+    },
     statusColor() {
       switch (this.connectionStatus) {
         case 'connected':
@@ -172,19 +181,31 @@ export default {
 
     setupWebSocketSubscription() {
       try {
-        const pubsub_token = `${this.accountId}_inbox_${this.inboxId}`;
+        // Use user's pubsub_token for authentication (same as BaseActionCableConnector)
+        const pubsub_token = this.userPubsubToken;
         const cable = createConsumer();
-        
+
+        if (!pubsub_token || !this.currentUserId || !this.currentAccountId) {
+          console.error('Cannot setup WebSocket: missing required user data');
+          return;
+        }
+
         this.subscription = cable.subscriptions.create(
-          { 
+          {
             channel: 'RoomChannel',
-            pubsub_token: pubsub_token
+            pubsub_token: pubsub_token,
+            user_id: this.currentUserId,
+            account_id: this.currentAccountId
           },
           {
             received: (data) => {
               if (data.event === 'whatsapp_status_changed') {
-                this.handleStatusUpdate(data);
-              } else {
+                // Filter to only handle events for this inbox
+                const isForOurInbox = data.inbox_id === parseInt(this.inboxId) ||
+                                    (!data.inbox_id && data.phone_number);
+                if (isForOurInbox) {
+                  this.handleStatusUpdate(data);
+                }
               }
             },
             connected: () => {

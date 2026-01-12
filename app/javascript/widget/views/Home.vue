@@ -6,6 +6,7 @@ import { IFrameHelper } from 'widget/helpers/utils';
 import { useDarkMode } from 'widget/composables/useDarkMode';
 import routerMixin from 'widget/mixins/routerMixin';
 import configMixin from 'widget/mixins/configMixin';
+import { useI18n } from 'vue-i18n';
 
 export default {
   name: 'Home',
@@ -22,6 +23,7 @@ export default {
   },
   setup() {
     const { prefersDarkMode } = useDarkMode();
+    const { t } = useI18n();
     return { prefersDarkMode };
   },
   computed: {
@@ -57,40 +59,122 @@ export default {
       );
     },
     defaultLocale() {
-      const widgetLocale = this.widgetLocale;
-      const { allowed_locales: allowedLocales, default_locale: defaultLocale } =
-        this.portal.config;
+      console.log('[VUE] --- DETECTING LOCALE START ---');
+      
+      // 1. HIGHEST PRIORITY: Check URL Params (from SDK)
+      const urlParams = new URLSearchParams(window.location.search);
+      const localeFromUrl = urlParams.get('locale');
+      
+      console.log('[VUE] A. URL Params locale:', localeFromUrl);
 
-      // IMPORTANT: Variation strict locale matching, Follow iso_639_1_code
-      // If the exact match of a locale is available in the list of portal locales, return it
-      // Else return the default locale. Eg: `es` will not work if `es_ES` is available in the list
-      if (allowedLocales.includes(widgetLocale)) {
-        return widgetLocale;
+      if (localeFromUrl) {
+         console.log('[VUE] ✓ Using locale from URL:', localeFromUrl);
+         return localeFromUrl;
       }
-      return defaultLocale;
+
+      // 2. Check window.chatwootWebChannel (Server config)
+      const webChannel = window.chatwootWebChannel;
+      console.log('[VUE] B. window.chatwootWebChannel:', webChannel);
+
+      if (webChannel && webChannel.locale) {
+        console.log('[VUE] ✓ Using locale from WebChannel:', webChannel.locale);
+        return webChannel.locale;
+      }
+
+      // 3. Check parent window locale (if embedded in iframe)
+      try {
+        const parentLocale = window.parent?.chatwootSettings?.locale;
+        if (parentLocale) {
+          console.log('[VUE] ✓ Using locale from parent window:', parentLocale);
+          return parentLocale;
+        }
+      } catch (e) {
+        // Cross-origin iframe, can't access parent
+        console.log('[VUE] Cannot access parent window (cross-origin)');
+      }
+
+      // 4. Fallback to portal config
+      const { allowed_locales: allowedLocales, default_locale: defaultLocale } = this.portal?.config || {};
+      const current = this.$i18n.locale;
+      
+      console.log('[VUE] C. Fallback Config:', { allowedLocales, defaultLocale, current });
+
+      if (allowedLocales && allowedLocales.includes(current)) {
+        console.log('[VUE] ✓ Using current i18n locale:', current);
+        return current;
+      }
+      
+      const finalLocale = defaultLocale || 'en';
+      console.log('[VUE] ✓ Using default locale:', finalLocale);
+      return finalLocale;
     },
   },
   mounted() {
+    console.log('[VUE] === COMPONENT MOUNTED ===');
+    console.log('[VUE] Current i18n locale:', this.$i18n.locale);
+    console.log('[VUE] Window location:', window.location.href);
+    
+    window.addEventListener('message', this.handleMessageEvent);
+    
+    // Detect mobile device
     const ua = navigator.userAgent || navigator.vendor || window.opera;
     const isAndroidOrIos = /android|iphone|ipod|blackberry|iemobile|opera mini/i.test(ua);
     const isIpadOS = (ua.includes('Mac') && navigator.maxTouchPoints > 1);
+    this.isMobileDevice = isAndroidOrIos || isIpadOS;
 
-    if (isAndroidOrIos || isIpadOS) {
-        this.isMobileDevice = true;
+    // Detect and set locale
+    const detectedLocale = this.defaultLocale;
+    console.log('[VUE] Detected locale:', detectedLocale);
+
+    if (detectedLocale && detectedLocale !== this.$i18n.locale) {
+      this.$i18n.locale = detectedLocale;
+      console.log('[VUE] ✓ Locale changed to:', this.$i18n.locale);
     } else {
-        this.isMobileDevice = false;
+      console.log('[VUE] Locale already set correctly');
     }
 
+    // Fetch articles if needed
     if (this.portal && this.popularArticles.length === 0) {
       const locale = this.defaultLocale;
+      console.log('[VUE] Fetching articles for locale:', locale);
       this.$store.dispatch('article/fetch', {
         slug: this.portal.slug,
         locale,
       });
     }
   },
+  beforeUnmount() {
+    window.removeEventListener('message', this.handleMessageEvent);
+  },
   methods: {
     ...mapActions('conversation', ['loadConversation', 'createConversation']),
+    
+    handleMessageEvent(event) {
+      if (!event.data) return;
+      
+      // Handle locale change from parent window
+      if (event.data.event === 'changeLocale' || event.data.type === 'change-language') {
+        const newLocale = event.data.locale || event.data.value;
+        console.log('[VUE] Received locale change message:', newLocale);
+        this.updateLocale(newLocale);
+      }
+    },
+
+    updateLocale(locale) {
+      if (!locale || locale === this.$i18n.locale) return;
+      
+      console.log(`[VUE] Changing locale from ${this.$i18n.locale} to ${locale}`);
+      this.$i18n.locale = locale;
+      
+      // Refetch articles with new locale
+      if (this.portal) {
+        this.$store.dispatch('article/fetch', {
+          slug: this.portal.slug,
+          locale,
+        });
+      }
+    },
+    
     async onNewConversation() {
       try {
         this.isLoading = true;
@@ -116,6 +200,7 @@ export default {
     goToConversationList() {
       this.$router.push({ name: 'conversation-list' });
     },
+    
     openArticleInArticleViewer(link) {
       let linkToOpen = `${link}?show_plain_layout=true`;
       const isDark = this.prefersDarkMode;
@@ -127,6 +212,7 @@ export default {
         query: { link: linkToOpen },
       });
     },
+    
     viewAllArticles() {
       const locale = this.defaultLocale;
       const {
@@ -134,6 +220,7 @@ export default {
       } = window.chatwootWebChannel;
       this.openArticleInArticleViewer(`/hc/${slug}/${locale}`);
     },
+    
     closeWidget() {
       if (IFrameHelper.isIFrame()) {
         IFrameHelper.sendMessage({ event: 'closeWindow' });

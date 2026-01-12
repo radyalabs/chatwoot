@@ -168,31 +168,6 @@ class Channel::WhatsappUnofficial < ApplicationRecord
   # Inbox Management
   # ============================================================================
 
-  # Delete inbox after failed validation attempts
-  def delete_inbox_after_failed_attempts
-    Rails.logger.error "Auto-deleting inbox due to failed validation attempts for #{phone_number}"
-
-    begin
-      adapter.logout_session if provider_configured?
-
-      clear_session_status_cache
-      clear_mismatch_attempts
-
-      if inbox.present?
-        inbox_name = inbox.name
-        inbox.destroy!
-        Rails.logger.info "Inbox '#{inbox_name}' auto-deleted successfully"
-        true
-      else
-        Rails.logger.warn "No inbox found to delete for channel #{phone_number}"
-        false
-      end
-    rescue StandardError => e
-      Rails.logger.error "Failed to auto-delete inbox for #{phone_number}: #{e.message}"
-      false
-    end
-  end
-
   # Handle failed validation attempts
   def handle_failed_validation_attempts
     current_attempts = read_mismatch_attempts_from_cache
@@ -258,18 +233,17 @@ class Channel::WhatsappUnofficial < ApplicationRecord
   end
 
   def handle_max_validation_attempts_reached(current_attempts, max_attempts)
-    Rails.logger.error "Maximum attempts reached for #{phone_number}. Auto-deleting inbox..."
+    Rails.logger.error "Maximum attempts reached for #{phone_number}."
 
-    write_session_status_to_cache('failed', expires_in: 1.hour)
+    write_session_status_to_cache('not_logged_in')
     disconnect_waha_session
-    delete_inbox_after_failed_attempts
+    clear_mismatch_attempts
 
     {
       success: false,
-      auto_deleted: true,
       attempts: current_attempts,
       max_attempts: max_attempts,
-      message: "Failed to connect after #{max_attempts} attempts. Inbox has been automatically removed."
+      message: "Failed to connect after #{max_attempts} attempts. Please try again later."
     }
   end
 
@@ -277,7 +251,6 @@ class Channel::WhatsappUnofficial < ApplicationRecord
     remaining = max_attempts - current_attempts
     {
       success: false,
-      auto_deleted: false,
       attempts: current_attempts,
       max_attempts: max_attempts,
       remaining_attempts: remaining,

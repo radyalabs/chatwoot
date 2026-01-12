@@ -865,9 +865,7 @@
       "STATUS": {
         "CONNECTED": "WhatsApp Terhubung",
         "DISCONNECTED": "WhatsApp Terputus",
-        "PENDING_VALIDATION": "Menunggu validasi",
-        "CHECKING": "Memeriksa...",
-        "UNKNOWN": "Tidak diketahui"
+        "CHECKING": "Memeriksa..."
       },
       "LAST_CHECKED": "Terakhir diperbarui",
       "NEVER_CHECKED": "Belum pernah diperiksa",
@@ -876,12 +874,10 @@
         "DISCONNECT": "Putuskan",
         "RECONNECT": "Sambung ulang",
         "LOADING": "Memuat...",
-        "CANCEL": "Batal",
-        "REFRESH_QR": "Refresh QR"
+        "CANCEL": "Batal"
       },
       "MESSAGES": {
         "DISCONNECTED_GUIDE": "Koneksi WhatsApp terputus. Silakan klik tombol \"Sambung ulang\" untuk menyambung ulang channel ini.",
-        "PENDING_VALIDATION_GUIDE": "Menunggu validasi QR code. Silakan scan kode QR dengan WhatsApp Anda.",
         "DISCONNECT_CONFIRM": "Apakah Anda yakin ingin memutuskan sesi WhatsApp ini?",
         "DISCONNECT_SUCCESS": "Sesi WhatsApp berhasil diputuskan",
         "DISCONNECT_ERROR": "Gagal memutuskan sesi WhatsApp",
@@ -893,7 +889,6 @@
       },
       "ALERTS": {
         "CONNECTED": "WhatsApp berhasil terkoneksi!",
-        "RECONNECTED": "WhatsApp berhasil terkoneksi kembali!",
         "DISCONNECTED_NOTICE": "WhatsApp terputus dari perangkat. Silakan sambung ulang untuk melanjutkan."
       }
     }

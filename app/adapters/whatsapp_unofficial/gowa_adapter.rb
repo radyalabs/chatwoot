@@ -287,14 +287,13 @@ module WhatsappUnofficial
 
     def handle_failed_rescan
       log_error "Maximum rescan attempts reached for #{channel.phone_number}"
-      channel.write_session_status_to_cache('failed', expires_in: 1.hour)
+      channel.write_session_status_to_cache('not_logged_in')
       logout_session
-      channel.delete_inbox_after_failed_attempts
+      channel.clear_rescan_attempts
 
       {
         success: false,
-        auto_deleted: true,
-        message: 'Failed to reconnect after 3 rescan attempts. Inbox has been automatically removed.'
+        message: 'Failed to reconnect after multiple attempts. Please try again later.'
       }
     end
 

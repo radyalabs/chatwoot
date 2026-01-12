@@ -4,6 +4,7 @@ class WhatsappUnofficial::SendOnWhatsappUnofficialService < Base::SendOnChannelS
   end
 
   def perform_reply
+    Rails.logger.info "START [WhatsappUnofficial::SendOnWhatsappUnofficialService] Reply to #{message.id}"
     begin
       response = channel.send_message(**message_params)
     rescue StandardError => e
@@ -11,6 +12,8 @@ class WhatsappUnofficial::SendOnWhatsappUnofficialService < Base::SendOnChannelS
       return
     end
     message.update!(source_id: response['message_id']) if response.is_a?(Hash) && response['message_id'].present?
+
+    Rails.logger.info "END [WhatsappUnofficial::SendOnWhatsappUnofficialService] Reply to #{message.id}"
   end
 
   def message_params

@@ -17,6 +17,10 @@
         "TITLE": "Create Inbox",
         "BODY": "Authenticate your account and create an inbox."
       },
+      "QRCODE": {
+        "TITLE": "Scan QR Code",
+        "BODY": "Scan the QR code with your WhatsApp to connect."
+      },
       "AGENT": {
         "TITLE": "Add Agents",
         "BODY": "Add agents to the created inbox."
@@ -27,6 +31,10 @@
       }
     },
     "ADD": {
+      "QRCODE": {
+        "TITLE": "Scan QR Code",
+        "DESC": "Scan the QR code below with your WhatsApp app to connect"
+      },
       "WHATSAPP_UNOFFICIAL_CHANNEL": {
         "TITLE": "Add WhatsApp Channel",
         "DESC": "Configure your WhatsApp integration",
@@ -787,6 +795,43 @@
       "LINE": "Line",
       "API": "API Channel",
       "INSTAGRAM": "Instagram"
+    },
+    "WHATSAPP_STATUS": {
+      "TITLE": "WhatsApp Status",
+      "STATUS": {
+        "CONNECTED": "WhatsApp Connected",
+        "DISCONNECTED": "WhatsApp Disconnected",
+        "PENDING_VALIDATION": "Waiting for validation",
+        "CHECKING": "Checking...",
+        "UNKNOWN": "Unknown"
+      },
+      "LAST_CHECKED": "Last updated",
+      "NEVER_CHECKED": "Never checked",
+      "BUTTONS": {
+        "REFRESH": "Refresh status",
+        "DISCONNECT": "Disconnect",
+        "RECONNECT": "Reconnect",
+        "LOADING": "Loading...",
+        "CANCEL": "Cancel",
+        "REFRESH_QR": "Refresh QR"
+      },
+      "MESSAGES": {
+        "DISCONNECTED_GUIDE": "WhatsApp connection is disconnected. Please click the \"Reconnect\" button to reconnect this channel.",
+        "PENDING_VALIDATION_GUIDE": "Waiting for QR code validation. Please scan the QR code with your WhatsApp.",
+        "DISCONNECT_CONFIRM": "Are you sure you want to disconnect this WhatsApp session?",
+        "DISCONNECT_SUCCESS": "WhatsApp session disconnected successfully",
+        "DISCONNECT_ERROR": "Failed to disconnect WhatsApp session",
+        "RECONNECT_SUCCESS": "WhatsApp reconnected successfully!",
+        "RECONNECT_ERROR": "Failed to reconnect WhatsApp session",
+        "QR_SCAN_INSTRUCTION": "Scan this QR code with your WhatsApp to reconnect",
+        "QR_ERROR": "Failed to load QR code",
+        "QR_EXPIRES_IN": "QR code expires in {seconds} seconds"
+      },
+      "ALERTS": {
+        "CONNECTED": "WhatsApp connected successfully!",
+        "RECONNECTED": "WhatsApp reconnected successfully!",
+        "DISCONNECTED_NOTICE": "WhatsApp disconnected from device. Please reconnect to continue."
+      }
     }
   }
 }

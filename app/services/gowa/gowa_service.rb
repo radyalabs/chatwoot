@@ -61,11 +61,11 @@ class Gowa::GowaService
   end
 
   # Reconnect a device
-  # GOWA uses /app/reconnect with X-Device-Id header
+  # GOWA uses GET /app/reconnect with X-Device-Id header
   # @param device_id [String] Device ID
   # @return [Hash] Response
   def reconnect_device(device_id:)
-    post('/app/reconnect', extra_headers: { 'X-Device-Id' => device_id })
+    get('/app/reconnect', extra_headers: { 'X-Device-Id' => device_id })
   end
 
   # Get device connection status

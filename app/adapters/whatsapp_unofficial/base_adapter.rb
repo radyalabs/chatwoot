@@ -34,6 +34,18 @@ module WhatsappUnofficial
       raise NotImplementedError, "#{self.class} must implement #logout_session"
     end
 
+    # Disconnect session - logout and broadcast status change
+    # Returns: { success: Boolean, message: String, status: String }
+    def disconnect_session
+      raise NotImplementedError, "#{self.class} must implement #disconnect_session"
+    end
+
+    # Reconnect session
+    # Returns: { success: Boolean, message: String, status: String }
+    def reconnect_session
+      raise NotImplementedError, "#{self.class} must implement #reconnect_session"
+    end
+
     # Delete device from provider
     def delete_device
       raise NotImplementedError, "#{self.class} must implement #delete_device"

@@ -130,7 +130,7 @@ export default {
   <div
     v-if="!authUIFlags.isFetching && !accountUIFlags.isFetchingItem"
     id="app"
-    class="flex-grow-0 w-full h-full min-h-0 app-wrapper"
+    class="flex-grow-0 w-full h-screen overflow-hidden flex flex-col app-wrapper"
     :class="{ 'app-rtl--wrapper': isRTL }"
     :dir="isRTL ? 'rtl' : 'ltr'"
   >
@@ -140,11 +140,13 @@ export default {
       <PaymentPendingBanner v-if="hideOnOnboardingView" />
       <UpgradeBanner />
     </template>
-    <router-view v-slot="{ Component }">
-      <transition name="fade" mode="out-in">
-        <component :is="Component" />
-      </transition>
-    </router-view>
+    <div class="flex-1 min-h-0 overflow-hidden">
+      <router-view v-slot="{ Component }">
+        <transition name="fade" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
+    </div>
     <AddAccountModal :show="showAddAccountModal" :has-accounts="hasAccounts" />
     <WootSnackbarBox />
     <NetworkNotification />
@@ -154,6 +156,12 @@ export default {
 
 <style lang="scss">
 @import './assets/scss/app';
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
 
 .v-popper--theme-tooltip .v-popper__inner {
   background: black !important;

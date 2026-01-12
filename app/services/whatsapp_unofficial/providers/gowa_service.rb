@@ -23,11 +23,11 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
 
       case file_type
       when 'image'
-        send_image(phone_number, download_url, caption: current_caption)
+        send_image(phone_number, attachment, caption: current_caption)
       when 'audio'
-        send_audio(phone_number, download_url)
+        send_audio(phone_number, download_url, caption: current_caption)
       when 'video'
-        send_video(phone_number, download_url)
+        send_video(phone_number, download_url, caption: current_caption)
       when 'file'
         send_document(phone_number, attachment, caption: current_caption)
       end
@@ -47,10 +47,18 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
     process_response(response)
   end
 
-  def send_image(phone_number, image_url, caption: nil)
+  def send_image(phone_number, attachment, caption: nil)
+    tempfile = Tempfile.new(
+      [File.basename(attachment[:filename], '.*'), File.extname(attachment[:filename])]
+    )
+
+    tempfile.binmode
+    tempfile.write(attachment[:io].read)
+    tempfile.rewind
+
     body = {
       phone: phone_number,
-      image_url: image_url
+      image: tempfile
     }
     body[:caption] = caption if caption
 
@@ -106,11 +114,12 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
     process_response(response)
   end
 
-  def send_video(phone_number, video_url)
+  def send_video(phone_number, video_url, caption: nil)
     body = {
       phone: "#{phone_number}@s.whatsapp.net",
       video_url: video_url
     }
+    body[:caption] = caption if caption
 
     response = HTTParty.post(
       "#{api_base_path}/send/video",

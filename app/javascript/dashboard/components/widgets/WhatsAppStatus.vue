@@ -2,6 +2,8 @@
 import WhatsAppUnofficialChannels from 'dashboard/api/WhatsAppUnofficialChannels';
 import { createConsumer } from '@rails/actioncable';
 import { useAlert } from 'dashboard/composables';
+import { mapGetters } from 'vuex';
+import { useI18n } from 'vue-i18n';
 
 export default {
   props: {
@@ -15,93 +17,119 @@ export default {
     },
     autoRefresh: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     refreshInterval: {
       type: Number,
-      default: 10000, // 10 seconds
+      default: 10000,
     },
+  },
+  emits: [
+    'statusChanged',
+    'statusError',
+    'sessionDisconnected',
+    'disconnectError',
+    'sessionReconnected',
+    'reconnectError',
+  ],
+  setup() {
+    const { t } = useI18n();
+    return { t };
   },
   data() {
     return {
       connectionStatus: 'checking',
       lastChecked: null,
       isLoading: false,
+      isDisconnecting: false,
+      isReconnecting: false,
       refreshTimer: null,
       subscription: null,
-      canRestart: true, // Default to true to show button initially
-      isFromRestart: false, // Track if connection is from restart/re-scan
+      showDisconnectConfirm: false,
+      // QR Code state
+      showQRCard: false,
+      qrCodeData: null,
+      qrCodeType: null,
+      isLoadingQR: false,
+      qrRefreshTimer: null,
+      qrCountdownTimer: null,
+      qrDuration: 60,
+      qrCountdown: 60,
+      statusPollingTimer: null,
     };
   },
   computed: {
+    ...mapGetters({
+      currentUser: 'getCurrentUser',
+      currentAccountId: 'getCurrentAccountId',
+      currentUserId: 'getCurrentUserID',
+    }),
+    userPubsubToken() {
+      return this.currentUser?.pubsub_token;
+    },
     statusColor() {
-      switch (this.connectionStatus) {
-        case 'connected':
-        case 'logged_in':
-          return 'text-green-600 dark:text-green-400';
-        case 'disconnected':
-        case 'not_logged_in':
-          return 'text-red-600 dark:text-red-400';
-        case 'pending_validation':
-          return 'text-yellow-600 dark:text-yellow-400';
-        case 'checking':
-          return 'text-gray-600 dark:text-gray-400';
-        default:
-          return 'text-gray-600 dark:text-gray-400';
+      if (this.connectionStatus === 'connected') {
+        return 'text-green-600 dark:text-green-400';
       }
+      if (this.connectionStatus === 'checking') {
+        return 'text-gray-600 dark:text-gray-400';
+      }
+      return 'text-red-600 dark:text-red-400';
     },
     statusText() {
-      switch (this.connectionStatus) {
-        case 'connected':
-        case 'logged_in':
-          return 'WhatsApp Terhubung';
-        case 'disconnected':
-        case 'not_logged_in':
-          return 'WhatsApp Terputus';
-        case 'pending_validation':
-          return 'Menunggu validasi';
-        case 'checking':
-          return 'Memeriksa...';
-        default:
-          return 'Tidak diketahui';
+      if (this.connectionStatus === 'connected') {
+        return this.t('INBOX_MGMT.WHATSAPP_STATUS.STATUS.CONNECTED');
       }
+      if (this.connectionStatus === 'checking') {
+        return this.t('INBOX_MGMT.WHATSAPP_STATUS.STATUS.CHECKING');
+      }
+      return this.t('INBOX_MGMT.WHATSAPP_STATUS.STATUS.DISCONNECTED');
     },
     statusIcon() {
-      switch (this.connectionStatus) {
-        case 'connected':
-        case 'logged_in':
-          return 'check-circle';
-        case 'disconnected':
-        case 'not_logged_in':
-          return 'x-circle';
-        case 'pending_validation':
-          return 'clock';
-        case 'checking':
-          return 'refresh-cw';
-        default:
-          return 'help-circle';
+      if (this.connectionStatus === 'connected') {
+        return 'check-circle';
       }
+      if (this.connectionStatus === 'checking') {
+        return 'refresh-cw';
+      }
+      return 'x-circle';
     },
     lastCheckedText() {
-      if (!this.lastChecked) return 'Belum pernah diperiksa';
-      return `Terakhir diperbarui: ${this.lastChecked.toLocaleTimeString('id-ID')}`;
-    },
-    connectedStatusText() {
-      if (this.connectionStatus === 'connected' || this.connectionStatus === 'logged_in') {
-        if (this.lastChecked) {
-          return `WhatsApp Terhubung\nTerakhir diperbarui: ${this.lastChecked.toLocaleTimeString('id-ID')}`;
-        }
-        return 'WhatsApp Terhubung';
+      if (!this.lastChecked) {
+        return this.t('INBOX_MGMT.WHATSAPP_STATUS.NEVER_CHECKED');
       }
-      return this.statusText;
+      const timeStr = this.lastChecked.toLocaleTimeString('id-ID');
+      return `${this.t('INBOX_MGMT.WHATSAPP_STATUS.LAST_CHECKED')}: ${timeStr}`;
     },
-    showActionButton() {
-      // Hide button when connected, show when disconnected
-      return this.connectionStatus !== 'connected' && this.connectionStatus !== 'logged_in';
+    isConnected() {
+      return this.connectionStatus === 'connected';
+    },
+    showDisconnectButton() {
+      return this.isConnected && !this.showDisconnectConfirm && !this.showQRCard;
+    },
+    showReconnectButton() {
+      return (
+        !this.isConnected &&
+        this.connectionStatus !== 'checking' &&
+        !this.showQRCard
+      );
+    },
+    qrCodeSrc() {
+      if (!this.qrCodeData) return null;
+      if (this.qrCodeType === 'url') {
+        return this.qrCodeData;
+      }
+      return `data:image/png;base64,${this.qrCodeData}`;
+    },
+    qrCountdownText() {
+      // Use $t for interpolation
+      return this.$t('INBOX_MGMT.WHATSAPP_STATUS.MESSAGES.QR_EXPIRES_IN', {
+        seconds: this.qrCountdown,
+      });
     },
   },
   async mounted() {
-    await this.checkStatus(true); // Real-time check on mount
+    await this.checkStatus(true);
     this.setupWebSocketSubscription();
     if (this.autoRefresh) {
       this.startAutoRefresh();
@@ -109,6 +137,9 @@ export default {
   },
   beforeUnmount() {
     this.stopAutoRefresh();
+    this.stopQRRefresh();
+    this.stopQRCountdown();
+    this.stopStatusPolling();
     this.disconnectWebSocket();
   },
   methods: {
@@ -119,149 +150,318 @@ export default {
           this.inboxId,
           realTime
         );
-        
+
         const status = response.data?.status || 'unknown';
         const connected = response.data?.connected || false;
-                
+
         this.connectionStatus = connected ? 'connected' : status;
         this.lastChecked = new Date();
-        this.canRestart = !connected && status !== 'checking';
-        
-        this.$emit('status-changed', {
+
+        // Hide QR card if connected
+        if (connected) {
+          this.hideQRCard(false); // Don't reset status, we already set it
+        }
+
+        this.$emit('statusChanged', {
           status: this.connectionStatus,
           connected,
           lastChecked: this.lastChecked,
         });
       } catch (error) {
-        console.error('Failed to check WhatsApp status:', error);
         this.connectionStatus = 'disconnected';
-        this.canRestart = true;
-        
-        this.$emit('status-error', error);
+        this.$emit('statusError', error);
       } finally {
         this.isLoading = false;
       }
     },
 
-    async restartSession() {
-      if (!this.canRestart) return;
-      
-      this.isLoading = true;
-      this.isFromRestart = true; // Mark as restart action
-      
+    showDisconnectConfirmation() {
+      this.showDisconnectConfirm = true;
+    },
+
+    cancelDisconnect() {
+      this.showDisconnectConfirm = false;
+    },
+
+    async confirmDisconnect() {
+      this.showDisconnectConfirm = false;
+      this.isDisconnecting = true;
+
       try {
-        const response = await WhatsAppUnofficialChannels.restartSession(this.inboxId);
-        
+        const response = await WhatsAppUnofficialChannels.disconnectSession(
+          this.inboxId
+        );
+
         if (response.data?.success) {
-          this.connectionStatus = 'pending_validation';
-          this.$emit('session-restarted', response.data);
-          
-          // Langsung redirect ke halaman QR setelah restart
-          this.goToQRPage();
+          this.connectionStatus = 'disconnected';
+          const successMsg = this.t(
+            'INBOX_MGMT.WHATSAPP_STATUS.MESSAGES.DISCONNECT_SUCCESS'
+          );
+          useAlert(successMsg);
+          this.$emit('sessionDisconnected', response.data);
         } else {
-          throw new Error(response.data?.message || 'Failed to restart session');
+          const msg = response.data?.message || 'Failed to disconnect session';
+          throw new Error(msg);
         }
       } catch (error) {
-        console.error('Failed to restart WhatsApp session:', error);
-        this.$emit('restart-error', error);
-        this.isFromRestart = false; // Reset flag on error
+        const errorMsg = this.t(
+          'INBOX_MGMT.WHATSAPP_STATUS.MESSAGES.DISCONNECT_ERROR'
+        );
+        useAlert(errorMsg);
+        this.$emit('disconnectError', error);
       } finally {
-        this.isLoading = false;
+        this.isDisconnecting = false;
+      }
+    },
+
+    async reconnectSession() {
+      this.isReconnecting = true;
+
+      try {
+        const response = await WhatsAppUnofficialChannels.reconnectSession(
+          this.inboxId
+        );
+
+        if (response.data?.success) {
+          // If device was recreated and requires fresh QR scan
+          if (response.data.requires_qr) {
+            this.$emit('sessionReconnected', response.data);
+            // Show QR card inline instead of redirecting
+            await this.showQRCardAndFetch();
+            return;
+          }
+
+          if (response.data.connected) {
+            this.connectionStatus = 'connected';
+            const successMsg = this.t(
+              'INBOX_MGMT.WHATSAPP_STATUS.MESSAGES.RECONNECT_SUCCESS'
+            );
+            useAlert(successMsg);
+          } else {
+            // Not connected yet, show QR card
+            await this.showQRCardAndFetch();
+            return;
+          }
+          this.$emit('sessionReconnected', response.data);
+        } else {
+          const msg = response.data?.message || 'Failed to reconnect session';
+          throw new Error(msg);
+        }
+      } catch (error) {
+        const errorMsg = this.t(
+          'INBOX_MGMT.WHATSAPP_STATUS.MESSAGES.RECONNECT_ERROR'
+        );
+        useAlert(errorMsg);
+        this.$emit('reconnectError', error);
+      } finally {
+        this.isReconnecting = false;
+      }
+    },
+
+    async showQRCardAndFetch() {
+      this.showQRCard = true;
+      await this.fetchQRCode();
+      this.startQRCountdown();
+      this.startStatusPolling();
+    },
+
+    async fetchQRCode() {
+      this.isLoadingQR = true;
+      try {
+        const response = await WhatsAppUnofficialChannels.generateQR(
+          this.inboxId
+        );
+
+        if (response.data?.success) {
+          this.qrCodeData = response.data.qr_code;
+          this.qrCodeType = response.data.qr_type || 'base64';
+          this.qrDuration = response.data.qr_duration || 60;
+          this.qrCountdown = this.qrDuration;
+        } else if (response.data?.already_logged_in) {
+          // Already connected, hide QR and update status
+          this.connectionStatus = 'connected';
+          this.hideQRCard(false); // Don't reset status, we just set it to connected
+          const successMsg = this.t(
+            'INBOX_MGMT.WHATSAPP_STATUS.MESSAGES.RECONNECT_SUCCESS'
+          );
+          useAlert(successMsg);
+        } else {
+          throw new Error(response.data?.message || 'Failed to generate QR');
+        }
+      } catch (error) {
+        // Don't show error for already logged in
+        if (!error.message?.includes('already logged in')) {
+          const errorMsg = this.t(
+            'INBOX_MGMT.WHATSAPP_STATUS.MESSAGES.QR_ERROR'
+          );
+          useAlert(errorMsg);
+        }
+      } finally {
+        this.isLoadingQR = false;
+      }
+    },
+
+    startQRCountdown() {
+      this.stopQRCountdown();
+      this.qrCountdown = this.qrDuration;
+
+      this.qrCountdownTimer = setInterval(() => {
+        if (!this.showQRCard || this.isConnected) {
+          this.stopQRCountdown();
+          return;
+        }
+
+        this.qrCountdown--;
+
+        if (this.qrCountdown <= 0) {
+          // Auto-refresh QR when countdown reaches 0
+          this.fetchQRCode();
+        }
+      }, 1000);
+    },
+
+    stopQRCountdown() {
+      if (this.qrCountdownTimer) {
+        clearInterval(this.qrCountdownTimer);
+        this.qrCountdownTimer = null;
+      }
+    },
+
+    stopQRRefresh() {
+      // Keep for backward compatibility, now handled by countdown
+      this.stopQRCountdown();
+    },
+
+    hideQRCard(resetStatus = true) {
+      this.showQRCard = false;
+      this.qrCodeData = null;
+      this.qrCodeType = null;
+      this.stopQRCountdown();
+      this.stopStatusPolling();
+      // Reset status to disconnected when user cancels QR flow (not when connected via WebSocket)
+      if (resetStatus && !this.isConnected) {
+        this.connectionStatus = 'disconnected';
+      }
+    },
+
+    startStatusPolling() {
+      this.stopStatusPolling();
+
+      // Poll status every 3 seconds while QR card is visible
+      this.statusPollingTimer = setInterval(async () => {
+        if (!this.showQRCard || this.isConnected) {
+          this.stopStatusPolling();
+          return;
+        }
+
+        try {
+          const response = await WhatsAppUnofficialChannels.getConnectionStatus(
+            this.inboxId,
+            true // real_time = true for GOWA API check
+          );
+
+          if (response.data?.connected) {
+            this.connectionStatus = 'connected';
+            this.hideQRCard(false);
+            useAlert(this.t('INBOX_MGMT.WHATSAPP_STATUS.ALERTS.CONNECTED'));
+            this.stopStatusPolling();
+          }
+        } catch (error) {
+          // Silently ignore polling errors
+        }
+      }, 3000);
+    },
+
+    stopStatusPolling() {
+      if (this.statusPollingTimer) {
+        clearInterval(this.statusPollingTimer);
+        this.statusPollingTimer = null;
       }
     },
 
     setupWebSocketSubscription() {
       try {
-        const pubsub_token = `${this.accountId}_inbox_${this.inboxId}`;
+        const pubsubToken = this.userPubsubToken;
         const cable = createConsumer();
-        
+
+        if (!pubsubToken || !this.currentUserId || !this.currentAccountId) {
+          return;
+        }
+
         this.subscription = cable.subscriptions.create(
-          { 
+          {
             channel: 'RoomChannel',
-            pubsub_token: pubsub_token
+            pubsub_token: pubsubToken,
+            user_id: this.currentUserId,
+            account_id: this.currentAccountId,
           },
           {
-            received: (data) => {
+            received: data => {
               if (data.event === 'whatsapp_status_changed') {
-                this.handleStatusUpdate(data);
-              } else {
+                const isForOurInbox =
+                  data.inbox_id === parseInt(this.inboxId, 10) ||
+                  (!data.inbox_id && data.phone_number);
+                if (isForOurInbox) {
+                  this.handleStatusUpdate(data);
+                }
               }
             },
-            connected: () => {
-            },
-            disconnected: () => {
-            }
+            connected: () => {},
+            disconnected: () => {},
           }
         );
       } catch (error) {
-        console.error('Failed to setup WebSocket for status monitoring:', error);
+        // WebSocket setup failed silently
       }
     },
 
     handleStatusUpdate(data) {
       const oldStatus = this.connectionStatus;
-      
-      if (data.type === 'session_ready' || data.type === 'phone_validation_success' || data.type === 'auto_reconnect') {
+
+      if (
+        data.type === 'session_ready' ||
+        data.type === 'phone_validation_success' ||
+        data.type === 'auto_reconnect'
+      ) {
         this.connectionStatus = 'connected';
-        this.canRestart = false;
-        
+        this.hideQRCard(false); // Don't reset status, we just set it to connected
+
         if (oldStatus !== 'connected') {
-          const isOnQRPage = this.$route && this.$route.name === 'settings_inboxes_display_qrcode';
-          
-          if (!isOnQRPage) {
-            if (this.isFromRestart) {
-              useAlert('WhatsApp berhasil terkoneksi kembali!');
-              this.isFromRestart = false;
-            } else {
-              useAlert('WhatsApp berhasil terkoneksi!');
-            }
-          }
+          useAlert(this.t('INBOX_MGMT.WHATSAPP_STATUS.ALERTS.CONNECTED'));
         }
-        
       } else if (data.type === 'session_mismatch') {
         this.connectionStatus = 'disconnected';
-        this.canRestart = true;
       } else if (data.type === 'session_failed') {
         this.connectionStatus = 'disconnected';
-        this.canRestart = !data.auto_deleted; // Can't restart if auto-deleted
+        this.hideQRCard(false); // Don't reset status, we just set it to disconnected
       } else if (data.type === 'auto_disconnect') {
-        // Handle auto-detected disconnect from status polling
         this.connectionStatus = 'disconnected';
-        this.canRestart = true;
-        
-        // Show notification about disconnect
+
         if (oldStatus === 'connected') {
-          useAlert('WhatsApp terputus dari perangkat. Silakan scan ulang untuk menghubungkan kembali.');
+          const noticeMsg = this.t(
+            'INBOX_MGMT.WHATSAPP_STATUS.ALERTS.DISCONNECTED_NOTICE'
+          );
+          useAlert(noticeMsg);
         }
       } else if (data.status) {
-        this.connectionStatus = data.connected ? 'connected' : data.status;
-        this.canRestart = !data.connected;
-        
-        // Show success alert when status changes to connected (without auto-redirect)
-        if (data.connected && oldStatus !== 'connected') {
-          // Check if user is currently on QR page to avoid duplicate alerts
-          const isOnQRPage = this.$route && this.$route.name === 'settings_inboxes_display_qrcode';
-          
-          if (!isOnQRPage) {
-            if (this.isFromRestart) {
-              useAlert('WhatsApp berhasil terkoneksi kembali!');
-              this.isFromRestart = false; // Reset flag
-            } else {
-              useAlert('WhatsApp berhasil terkoneksi!');
-            }
+        this.connectionStatus = data.connected ? 'connected' : 'disconnected';
+
+        if (data.connected) {
+          this.hideQRCard(false); // Don't reset status, we just set it to connected
+          if (oldStatus !== 'connected') {
+            useAlert(this.t('INBOX_MGMT.WHATSAPP_STATUS.ALERTS.CONNECTED'));
           }
         }
       }
-      
+
       this.lastChecked = new Date();
-      
+
       if (oldStatus !== this.connectionStatus) {
-        this.$emit('status-changed', {
+        this.$emit('statusChanged', {
           status: this.connectionStatus,
           connected: this.connectionStatus === 'connected',
           lastChecked: this.lastChecked,
         });
-      } else {
       }
     },
 
@@ -274,7 +474,6 @@ export default {
 
     startAutoRefresh() {
       this.refreshTimer = setInterval(() => {
-        // Always refresh for real-time monitoring, regardless of connection status
         this.checkStatus(true);
       }, this.refreshInterval);
     },
@@ -289,41 +488,14 @@ export default {
     async forceRefresh() {
       await this.checkStatus(true);
     },
-
-    goToQRPage() {
-      // Navigate to QR page for this inbox with rescan context
-      this.$router.push({
-        name: 'settings_inboxes_display_qrcode',
-        params: {
-          accountId: this.accountId,
-          inbox_id: this.inboxId,
-        },
-        query: {
-          rescan: 'true'
-        }
-      });
-    },
-
-    redirectToInboxListWithSuccess() {
-      // Show success toast
-      useAlert('WhatsApp berhasil terkoneksi kembali!');
-      
-      // Redirect to inbox list after short delay
-      setTimeout(() => {
-        this.$router.push({
-          name: 'settings_inbox_list',
-          params: {
-            accountId: this.accountId,
-          }
-        });
-      }, 1500);
-    },
   },
 };
 </script>
 
 <template>
-  <div class="whatsapp-status-widget p-4 border rounded-lg bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+  <div
+    class="whatsapp-status-widget p-4 border rounded-lg bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+  >
     <!-- Status Header -->
     <div class="flex items-center justify-between mb-3">
       <div class="flex items-center space-x-2">
@@ -371,17 +543,49 @@ export default {
           />
         </svg>
         <span class="font-medium text-gray-900 dark:text-slate-100">
-          Status WhatsApp
+          {{ t('INBOX_MGMT.WHATSAPP_STATUS.TITLE') }}
         </span>
       </div>
-      
+
       <!-- Action Buttons -->
       <div class="flex items-center space-x-2">
+        <!-- Disconnect Button - show when connected -->
         <button
-          @click="forceRefresh"
+          v-if="showDisconnectButton"
+          :disabled="isDisconnecting"
+          class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-red-600 border border-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          @click="showDisconnectConfirmation"
+        >
+          <span v-if="isDisconnecting">
+            {{ t('INBOX_MGMT.WHATSAPP_STATUS.BUTTONS.LOADING') }}
+          </span>
+          <span v-else>
+            {{ t('INBOX_MGMT.WHATSAPP_STATUS.BUTTONS.DISCONNECT') }}
+          </span>
+        </button>
+
+        <!-- Reconnect Button - show when disconnected -->
+        <button
+          v-if="showReconnectButton"
+          :disabled="isReconnecting"
+          class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-green-600 border border-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          @click="reconnectSession"
+        >
+          <span v-if="isReconnecting">
+            {{ t('INBOX_MGMT.WHATSAPP_STATUS.BUTTONS.LOADING') }}
+          </span>
+          <span v-else>
+            {{ t('INBOX_MGMT.WHATSAPP_STATUS.BUTTONS.RECONNECT') }}
+          </span>
+        </button>
+
+        <!-- Refresh Button -->
+        <button
+          v-if="!showQRCard"
           :disabled="isLoading"
-          class="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50"
-          title="Refresh status"
+          :title="t('INBOX_MGMT.WHATSAPP_STATUS.BUTTONS.REFRESH')"
+          class="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50 border border-gray-300 dark:border-gray-600 rounded-md"
+          @click="forceRefresh"
         >
           <svg
             class="w-4 h-4"
@@ -398,18 +602,6 @@ export default {
             />
           </svg>
         </button>
-        
-        <!-- Debug Button - Show only when not connected -->
-        <button
-          v-if="showActionButton"
-          @click="restartSession"
-          :disabled="isLoading"
-          class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 border border-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          style="min-width: 100px;"
-        >
-          <span v-if="isLoading">Memuat...</span>
-          <span v-else>Scan Ulang</span>
-        </button>
       </div>
     </div>
 
@@ -417,21 +609,20 @@ export default {
     <div class="flex items-center justify-between">
       <div>
         <div class="flex items-center space-x-2">
-          <!-- Connection Status Circle for better visual feedback -->
+          <!-- Connection Status Circle -->
           <div
             class="w-3 h-3 rounded-full border border-white shadow-sm"
             :class="{
-              'bg-green-500': connectionStatus === 'connected' || connectionStatus === 'logged_in',
-              'bg-red-500': connectionStatus === 'disconnected' || connectionStatus === 'not_logged_in',
-              'bg-yellow-500': connectionStatus === 'pending_validation',
-              'bg-gray-500': connectionStatus === 'checking' || connectionStatus === 'unknown'
+              'bg-green-500': isConnected,
+              'bg-red-500': connectionStatus === 'disconnected',
+              'bg-gray-500': connectionStatus === 'checking',
             }"
-          ></div>
+          />
           <span :class="statusColor" class="font-medium">{{ statusText }}</span>
           <div
-            v-if="isLoading"
+            v-if="isLoading || isDisconnecting || isReconnecting"
             class="w-3 h-3 border-2 border-green-500 border-t-transparent rounded-full animate-spin"
-          ></div>
+          />
         </div>
         <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
           {{ lastCheckedText }}
@@ -439,27 +630,149 @@ export default {
       </div>
     </div>
 
-    <!-- Connection Guide -->
-        <!-- Connection Guide -->
+    <!-- Disconnect Confirmation Card -->
     <div
-      v-if="connectionStatus === 'disconnected' || connectionStatus === 'not_logged_in'"
+      v-if="showDisconnectConfirm"
+      class="mt-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
+    >
+      <div class="flex items-start space-x-3">
+        <div class="flex-shrink-0">
+          <svg
+            class="w-5 h-5 text-red-600 dark:text-red-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+        </div>
+        <div class="flex-1">
+          <p class="text-sm font-medium text-red-800 dark:text-red-200">
+            {{ t('INBOX_MGMT.WHATSAPP_STATUS.MESSAGES.DISCONNECT_CONFIRM') }}
+          </p>
+          <div class="mt-3 flex space-x-3">
+            <button
+              :disabled="isDisconnecting"
+              class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-red-600 border border-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              @click="confirmDisconnect"
+            >
+              <span v-if="isDisconnecting">
+                {{ t('INBOX_MGMT.WHATSAPP_STATUS.BUTTONS.LOADING') }}
+              </span>
+              <span v-else>
+                {{ t('INBOX_MGMT.WHATSAPP_STATUS.BUTTONS.DISCONNECT') }}
+              </span>
+            </button>
+            <button
+              :disabled="isDisconnecting"
+              class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              @click="cancelDisconnect"
+            >
+              {{ t('INBOX_MGMT.WHATSAPP_STATUS.BUTTONS.CANCEL') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR Code Card -->
+    <div
+      v-else-if="showQRCard"
+      class="mt-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg"
+    >
+      <div class="flex flex-col items-center">
+        <div class="flex items-center justify-between w-full mb-3">
+          <p class="text-sm font-medium text-blue-800 dark:text-blue-200">
+            {{ t('INBOX_MGMT.WHATSAPP_STATUS.MESSAGES.QR_SCAN_INSTRUCTION') }}
+          </p>
+          <button
+            class="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            @click="hideQRCard"
+          >
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <!-- QR Code Display -->
+        <div
+          class="w-64 h-64 bg-white rounded-lg flex items-center justify-center border border-gray-200"
+        >
+          <div
+            v-if="isLoadingQR"
+            class="flex flex-col items-center space-y-2"
+          >
+            <div
+              class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"
+            />
+            <span class="text-sm text-gray-500">
+              {{ t('INBOX_MGMT.WHATSAPP_STATUS.BUTTONS.LOADING') }}
+            </span>
+          </div>
+          <img
+            v-else-if="qrCodeSrc"
+            :src="qrCodeSrc"
+            alt="WhatsApp QR Code"
+            class="w-full h-full object-contain p-2"
+          />
+          <div
+            v-else
+            class="flex flex-col items-center space-y-2 text-gray-400"
+          >
+            <svg
+              class="w-12 h-12"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+              />
+            </svg>
+            <span class="text-sm">
+              {{ t('INBOX_MGMT.WHATSAPP_STATUS.MESSAGES.QR_ERROR') }}
+            </span>
+          </div>
+        </div>
+
+        <!-- QR Countdown Timer -->
+        <div
+          v-if="qrCodeSrc && !isLoadingQR"
+          class="mt-3 text-sm text-gray-500 dark:text-gray-400"
+        >
+          {{ qrCountdownText }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Connection Guide -->
+    <div
+      v-else-if="connectionStatus === 'disconnected'"
       class="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded"
     >
       <p class="text-sm text-red-700 dark:text-red-300">
-        Koneksi WhatsApp terputus. Silakan klik tombol "Scan Ulang" untuk menyambung ulang channel ini.
+        {{ t('INBOX_MGMT.WHATSAPP_STATUS.MESSAGES.DISCONNECTED_GUIDE') }}
       </p>
     </div>
-
-    <div
-      v-else-if="connectionStatus === 'pending_validation'"
-      class="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded"
-    >
-      <p class="text-sm text-yellow-700 dark:text-yellow-300">
-        Menunggu validasi QR code. Silakan scan kode QR dengan WhatsApp Anda.
-      </p>
-    </div>
-
-    <!-- Note: Removed redundant green box when connected since status is already shown above -->
   </div>
 </template>
 
@@ -468,23 +781,12 @@ export default {
   animation: spin 1s linear infinite;
 }
 
-.animate-ping {
-  animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
-}
-
 @keyframes spin {
   from {
     transform: rotate(0deg);
   }
   to {
     transform: rotate(360deg);
-  }
-}
-
-@keyframes ping {
-  75%, 100% {
-    transform: scale(2);
-    opacity: 0;
   }
 }
 </style>

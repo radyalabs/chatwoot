@@ -107,7 +107,7 @@ module WhatsappUnofficial
       { status: 'ready_for_qr' }
     end
 
-    # Logout and clear device_id
+    # Logout session (disconnect but keep device_id)
     def logout_session
       return nil unless channel.device_id.present?
 
@@ -115,15 +115,78 @@ module WhatsappUnofficial
       response = gowa_service.logout_device(device_id: channel.device_id)
       log_info "GOWA logout response for #{channel.device_id}: #{response}"
 
-      channel.update!(device_id: nil)
       channel.clear_session_status_cache
+      channel.write_session_status_to_cache('not_logged_in')
 
       response
     rescue StandardError => e
       log_error "Failed to logout GOWA device #{channel.device_id}: #{e.message}"
-      channel.update!(device_id: nil)
       channel.clear_session_status_cache
       nil
+    end
+
+    # Disconnect session - logout and broadcast status
+    def disconnect_session
+      return { success: false, message: 'No device configured' } unless channel.device_id.present?
+
+      log_info "Disconnecting GOWA device #{channel.device_id}"
+
+      begin
+        response = gowa_service.logout_device(device_id: channel.device_id)
+        log_info "GOWA disconnect response for #{channel.device_id}: #{response}"
+
+        channel.clear_session_status_cache
+        channel.write_session_status_to_cache('not_logged_in')
+
+        # Broadcast disconnect event
+        WhatsappUnofficial::BroadcastService.new(channel).disconnect
+
+        { success: true, message: 'Session disconnected successfully', status: 'not_logged_in' }
+      rescue StandardError => e
+        log_error "Failed to disconnect GOWA device #{channel.device_id}: #{e.message}"
+        { success: false, message: "Failed to disconnect: #{e.message}" }
+      end
+    end
+
+    # Reconnect session
+    # If device no longer exists (e.g., after logout deleted it), recreate and trigger QR flow
+    def reconnect_session
+      return { success: false, message: 'No device configured' } unless channel.device_id.present?
+
+      log_info "Reconnecting GOWA device #{channel.device_id}"
+
+      begin
+        response = gowa_service.reconnect_device(device_id: channel.device_id)
+        log_info "GOWA reconnect response for #{channel.device_id}: #{response}"
+
+        channel.clear_session_status_cache
+
+        # Check if reconnect was successful
+        status = get_session_status
+        if status[:connected]
+          channel.write_session_status_to_cache('logged_in')
+          WhatsappUnofficial::BroadcastService.new(channel).reconnect
+          { success: true, message: 'Session reconnected successfully', status: 'logged_in' }
+        else
+          channel.write_session_status_to_cache('waiting')
+          { success: true, message: 'Reconnect initiated, waiting for connection', status: 'waiting' }
+        end
+      rescue StandardError => e
+        # Handle DEVICE_NOT_FOUND by recreating the device and triggering QR flow
+        if e.message.include?('DEVICE_NOT_FOUND')
+          log_info "Device #{channel.device_id} not found, recreating device for fresh QR scan"
+          return recreate_device_for_qr
+        end
+
+        # Handle "not logged in (session deleted)" - device exists but needs fresh QR login
+        if e.message.include?('not logged in') || e.message.include?('session deleted')
+          log_info "Device #{channel.device_id} exists but session deleted, triggering fresh QR scan"
+          return trigger_qr_login
+        end
+
+        log_error "Failed to reconnect GOWA device #{channel.device_id}: #{e.message}"
+        { success: false, message: "Failed to reconnect: #{e.message}" }
+      end
     end
 
     # Delete device from GOWA
@@ -232,6 +295,52 @@ module WhatsappUnofficial
         success: false,
         auto_deleted: true,
         message: 'Failed to reconnect after 3 rescan attempts. Inbox has been automatically removed.'
+      }
+    end
+
+    # Recreate device and prepare for fresh QR scan
+    # Used when GOWA device no longer exists (e.g., after logout deleted it)
+    def recreate_device_for_qr
+      channel.clear_session_status_cache
+
+      # Clear existing device_id to allow fresh creation
+      old_device_id = channel.device_id
+      channel.update!(device_id: nil)
+
+      log_info "Recreating device for #{channel.phone_number} (old device_id: #{old_device_id})"
+
+      # Create new device
+      webhook_url = webhook_url_for(channel.phone_number)
+      create_device(webhook_url: webhook_url)
+      channel.reload
+
+      # Set status for QR generation
+      channel.write_session_status_to_cache('waiting')
+
+      {
+        success: true,
+        requires_qr: true,
+        message: 'Device recreated. Please scan QR code to reconnect.',
+        status: 'waiting'
+      }
+    rescue StandardError => e
+      log_error "Failed to recreate device for #{channel.phone_number}: #{e.message}"
+      { success: false, message: "Failed to recreate device: #{e.message}" }
+    end
+
+    # Trigger fresh QR login for existing device
+    # Used when device exists but session was deleted/logged out
+    def trigger_qr_login
+      channel.clear_session_status_cache
+      channel.write_session_status_to_cache('waiting')
+
+      log_info "Triggering fresh QR login for device #{channel.device_id}"
+
+      {
+        success: true,
+        requires_qr: true,
+        message: 'Session expired. Please scan QR code to reconnect.',
+        status: 'waiting'
       }
     end
   end

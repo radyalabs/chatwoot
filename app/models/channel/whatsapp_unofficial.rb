@@ -169,6 +169,16 @@ class Channel::WhatsappUnofficial < ApplicationRecord
     adapter.logout_session
   end
 
+  # Disconnect session with status broadcast
+  def disconnect_session
+    adapter.disconnect_session
+  end
+
+  # Reconnect session
+  def reconnect_session
+    adapter.reconnect_session
+  end
+
   # ============================================================================
   # Inbox Management
   # ============================================================================

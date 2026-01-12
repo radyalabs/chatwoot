@@ -164,6 +164,75 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController #
     end
   end
 
+  def whatsapp_disconnect_session
+    @channel = @inbox.channel
+
+    begin
+      if @channel.respond_to?(:disconnect_session)
+        result = @channel.disconnect_session
+
+        if result[:success]
+          render json: {
+            success: true,
+            message: result[:message],
+            status: result[:status]
+          }
+        else
+          render json: {
+            success: false,
+            message: result[:message]
+          }, status: :unprocessable_entity
+        end
+      else
+        render json: {
+          success: false,
+          message: 'Disconnect session not supported for this channel type'
+        }, status: :unprocessable_entity
+      end
+    rescue StandardError => e
+      Rails.logger.error "WhatsApp disconnect session error: #{e.message}"
+      render json: {
+        success: false,
+        message: "Failed to disconnect session: #{e.message}"
+      }, status: :internal_server_error
+    end
+  end
+
+  def whatsapp_reconnect_session
+    @channel = @inbox.channel
+
+    begin
+      if @channel.respond_to?(:reconnect_session)
+        result = @channel.reconnect_session
+
+        if result[:success]
+          render json: {
+            success: true,
+            message: result[:message],
+            status: result[:status],
+            requires_qr: result[:requires_qr] || false
+          }
+        else
+          render json: {
+            success: false,
+            message: result[:message]
+          }, status: :unprocessable_entity
+        end
+      else
+        render json: {
+          success: false,
+          message: 'Reconnect session not supported for this channel type'
+        }, status: :unprocessable_entity
+      end
+    rescue StandardError => e
+      Rails.logger.error "WhatsApp reconnect session error: #{e.message}"
+      render json: {
+        success: false,
+        message: "Failed to reconnect session: #{e.message}"
+      }, status: :internal_server_error
+    end
+  end
+
   private
 
   def fetch_inbox

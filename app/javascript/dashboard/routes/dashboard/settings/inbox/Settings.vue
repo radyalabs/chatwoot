@@ -159,7 +159,7 @@ export default {
           ...visibleToAllChannelTabs,
           {
             key: 'whatsapp_status',
-            name: 'Status WhatsApp',
+            name: this.$t('INBOX_MGMT.WHATSAPP_STATUS.TITLE'),
           },
         ];
       }

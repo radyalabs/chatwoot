@@ -68,52 +68,31 @@ export default {
       return this.currentUser?.pubsub_token;
     },
     statusColor() {
-      switch (this.connectionStatus) {
-        case 'connected':
-        case 'logged_in':
-          return 'text-green-600 dark:text-green-400';
-        case 'disconnected':
-        case 'not_logged_in':
-          return 'text-red-600 dark:text-red-400';
-        case 'pending_validation':
-          return 'text-yellow-600 dark:text-yellow-400';
-        case 'checking':
-          return 'text-gray-600 dark:text-gray-400';
-        default:
-          return 'text-gray-600 dark:text-gray-400';
+      if (this.connectionStatus === 'connected') {
+        return 'text-green-600 dark:text-green-400';
       }
+      if (this.connectionStatus === 'checking') {
+        return 'text-gray-600 dark:text-gray-400';
+      }
+      return 'text-red-600 dark:text-red-400';
     },
     statusText() {
-      switch (this.connectionStatus) {
-        case 'connected':
-        case 'logged_in':
-          return this.t('INBOX_MGMT.WHATSAPP_STATUS.STATUS.CONNECTED');
-        case 'disconnected':
-        case 'not_logged_in':
-          return this.t('INBOX_MGMT.WHATSAPP_STATUS.STATUS.DISCONNECTED');
-        case 'pending_validation':
-          return this.t('INBOX_MGMT.WHATSAPP_STATUS.STATUS.PENDING_VALIDATION');
-        case 'checking':
-          return this.t('INBOX_MGMT.WHATSAPP_STATUS.STATUS.CHECKING');
-        default:
-          return this.t('INBOX_MGMT.WHATSAPP_STATUS.STATUS.UNKNOWN');
+      if (this.connectionStatus === 'connected') {
+        return this.t('INBOX_MGMT.WHATSAPP_STATUS.STATUS.CONNECTED');
       }
+      if (this.connectionStatus === 'checking') {
+        return this.t('INBOX_MGMT.WHATSAPP_STATUS.STATUS.CHECKING');
+      }
+      return this.t('INBOX_MGMT.WHATSAPP_STATUS.STATUS.DISCONNECTED');
     },
     statusIcon() {
-      switch (this.connectionStatus) {
-        case 'connected':
-        case 'logged_in':
-          return 'check-circle';
-        case 'disconnected':
-        case 'not_logged_in':
-          return 'x-circle';
-        case 'pending_validation':
-          return 'clock';
-        case 'checking':
-          return 'refresh-cw';
-        default:
-          return 'help-circle';
+      if (this.connectionStatus === 'connected') {
+        return 'check-circle';
       }
+      if (this.connectionStatus === 'checking') {
+        return 'refresh-cw';
+      }
+      return 'x-circle';
     },
     lastCheckedText() {
       if (!this.lastChecked) {
@@ -123,10 +102,7 @@ export default {
       return `${this.t('INBOX_MGMT.WHATSAPP_STATUS.LAST_CHECKED')}: ${timeStr}`;
     },
     isConnected() {
-      return (
-        this.connectionStatus === 'connected' ||
-        this.connectionStatus === 'logged_in'
-      );
+      return this.connectionStatus === 'connected';
     },
     showDisconnectButton() {
       return this.isConnected && !this.showDisconnectConfirm && !this.showQRCard;
@@ -249,26 +225,22 @@ export default {
         if (response.data?.success) {
           // If device was recreated and requires fresh QR scan
           if (response.data.requires_qr) {
-            this.connectionStatus = 'pending_validation';
             this.$emit('sessionReconnected', response.data);
             // Show QR card inline instead of redirecting
             await this.showQRCardAndFetch();
             return;
           }
 
-          if (response.data.status === 'logged_in') {
+          if (response.data.connected) {
             this.connectionStatus = 'connected';
             const successMsg = this.t(
               'INBOX_MGMT.WHATSAPP_STATUS.MESSAGES.RECONNECT_SUCCESS'
             );
             useAlert(successMsg);
           } else {
-            this.connectionStatus = response.data.status || 'waiting';
-            // If status is waiting, also show QR card
-            if (response.data.status === 'waiting') {
-              await this.showQRCardAndFetch();
-              return;
-            }
+            // Not connected yet, show QR card
+            await this.showQRCardAndFetch();
+            return;
           }
           this.$emit('sessionReconnected', response.data);
         } else {
@@ -367,11 +339,7 @@ export default {
       this.stopQRCountdown();
       this.stopStatusPolling();
       // Reset status to disconnected when user cancels QR flow (not when connected via WebSocket)
-      if (
-        resetStatus &&
-        (this.connectionStatus === 'pending_validation' ||
-          this.connectionStatus === 'waiting')
-      ) {
+      if (resetStatus && !this.isConnected) {
         this.connectionStatus = 'disconnected';
       }
     },
@@ -476,7 +444,7 @@ export default {
           useAlert(noticeMsg);
         }
       } else if (data.status) {
-        this.connectionStatus = data.connected ? 'connected' : data.status;
+        this.connectionStatus = data.connected ? 'connected' : 'disconnected';
 
         if (data.connected) {
           this.hideQRCard(false); // Don't reset status, we just set it to connected
@@ -646,13 +614,8 @@ export default {
             class="w-3 h-3 rounded-full border border-white shadow-sm"
             :class="{
               'bg-green-500': isConnected,
-              'bg-red-500':
-                connectionStatus === 'disconnected' ||
-                connectionStatus === 'not_logged_in',
-              'bg-yellow-500': connectionStatus === 'pending_validation',
-              'bg-gray-500':
-                connectionStatus === 'checking' ||
-                connectionStatus === 'unknown',
+              'bg-red-500': connectionStatus === 'disconnected',
+              'bg-gray-500': connectionStatus === 'checking',
             }"
           />
           <span :class="statusColor" class="font-medium">{{ statusText }}</span>
@@ -803,23 +766,11 @@ export default {
 
     <!-- Connection Guide -->
     <div
-      v-else-if="
-        connectionStatus === 'disconnected' ||
-        connectionStatus === 'not_logged_in'
-      "
+      v-else-if="connectionStatus === 'disconnected'"
       class="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded"
     >
       <p class="text-sm text-red-700 dark:text-red-300">
         {{ t('INBOX_MGMT.WHATSAPP_STATUS.MESSAGES.DISCONNECTED_GUIDE') }}
-      </p>
-    </div>
-
-    <div
-      v-else-if="connectionStatus === 'pending_validation'"
-      class="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded"
-    >
-      <p class="text-sm text-yellow-700 dark:text-yellow-300">
-        {{ t('INBOX_MGMT.WHATSAPP_STATUS.MESSAGES.PENDING_VALIDATION_GUIDE') }}
       </p>
     </div>
   </div>

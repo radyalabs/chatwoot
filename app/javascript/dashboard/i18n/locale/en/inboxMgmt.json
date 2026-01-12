@@ -801,9 +801,7 @@
       "STATUS": {
         "CONNECTED": "WhatsApp Connected",
         "DISCONNECTED": "WhatsApp Disconnected",
-        "PENDING_VALIDATION": "Waiting for validation",
-        "CHECKING": "Checking...",
-        "UNKNOWN": "Unknown"
+        "CHECKING": "Checking..."
       },
       "LAST_CHECKED": "Last updated",
       "NEVER_CHECKED": "Never checked",
@@ -812,12 +810,10 @@
         "DISCONNECT": "Disconnect",
         "RECONNECT": "Reconnect",
         "LOADING": "Loading...",
-        "CANCEL": "Cancel",
-        "REFRESH_QR": "Refresh QR"
+        "CANCEL": "Cancel"
       },
       "MESSAGES": {
         "DISCONNECTED_GUIDE": "WhatsApp connection is disconnected. Please click the \"Reconnect\" button to reconnect this channel.",
-        "PENDING_VALIDATION_GUIDE": "Waiting for QR code validation. Please scan the QR code with your WhatsApp.",
         "DISCONNECT_CONFIRM": "Are you sure you want to disconnect this WhatsApp session?",
         "DISCONNECT_SUCCESS": "WhatsApp session disconnected successfully",
         "DISCONNECT_ERROR": "Failed to disconnect WhatsApp session",
@@ -829,7 +825,6 @@
       },
       "ALERTS": {
         "CONNECTED": "WhatsApp connected successfully!",
-        "RECONNECTED": "WhatsApp reconnected successfully!",
         "DISCONNECTED_NOTICE": "WhatsApp disconnected from device. Please reconnect to continue."
       }
     }

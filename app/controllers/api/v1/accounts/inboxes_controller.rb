@@ -244,39 +244,20 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController #
     @agent_bot = @inbox.agent_bot
   end
 
-  def build_status_response(status) # rubocop:disable Metrics/MethodLength
-    waha_status = map_to_waha_status(status)
+  def build_status_response(status)
+    normalized_status = map_to_waha_status(status)
+    is_connected = normalized_status == 'connected'
 
-    attempts_info = {}
-    if @channel.respond_to?(:read_mismatch_attempts_from_cache)
-      current_attempts = @channel.read_mismatch_attempts_from_cache
-      if current_attempts.positive?
-        attempts_info = {
-          current_attempts: current_attempts,
-          max_attempts: 3,
-          remaining_attempts: 3 - current_attempts
-        }
-      end
-    end
-
-    base_response = {
+    {
       success: true,
       message: 'session info fetched successfully',
-      connected: waha_status == 'logged_in',
-      status: waha_status,
+      connected: is_connected,
+      status: normalized_status,
       data: {
-        status: waha_status,
-        connected: waha_status == 'logged_in'
+        status: normalized_status,
+        connected: is_connected
       }
     }
-
-    # Add attempts info if available
-    if attempts_info.any?
-      base_response[:attempts] = attempts_info
-      base_response[:data][:attempts] = attempts_info
-    end
-
-    base_response
   end
 
   def error_status_response(error_message)
@@ -285,7 +266,7 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController #
       connected: false,
       message: error_message,
       data: {
-        status: 'not_logged_in',
+        status: 'disconnected',
         connected: false
       }
     }
@@ -342,19 +323,16 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController #
 
   def map_to_waha_status(status)
     actual_status = status.dig('data', 'status')
-    status_map = {
-      'connected' => 'logged_in',
-      'authenticated' => 'logged_in',
-      'ready' => 'logged_in',
-      'logged_in' => 'logged_in',
-      'pending_validation' => 'pending_validation',
-      'waiting' => 'pending_validation',
-      'waiting_for_qr' => 'waiting_for_qr',
-      'disconnected' => 'not_logged_in',
-      'not_logged_in' => 'not_logged_in'
-    }
+    connected = status.dig('data', 'connected')
 
-    status_map.fetch(actual_status&.downcase, 'not_logged_in')
+    # Normalize to simple connected/disconnected for UI
+    # Internal statuses (validated, waiting, mismatch, etc.) are kept in logs for debugging
+    return 'connected' if connected
+
+    connected_statuses = %w[connected authenticated ready logged_in validated]
+    return 'connected' if connected_statuses.include?(actual_status&.downcase)
+
+    'disconnected'
   end
 
   def permitted_params(channel_attributes = [])

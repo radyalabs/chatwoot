@@ -24,6 +24,14 @@ class WhatsAppUnofficialChannels extends ApiClient {
   restartSession(inboxId) {
     return axios.post(`${this.baseUrl()}/inboxes/${inboxId}/whatsapp/restart`);
   }
+
+  disconnectSession(inboxId) {
+    return axios.post(`${this.baseUrl()}/inboxes/${inboxId}/whatsapp/disconnect`);
+  }
+
+  reconnectSession(inboxId) {
+    return axios.post(`${this.baseUrl()}/inboxes/${inboxId}/whatsapp/reconnect`);
+  }
 }
 
 export default new WhatsAppUnofficialChannels();

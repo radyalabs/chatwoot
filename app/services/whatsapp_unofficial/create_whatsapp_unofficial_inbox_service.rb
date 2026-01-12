@@ -1,8 +1,12 @@
+# frozen_string_literal: true
+
 class WhatsappUnofficial::CreateWhatsappUnofficialInboxService
-  def initialize(account_id:, phone_number:, inbox_name:)
+  def initialize(account_id:, phone_number:, inbox_name:, provider: nil, provider_config: {})
     @account_id = account_id
     @phone_number = phone_number
     @inbox_name = inbox_name
+    @provider = provider || WhatsappUnofficial::AdapterFactory.default_provider
+    @provider_config = provider_config
   end
 
   def perform
@@ -13,10 +17,10 @@ class WhatsappUnofficial::CreateWhatsappUnofficialInboxService
       inbox.save!(validate: false)
     end
 
-    # Setup webhook URL and device synchronously first
+    # Setup webhook URL and device using the adapter
     setup_webhook_and_device
 
-    { inbox: inbox, webhook_url: @channel.reload.webhook_url }
+    { inbox: inbox, webhook_url: @channel.reload.webhook_url, provider: @channel.effective_provider }
   rescue StandardError => e
     Rails.logger.error "Failed to create WhatsApp unofficial inbox: #{e.message}"
     raise e
@@ -27,7 +31,9 @@ class WhatsappUnofficial::CreateWhatsappUnofficialInboxService
   def create_channel
     Channel::WhatsappUnofficial.create!(
       account_id: @account_id,
-      phone_number: @phone_number
+      phone_number: @phone_number,
+      provider: @provider,
+      provider_config: @provider_config
     )
   end
 
@@ -41,10 +47,10 @@ class WhatsappUnofficial::CreateWhatsappUnofficialInboxService
   end
 
   def setup_webhook_and_device
-    # Set webhook URL only (safe operation)
+    # Set webhook URL via adapter (provider-aware)
     @channel.set_webhook_url
-    Rails.logger.info "Webhook URL setup completed for phone #{@channel.phone_number}"
-    
+    Rails.logger.info "Webhook URL setup completed for phone #{@channel.phone_number} (provider: #{@channel.effective_provider})"
+
     # Try to setup device synchronously with timeout
     setup_device_sync_with_timeout
   end
@@ -53,7 +59,7 @@ class WhatsappUnofficial::CreateWhatsappUnofficialInboxService
     # Try sync setup first with 10 second timeout
     Timeout.timeout(10) do
       @channel.create_device_with_retry(max_retries: 1)
-      Rails.logger.info "Token setup completed synchronously for phone #{@channel.phone_number}"
+      Rails.logger.info "Device setup completed synchronously for phone #{@channel.phone_number}"
     end
   rescue Timeout::Error
     Rails.logger.warn "Device setup timeout for phone #{@channel.phone_number}, falling back to background job"
@@ -61,15 +67,5 @@ class WhatsappUnofficial::CreateWhatsappUnofficialInboxService
   rescue StandardError => e
     Rails.logger.error "Sync device setup failed for phone #{@channel.phone_number}: #{e.message}"
     SetupWhatsappUnofficialDeviceJob.perform_later(@channel.id)
-  end
-
-  def setup_device_and_token
-    # 1. Set webhook URL first
-    @channel.set_webhook_url
-    
-    # 2. Create device and save token
-    @channel.create_device_with_retry
-    
-    Rails.logger.info "Webhook URL and token setup completed for phone #{@channel.phone_number}"
   end
 end

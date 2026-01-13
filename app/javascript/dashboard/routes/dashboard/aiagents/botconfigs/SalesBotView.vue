@@ -295,11 +295,11 @@
                             type="number" 
                             min="1"
                             v-model="idleConfig.duration"
-                            class="text-center px-2 py-2 text-sm font-medium border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                            class="text-center px-2 py-2 text-sm font-medium border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors h-10"
                             placeholder="30" 
                           />
                         </div>
-                        <span class="text-slate-600 dark:text-slate-400 text-sm">
+                        <span class="text-slate-600 dark:text-slate-400 text-sm leading-10 self-start">
                           {{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_DESC') }}
                         </span>
                       </div>
@@ -347,7 +347,9 @@
 
           <!-- Shipping Tab -->
           <div v-show="activeTabIndex === 3" class="w-full min-w-0">
-            <ShippingConfig 
+            <ShippingConfig
+              v-if="data && data.id"
+              :ai-agent-id="data.id"
               :initial-stores="shippingStores" 
               :is-saving="isSaving"
               @save-config="submitShippingConfig"
@@ -1569,6 +1571,7 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import provinsiJson from '../wilayah/provinsi/provinsi.json';
 import QnaKnowledgeSources from '../knowledge-sources/QnaKnowledgeSources.vue';
 import { ref, reactive, watch, onMounted, computed, provide } from 'vue';
+import { useStore } from 'vuex';
 import { useI18n } from 'vue-i18n'
 
 // Google Sheets Auth Flow for Catalog
@@ -1581,7 +1584,8 @@ import { useAlert } from 'dashboard/composables';
 import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue';
 import ShippingConfig from './sales-bot-tabs/ShippingConfig.vue';
 
-const { t } = useI18n()
+const { t } = useI18n();
+const store = useStore();
 
 // Props for data from parent component
 const props = defineProps({
@@ -1660,7 +1664,9 @@ onMounted(async () => {
   // Load provinces for address selection
   loadProvinsi();
 
-  await fetchShippingStores();
+  if (props.data?.id) {
+    await store.dispatch('shippingStores/fetch', props.data.id);
+  }
   // Pre-load Google Maps API but don't initialize map yet
   try {
     await loadGoogleMaps();
@@ -1685,11 +1691,13 @@ onMounted(async () => {
 // Note: No 'immediate: true' to avoid double-loading on mount (onMounted already calls it)
 watch(
   () => props.data,
-  (newData) => {
+  async (newData) => {
     if (newData && newData.display_flow_data) {
       loadSavedConfiguration();
-      // Load idle config from API
       loadIdleConfig();
+      if (newData.id) {
+        await store.dispatch('shippingStores/fetch', newData.id);
+      }
     }
   },
   { deep: true }
@@ -1946,8 +1954,6 @@ const activeTabIndex = ref(0);
 const catalogSheet = ref('');
 const catalogDesc = ref('');
 const cartEnabled = ref(false);
-
-const shippingStores = ref([]);
 
 const shippingMethods = reactive({
   kurirToko: false,
@@ -2860,26 +2866,14 @@ const paymentGatewayProviders = [
   { label: 'Duitku', id: 'duitku' }
 ];
 
-// Shipping
-async function fetchShippingStores() {
-  if (!props.data?.id) return;
-  try {
-    // Panggil API GET Stores dari database baru
-    const response = await shippingStoresAPI.getStores(props.data.id);
-    shippingStores.value = response.data;
-  } catch (error) {
-    console.error('Gagal memuat toko:', error);
-  }
-}
-
 async function submitShippingConfig(updatedStores) {
   if (isSaving.value) return;
 
   try {
     isSaving.value = true;
+    
     const storeResponse = await shippingStoresAPI.batchUpdate(props.data.id, updatedStores);
     const savedStoresWithIds = storeResponse.data;
-    shippingStores.value = savedStoresWithIds;
 
     let flowData = JSON.parse(JSON.stringify(props.data.flow_data));
     let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
@@ -2914,6 +2908,7 @@ async function submitShippingConfig(updatedStores) {
     };
 
     await aiAgents.updateAgent(props.data.id, agentPayload);
+    await store.dispatch('shippingStores/fetch', props.data.id);
     
     emit('update:data');
     useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_SUCCESS')); 

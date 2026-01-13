@@ -58,8 +58,9 @@ module WhatsappUnofficial
     def create_device(webhook_url:)
       raise 'GOWA not configured' unless configured?
 
-      # Use phone_number as device_id for easier identification
-      custom_device_id = channel.phone_number
+      # Use environment prefix + phone_number as device_id for easier identification
+      # Format: {env}_{phone_number} (e.g., staging_6281234567890, production_6281234567890)
+      custom_device_id = generate_device_id(channel.phone_number)
       log_info "Creating device for phone #{channel.phone_number} with device_id: #{custom_device_id}"
 
       begin
@@ -341,6 +342,13 @@ module WhatsappUnofficial
         message: 'Session expired. Please scan QR code to reconnect.',
         status: 'waiting'
       }
+    end
+
+    # Generate device_id with environment prefix
+    # Format: {env}_{phone_number} (e.g., staging_6281234567890, production_6281234567890)
+    def generate_device_id(phone_number)
+      env_prefix = Rails.env.to_s
+      "#{env_prefix}_#{phone_number}"
     end
   end
 end

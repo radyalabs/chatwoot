@@ -30,7 +30,7 @@ export default {
             'INBOX_MGMT.EDIT.SENDER_NAME_SECTION.FRIENDLY.SUBTITLE'
           ),
           preview: {
-            senderName: 'Smith',
+            senderName: 'Herman',
             businessName: 'Jangkau',
             email: '<support@yourbusiness.com>',
           },

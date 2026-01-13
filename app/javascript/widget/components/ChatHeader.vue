@@ -125,17 +125,17 @@ export default {
           </div>
         </div>
       </div>
-
-      <div v-if="isMobileDevice" class="flex items-center">
-        <button 
-          class="text-white/80 hover:text-white transition p-1 rounded-full hover:bg-white/10 ml-2"
-          @click="closeWidget"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
+    </div> 
+    <div v-if="isMobileDevice" class="flex items-center">
+      <button 
+        class="text-white/80 hover:text-white transition p-1 rounded-full hover:bg-white/10 ml-2"
+        @click="closeWidget"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
     </div>
+
   </header>
 </template>

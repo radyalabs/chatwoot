@@ -163,7 +163,7 @@ export default {
           count: fmt(totalStarter), 
           percentVal: 100,
           displayPercent: '100%',
-          colorClass: 'bg-yellow-500',
+          colorClass: 'bg-teal-600',
           widthStyle: '100%'
         },
         { 
@@ -190,7 +190,7 @@ export default {
           count: fmt(assistedTotal), 
           percentVal: calcPercent(assistedTotal, totalStarter), 
           displayPercent: `${calcPercent(assistedTotal, totalStarter)}%`,
-          colorClass: 'bg-pink-500',
+          colorClass: 'bg-green-500',
           widthStyle: calcWidth(calcPercent(assistedTotal, totalStarter)),
           botPct: calcPercent(assistedBot, assistedTotal),
           csPct: calcPercent(assistedCs, assistedTotal)

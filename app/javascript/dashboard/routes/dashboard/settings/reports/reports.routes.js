@@ -24,6 +24,30 @@ import BotReports from './BotReports.vue';
 import LiveReports from './LiveReports.vue';
 import SLAReports from './SLAReports.vue';
 
+const isFeatureEnabled = (featureFlag) => {
+  if (!featureFlag) return true;
+  
+  const state = store.state;
+  
+  // Try multiple ways to get account ID
+  const accountId = state.route?.params?.accountId || 
+                    state.auth?.currentAccountId ||
+                    state.accounts?.currentAccountId;
+  
+  if (!accountId) return false;
+  
+  const accounts = state.accounts?.accounts;
+  const account = accounts?.find(acc => acc.id === parseInt(accountId) || acc.account_id === parseInt(accountId));
+  const features = account?.features || {};
+  
+  // If features object is empty or feature flag not defined, default to FALSE (hidden)
+  if (!features || Object.keys(features).length === 0) {
+    return false;
+  }
+  
+  return features[featureFlag] === true;
+};
+
 // Function to check user tier access
 const checkTierAccess = (requiredTiers) => {
   return (to, from, next) => {
@@ -84,6 +108,7 @@ const baseOldReportRoutes = [
     meta: {
       permissions: ['administrator', 'report_manage'],
       userTier: getUserTier(), // Pass the current user tier to the component
+      featureFlag: FEATURE_FLAGS.REPORT_AGENT, 
     },
     component: AgentReports,
   },
@@ -102,6 +127,7 @@ const baseOldReportRoutes = [
       permissions: ['administrator', 'report_manage'],
       requiresTier: ['pertalite', 'pertamax', 'pertamax_turbo'], // Add tier requirement
       userTier: getUserTier(), // Pass the current user tier to the component
+      featureFlag: FEATURE_FLAGS.REPORT_CHAT_ANALYTICS,
     },
     beforeEnter: checkTierAccess(['pertalite', 'pertamax', 'pertamax_turbo']),
     component: LabelReports,
@@ -118,9 +144,16 @@ const baseOldReportRoutes = [
 
 // Filter routes based on user tier
 const oldReportRoutes = baseOldReportRoutes.filter(route => {
-  if (route.meta.requiresTier) {
-    return hasTierAccess(route.meta.requiresTier);
+  // Check tier access
+  if (route.meta.requiresTier && !hasTierAccess(route.meta.requiresTier)) {
+    return false;
   }
+  
+  // Check feature flag
+  if (route.meta.featureFlag && !isFeatureEnabled(route.meta.featureFlag)) {
+    return false;
+  }
+  
   return true;
 });
 

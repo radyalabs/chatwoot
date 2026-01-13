@@ -34,4 +34,6 @@ export const FEATURE_FLAGS = {
   CUSTOM_ROLES: 'custom_roles',
   CHATWOOT_V4: 'chatwoot_v4',
   REPORT_V4: 'report_v4',
+  REPORT_AGENT: 'agent_reports',
+  REPORT_CHAT_ANALYTICS: 'label_reports',
 };

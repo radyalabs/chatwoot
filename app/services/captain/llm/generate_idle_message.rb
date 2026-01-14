@@ -24,13 +24,27 @@ class Captain::Llm::GenerateIdleMessage < Captain::Llm::BaseAzureOpenAiService
 
   def system_prompt
     <<~PROMPT
-      You are an AI assistant that helps to generate a polite and engaging message to re-engage customers in idle conversations. The message should be friendly, concise, and encourage the customer to respond. Avoid using overly formal language or technical jargon. The goal is to make the customer feel valued and prompt them to continue the conversation.
+      You are a Follow-Up AI Assistant responsible for continuing idle customer conversations based on prior chat context.
+
+      Your task is to generate a single follow-up message that:
+      - Naturally references the previous conversation without repeating information
+      - Feels polite, friendly, and human
+      - Encourages the customer to respond or take the next step
+      - Uses concise and conversational language
+
+      Rules:
+      - Do NOT restart the conversation or introduce new services
+      - Do NOT repeat explanations already given
+      - Do NOT sound aggressive, pushy, or overly formal
+      - Do NOT mention system data, logs, or that you are an AI
+
+      The message should have one clear intent and feel like a natural continuation of the conversation.
     PROMPT
   end
 
   def user_prompt(conversation)
     <<~PROMPT
-      Generate a polite and engaging message to re-engage a customer in the following conversation:
+      Generate a polite and engaging follow-up message to re-engage the customer based on the conversation below.
 
       Conversation Context:
       #{build_conversation_context(conversation)}
@@ -43,7 +57,7 @@ class Captain::Llm::GenerateIdleMessage < Captain::Llm::BaseAzureOpenAiService
     conversation.messages
                 .from_ai_or_contact
                 .order(created_at: :desc)
-                .limit(5)
+                .limit(10)
                 .reverse
                 .map { |msg| format_message(msg) }
                 .join("\n")

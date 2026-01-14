@@ -163,7 +163,7 @@ export default {
           count: fmt(totalStarter), 
           percentVal: 100,
           displayPercent: '100%',
-          colorClass: 'bg-teal-600',
+          colorClass: 'bg-teal-700',
           widthStyle: '100%'
         },
         { 
@@ -190,7 +190,7 @@ export default {
           count: fmt(assistedTotal), 
           percentVal: calcPercent(assistedTotal, totalStarter), 
           displayPercent: `${calcPercent(assistedTotal, totalStarter)}%`,
-          colorClass: 'bg-green-500',
+          colorClass: 'bg-green-700',
           widthStyle: calcWidth(calcPercent(assistedTotal, totalStarter)),
           botPct: calcPercent(assistedBot, assistedTotal),
           csPct: calcPercent(assistedCs, assistedTotal)
@@ -460,7 +460,7 @@ export default {
               >
                 <div class="flex flex-col items-center justify-center leading-tight p-1 transform translate-y-[-2px]">
                   <span class="text-xl sm:text-2xl font-bold drop-shadow-md">
-                    {{ item.displayPercent }}
+                    {{ item.count }} / {{ item.displayPercent }}
                   </span>
                   <span class="text-[10px] sm:text-xs font-semibold opacity-90 text-center uppercase tracking-wide px-2 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
                     {{ item.label }}

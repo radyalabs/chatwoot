@@ -82,7 +82,6 @@ class Api::V2::Accounts::ReportsController < Api::V1::Accounts::BaseController
   end
 
   def funnel_metrics
-    # 1. Range Waktu
     range = if params[:since].present? && params[:until].present?
               Time.at(params[:since].to_i)..Time.at(params[:until].to_i)
             else
@@ -92,7 +91,6 @@ class Api::V2::Accounts::ReportsController < Api::V1::Accounts::BaseController
     conversations = Current.account.conversations.where(created_at: range)
     messages = Current.account.messages.where(created_at: range)
 
-    # --- DEFINISI KATA KUNCI (DICTIONARY) ---
     high_intent_keywords = [
       'beli', 'order', 'pesan', 'bayar', 'transfer', 'tf', 'trf', 'rek', 'rekening', 
       'norek', 'payment', 'lunas', 'qris', 'cod', 'invoice', 'nota', 'checkout',
@@ -109,11 +107,12 @@ class Api::V2::Accounts::ReportsController < Api::V1::Accounts::BaseController
 
     total_starter = conversations.count
 
-    engaged_conversation_ids = messages.where(sender_type: 'Contact')
-                                       .reorder(nil)
-                                       .select(:conversation_id)
-                                       .distinct
-    engage_user = conversations.where(id: engaged_conversation_ids).count
+    engage_user = conversations.joins(:messages)
+                               .where(messages: { private: false }) 
+                               .group('conversations.id')
+                               .having('COUNT(messages.id) >= ?', 10)
+                               .count
+                               .size
 
     high_intent_conversation_ids = messages.where(sender_type: 'Contact')
                                            .where("content ILIKE ANY (array[?])", sql_query)
@@ -136,17 +135,12 @@ class Api::V2::Accounts::ReportsController < Api::V1::Accounts::BaseController
       assisted_cs  = resolved_conversations.count
     end
 
-    repeat_buyer = Current.account.contacts.where(created_at: range)
-                     .where("CAST(additional_attributes ->> 'conversations_count' AS INTEGER) > ?", 1)
-                     .count
-
     render json: {
       total_starter: total_starter,
       engage_user: engage_user,
       high_intent: high_intent,
       assisted_bot: assisted_bot,
       assisted_cs: assisted_cs,
-      repeat_buyer: repeat_buyer
     }
   end
 

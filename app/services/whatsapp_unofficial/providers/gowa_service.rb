@@ -4,6 +4,8 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
 
     if attachments.any?
       send_attachment_message(message, attachments)
+    elsif message[:link].present?
+      send_message_link(message)
     else
       send_message_text(message)
     end
@@ -41,6 +43,20 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
       body: {
         phone: "#{message[:phone_number]}@s.whatsapp.net",
         message: message[:content]
+      }.to_json
+    )
+
+    process_response(response)
+  end
+
+  def send_message_link(message)
+    response = HTTParty.post(
+      "#{api_base_path}/send/link",
+      headers: api_headers,
+      body: {
+        phone: "#{message[:phone_number]}@s.whatsapp.net",
+        link: message[:link],
+        caption: message[:content]
       }.to_json
     )
 

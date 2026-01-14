@@ -53,12 +53,18 @@ module WhatsappUnofficial::IncomingMessageServiceHelpers
   end
 
   def file
-    return payload[:image] if payload[:image].present?
-    return payload[:document] if payload[:document].present?
-    return payload[:video] if payload[:video].present?
-    return payload[:audio] if payload[:audio].present?
+    @file ||= payload[:image].presence ||
+              payload[:document].presence ||
+              payload[:video].presence ||
+              payload[:audio].presence
+  end
 
-    nil
+  def location
+    @location ||= payload[:location].presence
+  end
+
+  def contact_card
+    @contact_card ||= payload[:contact].presence
   end
 
   def sender_jid
@@ -76,5 +82,20 @@ module WhatsappUnofficial::IncomingMessageServiceHelpers
     return nil if digits_only.empty?
 
     "+#{digits_only}"
+  end
+
+  def extract_phone_from_vcard(vcard)
+    return nil if vcard.blank?
+
+    waid = vcard[/waid=(\d+)/, 1]
+    return "+#{waid}" if waid.present?
+
+    tel = vcard[/^TEL.*:(.+)$/, 1]
+    return nil if tel.blank?
+
+    digits = tel.gsub(/\D+/, '')
+    return nil if digits.blank?
+
+    "+#{digits}"
   end
 end

@@ -54,9 +54,9 @@ class WhatsappUnofficial::IncomingMessageService
   end
 
   def process_message_attachments
-    # attach_contact
+    attach_contact
     attach_files
-    # attach_location
+    attach_location
   end
 
   def attach_files
@@ -89,9 +89,9 @@ class WhatsappUnofficial::IncomingMessageService
     @message.attachments.new(
       account_id: @message.account_id,
       file_type: :location,
-      fallback_title: location_fallback_title,
-      coordinates_lat: location['latitude'],
-      coordinates_long: location['longitude']
+      fallback_title: "#{location[:name]} (#{location[:address]})",
+      coordinates_lat: location[:degreesLatitude],
+      coordinates_long: location[:degreesLongitude]
     )
   end
 
@@ -101,7 +101,7 @@ class WhatsappUnofficial::IncomingMessageService
     @message.attachments.new(
       account_id: @message.account_id,
       file_type: :contact,
-      fallback_title: contact_card['phone_number'].to_s
+      fallback_title: contact_card[:vcard]
     )
   end
 end

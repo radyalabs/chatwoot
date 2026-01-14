@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_01_08_090113) do
+ActiveRecord::Schema[7.0].define(version: 2026_01_14_110140) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -1560,7 +1560,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_08_090113) do
   add_foreign_key "ai_agent_selected_labels", "labels"
   add_foreign_key "idle_configs", "accounts"
   add_foreign_key "idle_configs", "ai_agents"
-  add_foreign_key "idle_conversations", "conversations"
+  add_foreign_key "idle_conversations", "conversations", on_delete: :cascade
   add_foreign_key "inboxes", "portals"
   add_foreign_key "knowledge_source_files", "knowledge_sources"
   add_foreign_key "knowledge_source_qnas", "knowledge_sources"

@@ -101,7 +101,7 @@ class WhatsappUnofficial::IncomingMessageService
     @message.attachments.new(
       account_id: @message.account_id,
       file_type: :contact,
-      fallback_title: contact_card[:vcard]
+      fallback_title: extract_phone_from_vcard(contact_card[:vcard])
     )
   end
 end

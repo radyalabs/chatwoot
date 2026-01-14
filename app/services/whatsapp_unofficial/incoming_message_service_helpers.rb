@@ -83,4 +83,19 @@ module WhatsappUnofficial::IncomingMessageServiceHelpers
 
     "+#{digits_only}"
   end
+
+  def extract_phone_from_vcard(vcard)
+    return nil if vcard.blank?
+
+    waid = vcard[/waid=(\d+)/, 1]
+    return "+#{waid}" if waid.present?
+
+    tel = vcard[/^TEL.*:(.+)$/, 1]
+    return nil if tel.blank?
+
+    digits = tel.gsub(/\D+/, '')
+    return nil if digits.blank?
+
+    "+#{digits}"
+  end
 end

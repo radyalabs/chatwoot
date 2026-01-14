@@ -18,7 +18,8 @@ class WhatsappUnofficial::SendOnWhatsappUnofficialService < Base::SendOnChannelS
     {
       phone_number: contact_inbox.source_id,
       content: message.content,
-      attachments: attachments
+      attachments: attachments,
+      link: link(message)
     }
   end
 
@@ -34,6 +35,12 @@ class WhatsappUnofficial::SendOnWhatsappUnofficialService < Base::SendOnChannelS
         download_url: attachment.download_url
       }
     end.compact
+  end
+
+  def link(message)
+    return nil if message.content.blank?
+
+    message.content[%r{https?://[^\s]+}]
   end
 
   def inbox

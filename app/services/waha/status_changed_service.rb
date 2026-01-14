@@ -29,7 +29,7 @@ class Waha::StatusChangedService
     event_data = {
       event: 'whatsapp_status_changed',
       type: 'phone_validation_success',
-      status: 'logged_in',
+      status: 'connected',
       phone_number: channel.phone_number,
       session_id: params[:sessionID],
       connected: true,

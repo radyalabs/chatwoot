@@ -182,7 +182,7 @@ class Waha::CallbackController < ApplicationController # rubocop:disable Metrics
                                    type: 'session_status_changed',
                                    status: status,
                                    phone_number: channel.phone_number,
-                                   connected: status == 'logged_in',
+                                   connected: %w[logged_in connected].include?(status),
                                    inbox_id: inbox.id,
                                    channel_id: channel.id,
                                    account_id: account.id,
@@ -210,7 +210,7 @@ class Waha::CallbackController < ApplicationController # rubocop:disable Metrics
     ActionCable.server.broadcast(pubsub_token, {
                                    event: 'whatsapp_status_changed',
                                    type: 'session_ready',
-                                   status: 'logged_in',
+                                   status: 'connected',
                                    phone_number: channel.phone_number,
                                    connected: true,
                                    message: 'WhatsApp session is ready for messaging!',
@@ -296,7 +296,7 @@ class Waha::CallbackController < ApplicationController # rubocop:disable Metrics
     ActionCable.server.broadcast(pubsub_token, {
                                    event: 'whatsapp_status_changed',
                                    type: 'phone_validation_success',
-                                   status: 'logged_in',
+                                   status: 'connected',
                                    phone_number: channel.phone_number,
                                    session_id: session_id,
                                    connected: true,

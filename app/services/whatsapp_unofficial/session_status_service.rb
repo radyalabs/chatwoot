@@ -22,13 +22,10 @@ class WhatsappUnofficial::SessionStatusService
       return not_logged_in_response
     end
 
-    # Skip API calls if channel is marked as disconnected
-    # This prevents unnecessary DEVICE_NOT_FOUND errors for devices that were:
-    # - Intentionally disconnected by user/admin
-    # - Previously found to not exist on the provider server
-    if channel.intentionally_disconnected?
-      Rails.logger.info "Skipping session status check for #{channel.phone_number} - channel is marked as disconnected"
-      return disconnected_response
+    # Skip API calls only if channel is explicitly disconnected by user/admin
+    if channel.disconnected?
+      Rails.logger.info "Skipping session status check for #{channel.phone_number} - channel is disconnected"
+      return not_logged_in_response
     end
 
     check_status_with_transitions
@@ -94,18 +91,17 @@ class WhatsappUnofficial::SessionStatusService
     {
       'data' => {
         'connected' => connected,
-        'status' => connected ? 'logged_in' : 'not_logged_in'
+        'status' => connected ? 'connected' : 'disconnected'
       }
     }
-  end
-
-  def not_logged_in_response
-    { 'data' => { 'connected' => false, 'status' => 'not_logged_in' } }
   end
 
   def disconnected_response
     { 'data' => { 'connected' => false, 'status' => 'disconnected' } }
   end
+
+  # Alias for backward compatibility
+  alias not_logged_in_response disconnected_response
 
   def broadcast_service
     @broadcast_service ||= WhatsappUnofficial::BroadcastService.new(channel)

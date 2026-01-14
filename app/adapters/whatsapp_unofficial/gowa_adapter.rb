@@ -32,31 +32,38 @@ module WhatsappUnofficial
     end
 
     # Returns: { connected: Boolean, status: String }
+    # Status values: 'connected', 'disconnected', 'waiting', 'error'
     def get_session_status
-      return { connected: false, status: 'not_logged_in' } unless channel.device_id.present?
+      return { connected: false, status: 'disconnected' } unless channel.device_id.present?
+
+      # Skip API call only if channel is explicitly disconnected by user/admin
+      if channel.disconnected?
+        log_info "Skipping session status check - channel is disconnected"
+        return { connected: false, status: 'disconnected' }
+      end
 
       result = gowa_service.get_device_status(device_id: channel.device_id)
       is_logged_in = result.dig('results', 'is_logged_in') || false
       is_connected = result.dig('results', 'is_connected') || false
 
       status = if is_logged_in
-                 'logged_in'
+                 'connected'
                elsif is_connected
-                 'waiting_for_qr'
+                 'waiting'
                else
-                 'not_logged_in'
+                 'disconnected'
                end
 
       { connected: is_logged_in, status: status }
     rescue StandardError => e
       log_error "Failed to get session status for device #{channel.device_id}: #{e.message}"
 
-      # Handle DEVICE_NOT_FOUND - mark channel as disconnected to prevent future API calls
+      # Handle DEVICE_NOT_FOUND gracefully - mark as disconnected and return disconnected
+      # This stops future API calls and allows user to start fresh reconnect flow
       if e.message.include?('DEVICE_NOT_FOUND')
-        log_info "Device #{channel.device_id} not found on GOWA server, marking as disconnected"
+        log_info "Device #{channel.device_id} not found, marking channel as disconnected"
         channel.mark_as_disconnected!
-        channel.clear_session_status_cache
-        return { connected: false, status: 'disconnected', device_not_found: true }
+        return { connected: false, status: 'disconnected' }
       end
 
       { connected: false, status: 'error' }
@@ -129,7 +136,7 @@ module WhatsappUnofficial
       # Mark as intentionally disconnected to skip future session status checks
       channel.mark_as_disconnected!
       channel.clear_session_status_cache
-      channel.write_session_status_to_cache('not_logged_in')
+      channel.write_session_status_to_cache('disconnected')
 
       response
     rescue StandardError => e
@@ -153,7 +160,7 @@ module WhatsappUnofficial
         # Mark as intentionally disconnected to skip future session status checks
         channel.mark_as_disconnected!
         channel.clear_session_status_cache
-        channel.write_session_status_to_cache('not_logged_in')
+        channel.write_session_status_to_cache('disconnected')
 
         # Broadcast disconnect event
         WhatsappUnofficial::BroadcastService.new(channel).disconnect
@@ -185,7 +192,7 @@ module WhatsappUnofficial
         status = get_session_status
         if status[:connected]
           channel.mark_as_connected!
-          channel.write_session_status_to_cache('logged_in')
+          channel.write_session_status_to_cache('connected')
           WhatsappUnofficial::BroadcastService.new(channel).reconnect
           { success: true, message: 'Session reconnected successfully', status: 'connected' }
         else
@@ -312,7 +319,7 @@ module WhatsappUnofficial
     def handle_failed_rescan
       log_error "Maximum rescan attempts reached for #{channel.phone_number}"
       channel.mark_as_disconnected!
-      channel.write_session_status_to_cache('not_logged_in')
+      channel.write_session_status_to_cache('disconnected')
       logout_session
       channel.clear_rescan_attempts
 

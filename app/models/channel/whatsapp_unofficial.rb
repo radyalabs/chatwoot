@@ -97,9 +97,9 @@ class Channel::WhatsappUnofficial < ApplicationRecord
     status == STATUS_CONNECTED
   end
 
-  # Check if the channel was intentionally disconnected by user/admin
-  # and should not attempt session status checks
-  def intentionally_disconnected?
+  # Check if the channel is disconnected (user/admin initiated or device not found)
+  # When true, session status checks should be skipped
+  def disconnected?
     status == STATUS_DISCONNECTED
   end
 
@@ -278,7 +278,7 @@ class Channel::WhatsappUnofficial < ApplicationRecord
   def handle_max_validation_attempts_reached(current_attempts, max_attempts)
     Rails.logger.error "Maximum attempts reached for #{phone_number}."
 
-    write_session_status_to_cache('not_logged_in')
+    write_session_status_to_cache('disconnected')
     disconnect_waha_session
     clear_mismatch_attempts
 

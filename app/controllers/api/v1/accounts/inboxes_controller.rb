@@ -79,7 +79,7 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController #
         render json: {
           success: true,
           already_connected: true,
-          status: 'logged_in',
+          status: 'connected',
           provider: @channel.effective_provider,
           message: 'WhatsApp session is already connected'
         }

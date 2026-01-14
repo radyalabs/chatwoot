@@ -24,14 +24,18 @@ module WhatsappUnofficial
     end
 
     # Returns: { connected: Boolean, status: String }
+    # Status values: 'connected', 'disconnected', 'waiting', 'error'
     def get_session_status
-      return { connected: false, status: 'not_logged_in' } unless channel.token.present?
+      return { connected: false, status: 'disconnected' } unless channel.token.present?
 
       result = waha_service.get_session_status(api_key: channel.token)
-      waha_status = result.dig('data', 'status') || 'not_logged_in'
+      waha_status = result.dig('data', 'status') || 'disconnected'
       connected = waha_status.downcase == 'logged_in'
 
-      { connected: connected, status: waha_status }
+      # Normalize WAHA status to standard terminology
+      normalized_status = connected ? 'connected' : 'disconnected'
+
+      { connected: connected, status: normalized_status }
     rescue StandardError => e
       log_error "Failed to get session status for #{channel.phone_number}: #{e.message}"
       { connected: false, status: 'error' }
@@ -201,7 +205,7 @@ module WhatsappUnofficial
     def handle_failed_rescan
       log_error "Maximum rescan attempts reached for #{channel.phone_number}"
       channel.mark_as_disconnected!
-      channel.write_session_status_to_cache('not_logged_in')
+      channel.write_session_status_to_cache('disconnected')
       logout_session
       channel.clear_rescan_attempts
 

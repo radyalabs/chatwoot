@@ -60,16 +60,19 @@ class WhatsappUnofficial::QrCodeService
 
   def handle_already_logged_in
     Rails.logger.info "Device #{channel.phone_number} is already logged in, updating status"
+    channel.mark_as_connected!
     channel.write_session_status_to_cache('validated')
     channel.clear_mismatch_attempts
     channel.clear_rescan_attempts
     broadcast_service.session_ready
 
-    { 'data' => { 'already_connected' => true, 'status' => 'logged_in' } }
+    { 'data' => { 'already_connected' => true, 'status' => 'connected' } }
   end
 
   def handle_success(qr_result)
     Rails.logger.info "QR code generated successfully for phone #{channel.phone_number}"
+    # Mark channel as waiting for QR scan if not already connected
+    channel.mark_as_waiting! unless channel.connected?
     { 'data' => { 'qr' => qr_result[:qr_data], 'qr_type' => qr_result[:qr_type].to_s } }
   end
 

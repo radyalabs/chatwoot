@@ -50,6 +50,15 @@ module WhatsappUnofficial
       { connected: is_logged_in, status: status }
     rescue StandardError => e
       log_error "Failed to get session status for device #{channel.device_id}: #{e.message}"
+
+      # Handle DEVICE_NOT_FOUND - mark channel as disconnected to prevent future API calls
+      if e.message.include?('DEVICE_NOT_FOUND')
+        log_info "Device #{channel.device_id} not found on GOWA server, marking as disconnected"
+        channel.mark_as_disconnected!
+        channel.clear_session_status_cache
+        return { connected: false, status: 'disconnected', device_not_found: true }
+      end
+
       { connected: false, status: 'error' }
     end
 
@@ -109,6 +118,7 @@ module WhatsappUnofficial
     end
 
     # Logout session (disconnect but keep device_id)
+    # Marks channel as intentionally disconnected to prevent future session status checks
     def logout_session
       return nil unless channel.device_id.present?
 
@@ -116,17 +126,21 @@ module WhatsappUnofficial
       response = gowa_service.logout_device(device_id: channel.device_id)
       log_info "GOWA logout response for #{channel.device_id}: #{response}"
 
+      # Mark as intentionally disconnected to skip future session status checks
+      channel.mark_as_disconnected!
       channel.clear_session_status_cache
       channel.write_session_status_to_cache('not_logged_in')
 
       response
     rescue StandardError => e
       log_error "Failed to logout GOWA device #{channel.device_id}: #{e.message}"
+      channel.mark_as_disconnected!
       channel.clear_session_status_cache
       nil
     end
 
     # Disconnect session - logout and broadcast status
+    # Marks channel as intentionally disconnected to prevent future session status checks
     def disconnect_session
       return { success: false, message: 'No device configured' } unless channel.device_id.present?
 
@@ -136,16 +150,21 @@ module WhatsappUnofficial
         response = gowa_service.logout_device(device_id: channel.device_id)
         log_info "GOWA disconnect response for #{channel.device_id}: #{response}"
 
+        # Mark as intentionally disconnected to skip future session status checks
+        channel.mark_as_disconnected!
         channel.clear_session_status_cache
         channel.write_session_status_to_cache('not_logged_in')
 
         # Broadcast disconnect event
         WhatsappUnofficial::BroadcastService.new(channel).disconnect
 
-        { success: true, message: 'Session disconnected successfully', status: 'not_logged_in' }
+        { success: true, message: 'Session disconnected successfully', status: 'disconnected' }
       rescue StandardError => e
         log_error "Failed to disconnect GOWA device #{channel.device_id}: #{e.message}"
-        { success: false, message: "Failed to disconnect: #{e.message}" }
+        # Even if API fails, mark as disconnected to prevent further API calls
+        channel.mark_as_disconnected!
+        channel.clear_session_status_cache
+        { success: false, message: "Failed to disconnect: #{e.message}", status: 'disconnected' }
       end
     end
 
@@ -165,10 +184,12 @@ module WhatsappUnofficial
         # Check if reconnect was successful
         status = get_session_status
         if status[:connected]
+          channel.mark_as_connected!
           channel.write_session_status_to_cache('logged_in')
           WhatsappUnofficial::BroadcastService.new(channel).reconnect
-          { success: true, message: 'Session reconnected successfully', status: 'logged_in' }
+          { success: true, message: 'Session reconnected successfully', status: 'connected' }
         else
+          channel.mark_as_waiting!
           channel.write_session_status_to_cache('waiting')
           { success: true, message: 'Reconnect initiated, waiting for connection', status: 'waiting' }
         end
@@ -253,6 +274,7 @@ module WhatsappUnofficial
       channel.reload
 
       # Step 5: Set status for QR generation
+      channel.mark_as_waiting!
       channel.write_session_status_to_cache('waiting')
 
       {
@@ -263,6 +285,7 @@ module WhatsappUnofficial
       }
     rescue StandardError => e
       log_error "Failed to restart GOWA device for #{channel.phone_number}: #{e.message}"
+      channel.mark_as_waiting!
       channel.write_session_status_to_cache('waiting')
 
       {
@@ -288,6 +311,7 @@ module WhatsappUnofficial
 
     def handle_failed_rescan
       log_error "Maximum rescan attempts reached for #{channel.phone_number}"
+      channel.mark_as_disconnected!
       channel.write_session_status_to_cache('not_logged_in')
       logout_session
       channel.clear_rescan_attempts
@@ -315,6 +339,7 @@ module WhatsappUnofficial
       channel.reload
 
       # Set status for QR generation
+      channel.mark_as_waiting!
       channel.write_session_status_to_cache('waiting')
 
       {
@@ -332,6 +357,7 @@ module WhatsappUnofficial
     # Used when device exists but session was deleted/logged out
     def trigger_qr_login
       channel.clear_session_status_cache
+      channel.mark_as_waiting!
       channel.write_session_status_to_cache('waiting')
 
       log_info "Triggering fresh QR login for device #{channel.device_id}"

@@ -8,6 +8,7 @@
 #  phone_number    :string           not null
 #  provider        :string
 #  provider_config :jsonb
+#  status          :string           default("disconnected"), not null
 #  token           :string
 #  webhook_url     :string
 #  created_at      :datetime         not null
@@ -19,6 +20,7 @@
 #
 #  index_channel_whatsapp_unofficials_on_account_id    (account_id)
 #  index_channel_whatsapp_unofficials_on_phone_number  (phone_number) UNIQUE
+#  index_channel_whatsapp_unofficials_on_status        (status)
 #
 
 class Channel::WhatsappUnofficial < ApplicationRecord
@@ -31,10 +33,18 @@ class Channel::WhatsappUnofficial < ApplicationRecord
   EDITABLE_ATTRS = [:token, :device_id, :phone_number, :provider, { provider_config: {} }].freeze
   PROVIDERS = %w[waha gowa].freeze
 
+  # Connection status values stored in the database
+  # These represent the user-facing connection state
+  STATUS_CONNECTED = 'connected'
+  STATUS_DISCONNECTED = 'disconnected'
+  STATUS_WAITING = 'waiting' # Waiting for QR scan
+  STATUSES = [STATUS_CONNECTED, STATUS_DISCONNECTED, STATUS_WAITING].freeze
+
   validates :phone_number, presence: true
   validates :account_id, presence: true
   validates :webhook_url, length: { maximum: Limits::URL_LENGTH_LIMIT }
   validates :provider, inclusion: { in: PROVIDERS }, allow_nil: true
+  validates :status, inclusion: { in: STATUSES }
 
   belongs_to :account
   has_one :inbox, as: :channel, dependent: :destroy
@@ -82,6 +92,44 @@ class Channel::WhatsappUnofficial < ApplicationRecord
 
   # Legacy alias for backward compatibility
   alias waha_configured? provider_configured?
+
+  # ============================================================================
+  # Connection Status Management
+  # ============================================================================
+
+  # Check if the channel is currently connected
+  def connected?
+    status == STATUS_CONNECTED
+  end
+
+  # Check if the channel was intentionally disconnected by user/admin
+  # and should not attempt session status checks
+  def intentionally_disconnected?
+    status == STATUS_DISCONNECTED
+  end
+
+  # Check if the channel is waiting for QR scan
+  def waiting_for_qr?
+    status == STATUS_WAITING
+  end
+
+  # Update status to connected
+  def mark_as_connected!
+    update!(status: STATUS_CONNECTED)
+    Rails.logger.info "Channel #{phone_number} marked as connected"
+  end
+
+  # Update status to disconnected (user/admin initiated)
+  def mark_as_disconnected!
+    update!(status: STATUS_DISCONNECTED)
+    Rails.logger.info "Channel #{phone_number} marked as disconnected"
+  end
+
+  # Update status to waiting for QR scan
+  def mark_as_waiting!
+    update!(status: STATUS_WAITING)
+    Rails.logger.info "Channel #{phone_number} marked as waiting for QR"
+  end
 
   # ============================================================================
   # Service Delegations

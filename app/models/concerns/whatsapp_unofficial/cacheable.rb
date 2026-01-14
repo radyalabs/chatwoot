@@ -118,25 +118,28 @@ module WhatsappUnofficial
     end
 
     # Cached session status with interpretation
+    # Status values: 'connected', 'disconnected', 'waiting', 'mismatch', 'failed'
     def session_status
       Rails.logger.info "Checking session status for #{phone_number} using cache"
 
-      return { 'data' => { 'connected' => false, 'status' => 'not_logged_in' } } if token.blank? && device_id.blank?
+      return { 'data' => { 'connected' => false, 'status' => 'disconnected' } } if token.blank? && device_id.blank?
 
       cached_status = read_session_status_from_cache
       Rails.logger.info "CACHE: Read '#{cached_status}' for #{phone_number}"
 
       case cached_status
-      when 'validated'
-        { 'data' => { 'connected' => true, 'status' => 'logged_in' } }
+      when 'validated', 'connected'
+        { 'data' => { 'connected' => true, 'status' => 'connected' } }
       when 'mismatch'
         { 'data' => { 'connected' => false, 'status' => 'mismatch' } }
       when 'waiting'
-        { 'data' => { 'connected' => false, 'status' => 'waiting_for_qr' } }
+        { 'data' => { 'connected' => false, 'status' => 'waiting' } }
       when 'failed'
         { 'data' => { 'connected' => false, 'status' => 'failed' } }
+      when 'disconnected'
+        { 'data' => { 'connected' => false, 'status' => 'disconnected' } }
       else
-        { 'data' => { 'connected' => false, 'status' => 'pending_validation' } }
+        { 'data' => { 'connected' => false, 'status' => 'disconnected' } }
       end
     end
   end

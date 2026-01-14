@@ -9,11 +9,27 @@ class WhatsappUnofficial::SessionStatusService
 
   # Check real-time session status from provider API
   # Handles state transitions and broadcasts events
+  # Skips API calls for intentionally disconnected channels to prevent DEVICE_NOT_FOUND errors
   # @return [Hash] Response with connection status
   def perform
     Rails.logger.info "Checking real-time status for #{channel.phone_number} from #{channel.effective_provider} API"
 
     return not_logged_in_response unless channel.provider_configured?
+
+    # Skip API calls if device_id is missing for GOWA provider
+    if channel.effective_provider == 'gowa' && channel.device_id.blank?
+      Rails.logger.info "Skipping session status check for #{channel.phone_number} - no device_id configured"
+      return not_logged_in_response
+    end
+
+    # Skip API calls if channel is marked as disconnected
+    # This prevents unnecessary DEVICE_NOT_FOUND errors for devices that were:
+    # - Intentionally disconnected by user/admin
+    # - Previously found to not exist on the provider server
+    if channel.intentionally_disconnected?
+      Rails.logger.info "Skipping session status check for #{channel.phone_number} - channel is marked as disconnected"
+      return disconnected_response
+    end
 
     check_status_with_transitions
   rescue StandardError => e
@@ -41,7 +57,8 @@ class WhatsappUnofficial::SessionStatusService
   end
 
   def handle_connected(_previous_status)
-    Rails.logger.info "Session connected for #{channel.phone_number}, updating cache to 'validated'"
+    Rails.logger.info "Session connected for #{channel.phone_number}, updating status to 'connected'"
+    channel.mark_as_connected!
     channel.write_session_status_to_cache('validated')
     channel.clear_mismatch_attempts
     channel.clear_rescan_attempts
@@ -84,6 +101,10 @@ class WhatsappUnofficial::SessionStatusService
 
   def not_logged_in_response
     { 'data' => { 'connected' => false, 'status' => 'not_logged_in' } }
+  end
+
+  def disconnected_response
+    { 'data' => { 'connected' => false, 'status' => 'disconnected' } }
   end
 
   def broadcast_service

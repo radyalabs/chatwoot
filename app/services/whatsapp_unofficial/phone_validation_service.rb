@@ -88,6 +88,7 @@ class WhatsappUnofficial::PhoneValidationService
 
   def handle_match
     Rails.logger.info 'Phone validation SUCCESS - numbers match!'
+    channel.mark_as_connected!
     channel.clear_mismatch_attempts
     channel.clear_rescan_attempts
     channel.write_session_status_to_cache('validated')
@@ -114,6 +115,7 @@ class WhatsappUnofficial::PhoneValidationService
 
   def handle_max_attempts_reached(current_attempts, is_rescan)
     Rails.logger.error "Maximum mismatch attempts (#{MAX_ATTEMPTS}) reached for #{channel.phone_number}"
+    channel.mark_as_disconnected!
     channel.write_session_status_to_cache('failed', expires_in: 1.hour)
     channel.disconnect_waha_session
     broadcast_service.session_failed(callback_phone, current_attempts)

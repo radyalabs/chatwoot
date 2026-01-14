@@ -6,21 +6,9 @@ class WhatsappUnofficial::IncomingMessageService
 
   def perform
     processed_params
-    process_messages
-  end
-
-  private
-
-  def process_messages
     set_contact
-    return unless @contact
-
     set_conversation
-    create_message
-    @message.save!
-  end
 
-  def create_message
     @message = @conversation.messages.build(
       content: message_content,
       account_id: @inbox.account_id,
@@ -32,7 +20,10 @@ class WhatsappUnofficial::IncomingMessageService
     )
 
     process_message_attachments if message_params?
+    @message.save!
   end
+
+  private
 
   def set_contact
     contact_inbox = ContactInboxWithContactBuilder.new(

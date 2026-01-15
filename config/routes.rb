@@ -658,6 +658,7 @@ Rails.application.routes.draw do
   post 'webhooks/instagram', to: 'webhooks/instagram#events'
   post 'webhooks/waha/:phone_number', to: 'webhooks/waha#process_payload'
   post 'webhooks/gowa', to: 'webhooks/gowa#process_payload'
+  post 'webhooks/whatsapp_unofficial', to: 'webhooks/whatsapp_unofficial#process_payload'
 
   namespace :twitter do
     resource :callback, only: [:show]

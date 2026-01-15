@@ -45,6 +45,20 @@ class Captain::Llm::BaseJangkauService
   end
 
   def request_body
+    # Get attachments from last message
+    last_message = @conversation.messages.last
+    attachments = if last_message&.attachments&.any?
+                    last_message.attachments.select { |att| att.file.attached? }.map do |att|
+                      {
+                        url: att.file_url,
+                        file_type: att.file_type,
+                        filename: att.file.filename.to_s
+                      }
+                    end
+                  else
+                    []
+                  end
+
     {
       'question' => @question,
       'overrideConfig' => {
@@ -56,7 +70,8 @@ class Captain::Llm::BaseJangkauService
           'account_id' => @account_id.to_s,
           'customer_name' => @additional_attributes['name'] || '',
           'contact' => @additional_attributes['phone_number'] || '',
-          'channel' => @additional_attributes['channel'] || ''
+          'channel' => @additional_attributes['channel'] || '',
+          'attachments' => attachments.any? ? attachments : nil
         }.merge(@ai_agent.flow_data || {})
       }
     }

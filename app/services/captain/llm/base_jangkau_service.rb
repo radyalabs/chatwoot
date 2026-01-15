@@ -45,8 +45,23 @@ class Captain::Llm::BaseJangkauService
   end
 
   def request_body
+    # Get attachments from last message
+    last_message = @conversation.messages.last
+    attachments = if last_message&.attachments&.any?
+                    last_message.attachments.select { |att| att.file.attached? }.map do |att|
+                      {
+                        url: att.file_url,
+                        file_type: att.file_type,
+                        filename: att.file.filename.to_s
+                      }
+                    end
+                  else
+                    []
+                  end
+
     {
       'question' => @question,
+      'attachments' => attachments.any? ? attachments : nil,
       'overrideConfig' => {
         'session_id' => @conversation.uuid,
         'conversation_id' => @conversation.id,
@@ -59,7 +74,7 @@ class Captain::Llm::BaseJangkauService
           'channel' => @additional_attributes['channel'] || ''
         }.merge(@ai_agent.flow_data || {})
       }
-    }
+    }.compact
   end
 
   def headers

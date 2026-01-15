@@ -20,7 +20,7 @@
 #
 # Foreign Keys
 #
-#  fk_rails_...  (conversation_id => conversations.id)
+#  fk_rails_...  (conversation_id => conversations.id) ON DELETE => cascade
 #
 class IdleConversation < ApplicationRecord
   belongs_to :conversation

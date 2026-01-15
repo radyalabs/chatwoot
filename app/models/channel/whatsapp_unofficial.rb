@@ -31,7 +31,7 @@ class Channel::WhatsappUnofficial < ApplicationRecord
   self.table_name = 'channel_whatsapp_unofficials'
 
   EDITABLE_ATTRS = [:token, :device_id, :phone_number, :provider, { provider_config: {} }].freeze
-  PROVIDERS = %w[waha gowa].freeze
+  PROVIDERS = %w[gowa wapi].freeze
 
   # Connection status values stored in the database
   # These represent the user-facing connection state
@@ -60,11 +60,14 @@ class Channel::WhatsappUnofficial < ApplicationRecord
   end
 
   def provider_service
-    if provider == 'gowa'
-      WhatsappUnofficial::Providers::GowaService.new(whatsapp_channel: self)
-    elsif provider == 'wapi'
-      WhatsappUnofficial::Providers::WapiService.new(whatsapp_channel: self)
-    end
+    @provider_service ||= case provider
+                          when 'gowa'
+                            WhatsappUnofficial::Providers::GowaService.new(whatsapp_channel: self)
+                          when 'wapi'
+                            WhatsappUnofficial::Providers::WapiService.new(whatsapp_channel: self)
+                          else
+                            raise "Unknown WhatsApp provider: #{provider.inspect}"
+                          end
   end
 
   delegate :send_message, to: :provider_service
@@ -213,14 +216,10 @@ class Channel::WhatsappUnofficial < ApplicationRecord
   end
 
   # Disconnect session with status broadcast
-  def disconnect_session
-    adapter.disconnect_session
-  end
+  delegate :disconnect_session, to: :adapter
 
   # Reconnect session
-  def reconnect_session
-    adapter.reconnect_session
-  end
+  delegate :reconnect_session, to: :adapter
 
   # ============================================================================
   # Inbox Management

@@ -1,69 +1,72 @@
-class Captain::Llm::GenerateIdleMessage < Captain::Llm::BaseAzureOpenAiService
-  def perform(conversation)
-    messages = [
-      {
-        role: 'system',
-        content: system_prompt
-      },
-      {
-        role: 'user',
-        content: user_prompt(conversation)
-      }
-    ]
+class Captain::Llm::GenerateIdleMessage
+  include ResponseFormatChatHelper
+  include HTTParty
+  base_uri ENV.fetch('JANGKAU_AGENT_API_URL', 'https://agent.jangkau.ai/')
 
-    response = @client.chat(
-      parameters: {
-        messages: messages
-      }
-    )
+  pattr_initialize [:conversation]
 
-    response.dig('choices', 0, 'message', 'content')&.strip
+  def perform
+    raise ArgumentError, 'conversation is nil' if conversation.nil?
+    raise ArgumentError, 'agent_bot_inbox not found' if agent_bot_inbox.nil?
+    raise ArgumentError, 'ai_agent not found' if ai_agent.nil?
+
+    generate_response
   end
 
   private
 
-  def system_prompt
-    <<~PROMPT
-      You are a Follow-Up AI Assistant responsible for continuing idle customer conversations based on prior chat context.
+  def generate_response
+    Rails.logger.info '[generate_response] Generating response for Jangkau AI Agent'
 
-      Your task is to generate a single follow-up message that:
-      - Naturally references the previous conversation without repeating information
-      - Feels polite, friendly, and human
-      - Encourages the customer to respond or take the next step
-      - Uses concise and conversational language
+    endpoint = '/v2/chat/followup/'
 
-      Rules:
-      - Do NOT restart the conversation or introduce new services
-      - Do NOT repeat explanations already given
-      - Do NOT sound aggressive, pushy, or overly formal
-      - Do NOT mention system data, logs, or that you are an AI
-
-      The message should have one clear intent and feel like a natural continuation of the conversation.
-    PROMPT
+    response = self.class.post(
+      endpoint,
+      body: request_body.to_json,
+      headers: headers
+    )
+    Rails.logger.info '[generate_response] Received Jangkau response'
+    parsed = parsed_response(response, is_custom_agent: ai_agent.custom_agent?)
+    parsed[:response]
+  rescue StandardError => e
+    Rails.logger.error "[generate_response] error: #{e.message}"
+    raise "Failed to generate response: #{e.message}"
   end
 
-  def user_prompt(conversation)
+  def agent_bot_inbox
+    @agent_bot_inbox ||= AgentBotInbox.find_by(inbox_id: conversation.inbox_id)
+  end
+
+  def ai_agent
+    @ai_agent ||= AiAgent.find_by(id: agent_bot_inbox.ai_agent_id)
+  end
+
+  def request_body
+    {
+      'question' => user_prompt,
+      'overrideConfig' => {
+        'session_id' => "followup:#{conversation.uuid}",
+        'conversation_id' => conversation.id,
+        'inbox_id' => conversation.inbox_id,
+        'ai_agent_id' => ai_agent.id,
+        'vars' => {
+          'account_id' => ai_agent.account_id.to_s
+        }.merge(ai_agent.flow_data || {})
+      }
+    }
+  end
+
+  def headers
+    {
+      'Content-Type' => 'application/json',
+      'Accept' => 'application/json',
+      'X-API-Key' => ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
+    }
+  end
+
+  def user_prompt
     <<~PROMPT
       Generate a polite and engaging follow-up message to re-engage the customer based on the conversation below.
-
-      Conversation Context:
-      #{build_conversation_context(conversation)}
-
-      Please provide only the message content without any additional text or formatting.
     PROMPT
-  end
-
-  def build_conversation_context(conversation)
-    conversation.messages
-                .from_ai_or_contact
-                .order(created_at: :desc)
-                .limit(10)
-                .reverse
-                .map { |msg| format_message(msg) }
-                .join("\n")
-  end
-
-  def format_message(message)
-    "#{message.sender_type}: #{message.content}"
   end
 end

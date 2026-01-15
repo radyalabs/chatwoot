@@ -24,14 +24,18 @@ module WhatsappUnofficial
     end
 
     # Returns: { connected: Boolean, status: String }
+    # Status values: 'connected', 'disconnected', 'waiting', 'error'
     def get_session_status
-      return { connected: false, status: 'not_logged_in' } unless channel.token.present?
+      return { connected: false, status: 'disconnected' } unless channel.token.present?
 
       result = waha_service.get_session_status(api_key: channel.token)
-      waha_status = result.dig('data', 'status') || 'not_logged_in'
+      waha_status = result.dig('data', 'status') || 'disconnected'
       connected = waha_status.downcase == 'logged_in'
 
-      { connected: connected, status: waha_status }
+      # Normalize WAHA status to standard terminology
+      normalized_status = connected ? 'connected' : 'disconnected'
+
+      { connected: connected, status: normalized_status }
     rescue StandardError => e
       log_error "Failed to get session status for #{channel.phone_number}: #{e.message}"
       { connected: false, status: 'error' }
@@ -70,6 +74,7 @@ module WhatsappUnofficial
     end
 
     # Logout and clear token
+    # Marks channel as intentionally disconnected to prevent future session status checks
     def logout_session
       return nil unless channel.token.present?
 
@@ -77,12 +82,15 @@ module WhatsappUnofficial
       response = waha_service.logout_session(api_key: channel.token)
       log_info "WAHA session logout response for #{channel.phone_number}: #{response}"
 
+      # Mark as intentionally disconnected to skip future session status checks
+      channel.mark_as_disconnected!
       channel.update!(token: nil)
       channel.clear_session_status_cache
 
       response
     rescue StandardError => e
       log_error "Failed to logout WAHA session for #{channel.phone_number}: #{e.message}"
+      channel.mark_as_disconnected!
       channel.update!(token: nil)
       channel.clear_session_status_cache
       nil
@@ -154,6 +162,7 @@ module WhatsappUnofficial
       end
 
       # Step 6: Set status for QR generation
+      channel.mark_as_waiting!
       channel.write_session_status_to_cache('waiting')
 
       # Step 7: Clear QR cache
@@ -169,6 +178,7 @@ module WhatsappUnofficial
       }
     rescue StandardError => e
       log_error "Failed to complete restart for #{channel.phone_number}: #{e.message}"
+      channel.mark_as_waiting!
       channel.write_session_status_to_cache('waiting')
 
       {
@@ -194,7 +204,8 @@ module WhatsappUnofficial
 
     def handle_failed_rescan
       log_error "Maximum rescan attempts reached for #{channel.phone_number}"
-      channel.write_session_status_to_cache('not_logged_in')
+      channel.mark_as_disconnected!
+      channel.write_session_status_to_cache('disconnected')
       logout_session
       channel.clear_rescan_attempts
 

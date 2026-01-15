@@ -8,7 +8,8 @@ module ResponseFormatChatHelper
       response: normalize_utf8(response&.dig('response')),
       is_handover: response&.dig('is_handover_human') || false,
       is_end_state: response&.dig('is_end_state') || false,
-      has_domain_change: response&.dig('has_domain_change') || false
+      has_domain_change: response&.dig('has_domain_change') || false,
+      attachments: response&.dig('attachments') || []
     }
   end
 

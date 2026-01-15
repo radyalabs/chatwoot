@@ -61,6 +61,7 @@ class Captain::Llm::BaseJangkauService
 
     {
       'question' => @question,
+      'attachments' => attachments.any? ? attachments : nil,
       'overrideConfig' => {
         'session_id' => @conversation.uuid,
         'conversation_id' => @conversation.id,
@@ -70,11 +71,10 @@ class Captain::Llm::BaseJangkauService
           'account_id' => @account_id.to_s,
           'customer_name' => @additional_attributes['name'] || '',
           'contact' => @additional_attributes['phone_number'] || '',
-          'channel' => @additional_attributes['channel'] || '',
-          'attachments' => attachments.any? ? attachments : nil
+          'channel' => @additional_attributes['channel'] || ''
         }.merge(@ai_agent.flow_data || {})
       }
-    }
+    }.compact
   end
 
   def headers

@@ -39,17 +39,13 @@ class ActionCableListener < BaseListener
              contact_tokens(conversation.contact_inbox, message)
 
     if message.sender_type == 'Contact'
-      # ChatServiceJob.perform_async(message.id)
-      Captain::Copilot::ChatService.new(message).perform
-      # chat_service = Captain::Copilot::ChatService.new(message)
-      # thread = Thread.new do
-      #   chat_service.perform
-      # end
-
-      # # Watchdog thread to ensure the thread is still alive
-      # Thread.new do
-      #   chat_service.notify_if_long_running unless thread.join(LOADING_DELAY_SECONDS)
-      # end
+      # Use background job with delay to ensure attachments are fully uploaded
+      # Delay: 3 seconds if has attachments, immediate if no attachments
+      if message.attachments.any?
+        Captain::Copilot::ChatServiceJob.set(wait: 3.seconds).perform_later(message.id)
+      else
+        Captain::Copilot::ChatServiceJob.perform_later(message.id)
+      end
     end
 
     broadcast(account, tokens, MESSAGE_CREATED, message.push_event_data)

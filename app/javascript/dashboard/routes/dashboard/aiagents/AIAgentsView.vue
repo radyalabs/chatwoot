@@ -13,13 +13,14 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
 const agentTypes = [
-  { label: 'Single Agent', id: 'single' },
-  { label: 'Multi Agent', id: 'multi' },
-  { label: 'Custom Agent', id: 'custom' }
+  { label: 'Single Agent', id: 'single', disabled: false },
+  { label: 'Multi Agent', id: 'multi', disabled: true },
+  { label: 'Custom Agent', id: 'custom', disabled: true }
 ];
 const selectedAgentType = ref(agentTypes[0].id);
 
 function handleAgentTypeChange(item) {
+  if (item.disabled) return;
   selectedAgentType.value = item.id;
 }
 
@@ -209,13 +210,35 @@ async function createAiAgent() {
   }
 }
 
-const templates = computed(() =>
-  aiTemplates.value?.map(e => ({
-    label: e.name,
-    id: `${e.id}`,
-    description: e.description,
-  }))
-);
+const templates = computed(() => {
+  if (!aiTemplates.value) return [];
+
+  const targetsToDisable = ['Event Organizer', 'Restoran & Cafe', 'Restaurant & Cafe']; 
+
+  const activeList = [];
+  const disabledList = [];
+
+  aiTemplates.value.forEach(e => {
+    const shouldDisable = targetsToDisable.some(target => 
+      e.name.toLowerCase().includes(target.toLowerCase())
+    );
+
+    const mappedItem = {
+      label: e.name,
+      id: `${e.id}`,
+      description: e.description,
+      disabled: shouldDisable
+    };
+
+    if (shouldDisable) {
+      disabledList.push(mappedItem);
+    } else {
+      activeList.push(mappedItem);
+    }
+  });
+
+  return [...activeList, ...disabledList];
+});
 const selectedTemplate = computed({
   get: () => state.selectedTemplate,
   set: (value) => { state.selectedTemplate = value; }
@@ -542,12 +565,14 @@ function formatUpdatedAt(updatedAt) {
               v-for="type in agentTypes"
               :key="type.id"
               class="flex items-center gap-2"
+              :class="{ 'opacity-50 cursor-not-allowed': type.disabled }"
             >
               <input
                 type="radio"
                 :value="type.id"
                 v-model="selectedAgentType"
                 name="agentType"
+                :disabled="type.disabled"
               />
               {{ type.label }}
             </label>
@@ -566,13 +591,15 @@ function formatUpdatedAt(updatedAt) {
             class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             :class="{ 'border-red-500': v$.selectedTemplate.$error }"
           >
-            <option v-if="!selectedTemplate" class="text-gray-500" value="">Select a template...</option>
+            <option v-if="!selectedTemplate" class="text-gray-500" value="">{{ $t('AGENT_MGMT.FORM_CREATE.SELECT_TEMPLATE') }}</option>
             <option
               v-for="template in templates"
               :key="template.id"
               :value="template.id"
+              :disabled="template.disabled"
+              :class="{ 'text-gray-400 bg-gray-100': template.disabled }"
             >
-              {{ template.label }}
+              {{ template.label }} {{ template.disabled ? '(Coming Soon)' : '' }}
             </option>
           </select>
           <div v-if="selectedAgentType === 'single' && selectedTemplateDescription" class="text-xs text-gray-500 mt-1 mb-2">

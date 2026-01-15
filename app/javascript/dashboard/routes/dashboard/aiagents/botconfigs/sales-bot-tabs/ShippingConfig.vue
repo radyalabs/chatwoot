@@ -26,7 +26,7 @@
         </div>
 
         <div class="space-y-4">
-          <div v-for="(store, index) in stores" :key="store.id || index" 
+          <div v-for="(store, index) in localStores" :key="store.id || index" 
                class="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow group">
             
             <div class="flex justify-between items-start mb-4">
@@ -110,7 +110,7 @@
 
           </div>
           
-          <div v-if="stores.length === 0" class="text-center py-12 bg-white dark:bg-slate-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+          <div v-if="localStores.length === 0" class="text-center py-12 bg-white dark:bg-slate-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
              <div class="w-16 h-16 bg-gray-50 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -150,14 +150,14 @@
           
           <button
             class="w-full flex justify-center items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg transition-colors disabled:opacity-70 disabled:cursor-not-allowed font-medium shadow-sm"
-            :disabled="isSaving"
+            :disabled="props.isSaving"
             @click="saveAll"
           >
-            <svg v-if="isSaving" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+            <svg v-if="props.isSaving" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"></circle>
                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <span>{{ isSaving ? $t('AGENT_MGMT.SALESBOT.SHIPPING.SAVING_BTN') : $t('AGENT_MGMT.SALESBOT.SHIPPING.SAVE_BTN') }}</span>
+            <span>{{ props.isSaving ? $t('AGENT_MGMT.SALESBOT.SHIPPING.SAVING_BTN') : $t('AGENT_MGMT.SALESBOT.SHIPPING.SAVE_BTN') }}</span>
           </button>
         </div>
       </div>
@@ -213,23 +213,33 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { useStore } from 'vuex';
 import { useI18n } from 'vue-i18n';
 import StoreAddressModal from './components/StoreAddressModal.vue';
+import { useAlert } from 'dashboard/composables';
 
 const { t } = useI18n();
+const store = useStore();
 
 const props = defineProps({
-  initialStores: {
-    type: Array,
-    default: () => []
+  aiAgentId: {
+    type: [Number, String],
+    required: true
   },
-  isSaving: Boolean
+  isSaving: {
+    type: Boolean,
+    default: false
+  }
 });
 
 const emit = defineEmits(['save-config']);
 
-const stores = ref([]);
+const savedStores = computed(() => store.getters['shippingStores/getStores']);
+const uiFlags = computed(() => store.getters['shippingStores/getUIFlags']);
+
+const localStores = ref([]);
+
 const showModal = ref(false);
 const selectedStore = ref(null);
 const editingIndex = ref(-1);
@@ -239,9 +249,9 @@ const showDeleteModal = ref(false);
 const storeToDeleteIndex = ref(-1);
 
 // PERBAIKAN: Gunakan watch agar data sinkron saat fetch dari parent selesai
-watch(() => props.initialStores, (newStores) => {
+watch(savedStores, (newStores) => {
   if (newStores) {
-    stores.value = JSON.parse(JSON.stringify(newStores));
+    localStores.value = JSON.parse(JSON.stringify(newStores));
   }
 }, { deep: true, immediate: true });
 
@@ -252,7 +262,7 @@ const openAddModal = () => {
 };
 
 const editStore = (index) => {
-  selectedStore.value = JSON.parse(JSON.stringify(stores.value[index]));
+  selectedStore.value = JSON.parse(JSON.stringify(localStores.value[index]));
   editingIndex.value = index;
   showModal.value = true;
 };
@@ -266,7 +276,7 @@ const promptDelete = (index) => {
 // PERBAIKAN: Fungsi Konfirmasi Hapus
 const confirmDelete = () => {
   if (storeToDeleteIndex.value > -1) {
-    stores.value.splice(storeToDeleteIndex.value, 1);
+    localStores.value.splice(storeToDeleteIndex.value, 1);
     storeToDeleteIndex.value = -1;
   }
   showDeleteModal.value = false;
@@ -285,13 +295,13 @@ const closeModal = () => {
 
 const handleSaveStore = (storeData) => {
   if (editingIndex.value > -1) {
-    stores.value[editingIndex.value] = storeData;
+    localStores.value[editingIndex.value] = storeData;
   } else {
-    stores.value.push(storeData);
+    localStores.value.push(storeData);
   }
 };
 
 const saveAll = () => {
-  emit('save-config', stores.value);
+  emit('save-config', localStores.value);
 };
 </script>

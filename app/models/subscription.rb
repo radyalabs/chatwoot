@@ -53,8 +53,28 @@ class Subscription < ApplicationRecord
   validates :price, numericality: { greater_than_or_equal_to: 0 }
 
   after_create :create_usage_record
+  after_save :sync_active_subscription_to_account, if: :became_active_and_paid?
 
   scope :active, -> { where(status: 'active').where('ends_at > ?', Time.now) }
+
+  # Syncs this subscription as the account's active subscription when it becomes active and paid.
+  # This ensures accounts.active_subscription_id is always up-to-date regardless of which
+  # code path activates the subscription (webhook, check_status, manual update, etc.)
+  def sync_active_subscription_to_account
+    account.update!(
+      active_subscription_id: id,
+      subscription_status: 'active'
+    )
+  end
+
+  private
+
+  def became_active_and_paid?
+    status == 'active' && payment_status == 'paid' &&
+      (saved_change_to_status? || saved_change_to_payment_status?)
+  end
+
+  public
 
   # Method untuk membuat record usage
   def create_usage_record

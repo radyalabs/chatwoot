@@ -41,7 +41,7 @@ class NotifyIdleConversationJob < ApplicationJob
   end
 
   def idle_conversation_processor(idle_conversation)
-    message = Captain::Llm::GenerateIdleMessage.new.perform(idle_conversation.conversation)
+    message = Captain::Llm::GenerateIdleMessage.new(conversation: idle_conversation.conversation).perform
 
     create_message(
       message, {

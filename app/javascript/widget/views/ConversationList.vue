@@ -31,8 +31,6 @@
              :src="avatarUrl" 
              class="w-12 h-12 rounded-full border-2 border-white/20 bg-white object-contain p-0.5 z-10 relative" 
            />
-           <div class="absolute top-0 -left-6 w-10 h-10 rounded-full bg-white/10 z-0"></div>
-           <div class="absolute top-0 -right-6 w-10 h-10 rounded-full bg-white/10 z-0"></div>
         </div>
       </div>
 

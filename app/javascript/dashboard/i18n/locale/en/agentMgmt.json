@@ -71,7 +71,7 @@
     },
     "REMINDER": {
       "TITLE": "Reminder Message",
-      "DESC": "Send automatic reminder messages to customers after booking",
+      "DESC": "Send automatic reminder messages to customers after scheduling",
       "TIME": "When will the message be sent?",
       "TIME_OPTIONS": {
         "30_MINUTES": "30 Minutes",
@@ -86,10 +86,16 @@
       "MSG_VARIABLE": "Add Variable(s)",
       "VARIABLES": {
         "CUSTOMER_NAME": "Customer Name",
-        "BOOKING_DATE": "Booking Date",
-        "BOOKING_TIME": "Booking Time",
         "SERVICE_NAME": "Service Name",
-        "LOCATION": "Location"
+        "BOOKING": {
+          "DATE": "Booking Date",
+          "TIME": "Booking Time",
+          "LOCATION": "Location"
+        },
+        "LEADGEN": {
+          "DATE": "Consultation Date",
+          "TIME": "Consultation Time"
+        }
       },
       "MSG_DESC": "This message will be sent automatically to customers via the appropriate platform at the specified time.",
       "MSG_EXAMPLE": "Example"

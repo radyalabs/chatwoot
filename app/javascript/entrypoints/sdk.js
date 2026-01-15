@@ -18,7 +18,7 @@ import {
 import { setCookieWithDomain } from '../sdk/cookieHelpers';
 import { SDK_SET_BUBBLE_VISIBILITY } from 'shared/constants/sharedFrameEvents';
 
-const runSDK = ({ baseUrl, websiteToken }) => {
+const runSDK = ({ baseUrl, websiteToken, locale: sdkLocale }) => {
   if (window.$chatwoot) {
     return;
   }
@@ -42,7 +42,17 @@ const runSDK = ({ baseUrl, websiteToken }) => {
   );
 
   const chatwootSettings = window.chatwootSettings || {};
-  let locale = chatwootSettings.locale;
+  let locale = sdkLocale || 
+             window.JangkauSettings?.locale || 
+             chatwootSettings.locale;
+
+  if (chatwootSettings.useBrowserLanguage && !sdkLocale && !window.JangkauSettings?.locale) {
+    locale = window.navigator.language.replace('-', '_');
+  }
+
+  locale = locale || 'en';
+
+  console.log('[SDK] Final locale to use:', locale);
   let baseDomain = chatwootSettings.baseDomain;
 
   if (chatwootSettings.useBrowserLanguage) {
@@ -170,6 +180,7 @@ const runSDK = ({ baseUrl, websiteToken }) => {
     },
 
     setLocale(localeToBeUsed = 'en') {
+      window.$chatwoot.locale = localeToBeUsed;
       IFrameHelper.sendMessage('set-locale', { locale: localeToBeUsed });
     },
 
@@ -191,6 +202,7 @@ const runSDK = ({ baseUrl, websiteToken }) => {
       iframe.src = IFrameHelper.getUrl({
         baseUrl: window.$chatwoot.baseUrl,
         websiteToken: window.$chatwoot.websiteToken,
+        locale: window.$chatwoot.locale,
       });
 
       window.$chatwoot.resetTriggered = true;
@@ -200,6 +212,7 @@ const runSDK = ({ baseUrl, websiteToken }) => {
   IFrameHelper.createFrame({
     baseUrl,
     websiteToken,
+    locale,
   });
 };
 

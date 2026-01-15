@@ -130,6 +130,8 @@ Rails.application.routes.draw do
               get 'whatsapp/qr', to: 'inboxes#whatsapp_qr'
               get 'whatsapp/status', to: 'inboxes#whatsapp_status'
               post 'whatsapp/restart', to: 'inboxes#whatsapp_restart_session'
+              post 'whatsapp/disconnect', to: 'inboxes#whatsapp_disconnect_session'
+              post 'whatsapp/reconnect', to: 'inboxes#whatsapp_reconnect_session'
             end
           end
 
@@ -174,7 +176,7 @@ Rails.application.routes.draw do
             resources :documents, only: [:index, :show, :create, :destroy]
             resources :assistant_responses
           end
-          
+
           post :translate, to: 'translator#translate'
           resources :agent_bots, only: [:index, :create, :show, :update, :destroy] do
             delete :avatar, on: :member
@@ -487,7 +489,7 @@ Rails.application.routes.draw do
                 put :config, action: :update_config
               end
             end
-            
+
             # Shipping configs routes
             resources :shipping_stores, only: [:index] do
               collection do
@@ -655,6 +657,7 @@ Rails.application.routes.draw do
   get 'webhooks/instagram', to: 'webhooks/instagram#verify'
   post 'webhooks/instagram', to: 'webhooks/instagram#events'
   post 'webhooks/waha/:phone_number', to: 'webhooks/waha#process_payload'
+  post 'webhooks/gowa', to: 'webhooks/gowa#process_payload'
 
   namespace :twitter do
     resource :callback, only: [:show]
@@ -702,6 +705,7 @@ Rails.application.routes.draw do
       resources :accounts, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
         post :seed, on: :member
         post :reset_cache, on: :member
+        resources :contact_conversations, only: [:index], path: 'conversations'
       end
       resources :users, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
         delete :avatar, on: :member, action: :destroy_avatar

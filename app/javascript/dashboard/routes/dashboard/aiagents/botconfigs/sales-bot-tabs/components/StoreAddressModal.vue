@@ -2,7 +2,7 @@
   <div v-if="isOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6" role="dialog">
     <div class="fixed inset-0 bg-slate-900/50 transition-opacity backdrop-blur-sm" @click="close"></div>
 
-    <div class="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto transform rounded-xl bg-white dark:bg-slate-800 shadow-2xl transition-all flex flex-col border border-gray-200 dark:border-gray-700">
+    <div class="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto transform rounded-xl bg-white dark:bg-slate-800 shadow-2xl transition-all flex flex-col border border-gray-200 dark:border-gray-700 custom-scrollbar">
       
       <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 sticky top-0 z-10">
         <h3 class="text-lg font-bold text-slate-900 dark:text-white">
@@ -52,7 +52,7 @@
               id="map-search-input"
               type="text" 
               :placeholder="$t('AGENT_MGMT.SALESBOT.SHIPPING.MODAL.MAP_SEARCH_PLACEHOLDER')"
-              class="w-full border border-gray-300 rounded-lg pl-10 pr-20 py-2.5 text-sm focus:ring-2 focus:ring-green-500 dark:bg-slate-800 dark:border-gray-600 dark:text-white shadow-sm"
+              class="w-full border border-gray-300 rounded-lg pl-10 pr-20 py-2.5 text-sm focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 dark:border-gray-600 dark:text-white shadow-sm"
             />
           </div>
 
@@ -106,7 +106,7 @@
             </label>
           </div>
 
-          <div v-if="form.store_courier.enabled" class="p-5 border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-slate-900/30 space-y-5 animate-fadeIn">
+          <div v-if="form.store_courier.enabled" class="p-5 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-900/30 space-y-5 animate-fadeIn">
             <div>
                <label class="block text-xs font-semibold uppercase text-gray-500 mb-2 tracking-wider">
                  {{ $t('AGENT_MGMT.SALESBOT.SHIPPING.MODAL.OPERATIONAL_HOURS') }}
@@ -278,7 +278,7 @@
                </div>
             </label>
           </div>          
-          <div v-if="form.store_pickup.enabled" class="p-5 border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-slate-900/30 space-y-4 animate-fadeIn">
+          <div v-if="form.store_pickup.enabled" class="p-5 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-900/30 space-y-4 animate-fadeIn">
             <div>
                <label class="block text-xs font-semibold uppercase text-gray-500 mb-2 tracking-wider">
                  {{ $t('AGENT_MGMT.SALESBOT.SHIPPING.MODAL.OPERATIONAL_HOURS') }}
@@ -314,7 +314,7 @@
 
       </div>
 
-      <div class="p-5 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3 bg-gray-50 dark:bg-slate-800 sticky bottom-0 z-20">
+      <div class="p-5 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3 bg-gray-50 dark:bg-slate-800 bottom-0 z-20">
         <button @click="close" class="px-5 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-white hover:border-gray-400 transition-all dark:border-gray-600 dark:text-gray-200 dark:hover:bg-slate-700">
           {{ $t('AGENT_MGMT.SALESBOT.SHIPPING.MODAL.CANCEL_BTN') }}
         </button>
@@ -578,5 +578,18 @@ const save = () => {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-5px); }
   to { opacity: 1; transform: translateY(0); }
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 10px;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #475569;
 }
 </style>

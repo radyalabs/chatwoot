@@ -17,7 +17,7 @@ class NotifyIdleConversationJob < ApplicationJob
 
     conversations.each do |idle_conversation|
       duration = DEFAULT_DURATION # default duration
-      duration = @duration_cache[idle_conversation.ai_agent_id] || DEFAULT_DURATION if idle_conversation.step.positive?
+      duration = @duration_cache[idle_conversation.ai_agent_id] || duration if idle_conversation.step.zero?
 
       next unless idle_since?(idle_conversation.conversation.last_activity_at, duration)
 
@@ -41,7 +41,10 @@ class NotifyIdleConversationJob < ApplicationJob
   end
 
   def idle_conversation_processor(idle_conversation)
-    message = Captain::Llm::GenerateIdleMessage.new(conversation: idle_conversation.conversation).perform
+    message = Captain::Llm::GenerateIdleMessage.new(
+      conversation: idle_conversation.conversation,
+      step: idle_conversation.step
+    ).perform
 
     create_message(
       message, {

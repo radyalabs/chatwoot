@@ -3,7 +3,7 @@ class Captain::Llm::GenerateIdleMessage
   include HTTParty
   base_uri ENV.fetch('JANGKAU_AGENT_API_URL', 'https://agent.jangkau.ai/')
 
-  pattr_initialize [:conversation]
+  pattr_initialize [:conversation, :step]
 
   def perform
     raise ArgumentError, 'conversation is nil' if conversation.nil?
@@ -42,6 +42,8 @@ class Captain::Llm::GenerateIdleMessage
   end
 
   def request_body
+    user_prompt = step.zero? ? user_prompt_initial : user_prompt_closure
+
     {
       'question' => user_prompt,
       'overrideConfig' => {
@@ -64,9 +66,15 @@ class Captain::Llm::GenerateIdleMessage
     }
   end
 
-  def user_prompt
+  def user_prompt_initial
     <<~PROMPT
-      Generate a polite and engaging follow-up message to re-engage the customer based on the conversation below.
+      Generate a follow-up to re-engage based on their last question/topic. Be specific and helpful.
+    PROMPT
+  end
+
+  def user_prompt_closure
+    <<~PROMPT
+      Generate a final follow-up acknowledging they may be busy. Close politely while keeping the door open.
     PROMPT
   end
 end

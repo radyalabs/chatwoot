@@ -53,6 +53,8 @@ class AiAgent < ApplicationRecord
   accepts_nested_attributes_for :ai_agent_selected_labels, allow_destroy: true
 
   before_validation :set_default_messages
+  after_create :create_default_numbering_config
+  after_destroy :cleanup_numbering_counters
 
   def set_default_messages
     self.system_prompts ||= 'Default system prompt'
@@ -161,5 +163,23 @@ class AiAgent < ApplicationRecord
       'ai_agent_selected_labels' => 'selected_labels',
       'ai_agent_followups' => 'followups'
     }[key] || key
+  end
+
+  def create_default_numbering_config
+    sheet_numbering_configs.create!(
+      account: account,
+      numbering_key: 'default',
+      prefix: nil,
+      format_pattern: '[NUMBER]/[MONTH]/[YEAR]',
+      current_value: 1,
+      number_padding: 3,
+      reset_interval: 'never'
+    )
+  rescue ActiveRecord::RecordInvalid => e
+    Rails.logger.error("[AiAgent] Failed to create default numbering config: #{e.message}")
+  end
+
+  def cleanup_numbering_counters
+    CleanupNumberingCountersJob.perform_later(account_id, id)
   end
 end

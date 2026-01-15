@@ -51,7 +51,8 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
       parsed,
       additional_attributes: {
         message_type: 1,
-        sender_type: 'AiAgent'
+        sender_type: 'AiAgent',
+        attachments: parsed[:attachments]
       }
     )
   end
@@ -115,6 +116,9 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
   end
 
   def message_created(content, additional_attributes)
+    # Extract image_urls before merging (it's not a Message attribute)
+    attachments = additional_attributes&.delete(:attachments)
+    
     attrs = {
       content: content,
       account_id: @context.account_id,
@@ -128,6 +132,38 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
 
     attrs.merge!(additional_attributes) if additional_attributes.present?
 
-    Message.create!(attrs)
+    Rails.logger.info "[BOT] Building outgoing message with #{attachments.present? ? attachments.count : 0} image(s)..."
+    
+    # Build message (not create yet) - following Telegram incoming pattern
+    message = @context.conversation.messages.build(attrs)
+    
+    # Attach images BEFORE save (like Telegram incoming)
+    if attachments.present?
+      Rails.logger.info "[BOT] Attaching #{attachments.count} image(s) before save..."
+      
+      attachments.each_with_index do |image_url, idx|
+        begin
+          Rails.logger.info "  Downloading image #{idx + 1}: #{image_url}"
+          image_file = Down.download(image_url)
+          message.attachments.new(
+            account_id: message.account_id,
+            file_type: 'image',
+            file: {
+              io: image_file,
+              filename: File.basename(image_url),
+              content_type: image_file.content_type || 'image/jpeg'
+            }
+          )
+        rescue StandardError => e
+          Rails.logger.error "Failed to attach image #{idx + 1}: #{e.message}"
+        end
+      end
+      
+    end
+    
+    message.save!
+    Rails.logger.info "[BOT] Message saved! ID: #{message.id}, attachments: #{message.attachments.count}"
+    
+    message
   end
 end

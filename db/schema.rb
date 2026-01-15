@@ -543,8 +543,10 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_08_090113) do
     t.string "provider"
     t.string "device_id"
     t.jsonb "provider_config", default: {}
+    t.string "status", default: "disconnected", null: false
     t.index ["account_id"], name: "index_channel_whatsapp_unofficials_on_account_id"
     t.index ["phone_number"], name: "index_channel_whatsapp_unofficials_on_phone_number", unique: true
+    t.index ["status"], name: "index_channel_whatsapp_unofficials_on_status"
   end
 
   create_table "contact_inboxes", force: :cascade do |t|

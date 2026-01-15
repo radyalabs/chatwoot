@@ -21,7 +21,7 @@ class CleanupNumberingCountersJob < ApplicationJob
     end
 
     response = HTTParty.delete(
-      "#{base_url}v2/internal/numbering/counters",
+      "#{base_url}v2/numbering/counters",
       body: {
         account_id: account_id,
         ai_agent_id: ai_agent_id

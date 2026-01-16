@@ -2,7 +2,7 @@ class Webhooks::WhatsappUnofficialController < ActionController::API
   before_action :verify_signature
 
   def process_payload
-    Webhooks::WhatsappUnofficialEventJob.perform_later(params.to_unsafe_hash)
+    Webhooks::WhatsappUnofficialEventsJob.perform_later(params.to_unsafe_hash)
     head :ok
   end
 

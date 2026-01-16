@@ -1,4 +1,4 @@
-class Webhooks::WhatsappUnofficialEventJob < ApplicationJob
+class Webhooks::WhatsappUnofficialEventsJob < ApplicationJob
   queue_as :default
 
   ALLOWED_EVENTS = %w[

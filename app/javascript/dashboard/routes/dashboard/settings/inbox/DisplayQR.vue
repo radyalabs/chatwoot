@@ -220,16 +220,32 @@ export default {
           // console.log('🚫 Cannot generate QR code - connection failed');
           return;
         }
-        
+
         this.isLoading = true;
         const inboxId = this.$route.params.inbox_id;
         const accountId = this.$route.params.accountId;
-        
+
         const response = await WhatsAppUnofficialChannels.generateQR(inboxId);
-        
-        if (response.data.success && response.data.qr_code) {
-          // Convert base64 to data URL for image display
-          this.qrCodeData = `data:image/png;base64,${response.data.qr_code}`;
+
+        if (response.data.success && response.data.already_connected) {
+          // Session is already connected (GOWA returns this after QR was scanned)
+          this.connectionStatus = 'connected';
+          this.clearIntervals();
+          setTimeout(() => {
+            this.redirectToInboxSettings();
+          }, 1000);
+        } else if (response.data.success && response.data.qr_code) {
+          // Handle different QR types based on provider
+          // WAHA returns base64, GOWA returns URL
+          const qrType = response.data.qr_type || 'base64';
+
+          if (qrType === 'url') {
+            // GOWA returns a direct URL to the QR image
+            this.qrCodeData = response.data.qr_code;
+          } else {
+            // WAHA returns base64, convert to data URL for image display
+            this.qrCodeData = `data:image/png;base64,${response.data.qr_code}`;
+          }
         } else {
           throw new Error(response.data.message || 'Failed to generate QR code');
         }

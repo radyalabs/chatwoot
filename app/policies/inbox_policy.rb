@@ -78,4 +78,18 @@ class InboxPolicy < ApplicationPolicy
 
     Current.user.assigned_inboxes.include? record
   end
+
+  def whatsapp_disconnect_session?
+    # Allow access to WhatsApp disconnect session for administrators and agents assigned to the inbox
+    return true if @account_user.administrator?
+
+    Current.user.assigned_inboxes.include? record
+  end
+
+  def whatsapp_reconnect_session?
+    # Allow access to WhatsApp reconnect session for administrators and agents assigned to the inbox
+    return true if @account_user.administrator?
+
+    Current.user.assigned_inboxes.include? record
+  end
 end

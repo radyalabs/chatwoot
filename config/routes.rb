@@ -130,6 +130,8 @@ Rails.application.routes.draw do
               get 'whatsapp/qr', to: 'inboxes#whatsapp_qr'
               get 'whatsapp/status', to: 'inboxes#whatsapp_status'
               post 'whatsapp/restart', to: 'inboxes#whatsapp_restart_session'
+              post 'whatsapp/disconnect', to: 'inboxes#whatsapp_disconnect_session'
+              post 'whatsapp/reconnect', to: 'inboxes#whatsapp_reconnect_session'
             end
           end
 
@@ -604,6 +606,8 @@ Rails.application.routes.draw do
   get 'webhooks/instagram', to: 'webhooks/instagram#verify'
   post 'webhooks/instagram', to: 'webhooks/instagram#events'
   post 'webhooks/waha/:phone_number', to: 'webhooks/waha#process_payload'
+  post 'webhooks/gowa', to: 'webhooks/gowa#process_payload'
+  post 'webhooks/whatsapp_unofficial', to: 'webhooks/whatsapp_unofficial#process_payload'
 
   namespace :twitter do
     resource :callback, only: [:show]

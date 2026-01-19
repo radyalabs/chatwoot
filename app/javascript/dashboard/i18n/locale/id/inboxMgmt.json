@@ -31,6 +31,10 @@
       }
     },
     "ADD": {
+      "QRCODE": {
+        "TITLE": "Pindai Kode QR",
+        "DESC": "Pindai kode QR di bawah ini dengan aplikasi WhatsApp Anda untuk terhubung"
+      },
       "WHATSAPP_UNOFFICIAL_CHANNEL": {
         "TITLE": "Tambah Channel WhatsApp Non-Bisnis",
         "DESC": "Atur koneksi dengan WhatsApp Non-Bisnismu",
@@ -852,6 +856,38 @@
       "LINE": "Line",
       "API": "API Channel",
       "INSTAGRAM": "Instagram"
+    },
+    "WHATSAPP_STATUS": {
+      "TITLE": "Status WhatsApp",
+      "STATUS": {
+        "CONNECTED": "WhatsApp Terhubung",
+        "DISCONNECTED": "WhatsApp Terputus",
+        "CHECKING": "Memeriksa..."
+      },
+      "LAST_CHECKED": "Terakhir diperbarui",
+      "NEVER_CHECKED": "Belum pernah diperiksa",
+      "BUTTONS": {
+        "REFRESH": "Refresh status",
+        "DISCONNECT": "Putuskan",
+        "RECONNECT": "Sambung ulang",
+        "LOADING": "Memuat...",
+        "CANCEL": "Batal"
+      },
+      "MESSAGES": {
+        "DISCONNECTED_GUIDE": "Koneksi WhatsApp terputus. Silakan klik tombol \"Sambung ulang\" untuk menyambung ulang channel ini.",
+        "DISCONNECT_CONFIRM": "Apakah Anda yakin ingin memutuskan sesi WhatsApp ini?",
+        "DISCONNECT_SUCCESS": "Sesi WhatsApp berhasil diputuskan",
+        "DISCONNECT_ERROR": "Gagal memutuskan sesi WhatsApp",
+        "RECONNECT_SUCCESS": "WhatsApp berhasil tersambung kembali!",
+        "RECONNECT_ERROR": "Gagal menyambung ulang sesi WhatsApp",
+        "QR_SCAN_INSTRUCTION": "Scan kode QR ini dengan WhatsApp Anda untuk menyambung ulang",
+        "QR_ERROR": "Gagal memuat kode QR",
+        "QR_EXPIRES_IN": "Kode QR kedaluwarsa dalam {seconds} detik"
+      },
+      "ALERTS": {
+        "CONNECTED": "WhatsApp berhasil terkoneksi!",
+        "DISCONNECTED_NOTICE": "WhatsApp terputus dari perangkat. Silakan sambung ulang untuk melanjutkan."
+      }
     }
   }
 }

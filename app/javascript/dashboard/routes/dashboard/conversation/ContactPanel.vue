@@ -85,12 +85,7 @@ const onDragEnd = () => {
 };
 
 onMounted(() => {
-  const hiddenItems = ['conversation_info', 'contact_attributes', 'macros'];
-
-  conversationSidebarItems.value = conversationSidebarItemsOrder.value.filter(
-    item => !hiddenItems.includes(item.name)
-  );
-
+  conversationSidebarItems.value = conversationSidebarItemsOrder.value;
   getContactDetails();
   store.dispatch('attributes/get', 0);
 });
@@ -153,7 +148,7 @@ onMounted(() => {
                 />
               </AccordionItem>
             </div>
-            <!-- <div v-else-if="element.name === 'conversation_info'">
+            <div v-else-if="element.name === 'conversation_info'">
               <AccordionItem
                 :title="$t('CONVERSATION_SIDEBAR.ACCORDION.CONVERSATION_INFO')"
                 :is-open="isContactSidebarItemOpen('is_conv_details_open')"
@@ -189,7 +184,7 @@ onMounted(() => {
                   "
                 />
               </AccordionItem>
-            </div> -->
+            </div>
             <div v-else-if="element.name === 'previous_conversation'">
               <AccordionItem
                 v-if="contact.id"
@@ -208,7 +203,7 @@ onMounted(() => {
                 />
               </AccordionItem>
             </div>
-            <!-- <woot-feature-toggle
+            <woot-feature-toggle
               v-else-if="element.name === 'macros'"
               feature-key="macros"
             >
@@ -220,7 +215,7 @@ onMounted(() => {
               >
                 <MacrosList :conversation-id="conversationId" />
               </AccordionItem>
-            </woot-feature-toggle> -->
+            </woot-feature-toggle>
           </div>
         </template>
       </Draggable>

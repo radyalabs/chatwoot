@@ -175,7 +175,7 @@ useKeyboardEvents(keyboardEvents);
         />
       </div>
       <FileUpload
-        v-if="isEmailOrWebWidgetInbox"
+        v-if="!isWhatsappInbox && !hasNoInbox"
         ref="uploadAttachment"
         input-id="composeNewConversationAttachment"
         :size="4096 * 4096"
@@ -190,7 +190,7 @@ useKeyboardEvents(keyboardEvents);
         @input-file="onFileUpload"
       >
         <Button
-          icon="i-lucide-plus"
+          icon="i-lucide-paperclip"
           color="slate"
           size="sm"
           class="!w-10 relative"

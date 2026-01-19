@@ -72,11 +72,6 @@ class Channel::WhatsappUnofficial < ApplicationRecord
 
   delegate :send_message, to: :provider_service
 
-  def clear_session_status_cache
-    ::Redis::Alfred.delete(session_status_cache_key)
-  end
-
-  # Get the adapter for this channel's provider
   def adapter
     @adapter ||= WhatsappUnofficial::AdapterFactory.for(self)
   end
@@ -242,21 +237,6 @@ class Channel::WhatsappUnofficial < ApplicationRecord
     else
       build_mismatch_response(current_attempts, max_attempts)
     end
-  end
-
-  # ============================================================================
-  # Messaging (TODO: Move to adapter in future)
-  # ============================================================================
-
-  def send_message_on_gowa(message)
-    message_id = send_message(message) if message.content.present?
-    message_id = Waha::SendOnChannelService.new(message: message).perform if message.attachments.present?
-    message_id
-  end
-
-  def send_message(_message)
-    Rails.logger.warn 'send_message not yet implemented via adapter'
-    nil
   end
 
   private

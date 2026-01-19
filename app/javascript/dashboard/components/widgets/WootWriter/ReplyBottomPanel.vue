@@ -288,7 +288,7 @@ export default {
           sm
         />
       </FileUpload>
-      <NextButton
+      <!-- <NextButton
         v-if="showAudioRecorderButton"
         v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_AUDIORECORDER_ICON')"
         :icon="!isRecordingAudio ? 'i-ph-microphone' : 'i-ph-microphone-slash'"
@@ -296,7 +296,7 @@ export default {
         faded
         sm
         @click="toggleAudioRecorder"
-      />
+      /> -->
       <NextButton
         v-if="showEditorToggle"
         v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_FORMAT_ICON')"
@@ -316,7 +316,7 @@ export default {
         :label="recordingAudioDurationText"
         @click="toggleAudioRecorderPlayPause"
       />
-      <NextButton
+      <!-- <NextButton
         v-if="showMessageSignatureButton"
         v-tooltip.top-end="signatureToggleTooltip"
         icon="i-ph-signature"
@@ -324,7 +324,7 @@ export default {
         faded
         sm
         @click="toggleMessageSignature"
-      />
+      /> -->
       <NextButton
         v-if="hasWhatsappTemplates"
         v-tooltip.top-end="$t('CONVERSATION.FOOTER.WHATSAPP_TEMPLATES')"

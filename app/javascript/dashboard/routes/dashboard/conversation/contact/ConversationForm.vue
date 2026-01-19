@@ -175,10 +175,18 @@ export default {
     },
     inboxes() {
       const inboxList = this.contact.contact_inboxes || [];
-      return inboxList.map(inbox => ({
-        ...inbox.inbox,
-        sourceId: inbox.source_id,
-      }));
+      return inboxList
+        .filter(inbox => {
+          // Filter out non-connected WhatsApp unofficial inboxes
+          if (inbox.inbox?.channel_type === INBOX_TYPES.WHATSAPP_UNOFFICIAL) {
+            return inbox.inbox?.whatsapp_status === 'connected';
+          }
+          return true;
+        })
+        .map(inbox => ({
+          ...inbox.inbox,
+          sourceId: inbox.source_id,
+        }));
     },
     isAnEmailInbox() {
       return (

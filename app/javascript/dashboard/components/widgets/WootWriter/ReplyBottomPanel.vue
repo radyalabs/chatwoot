@@ -5,7 +5,6 @@ import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
 import FileUpload from 'vue-upload-component';
 import * as ActiveStorage from 'activestorage';
 import inboxMixin from 'shared/mixins/inboxMixin';
-import { FEATURE_FLAGS } from 'dashboard/featureFlags';
 import {
   ALLOWED_FILE_TYPES,
   ALLOWED_FILE_TYPES_FOR_TWILIO_WHATSAPP,
@@ -34,10 +33,6 @@ export default {
       type: String,
       default: '',
     },
-    recordingAudioDurationText: {
-      type: String,
-      default: '00:00',
-    },
     // inbox prop is used in /mixins/inboxMixin,
     // remove this props when refactoring to composable if not needed
     // eslint-disable-next-line vue/no-unused-properties
@@ -49,10 +44,6 @@ export default {
       type: Boolean,
       default: false,
     },
-    showAudioRecorder: {
-      type: Boolean,
-      default: false,
-    },
     onFileUpload: {
       type: Function,
       default: () => {},
@@ -60,22 +51,6 @@ export default {
     toggleEmojiPicker: {
       type: Function,
       default: () => {},
-    },
-    toggleAudioRecorder: {
-      type: Function,
-      default: () => {},
-    },
-    toggleAudioRecorderPlayPause: {
-      type: Function,
-      default: () => {},
-    },
-    isRecordingAudio: {
-      type: Boolean,
-      default: false,
-    },
-    recordingAudioState: {
-      type: String,
-      default: '',
     },
     isSendDisabled: {
       type: Boolean,
@@ -152,8 +127,6 @@ export default {
   },
   computed: {
     ...mapGetters({
-      accountId: 'getCurrentAccountId',
-      isFeatureEnabledonAccount: 'accounts/isFeatureEnabledonAccount',
       uiFlags: 'integrations/getUIFlags',
     }),
     isNote() {
@@ -172,26 +145,6 @@ export default {
     showAttachButton() {
       return this.showFileUpload || this.isNote;
     },
-    showAudioRecorderButton() {
-      if (this.isALineChannel) {
-        return false;
-      }
-      // Disable audio recorder for safari browser as recording is not supported
-      // const isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(
-      //   navigator.userAgent
-      // );
-
-      return (
-        this.isFeatureEnabledonAccount(
-          this.accountId,
-          FEATURE_FLAGS.VOICE_RECORDER
-        ) && this.showAudioRecorder
-        // !isSafari
-      );
-    },
-    showAudioPlayStopButton() {
-      return this.showAudioRecorder && this.isRecordingAudio;
-    },
     allowedFileTypes() {
       if (this.isATwilioWhatsAppChannel) {
         return ALLOWED_FILE_TYPES_FOR_TWILIO_WHATSAPP;
@@ -204,31 +157,6 @@ export default {
     enableDragAndDrop() {
       return !this.newConversationModalActive;
     },
-    audioRecorderPlayStopIcon() {
-      switch (this.recordingAudioState) {
-        // playing paused recording stopped inactive destroyed
-        case 'playing':
-          return 'i-ph-pause';
-        case 'paused':
-          return 'i-ph-play';
-        case 'stopped':
-          return 'i-ph-play';
-        default:
-          return 'i-ph-stop';
-      }
-    },
-    showMessageSignatureButton() {
-      return !this.isOnPrivateNote;
-    },
-    sendWithSignature() {
-      // channelType is sourced from inboxMixin
-      return this.fetchSignatureFlagFromUISettings(this.channelType);
-    },
-    signatureToggleTooltip() {
-      return this.sendWithSignature
-        ? this.$t('CONVERSATION.FOOTER.DISABLE_SIGN_TOOLTIP')
-        : this.$t('CONVERSATION.FOOTER.ENABLE_SIGN_TOOLTIP');
-    },
     enableInsertArticleInReply() {
       return this.portalSlug;
     },
@@ -240,9 +168,6 @@ export default {
     ActiveStorage.start();
   },
   methods: {
-    toggleMessageSignature() {
-      this.setSignatureFlagForInbox(this.channelType, !this.sendWithSignature);
-    },
     replaceText(text) {
       this.$emit('replaceText', text);
     },
@@ -289,15 +214,6 @@ export default {
         />
       </FileUpload>
       <NextButton
-        v-if="showAudioRecorderButton"
-        v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_AUDIORECORDER_ICON')"
-        :icon="!isRecordingAudio ? 'i-ph-microphone' : 'i-ph-microphone-slash'"
-        slate
-        faded
-        sm
-        @click="toggleAudioRecorder"
-      />
-      <NextButton
         v-if="showEditorToggle"
         v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_FORMAT_ICON')"
         icon="i-ph-quotes"
@@ -305,25 +221,6 @@ export default {
         faded
         sm
         @click="$emit('toggleEditor')"
-      />
-      <NextButton
-        v-if="showAudioPlayStopButton"
-        v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_FORMAT_ICON')"
-        :icon="audioRecorderPlayStopIcon"
-        slate
-        faded
-        sm
-        :label="recordingAudioDurationText"
-        @click="toggleAudioRecorderPlayPause"
-      />
-      <NextButton
-        v-if="showMessageSignatureButton"
-        v-tooltip.top-end="signatureToggleTooltip"
-        icon="i-ph-signature"
-        slate
-        faded
-        sm
-        @click="toggleMessageSignature"
       />
       <NextButton
         v-if="hasWhatsappTemplates"

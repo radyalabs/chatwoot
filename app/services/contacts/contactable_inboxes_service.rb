@@ -14,6 +14,8 @@ class Contacts::ContactableInboxesService
       twilio_contactable_inbox(inbox)
     when 'Channel::Whatsapp'
       whatsapp_contactable_inbox(inbox)
+    when 'Channel::WhatsappUnofficial'
+      whatsapp_unofficial_contactable_inbox(inbox)
     when 'Channel::Sms'
       sms_contactable_inbox(inbox)
     when 'Channel::Email'
@@ -69,5 +71,11 @@ class Contacts::ContactableInboxesService
     when 'whatsapp'
       { source_id: "whatsapp:#{@contact.phone_number}", inbox: inbox }
     end
+  end
+
+  def whatsapp_unofficial_contactable_inbox(inbox)
+    return unless @contact.phone_number
+
+    { source_id: @contact.phone_number.delete('+'), inbox: inbox }
   end
 end

@@ -58,11 +58,9 @@ export default {
        agentDailyDataFromStore: 'getAgentDailyData',
        agentPerformanceFromStore: 'getAgentPerformanceData',
     }),
-    // Get user tier from route meta (passed from routes.js)
     userTier() {
       return this.$route.meta?.userTier || 'free';
     },
-    // Get available export options based on tier
     availableExportOptions() {
       if (this.userTier === 'pertamax_turbo') {
         return [
@@ -77,7 +75,6 @@ export default {
       }
       return [];
     },
-
     isDateRangeSelected() {
       return (
         this.selectedDateRange.id === DATE_RANGE_OPTIONS.CUSTOM_DATE_RANGE.id
@@ -101,7 +98,6 @@ export default {
       
       const data = this.handoverDataFromStore || defaultData;
       
-      // Map format reasons dari backend ke format UI
       if (data.reasons && data.reasons.labels) {
         data.reasons.details = data.reasons.labels.map((label, idx) => ({
            label: label,
@@ -118,89 +114,11 @@ export default {
        }
        return { labels: [], datasets: [] };
     },
-    firstResponseTimeChartData() {
-      // Generate dynamic line chart data for first response time for any number of agents
-      const endDate = this.to ? new Date(this.to * 1000) : new Date();
-      const startDate = this.from ? new Date(this.from * 1000) : new Date(Date.now() - 6 * 24 * 60 * 60 * 1000);
-      const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-      const numDays = Math.max(1, Math.min(daysDiff, 30));
-      
-      // Generate timestamps
-      const timestamps = [];
-      for (let i = numDays - 1; i >= 0; i--) {
-        const date = new Date(endDate);
-        date.setDate(date.getDate() - i);
-        timestamps.push(Math.floor(date.getTime() / 1000));
-      }
-      
-      // Generate data for selected agents (or default agents if none selected)
-      const agentsToShow = this.selectedAgents.length > 0 ? this.selectedAgents : [
-        { id: 1, name: 'Agent 1' },
-        { id: 2, name: 'Agent 2' },
-        { id: 3, name: 'Agent 3' }
-      ];
-      
-      // Generate datasets for all agents
-      const datasets = agentsToShow.map((agent, index) => ({
-        label: `AGENT_REPORTS.METRICS.FIRST_RESPONSE_TIME.NAME_${agent.name?.toUpperCase().replace(/\s+/g, '_') || `AGENT_${agent.id}`}`,
-        data: timestamps.map(timestamp => ({
-          value: Math.floor(Math.random() * 120) + 30, // 30-150 seconds
-          timestamp: timestamp,
-        })),
-      }));
-      
-      return datasets;
-    },
-    resolutionTimeChartData() {
-      // Generate dynamic line chart data for resolution time for any number of agents
-      const endDate = this.to ? new Date(this.to * 1000) : new Date();
-      const startDate = this.from ? new Date(this.from * 1000) : new Date(Date.now() - 6 * 24 * 60 * 60 * 1000);
-      const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-      const numDays = Math.max(1, Math.min(daysDiff, 30));
-      
-      // Generate timestamps
-      const timestamps = [];
-      for (let i = numDays - 1; i >= 0; i--) {
-        const date = new Date(endDate);
-        date.setDate(date.getDate() - i);
-        timestamps.push(Math.floor(date.getTime() / 1000));
-      }
-      
-      // Generate data for selected agents (or default agents if none selected)
-      const agentsToShow = this.selectedAgents.length > 0 ? this.selectedAgents : [
-        { id: 1, name: 'Agent 1' },
-        { id: 2, name: 'Agent 2' },
-        { id: 3, name: 'Agent 3' }
-      ];
-      
-      // Generate datasets for all agents
-      const datasets = agentsToShow.map((agent, index) => ({
-        label: `AGENT_REPORTS.METRICS.RESOLUTION_TIME.NAME_${agent.name?.toUpperCase().replace(/\s+/g, '_') || `AGENT_${agent.id}`}`,
-        data: timestamps.map(timestamp => ({
-          value: Math.floor(Math.random() * 300) + 60, // 60-360 minutes
-          timestamp: timestamp,
-        })),
-      }));
-      
-      return datasets;
-    },
-    // Agent performance table data
     agentTableData() {
       return this.agentPerformanceFromStore || [];
     },
-    
     agentMetricsData() {
       return this.agentPerformanceFromStore || [];
-    },
-    agentPerformanceDetails() {
-      // Generate performance details for each agent
-      return this.agentMetricsData.map(agentMetric => {
-        const agent = this.agentTableData.find(a => a.id === agentMetric.id);
-        return {
-          ...agent,
-          ...agentMetric.metric,
-        };
-      });
     },
   },
   watch: {
@@ -221,69 +139,7 @@ export default {
       this.$store.dispatch('fetchAgentPerformanceMetrics', reportObj);
     },
     fetchMetrics(filters) {
-      if (!filters.to || !filters.from) {
-        return;
-      }
-      
-      // TODO: Implement real API call for agent metrics
-      // 
-      // const agentIds = filters.selectedAgents.map(agent => agent.id);
-      // if (agentIds.length === 0) {
-      //   // If no agents selected, fetch metrics for all agents
-      //   agentIds = null; // or fetch all agents data
-      // }
-      //
-      // ReportsAPI.getAgentMetrics({
-      //   ...filters,
-      //   agentIds: agentIds
-      // }).then(response => {
-      //   this.metrics = {
-      //     totalConversations: response.data.total_conversations,
-      //     avgFirstResponseTime: response.data.avg_first_response_time,
-      //     avgResolutionTime: response.data.avg_resolution_time,
-      //   };
-      // }).catch(error => {
-      //   console.error('Failed to fetch agent metrics:', error);
-      //   useAlert(this.$t('REPORT.DATA_FETCHING_FAILED'));
-      // });
-      
-      // Dummy data for now
-      const numAgents = this.selectedAgents.length || 3;
-      this.metrics = {
-        totalConversations: Math.floor(Math.random() * 500 * numAgents) + 100,
-        avgFirstResponseTime: Math.floor(Math.random() * 60) + 30,
-        avgResolutionTime: Math.floor(Math.random() * 180) + 60,
-      };
-      
-      console.log('Fetching metrics for agents:', this.selectedAgents);
-    },
-    fetchChartData() {
-      // TODO: Implement real API calls for agent-specific chart data
-      // For multiple agents, we need to fetch data for each selected agent
-      
-      // Example of how to fetch data for multiple agents:
-      // const agentIds = this.selectedAgents.map(agent => agent.id);
-      // 
-      // if (agentIds.length === 0) {
-      //   // If no agents selected, fetch data for all agents or default set
-      //   agentIds = [1, 2, 3]; // default agent IDs
-      // }
-      //
-      // agentIds.forEach(async agentId => {
-      //   Object.keys(this.reportKeys).forEach(async key => {
-      //     try {
-      //       await this.$store.dispatch('fetchAgentReport', {
-      //         metric: this.reportKeys[key],
-      //         agentId: agentId,
-      //         ...this.getRequestPayload(),
-      //       });
-      //     } catch {
-      //       useAlert(this.$t('REPORT.DATA_FETCHING_FAILED'));
-      //     }
-      //   });
-      // });
-      
-      console.log('Fetching chart data for agents:', this.selectedAgents);
+      // Dummy implementation for metrics if needed
     },
     getRequestPayload() {
       const { from, to, groupBy, selectedAgents } = this;
@@ -341,9 +197,6 @@ export default {
         this.closeDropdown();
         return;
       }
-      
-      console.log(`Exporting data to ${format}`);
-      // TODO: Implement actual export functionality
       this.closeDropdown();
     },
     closeDropdownOnOutsideClick(event) {
@@ -355,6 +208,7 @@ export default {
     },
   },
   mounted() {
+    // Debug logging removed
     this.calculateDateRange();
     this.fetchAllData();
     window.addEventListener('click', this.closeDropdownOnOutsideClick);
@@ -369,13 +223,11 @@ export default {
   <div class="flex flex-col gap-4 pb-6">
     <ReportHeader :header-title="$t('AGENT_REPORTS.HEADER')" class="sticky">
       <div class="flex items-center gap-4">
-        <!-- Filters on the left -->
         <div class="flex-grow flex gap-4">
           <ReportsFiltersDateRange @on-range-change="onDateRangeChange" />
           <ReportsFiltersAgents @agents-filter-selection="onAgentsFilterSelection" />
         </div>
         
-        <!-- Export dropdown on the right -->
         <div v-if="false" class="relative inline-block text-left" ref="dropdownContainer">
           <button
             @click="toggleDropdown"
@@ -413,15 +265,10 @@ export default {
             </div>
           </div>
         </div>
-        <!-- <div v-else-if="userTier && userTier !== 'pertamax_turbo' && userTier !== 'pertamax'" 
-            class="text-sm text-gray-500 dark:text-gray-400">
-          {{ $t('OVERVIEW_REPORTS.UPGRADE_FOR_EXPORT') }}
-        </div> -->
       </div>
     </ReportHeader>
 
-    <!-- Handover Report Chart -->
-    <div v-if="userTier === 'pertalite' || userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="flex flex-col gap-6 w-full">
+    <div class="flex flex-col gap-6 w-full">
       
       <MetricCardFull class="w-full">
         <template #header>
@@ -478,7 +325,7 @@ export default {
         </div>
       </MetricCardFull>
 
-      <MetricCardFull class="w-full">
+      <MetricCardFull v-if="['pertamax', 'pertamax_turbo', 'custom'].includes(userTier)" class="w-full">
         <template #header>
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
             {{ $t('AGENT_REPORTS.HANDOVER_REPORT.DISTRIBUTION') }}
@@ -520,7 +367,6 @@ export default {
       </MetricCardFull>
     </div>
 
-    <!-- Conversations Handled Bar Chart -->
     <div class="flex flex-row flex-wrap max-w-full">
       <MetricCardFull class="w-full max-w-full">
         <div class="p-4">
@@ -569,60 +415,7 @@ export default {
       </MetricCardFull>
     </div>
 
-    <!-- First Response Time Line Chart -->
-    <!-- <div class="flex flex-row flex-wrap max-w-full">
-      <MetricCardFull class="w-full max-w-full">
-        <div class="p-4">
-          <div class="rounded-lg p-6">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                {{ $t('AGENT_REPORTS.METRICS.FIRST_RESPONSE_TIME.NAME') }}
-              </h3>
-            </div>
-            <div class="h-80">
-              <LineChart2
-                v-if="firstResponseTimeChartData.length > 0"
-                :datasets="firstResponseTimeChartData"
-              />
-              <div v-else class="flex items-center justify-center h-full">
-                <span class="text-sm text-gray-600 dark:text-gray-400">
-                  {{ $t('REPORT.NO_ENOUGH_DATA') }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </MetricCardFull>
-    </div> -->
-
-    <!-- Average Resolution Time Line Chart -->
-    <!-- <div v-if="userTier === 'pertalite' || userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="flex flex-row flex-wrap max-w-full">
-      <MetricCardFull class="w-full max-w-full">
-        <div class="p-4">
-          <div class="rounded-lg p-6">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                {{ $t('AGENT_REPORTS.METRICS.RESOLUTION_TIME.NAME') }}
-              </h3>
-            </div>
-            <div class="h-80">
-              <LineChart2
-                v-if="resolutionTimeChartData.length > 0"
-                :datasets="resolutionTimeChartData"
-              />
-              <div v-else class="flex items-center justify-center h-full">
-                <span class="text-sm text-gray-600 dark:text-gray-400">
-                  {{ $t('REPORT.NO_ENOUGH_DATA') }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </MetricCardFull>
-    </div> -->
-
-    <!-- Agent Performance Table -->
-    <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="flex flex-row flex-wrap max-w-full">
+    <div class="flex flex-row flex-wrap max-w-full">
       <MetricCard :header="$t('AGENT_REPORTS.AGENT_PERFORMANCE_TABLE.HEADER')">
         <AgentTable
           :agents="agentTableData"

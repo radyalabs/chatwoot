@@ -1,5 +1,6 @@
 {
   "REPORT": {
+    "TITLE": "Analisis",
     "HEADER": "Percakapan",
     "LOADING_CHART": "Memuat data grafik...",
     "NO_ENOUGH_DATA": "Kami belum menerima cukup data untuk membuat laporan, Silakan coba lagi nanti.",

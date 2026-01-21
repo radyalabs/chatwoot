@@ -11,7 +11,19 @@ class Api::V1::Accounts::UploadController < Api::V1::Accounts::BaseController
     render_success(result) if result.is_a?(ActiveStorage::Blob)
   end
 
+  def destroy
+    blob = find_blob
+    return render_error('Attachment not found', :not_found) unless blob
+
+    blob.purge
+    render json: { message: 'Attachment deleted' }, status: :ok
+  end
+
   private
+
+  def find_blob
+    ActiveStorage::Blob.find_by(key: params[:blob_key]) || ActiveStorage::Blob.find_by(id: params[:blob_id])
+  end
 
   def create_from_file
     attachment = params[:attachment]

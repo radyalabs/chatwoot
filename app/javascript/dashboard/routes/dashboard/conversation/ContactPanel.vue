@@ -86,6 +86,10 @@ const onDragEnd = () => {
 
 onMounted(() => {
   conversationSidebarItems.value = conversationSidebarItemsOrder.value;
+  const hiddenItems = ['conversation_info', 'contact_attributes', 'macros'];
+  conversationSidebarItems.value = conversationSidebarItemsOrder.value.filter(
+    item => !hiddenItems.includes(item.name)
+  );
   getContactDetails();
   store.dispatch('attributes/get', 0);
 });

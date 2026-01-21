@@ -48,8 +48,12 @@ class Api::V2::Accounts::ReportsController < Api::V1::Accounts::BaseController
 
   def conversations
     return head :unprocessable_entity if params[:type].blank?
+    data = {}
 
-    render json: conversation_metrics
+    data[:open] = Current.account.conversations.where(status: 'open').count
+    data[:unassigned] = Current.account.conversations.where(status: 'open', assignee_id: nil).count
+
+    render json: data
   end
 
   def bot_metrics
@@ -63,9 +67,218 @@ class Api::V2::Accounts::ReportsController < Api::V1::Accounts::BaseController
   end
 
   def credit_usage
+    inbox_ids = Current.account.inboxes.pluck(:id)
+
+    bot_agent_id = AgentBotInbox.where(inbox_id: inbox_ids).pluck(:ai_agent_id).first
+    
+    ai_count = 0
+    if bot_agent_id
+      ai_count = Current.account.conversations.where(status: 'resolved', assignee_id: bot_agent_id).count
+    end
+
     render json: {
-      credit_usage: rand(1..300)
+      ai_responses: ai_count 
     }
+  end
+
+  def funnel_metrics
+    range = if params[:since].present? && params[:until].present?
+              Time.at(params[:since].to_i)..Time.at(params[:until].to_i)
+            else
+              7.days.ago..Time.current
+            end
+
+    conversations = Current.account.conversations.where(created_at: range)
+    messages = Current.account.messages.where(created_at: range)
+
+    high_intent_keywords = [
+      'beli', 'order', 'pesan', 'bayar', 'transfer', 'tf', 'trf', 'rek', 'rekening', 
+      'norek', 'payment', 'lunas', 'qris', 'cod', 'invoice', 'nota', 'checkout',
+      
+      'harga', 'berapa', 'brp', 'biaya', 'price', 'pricelist', 'diskon', 'promo',
+      
+      'stok', 'ready', 'ada gak', 'tersedia', 'warna', 'ukuran', 'size', 'spek', 
+      'garansi', 'ori', 'original', 'realpic',
+      
+      'ongkir', 'kirim', 'sampai', 'resi', 'kurir', 'alamat', 'lokasi'
+    ]
+
+    sql_query = high_intent_keywords.map { |w| "%#{w}%" }
+
+    total_starter = conversations.count
+
+    engage_user = conversations.joins(:messages)
+                               .where(messages: { private: false }) 
+                               .group('conversations.id')
+                               .having('COUNT(messages.id) >= ?', 10)
+                               .count
+                               .size
+
+    high_intent_conversation_ids = messages.where(sender_type: 'Contact')
+                                           .where("content ILIKE ANY (array[?])", sql_query)
+                                           .reorder(nil)
+                                           .select(:conversation_id)
+                                           .distinct
+                                           
+    high_intent = conversations.where(id: high_intent_conversation_ids).count
+
+    resolved_conversations = conversations.where(status: :resolved)
+    
+    inbox_ids = Current.account.inboxes.pluck(:id)
+    bot_agent_id = AgentBotInbox.where(inbox_id: inbox_ids).pluck(:ai_agent_id).first
+    
+    if bot_agent_id
+      assisted_bot = resolved_conversations.where(assignee_id: bot_agent_id).count
+      assisted_cs  = resolved_conversations.where.not(assignee_id: bot_agent_id).count
+    else
+      assisted_bot = 0
+      assisted_cs  = resolved_conversations.count
+    end
+
+    render json: {
+      total_starter: total_starter,
+      engage_user: engage_user,
+      high_intent: high_intent,
+      assisted_bot: assisted_bot,
+      assisted_cs: assisted_cs,
+    }
+  end
+
+  def trend_metrics
+    start_date = params[:since] ? Time.at(params[:since].to_i).to_date : 6.days.ago.to_date
+    end_date = params[:until] ? Time.at(params[:until].to_i).to_date : Date.today
+
+    inbox_ids = Current.account.inboxes.pluck(:id)
+    bot_agent_id = AgentBotInbox.where(inbox_id: inbox_ids).pluck(:ai_agent_id).first
+
+    data_points = []
+
+    (start_date..end_date).each do |date|
+      daily_convos = Current.account.conversations.where(created_at: date.beginning_of_day..date.end_of_day)
+      
+      total = daily_convos.count
+      bot   = bot_agent_id ? daily_convos.where(assignee_id: bot_agent_id).count : 0
+      agent = total - bot
+
+      data_points << {
+        timestamp: date.to_time.to_i,
+        total: total,
+        bot: bot,
+        agent: agent
+      }
+    end
+
+    render json: data_points
+  end
+
+  def conversation_traffic
+    @report_data = generate_conversations_heatmap_report
+    timezone_offset = (params[:timezone_offset] || 0).to_f
+    @timezone = ActiveSupport::TimeZone[timezone_offset]
+
+    generate_csv('conversation_traffic_reports', 'api/v2/accounts/reports/conversation_traffic')
+  end
+
+  def handover_metrics
+    range = Time.at(params[:since].to_i)..Time.at(params[:until].to_i)
+    
+    inbox_ids = Current.account.inboxes.pluck(:id)
+    bot_agent_id = AgentBotInbox.where(inbox_id: inbox_ids).pluck(:ai_agent_id).first
+    
+    total_handovers = 0
+    handover_rate = 0
+    top_agents = []
+    
+    if bot_agent_id
+      bot_conv_ids = Current.account.messages.where(created_at: range, sender_id: bot_agent_id)
+                                             .reorder(nil) 
+                                             .select(:conversation_id).distinct
+      
+      total_bot_chats = bot_conv_ids.count
+      
+      handover_convs = Current.account.conversations.where(id: bot_conv_ids)
+                                                  .where.not(assignee_id: [nil, bot_agent_id])
+      
+      total_handovers = handover_convs.count
+      
+      handover_rate = total_bot_chats > 0 ? ((total_handovers.to_f / total_bot_chats) * 100).round(0) : 0
+      
+      top_agents = handover_convs.group(:assignee_id).count.map do |agent_id, count|
+        user = User.find_by(id: agent_id)
+        next unless user
+        { 
+          name: user.name, 
+          count: count, 
+          percentage: ((count.to_f / total_handovers) * 100).round(0) 
+        }
+      end.compact.sort_by { |x| -x[:count] }.first(3)
+    end
+
+    render json: {
+      totalHandover: total_handovers,
+      handoverRate: handover_rate,
+      byAgent: top_agents,
+      reasons: {
+        labels: ['Klien meminta CS', 'Bot tidak mengerti', 'Isu Teknis'],
+        data: [60, 30, 10], 
+        colors: ['#389947', '#86EFAC', '#D1FAE5']
+      }
+    }
+  end
+
+  def agents_daily_metrics
+     range = Time.at(params[:since].to_i)..Time.at(params[:until].to_i)
+     start_date = range.begin.to_date
+     end_date = range.end.to_date
+     
+     labels = (start_date..end_date).map { |d| d.strftime("%d/%m") }
+     datasets = []
+     
+     top_agent_ids = Current.account.conversations.where(created_at: range)
+                                    .group(:assignee_id).order('count_all DESC')
+                                    .limit(5).count.keys.compact
+     
+     User.where(id: top_agent_ids).each do |agent|
+       data = []
+       (start_date..end_date).each do |date|
+         cnt = Current.account.conversations.where(assignee_id: agent.id, 
+                                                 created_at: date.beginning_of_day..date.end_of_day).count
+         data << cnt
+       end
+       datasets << { label: agent.name, data: data }
+     end
+     
+     render json: { labels: labels, datasets: datasets }
+  end
+
+  def agent_performance_metrics
+    range = Time.at(params[:since].to_i)..Time.at(params[:until].to_i)
+    
+    agent_ids = Current.account.conversations.where(created_at: range)
+                               .where.not(assignee_id: nil)
+                               .select(:assignee_id).distinct
+    agents = User.where(id: agent_ids)
+    
+    data = agents.map do |agent|
+      convos = Current.account.conversations.where(assignee_id: agent.id, created_at: range)
+      total = convos.count
+      resolved = convos.where(status: :resolved).count
+      
+      {
+        id: agent.id,
+        name: agent.name,
+        email: agent.email,
+        thumbnail: agent.avatar_url,
+        metric: {
+          conversations_count: total,
+          resolution_rate: total > 0 ? ((resolved.to_f / total) * 100).round(1) : 0,
+          work_distribution: 0,
+          avg_first_response_time: "0m",
+          avg_resolution_time: "0m" 
+        }
+      }
+    end
+    render json: data
   end
 
   private

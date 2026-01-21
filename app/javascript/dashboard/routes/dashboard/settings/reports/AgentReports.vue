@@ -1,5 +1,5 @@
 <script>
-import { mapState } from 'vuex';
+import { mapState, mapGetters } from 'vuex';
 import { useAlert, useTrack } from 'dashboard/composables';
 import ReportFilterSelector from './components/FilterSelector.vue';
 import ReportHeader from './components/ReportHeader.vue';
@@ -15,6 +15,7 @@ import { REPORTS_EVENTS } from '../../../../helper/AnalyticsHelper/events';
 import ReportsAPI from 'dashboard/api/reports';
 import { getUnixStartOfDay, getUnixEndOfDay } from 'helpers/DateHelper';
 import subDays from 'date-fns/subDays';
+import DonutChart from '../../../../../shared/components/charts/DonutChart.vue';
 
 export default {
   name: 'AgentReports',
@@ -23,6 +24,7 @@ export default {
     ReportFilterSelector,
     LineChart2,
     BarChart,
+    DonutChart,
     MetricCard,
     MetricCardFull,
     AgentTable,
@@ -51,11 +53,14 @@ export default {
     };
   },
   computed: {
-    // Get user tier from route meta (passed from routes.js)
+    ...mapGetters({
+       handoverDataFromStore: 'getHandoverData',
+       agentDailyDataFromStore: 'getAgentDailyData',
+       agentPerformanceFromStore: 'getAgentPerformanceData',
+    }),
     userTier() {
       return this.$route.meta?.userTier || 'free';
     },
-    // Get available export options based on tier
     availableExportOptions() {
       if (this.userTier === 'pertamax_turbo') {
         return [
@@ -70,7 +75,6 @@ export default {
       }
       return [];
     },
-
     isDateRangeSelected() {
       return (
         this.selectedDateRange.id === DATE_RANGE_OPTIONS.CUSTOM_DATE_RANGE.id
@@ -84,187 +88,37 @@ export default {
         groupBy: this.groupBy?.period,
       };
     },
-    conversationsBarChartData() {
-      // Generate dummy data for demonstration - replace with real data from store
-      const labels = [];
-      const datasets = [];
-      
-      // Use filter dates if available, otherwise default to last 7 days
-      const endDate = this.to ? new Date(this.to * 1000) : new Date();
-      const startDate = this.from ? new Date(this.from * 1000) : new Date(Date.now() - 6 * 24 * 60 * 60 * 1000);
-      
-      // Calculate number of days between start and end date
-      const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-      const numDays = Math.max(1, Math.min(daysDiff, 30)); // Limit to 30 days max
-      
-      // Generate date labels
-      for (let i = numDays - 1; i >= 0; i--) {
-        const date = new Date(endDate);
-        date.setDate(date.getDate() - i);
-        // Format date for display (MM/DD)
-        const label = `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
-        labels.push(label);
-      }
-      
-      // Generate data for each selected agent (or all agents if none selected)
-      const agentsToShow = this.selectedAgents.length > 0 ? this.selectedAgents : [
-        { id: 1, name: 'Agent 1' },
-        { id: 2, name: 'Agent 2' },
-        { id: 3, name: 'Agent 3' }
-      ];
-      
-      // Color palette for different agents
-      const colors = [
-        '#3B82F6', // Blue
-        '#10B981', // Green
-        '#F59E0B', // Amber
-        '#EF4444', // Red
-        '#8B5CF6', // Purple
-        '#06B6D4', // Cyan
-        '#84CC16', // Lime
-        '#F97316', // Orange
-      ];
-      
-      agentsToShow.forEach((agent, agentIndex) => {
-        const conversationData = [];
-        
-        // Generate dummy data for each date
-        for (let i = 0; i < numDays; i++) {
-          const conversations = Math.floor(Math.random() * 50) + 10; // 10-60 conversations per agent per day
-          conversationData.push(conversations);
-        }
-        
-        datasets.push({
-          label: agent.name || `Agent ${agent.id}`,
-          data: conversationData,
-          backgroundColor: colors[agentIndex % colors.length],
-          borderColor: colors[agentIndex % colors.length],
-          borderWidth: 1,
-        });
-      });
-      
-      return {
-        labels: labels,
-        datasets: datasets,
+    handoverData() {
+      const defaultData = {
+        totalHandover: 0,
+        handoverRate: 0,
+        byAgent: [],
+        reasons: { labels: [], data: [], colors: [], details: [] }
       };
-    },
-    firstResponseTimeChartData() {
-      // Generate dynamic line chart data for first response time for any number of agents
-      const endDate = this.to ? new Date(this.to * 1000) : new Date();
-      const startDate = this.from ? new Date(this.from * 1000) : new Date(Date.now() - 6 * 24 * 60 * 60 * 1000);
-      const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-      const numDays = Math.max(1, Math.min(daysDiff, 30));
       
-      // Generate timestamps
-      const timestamps = [];
-      for (let i = numDays - 1; i >= 0; i--) {
-        const date = new Date(endDate);
-        date.setDate(date.getDate() - i);
-        timestamps.push(Math.floor(date.getTime() / 1000));
+      const data = this.handoverDataFromStore || defaultData;
+      
+      if (data.reasons && data.reasons.labels) {
+        data.reasons.details = data.reasons.labels.map((label, idx) => ({
+           label: label,
+           value: `${data.reasons.data[idx]}%`,
+           colorClass: idx === 0 ? 'bg-[#389947]' : idx === 1 ? 'bg-[#86EFAC]' : 'bg-[#D1FAE5]'
+        }));
       }
       
-      // Generate data for selected agents (or default agents if none selected)
-      const agentsToShow = this.selectedAgents.length > 0 ? this.selectedAgents : [
-        { id: 1, name: 'Agent 1' },
-        { id: 2, name: 'Agent 2' },
-        { id: 3, name: 'Agent 3' }
-      ];
-      
-      // Generate datasets for all agents
-      const datasets = agentsToShow.map((agent, index) => ({
-        label: `AGENT_REPORTS.METRICS.FIRST_RESPONSE_TIME.NAME_${agent.name?.toUpperCase().replace(/\s+/g, '_') || `AGENT_${agent.id}`}`,
-        data: timestamps.map(timestamp => ({
-          value: Math.floor(Math.random() * 120) + 30, // 30-150 seconds
-          timestamp: timestamp,
-        })),
-      }));
-      
-      return datasets;
+      return data;
     },
-    resolutionTimeChartData() {
-      // Generate dynamic line chart data for resolution time for any number of agents
-      const endDate = this.to ? new Date(this.to * 1000) : new Date();
-      const startDate = this.from ? new Date(this.from * 1000) : new Date(Date.now() - 6 * 24 * 60 * 60 * 1000);
-      const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-      const numDays = Math.max(1, Math.min(daysDiff, 30));
-      
-      // Generate timestamps
-      const timestamps = [];
-      for (let i = numDays - 1; i >= 0; i--) {
-        const date = new Date(endDate);
-        date.setDate(date.getDate() - i);
-        timestamps.push(Math.floor(date.getTime() / 1000));
-      }
-      
-      // Generate data for selected agents (or default agents if none selected)
-      const agentsToShow = this.selectedAgents.length > 0 ? this.selectedAgents : [
-        { id: 1, name: 'Agent 1' },
-        { id: 2, name: 'Agent 2' },
-        { id: 3, name: 'Agent 3' }
-      ];
-      
-      // Generate datasets for all agents
-      const datasets = agentsToShow.map((agent, index) => ({
-        label: `AGENT_REPORTS.METRICS.RESOLUTION_TIME.NAME_${agent.name?.toUpperCase().replace(/\s+/g, '_') || `AGENT_${agent.id}`}`,
-        data: timestamps.map(timestamp => ({
-          value: Math.floor(Math.random() * 300) + 60, // 60-360 minutes
-          timestamp: timestamp,
-        })),
-      }));
-      
-      return datasets;
+    conversationsBarChartData() {
+       if (this.agentDailyDataFromStore) {
+         return this.agentDailyDataFromStore;
+       }
+       return { labels: [], datasets: [] };
     },
-    // Agent performance table data
     agentTableData() {
-      const agentsToShow = this.selectedAgents.length > 0 ? this.selectedAgents : [
-        { id: 1, name: 'Agent 1', email: 'agent1@company.com' },
-        { id: 2, name: 'Agent 2', email: 'agent2@company.com' },
-        { id: 3, name: 'Agent 3', email: 'agent3@company.com' }
-      ];
-      
-      return agentsToShow;
+      return this.agentPerformanceFromStore || [];
     },
     agentMetricsData() {
-      // Generate dummy metrics for each agent
-      const agentsToShow = this.selectedAgents.length > 0 ? this.selectedAgents : [
-        { id: 1, name: 'Agent 1' },
-        { id: 2, name: 'Agent 2' },
-        { id: 3, name: 'Agent 3' }
-      ];
-      
-      let totalConversationsAll = 0;
-      const agentConversations = agentsToShow.map(() => {
-        const conversations = Math.floor(Math.random() * 200) + 50; // 50-250 conversations
-        totalConversationsAll += conversations;
-        return conversations;
-      });
-      
-      return agentsToShow.map((agent, index) => {
-        const conversations = agentConversations[index];
-        const workDistribution = totalConversationsAll > 0 ? (conversations / totalConversationsAll * 100).toFixed(1) : 0;
-        
-        return {
-          id: agent.id,
-          metric: {
-            avg_csat: (Math.random() * 2 + 3).toFixed(1), // 3.0-5.0 rating
-            conversations_count: conversations,
-            work_distribution: workDistribution,
-            resolution_rate: (Math.random() * 20 + 75).toFixed(1), // 75-95% resolution rate
-            avg_first_response_time: Math.floor(Math.random() * 60) + 15, // 15-75 minutes
-            trend: ['improving', 'stable', 'declining'][Math.floor(Math.random() * 3)]
-          }
-        };
-      });
-    },
-    agentPerformanceDetails() {
-      // Generate performance details for each agent
-      return this.agentMetricsData.map(agentMetric => {
-        const agent = this.agentTableData.find(a => a.id === agentMetric.id);
-        return {
-          ...agent,
-          ...agentMetric.metric,
-        };
-      });
+      return this.agentPerformanceFromStore || [];
     },
   },
   watch: {
@@ -274,73 +128,18 @@ export default {
   },
   methods: {
     fetchAllData() {
-      this.fetchMetrics(this.requestPayload);
-      this.fetchChartData();
-    },
-    fetchMetrics(filters) {
-      if (!filters.to || !filters.from) {
-        return;
-      }
-      
-      // TODO: Implement real API call for agent metrics
-      // 
-      // const agentIds = filters.selectedAgents.map(agent => agent.id);
-      // if (agentIds.length === 0) {
-      //   // If no agents selected, fetch metrics for all agents
-      //   agentIds = null; // or fetch all agents data
-      // }
-      //
-      // ReportsAPI.getAgentMetrics({
-      //   ...filters,
-      //   agentIds: agentIds
-      // }).then(response => {
-      //   this.metrics = {
-      //     totalConversations: response.data.total_conversations,
-      //     avgFirstResponseTime: response.data.avg_first_response_time,
-      //     avgResolutionTime: response.data.avg_resolution_time,
-      //   };
-      // }).catch(error => {
-      //   console.error('Failed to fetch agent metrics:', error);
-      //   useAlert(this.$t('REPORT.DATA_FETCHING_FAILED'));
-      // });
-      
-      // Dummy data for now
-      const numAgents = this.selectedAgents.length || 3;
-      this.metrics = {
-        totalConversations: Math.floor(Math.random() * 500 * numAgents) + 100,
-        avgFirstResponseTime: Math.floor(Math.random() * 60) + 30,
-        avgResolutionTime: Math.floor(Math.random() * 180) + 60,
+      const reportObj = {
+        id: this.$route.params.accountId,
+        from: this.from,
+        to: this.to
       };
       
-      console.log('Fetching metrics for agents:', this.selectedAgents);
+      this.$store.dispatch('fetchHandoverMetrics', reportObj);
+      this.$store.dispatch('fetchAgentDailyMetrics', reportObj);
+      this.$store.dispatch('fetchAgentPerformanceMetrics', reportObj);
     },
-    fetchChartData() {
-      // TODO: Implement real API calls for agent-specific chart data
-      // For multiple agents, we need to fetch data for each selected agent
-      
-      // Example of how to fetch data for multiple agents:
-      // const agentIds = this.selectedAgents.map(agent => agent.id);
-      // 
-      // if (agentIds.length === 0) {
-      //   // If no agents selected, fetch data for all agents or default set
-      //   agentIds = [1, 2, 3]; // default agent IDs
-      // }
-      //
-      // agentIds.forEach(async agentId => {
-      //   Object.keys(this.reportKeys).forEach(async key => {
-      //     try {
-      //       await this.$store.dispatch('fetchAgentReport', {
-      //         metric: this.reportKeys[key],
-      //         agentId: agentId,
-      //         ...this.getRequestPayload(),
-      //       });
-      //     } catch {
-      //       useAlert(this.$t('REPORT.DATA_FETCHING_FAILED'));
-      //     }
-      //   });
-      // });
-      
-      console.log('Fetching chart data for agents:', this.selectedAgents);
+    fetchMetrics(filters) {
+      // Dummy implementation for metrics if needed
     },
     getRequestPayload() {
       const { from, to, groupBy, selectedAgents } = this;
@@ -398,9 +197,6 @@ export default {
         this.closeDropdown();
         return;
       }
-      
-      console.log(`Exporting data to ${format}`);
-      // TODO: Implement actual export functionality
       this.closeDropdown();
     },
     closeDropdownOnOutsideClick(event) {
@@ -412,6 +208,7 @@ export default {
     },
   },
   mounted() {
+    // Debug logging removed
     this.calculateDateRange();
     this.fetchAllData();
     window.addEventListener('click', this.closeDropdownOnOutsideClick);
@@ -426,14 +223,12 @@ export default {
   <div class="flex flex-col gap-4 pb-6">
     <ReportHeader :header-title="$t('AGENT_REPORTS.HEADER')" class="sticky">
       <div class="flex items-center gap-4">
-        <!-- Filters on the left -->
         <div class="flex-grow flex gap-4">
           <ReportsFiltersDateRange @on-range-change="onDateRangeChange" />
           <ReportsFiltersAgents @agents-filter-selection="onAgentsFilterSelection" />
         </div>
         
-        <!-- Export dropdown on the right -->
-        <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="relative inline-block text-left" ref="dropdownContainer">
+        <div v-if="false" class="relative inline-block text-left" ref="dropdownContainer">
           <button
             @click="toggleDropdown"
             class="inline-flex justify-center w-full rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 text-white hover:opacity-90 transition-opacity"
@@ -470,18 +265,112 @@ export default {
             </div>
           </div>
         </div>
-        <!-- <div v-else-if="userTier && userTier !== 'pertamax_turbo' && userTier !== 'pertamax'" 
-            class="text-sm text-gray-500 dark:text-gray-400">
-          {{ $t('OVERVIEW_REPORTS.UPGRADE_FOR_EXPORT') }}
-        </div> -->
       </div>
     </ReportHeader>
 
-    <!-- Conversations Handled Bar Chart -->
+    <div class="flex flex-col gap-6 w-full">
+      
+      <MetricCardFull class="w-full">
+        <template #header>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            {{ $t('AGENT_REPORTS.HANDOVER_REPORT.TITLE') }}
+          </h3>
+        </template>
+        
+        <div class="p-4 pt-0">
+          <div class="flex flex-col sm:flex-row gap-4 mb-8">
+            <div class="flex-1 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+              <span class="block text-sm font-medium text-gray-500 mb-1">{{ $t('AGENT_REPORTS.HANDOVER_REPORT.TOTAL') }}</span>
+              <div class="flex items-end gap-2">
+                <span class="text-2xl font-bold text-green-700 dark:text-green-500">
+                  {{ handoverData.totalHandover.toLocaleString() }}
+                </span>
+                <span class="text-xs text-gray-400 mb-1">chat</span>
+              </div>
+            </div>
+            
+            <div class="flex-1 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+              <span class="block text-sm font-medium text-gray-500 mb-1">{{ $t('AGENT_REPORTS.HANDOVER_REPORT.RATE') }}</span>
+              <div class="flex items-end gap-2">
+                <span class="text-2xl font-bold text-green-700 dark:text-green-500">
+                  {{ handoverData.handoverRate }}%
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-4 p-5 border border-gray-100 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">{{ $t('AGENT_REPORTS.HANDOVER_REPORT.TOP_AGENT') }}</h4>
+            <div 
+              v-for="(agent, idx) in handoverData.byAgent" 
+              :key="idx" 
+              class="flex items-center w-full"
+            >
+              <div class="w-12 text-sm font-semibold text-gray-600 dark:text-gray-300">
+                {{ agent.name }}
+              </div>
+              
+              <div class="flex-1 h-8 bg-gray-200 dark:bg-gray-700 rounded-r-lg rounded-bl-lg relative ml-2 overflow-hidden shadow-inner border border-gray-200 dark:border-gray-600">
+                <div 
+                  class="absolute top-0 left-0 h-full bg-green-600 dark:bg-green-500 flex items-center px-3 transition-all duration-500"
+                  :style="{ width: `${agent.percentage}%` }"
+                >
+                  <span class="text-xs font-bold text-white whitespace-nowrap drop-shadow-sm">
+                    {{ agent.count }} chat
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </MetricCardFull>
+
+      <MetricCardFull v-if="['pertamax', 'pertamax_turbo', 'custom'].includes(userTier)" class="w-full">
+        <template #header>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            {{ $t('AGENT_REPORTS.HANDOVER_REPORT.DISTRIBUTION') }}
+          </h3>
+        </template>
+        
+        <div class="p-4 pt-0 flex flex-col md:flex-row items-center justify-center gap-8 h-full">
+          <div class="h-56 w-56 relative flex-shrink-0">
+             <DonutChart
+                :data="handoverData.reasons.data"
+                :labels="handoverData.reasons.labels"
+                :colors="handoverData.reasons.colors"
+                :options="{
+                  cutout: '0%', 
+                  plugins: { legend: { display: false } },
+                  maintainAspectRatio: false
+                }"
+              />
+          </div>
+
+          <div class="w-full md:w-auto flex flex-col gap-3 flex-grow justify-center">
+            <div 
+              v-for="(item, i) in handoverData.reasons.details" 
+              :key="i"
+              class="flex items-start justify-between text-sm p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+            >
+              <div class="flex items-start gap-3">
+                <span :class="['w-4 h-4 rounded-md mt-0.5 flex-shrink-0 shadow-sm', item.colorClass]"></span>
+                <span class="text-gray-700 dark:text-gray-200 font-medium leading-tight">
+                  {{ item.label }}
+                </span>
+              </div>
+              <span class="font-bold text-gray-900 dark:text-white ml-4">
+                {{ item.value }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </MetricCardFull>
+    </div>
+
     <div class="flex flex-row flex-wrap max-w-full">
       <MetricCardFull class="w-full max-w-full">
         <div class="p-4">
-          <div class="rounded-lg p-6">
+          <div class="rounded-lg">
             <div class="flex justify-between items-center mb-4">
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ $t('AGENT_REPORTS.METRICS.CONVERSATIONS.NAME') }}
@@ -526,60 +415,7 @@ export default {
       </MetricCardFull>
     </div>
 
-    <!-- First Response Time Line Chart -->
     <div class="flex flex-row flex-wrap max-w-full">
-      <MetricCardFull class="w-full max-w-full">
-        <div class="p-4">
-          <div class="rounded-lg p-6">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                {{ $t('AGENT_REPORTS.METRICS.FIRST_RESPONSE_TIME.NAME') }}
-              </h3>
-            </div>
-            <div class="h-80">
-              <LineChart2
-                v-if="firstResponseTimeChartData.length > 0"
-                :datasets="firstResponseTimeChartData"
-              />
-              <div v-else class="flex items-center justify-center h-full">
-                <span class="text-sm text-gray-600 dark:text-gray-400">
-                  {{ $t('REPORT.NO_ENOUGH_DATA') }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </MetricCardFull>
-    </div>
-
-    <!-- Average Resolution Time Line Chart -->
-    <div v-if="userTier === 'pertalite' || userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="flex flex-row flex-wrap max-w-full">
-      <MetricCardFull class="w-full max-w-full">
-        <div class="p-4">
-          <div class="rounded-lg p-6">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                {{ $t('AGENT_REPORTS.METRICS.RESOLUTION_TIME.NAME') }}
-              </h3>
-            </div>
-            <div class="h-80">
-              <LineChart2
-                v-if="resolutionTimeChartData.length > 0"
-                :datasets="resolutionTimeChartData"
-              />
-              <div v-else class="flex items-center justify-center h-full">
-                <span class="text-sm text-gray-600 dark:text-gray-400">
-                  {{ $t('REPORT.NO_ENOUGH_DATA') }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </MetricCardFull>
-    </div>
-
-    <!-- Agent Performance Table -->
-    <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo'" class="flex flex-row flex-wrap max-w-full">
       <MetricCard :header="$t('AGENT_REPORTS.AGENT_PERFORMANCE_TABLE.HEADER')">
         <AgentTable
           :agents="agentTableData"

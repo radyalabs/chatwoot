@@ -1,5 +1,5 @@
 <script>
-import { ref } from 'vue';
+import { ref, defineAsyncComponent } from 'vue';
 // constants & helpers
 import { ALLOWED_FILE_TYPES } from 'shared/constants/messages';
 import { ExceptionWithMessage } from 'shared/helpers/CustomErrors';
@@ -10,6 +10,7 @@ import { mapGetters } from 'vuex';
 
 // composables
 import { useUISettings } from 'dashboard/composables/useUISettings';
+import { vOnClickOutside } from '@vueuse/components';
 import { useAlert } from 'dashboard/composables';
 import { required, requiredIf } from '@vuelidate/validators';
 import { useVuelidate } from '@vuelidate/core';
@@ -22,12 +23,15 @@ import inboxMixin from 'shared/mixins/inboxMixin';
 import AttachmentPreview from 'dashboard/components/widgets/AttachmentsPreview.vue';
 import CannedResponse from 'dashboard/components/widgets/conversation/CannedResponse.vue';
 import InboxDropdownItem from 'dashboard/components/widgets/InboxDropdownItem.vue';
-import MessageSignatureMissingAlert from 'dashboard/components/widgets/conversation/MessageSignatureMissingAlert.vue';
 import ReplyEmailHead from 'dashboard/components/widgets/conversation/ReplyEmailHead.vue';
 import WootMessageEditor from 'dashboard/components/widgets/WootWriter/Editor.vue';
 import Thumbnail from 'dashboard/components/widgets/Thumbnail.vue';
 import FileUpload from 'vue-upload-component';
 import WhatsappTemplates from './WhatsappTemplates.vue';
+
+const EmojiInput = defineAsyncComponent(
+  () => import('shared/components/emoji/EmojiInput.vue')
+);
 
 import {
   appendSignature,
@@ -44,7 +48,10 @@ export default {
     InboxDropdownItem,
     FileUpload,
     AttachmentPreview,
-    MessageSignatureMissingAlert,
+    EmojiInput,
+  },
+  directives: {
+    OnClickOutside: vOnClickOutside,
   },
   mixins: [inboxMixin, fileUploadMixin],
   props: {
@@ -83,6 +90,7 @@ export default {
       targetInbox: {},
       whatsappTemplateSelected: false,
       attachedFiles: [],
+      showEmojiPicker: false,
     };
   },
   validations() {
@@ -167,10 +175,18 @@ export default {
     },
     inboxes() {
       const inboxList = this.contact.contact_inboxes || [];
-      return inboxList.map(inbox => ({
-        ...inbox.inbox,
-        sourceId: inbox.source_id,
-      }));
+      return inboxList
+        .filter(inbox => {
+          // Filter out non-connected WhatsApp unofficial inboxes
+          if (inbox.inbox?.channel_type === INBOX_TYPES.WHATSAPP_UNOFFICIAL) {
+            return inbox.inbox?.whatsapp_status === 'connected';
+          }
+          return true;
+        })
+        .map(inbox => ({
+          ...inbox.inbox,
+          sourceId: inbox.source_id,
+        }));
     },
     isAnEmailInbox() {
       return (
@@ -331,6 +347,9 @@ export default {
       this.setSignatureFlagForInbox(this.channelType, !this.sendWithSignature);
       this.setSignature();
     },
+    onClickInsertEmoji(emoji) {
+      this.message += emoji;
+    },
   },
 };
 </script>
@@ -461,25 +480,7 @@ export default {
                 :placeholder="$t('NEW_CONVERSATION.FORM.MESSAGE.PLACEHOLDER')"
                 @toggle-canned-menu="toggleCannedMenu"
                 @blur="v$.message.$touch"
-              >
-                <template #footer>
-                  <MessageSignatureMissingAlert
-                    v-if="isSignatureEnabledForInbox && !messageSignature"
-                    class="!mx-0 mb-1"
-                  />
-                  <div v-if="isAnEmailInbox" class="mt-px mb-3">
-                    <woot-button
-                      v-tooltip.top-end="signatureToggleTooltip"
-                      icon="signature"
-                      color-scheme="secondary"
-                      variant="smooth"
-                      size="small"
-                      :title="signatureToggleTooltip"
-                      @click.prevent="toggleMessageSignature"
-                    />
-                  </div>
-                </template>
-              </WootMessageEditor>
+              />
               <span v-if="v$.message.$error" class="editor-warning__message">
                 {{ $t('NEW_CONVERSATION.FORM.MESSAGE.ERROR') }}
               </span>
@@ -491,19 +492,75 @@ export default {
             @on-select-template="toggleWaTemplate"
             @on-send="onSendWhatsAppReply"
           />
-          <label v-else :class="{ error: v$.message.$error }">
-            {{ $t('NEW_CONVERSATION.FORM.MESSAGE.LABEL') }}
-            <textarea
-              v-model="message"
-              class="min-h-[5rem]"
-              type="text"
-              :placeholder="$t('NEW_CONVERSATION.FORM.MESSAGE.PLACEHOLDER')"
-              @input="v$.message.$touch"
-            />
-            <span v-if="v$.message.$error" class="message">
-              {{ $t('NEW_CONVERSATION.FORM.MESSAGE.ERROR') }}
-            </span>
-          </label>
+          <div v-else>
+            <label :class="{ error: v$.message.$error }">
+              {{ $t('NEW_CONVERSATION.FORM.MESSAGE.LABEL') }}
+              <textarea
+                v-model="message"
+                class="min-h-[5rem]"
+                type="text"
+                :placeholder="$t('NEW_CONVERSATION.FORM.MESSAGE.PLACEHOLDER')"
+                @input="v$.message.$touch"
+              />
+              <span v-if="v$.message.$error" class="message">
+                {{ $t('NEW_CONVERSATION.FORM.MESSAGE.ERROR') }}
+              </span>
+            </label>
+            <div class="flex items-center gap-2 mt-2">
+              <div
+                v-on-click-outside="() => (showEmojiPicker = false)"
+                class="relative"
+              >
+                <woot-button
+                  v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_EMOJI_ICON')"
+                  icon="emoji"
+                  color-scheme="secondary"
+                  variant="smooth"
+                  size="small"
+                  @click="showEmojiPicker = !showEmojiPicker"
+                />
+                <EmojiInput
+                  v-if="showEmojiPicker"
+                  class="left-0 top-full mt-1.5"
+                  :on-click="onClickInsertEmoji"
+                />
+              </div>
+              <FileUpload
+                ref="uploadAttachment"
+                input-id="newConversationAttachment"
+                :size="4096 * 4096"
+                :accept="allowedFileTypes"
+                multiple
+                :drop="true"
+                :drop-directory="false"
+                :data="{
+                  direct_upload_url: '/rails/active_storage/direct_uploads',
+                  direct_upload: true,
+                }"
+                @input-file="onFileUpload"
+              >
+                <woot-button
+                  v-tooltip.top-end="
+                    $t('CONVERSATION.REPLYBOX.TIP_ATTACH_ICON')
+                  "
+                  icon="attach"
+                  color-scheme="secondary"
+                  variant="smooth"
+                  size="small"
+                />
+              </FileUpload>
+            </div>
+            <div
+              v-if="hasAttachments"
+              class="max-h-20 overflow-y-auto mb-4 mt-1.5"
+            >
+              <AttachmentPreview
+                class="[&>.preview-item]:dark:bg-slate-700 flex-row flex-wrap gap-x-3 gap-y-1"
+                :attachments="attachedFiles"
+                @remove-attachment="removeAttachment"
+              />
+            </div>
+          </div>
           <div v-if="isEmailOrWebWidgetInbox" class="flex flex-col">
             <FileUpload
               ref="uploadAttachment"

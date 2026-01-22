@@ -69,10 +69,25 @@ export const compareInboxes = (a, b) => {
   return nameA.localeCompare(nameB);
 };
 
+/**
+ * Checks if a WhatsApp unofficial inbox should be hidden (not connected)
+ * @param {Object} inbox - The inbox object
+ * @returns {boolean} - True if the inbox is a non-connected WhatsApp unofficial inbox
+ */
+const isNonConnectedWhatsappUnofficial = inbox => {
+  return (
+    inbox.channelType === INBOX_TYPES.WHATSAPP_UNOFFICIAL &&
+    inbox.whatsappStatus !== 'connected'
+  );
+};
+
 export const buildContactableInboxesList = contactInboxes => {
   if (!contactInboxes) return [];
 
-  return contactInboxes.map(transformInbox).sort(compareInboxes);
+  return contactInboxes
+    .filter(inbox => !isNonConnectedWhatsappUnofficial(inbox))
+    .map(transformInbox)
+    .sort(compareInboxes);
 };
 
 export const getCapitalizedNameFromEmail = email => {

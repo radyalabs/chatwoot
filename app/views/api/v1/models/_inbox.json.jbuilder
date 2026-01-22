@@ -110,4 +110,7 @@ if resource.whatsapp?
 end
 
 ### WhatsApp Unofficial Channel
-json.phone_number resource.channel.try(:phone_number) if resource.whatsapp_unofficial?
+if resource.whatsapp_unofficial?
+  json.phone_number resource.channel.try(:phone_number)
+  json.whatsapp_status resource.channel.try(:status)
+end

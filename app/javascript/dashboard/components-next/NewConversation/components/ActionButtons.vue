@@ -54,11 +54,8 @@ const signatureToApply = computed(() =>
     : extractTextFromMarkdown(props.messageSignature)
 );
 
-const {
-  fetchSignatureFlagFromUISettings,
-  setSignatureFlagForInbox,
-  isEditorHotKeyEnabled,
-} = useUISettings();
+const { fetchSignatureFlagFromUISettings, isEditorHotKeyEnabled } =
+  useUISettings();
 
 const sendWithSignature = computed(() => {
   return fetchSignatureFlagFromUISettings(props.channelType);
@@ -72,11 +69,6 @@ const setSignature = () => {
       emit('removeSignature', signatureToApply.value);
     }
   }
-};
-
-const toggleMessageSignature = () => {
-  setSignatureFlagForInbox(props.channelType, !sendWithSignature.value);
-  setSignature();
 };
 
 // Added this watch to dynamically set signature on target inbox change.
@@ -185,7 +177,7 @@ useKeyboardEvents(keyboardEvents);
         />
       </div>
       <FileUpload
-        v-if="isEmailOrWebWidgetInbox"
+        v-if="hasSelectedInbox && !isWhatsappInbox && !hasNoInbox"
         ref="uploadAttachment"
         input-id="composeNewConversationAttachment"
         :size="4096 * 4096"
@@ -196,24 +188,16 @@ useKeyboardEvents(keyboardEvents);
           direct_upload_url: '/rails/active_storage/direct_uploads',
           direct_upload: true,
         }"
-        class="p-px"
+        class="relative"
         @input-file="onFileUpload"
       >
         <Button
-          icon="i-lucide-plus"
+          icon="i-lucide-paperclip"
           color="slate"
           size="sm"
-          class="!w-10 relative"
+          class="!w-10"
         />
       </FileUpload>
-      <Button
-        v-if="hasSelectedInbox && !isWhatsappInbox"
-        icon="i-lucide-signature"
-        color="slate"
-        size="sm"
-        class="!w-10"
-        @click="toggleMessageSignature"
-      />
     </div>
 
     <div class="flex items-center gap-2">

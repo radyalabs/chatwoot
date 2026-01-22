@@ -31,7 +31,7 @@ class Channel::WhatsappUnofficial < ApplicationRecord
   self.table_name = 'channel_whatsapp_unofficials'
 
   EDITABLE_ATTRS = [:token, :device_id, :phone_number, :provider, { provider_config: {} }].freeze
-  PROVIDERS = %w[gowa wapi].freeze
+  PROVIDERS = %w[gowa waha].freeze
 
   # Connection status values stored in the database
   # These represent the user-facing connection state

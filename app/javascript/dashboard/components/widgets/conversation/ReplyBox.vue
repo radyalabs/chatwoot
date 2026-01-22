@@ -100,7 +100,6 @@ export default {
       isRecordingAudio: false,
       recordingAudioState: '',
       recordingAudioDurationText: '',
-      isUploading: false,
       replyType: REPLY_EDITOR_MODES.REPLY,
       mentionSearchKey: '',
       hasSlashCommand: false,
@@ -224,6 +223,7 @@ export default {
         return true;
       }
       if (this.isATwitterInbox) return true;
+      if (this.isUploading) return true;
       if (this.hasAttachments || this.hasRecordedAudio) return false;
 
       return (
@@ -291,6 +291,9 @@ export default {
     },
     hasAttachments() {
       return this.attachedFiles.length;
+    },
+    isUploading() {
+      return this.attachedFiles.some(file => file.uploading);
     },
     isRichEditorEnabled() {
       return this.isAWebWidgetInbox || this.isAnEmailChannel;
@@ -895,7 +898,7 @@ export default {
         isPrivate,
       });
     },
-    attachFile({ blob, file }) {
+    attachFile({ blob, file, uploading = false, tempId = null }) {
       const reader = new FileReader();
       reader.readAsDataURL(file.file);
       reader.onloadend = () => {
@@ -906,8 +909,24 @@ export default {
           thumb: reader.result,
           blobSignedId: blob ? blob.signed_id : undefined,
           isRecordedAudio: file?.isRecordedAudio || false,
+          uploading,
+          tempId,
         });
       };
+    },
+    removeUploadingAttachment(tempId) {
+      this.attachedFiles = this.attachedFiles.filter(f => f.tempId !== tempId);
+    },
+    updateAttachmentWithBlob(tempId, blob) {
+      const index = this.attachedFiles.findIndex(f => f.tempId === tempId);
+      if (index !== -1) {
+        this.attachedFiles[index] = {
+          ...this.attachedFiles[index],
+          resource: blob,
+          blobSignedId: blob.signed_id,
+          uploading: false,
+        };
+      }
     },
     removeAttachment(attachments) {
       this.attachedFiles = attachments;

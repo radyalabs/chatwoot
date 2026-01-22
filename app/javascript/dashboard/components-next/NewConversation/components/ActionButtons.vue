@@ -35,6 +35,8 @@ const emit = defineEmits([
   'addSignature',
   'removeSignature',
   'attachFile',
+  'updateAttachment',
+  'removeUploadingAttachment',
 ]);
 
 const { t } = useI18n();
@@ -88,19 +90,27 @@ const onClickInsertEmoji = emoji => {
 
 const { onFileUpload } = useFileUpload({
   isATwilioSMSChannel: props.isTwilioSmsInbox,
-  attachFile: ({ blob, file }) => {
+  attachFile: ({ file, uploading = false, tempId = null }) => {
     if (!file) return;
     const reader = new FileReader();
     reader.readAsDataURL(file.file);
     reader.onloadend = () => {
       const newFile = {
-        resource: blob || file,
+        resource: file,
         isPrivate: false,
         thumb: reader.result,
-        blobSignedId: blob?.signed_id,
+        blobSignedId: undefined,
+        uploading,
+        tempId,
       };
       emit('attachFile', [...props.attachedFiles, newFile]);
     };
+  },
+  updateAttachment: (tempId, blob) => {
+    emit('updateAttachment', { tempId, blob });
+  },
+  removeAttachment: tempId => {
+    emit('removeUploadingAttachment', tempId);
   },
 });
 

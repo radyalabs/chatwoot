@@ -27,6 +27,25 @@ class WhatsappUnofficial::SendOnWhatsappUnofficialService < Base::SendOnChannelS
     message.attachments.filter_map do |attachment|
       next unless attachment.file.attached?
 
+      compression_result = Compression::CompressionService.compress(
+        attachment: attachment,
+        channel_type: 'whatsapp_unofficial'
+      )
+
+      build_attachment_hash(attachment, compression_result)
+    end.compact
+  end
+
+  def build_attachment_hash(attachment, compression_result)
+    if compression_result.compressed?
+      {
+        filename: compression_result.filename,
+        content_type: compression_result.content_type,
+        io: compression_result.io,
+        file_type: attachment.file_type,
+        download_url: nil
+      }
+    else
       {
         filename: attachment.file.filename.to_s,
         content_type: attachment.file.content_type,
@@ -34,7 +53,7 @@ class WhatsappUnofficial::SendOnWhatsappUnofficialService < Base::SendOnChannelS
         file_type: attachment.file_type,
         download_url: attachment.download_url
       }
-    end.compact
+    end
   end
 
   def link(message)

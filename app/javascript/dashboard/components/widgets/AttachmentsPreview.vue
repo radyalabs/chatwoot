@@ -73,7 +73,12 @@ const fileName = file => {
         </span>
       </div>
       <div class="flex items-center justify-center">
+        <div
+          v-if="attachment.uploading"
+          class="w-4 h-4 border-2 border-woot-500 border-t-transparent rounded-full animate-spin"
+        />
         <woot-button
+          v-else
           class="!w-6 !h-6 text-sm rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 clear secondary"
           icon="dismiss"
           @click="onRemoveAttachment(index)"
@@ -82,3 +87,18 @@ const fileName = file => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>

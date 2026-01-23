@@ -1,3 +1,5 @@
+require 'multipart/post'
+
 class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers::BaseService
   def send_message(message)
     attachments = message[:attachments] || []
@@ -74,7 +76,7 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
 
     body = {
       phone: phone_number,
-      image: tempfile
+      image: Multipart::Post::UploadIO.new(tempfile, attachment[:content_type], attachment[:filename])
     }
     body[:caption] = caption if caption
 
@@ -86,6 +88,9 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
     )
 
     process_response(response)
+  ensure
+    tempfile&.close
+    tempfile&.unlink
   end
 
   def send_document(phone_number, attachment, caption: nil)
@@ -99,7 +104,7 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
 
     body = {
       phone: "#{phone_number}@s.whatsapp.net",
-      file: tempfile
+      file: Multipart::Post::UploadIO.new(tempfile, attachment[:content_type], attachment[:filename])
     }
 
     body[:caption] = caption if caption
@@ -112,6 +117,9 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
     )
 
     process_response(response)
+  ensure
+    tempfile&.close
+    tempfile&.unlink
   end
 
   def send_audio(phone_number, audio_url)

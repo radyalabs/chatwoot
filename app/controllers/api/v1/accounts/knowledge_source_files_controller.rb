@@ -45,6 +45,9 @@ class Api::V1::Accounts::KnowledgeSourceFilesController < Api::V1::Accounts::Bas
   def create_source(knowledge_source, file)
     document_loader = create_document_loader(knowledge_source.store_id, file)
 
+    # log document loader
+    Rails.logger.info("Document Loader: #{document_loader.inspect}")
+    Rails.logger.info('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
     unless document_loader
       render json: { error: 'Failed to create document loader' }, status: :bad_gateway
       return

@@ -185,6 +185,9 @@ async function deleteData() {
 
 const isSaving = ref(false);
 async function save() {
+  console.log(`flow_data:`, props.data?.display_flow_data);
+  const collection_name = props.data?.display_flow_data?.agents_config[0].collection_name || null;
+  console.log(`collection_name:`, collection_name);
   try {
     isSaving.value = true;
 
@@ -222,7 +225,11 @@ async function save() {
     
     // Store items that will be saved (to exclude them from unsaved items later)
     const itemsThatWillBeSaved = itemsToSave.map(t => t.originalItem);
-      
+    
+    // log props.data.id, request, and collection_name
+    console.log(`Saving QnAs for AI Agent ID: ${props.data.id} with collection: ${collection_name}`);
+    console.log('Request payload:', request);
+
     await aiAgents.createOrUpdateKnowledgeQna(props.data.id, request);
     
     qnas.value = qnas.value.filter(qna => !itemsThatWillBeSaved.includes(qna));

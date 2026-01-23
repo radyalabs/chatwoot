@@ -45,8 +45,10 @@ async function fetchKnowledge() {
   try {
     isFetching.value = true;
     const data = await aiAgents.getKnowledgeSources(props.data.id);
+    console.log('Fetched knowledge source files:', data);
     files.value = data.data?.knowledge_source_files || [];
     console.log(`[${props.context}] Total files: ${files.value.length} | Context files: ${contextFiles.value.length}`);
+    console.log(`contextFiles:`, contextFiles.value);
   } catch (e) {
     useAlert('Gagal mendapatkan data');
   } finally {

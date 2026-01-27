@@ -9,7 +9,7 @@ class Api::V2::Internal::SheetNumberingConfigsController < ActionController::API
   # Required params:
   #   - account_id: The account ID
   #   - ai_agent_id: The AI agent ID
-  #   - numbering_key: The numbering key (e.g., "booking", "invoice")
+  #   - numbering_key: The numbering key (e.g., "booking", "lead_generation")
   #
   # Response (200 OK):
   #   {
@@ -26,7 +26,7 @@ class Api::V2::Internal::SheetNumberingConfigsController < ActionController::API
   # Response (401 Unauthorized):
   #   - error: "Unauthorized"
   #
-  def config
+  def show_config
     Rails.logger.info("[Internal::SheetNumberingConfigs] Fetching config: #{config_params.inspect}")
 
     sheet_config = SheetNumberingConfig.find_by!(

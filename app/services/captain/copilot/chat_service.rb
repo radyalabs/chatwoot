@@ -134,10 +134,8 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
 
     Rails.logger.info "[BOT] Building outgoing message with #{attachments.present? ? attachments.count : 0} image(s)..."
     
-    # Build message (not create yet) - following Telegram incoming pattern
     message = @context.conversation.messages.build(attrs)
     
-    # Attach images BEFORE save (like Telegram incoming)
     if attachments.present?
       Rails.logger.info "[BOT] Attaching #{attachments.count} image(s) before save..."
       
@@ -145,15 +143,37 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
         begin
           Rails.logger.info "  Downloading image #{idx + 1}: #{image_url}"
           image_file = Down.download(image_url)
+          Rails.logger.info "image file content type: #{image_file.content_type}"
+          Rails.logger.info "file image: #{image_file.inspect}"
+
+          content_type = image_file.content_type
+
+          # Skip if content_type is blank or not an image
+          if content_type.blank? || !content_type.start_with?('image/')
+            Rails.logger.warn "  Skipping non-image attachment (#{content_type || 'unknown'}): #{image_url}"
+            next
+          end
+
+          # Generate a proper filename with correct extension based on content_type
+          extension = case content_type
+                      when 'image/jpeg', 'image/jpg' then '.jpg'
+                      when 'image/png' then '.png'
+                      when 'image/gif' then '.gif'
+                      when 'image/webp' then '.webp'
+                      else '.jpg'
+                      end
+          filename = "bot_image_#{idx + 1}_#{Time.current.to_i}#{extension}"
+
           message.attachments.new(
             account_id: message.account_id,
             file_type: 'image',
             file: {
               io: image_file,
-              filename: File.basename(image_url),
-              content_type: image_file.content_type || 'image/jpeg'
+              filename: filename,
+              content_type: content_type
             }
           )
+
         rescue StandardError => e
           Rails.logger.error "Failed to attach image #{idx + 1}: #{e.message}"
         end

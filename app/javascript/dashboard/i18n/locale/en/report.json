@@ -150,11 +150,13 @@
     "NO_ENOUGH_DATA": "We've not received enough data points to generate report, Please try again later.",
     "DOWNLOAD_AGENT_REPORTS": "Download agent reports",
     "FILTER_DROPDOWN_LABEL": "Select Agent",
+    "CON_RATE": "Conversion Rate",
     "HANDOVER_REPORT": {
       "TITLE": "Handover Statistics",
       "TOTAL": "Total Handovers",
       "RATE": "Handover Rate",
       "TOP_AGENT": "Top Agents",
+      "CHAT_REDIRECTED": "chat redirected",
       "DISTRIBUTION": "Handover Reason Distribution"
     },
     "AGENT_PERFORMANCE_TABLE": {
@@ -595,7 +597,13 @@
       "TOTAL_STARTER": "Total Starter Chat",
       "ENGAGE_USER": "Engage User",
       "HIGH_INTENT": "High-Intent User",
-      "ASSISTED_USER": "Assited User"
+      "ASSISTED_USER": "Assited User",
+      "DESC": {
+        "STARTER": "Total number of visitors initiating a conversation.",
+        "ENGAGE": "Visitors who interacted further.",
+        "INTENT": "Users showing high interest.",
+        "ASSISTED": "PUsers successfully assisted."
+      }
     },
     "CONVERSATION_HEATMAP": {
       "HEADER": "Conversation Traffic",

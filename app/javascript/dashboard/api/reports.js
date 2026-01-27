@@ -46,11 +46,13 @@ class ReportsAPI extends ApiClient {
     });
   }
 
-  getConversationMetric(type = 'account', page = 1) {
+  getConversationMetric({type = 'account', page = 1, from, to }) {
     return axios.get(`${this.url}/conversations`, {
       params: {
         type,
         page,
+        since: from,
+        until: to,
       },
     });
   }

@@ -149,11 +149,13 @@
     "NO_ENOUGH_DATA": "Kami belum menerima cukup data untuk membuat laporan, Silakan coba lagi nanti.",
     "DOWNLOAD_AGENT_REPORTS": "Unduh laporan agen",
     "FILTER_DROPDOWN_LABEL": "Pilih Agen",
+    "CON_RATE": "Tingkat Konversi",
     "HANDOVER_REPORT": {
       "TITLE": "Statistik Pengalihan",
       "TOTAL": "Total Pengalihan",
       "RATE": "Persentase Pengalihan",
       "TOP_AGENT": "Agen Teratas",
+      "CHAT_REDIRECTED": "chat dialihkan",
       "DISTRIBUTION": "Sebaran Alasan Pengalihan"
     },
     "AGENT_PERFORMANCE_TABLE": {
@@ -601,7 +603,13 @@
       "TOTAL_STARTER": "Total Pesan Masuk",
       "ENGAGE_USER": "Total Percakapan Aktif",
       "HIGH_INTENT": "Total Peminat Serius",
-      "ASSISTED_USER": "Total Konversi"
+      "ASSISTED_USER": "Total Konversi",
+      "DESC": {
+        "STARTER": "Jumlah total pengunjung yang memulai percakapan.",
+        "ENGAGE": "Pengunjung yang berinteraksi lebih lanjut.",
+        "INTENT": "Pengguna yang menunjukkan ketertarikan tinggi.",
+        "ASSISTED": "Pengguna yang berhasil dibantu."
+      }
     },
     "CONVERSATION_HEATMAP": {
       "HEADER": "Lalu Lintas Percakapan",

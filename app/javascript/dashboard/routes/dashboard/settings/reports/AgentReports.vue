@@ -221,7 +221,7 @@ export default {
 
 <template>
   <div class="flex flex-col gap-4 pb-6">
-    <ReportHeader :header-title="$t('AGENT_REPORTS.HEADER')" class="sticky">
+    <ReportHeader :header-title="$t('AGENT_REPORTS.HEADER')" class="sticky top-0 z-40">
       <div class="flex items-center gap-4">
         <div class="flex-grow flex gap-4">
           <ReportsFiltersDateRange @on-range-change="onDateRangeChange" />
@@ -272,64 +272,139 @@ export default {
       
       <MetricCardFull class="w-full">
         <template #header>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            {{ $t('AGENT_REPORTS.HANDOVER_REPORT.TITLE') }}
-          </h3>
+          <div class="flex flex-col gap-4 w-full mb-4">
+            <div class="flex items-center gap-2 flex-row">
+              <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                {{ $t('AGENT_REPORTS.HANDOVER_REPORT.TITLE') }}
+              </h3>
+              <span class="flex flex-row items-center py-0.5 px-2 rounded bg-green-700 text-white text-xs">
+                <span class="bg-white h-1 w-1 rounded-full mr-1"/>
+                {{ $t('OVERVIEW_REPORTS.LIVE') }}
+              </span>
+            </div>
+          </div>
         </template>
         
         <div class="p-4 pt-0">
-          <div class="flex flex-col sm:flex-row gap-4 mb-8">
-            <div class="flex-1 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-              <span class="block text-sm font-medium text-gray-500 mb-1">{{ $t('AGENT_REPORTS.HANDOVER_REPORT.TOTAL') }}</span>
-              <div class="flex items-end gap-2">
-                <span class="text-2xl font-bold text-green-700 dark:text-green-500">
-                  {{ handoverData.totalHandover.toLocaleString() }}
-                </span>
-                <span class="text-xs text-gray-400 mb-1">chat</span>
-              </div>
-            </div>
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <div class="flex-1 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-              <span class="block text-sm font-medium text-gray-500 mb-1">{{ $t('AGENT_REPORTS.HANDOVER_REPORT.RATE') }}</span>
-              <div class="flex items-end gap-2">
-                <span class="text-2xl font-bold text-green-700 dark:text-green-500">
-                  {{ handoverData.handoverRate }}%
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex flex-col gap-4 p-5 border border-gray-100 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">{{ $t('AGENT_REPORTS.HANDOVER_REPORT.TOP_AGENT') }}</h4>
-            <div 
-              v-for="(agent, idx) in handoverData.byAgent" 
-              :key="idx" 
-              class="flex items-center w-full"
-            >
-              <div class="w-12 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                {{ agent.name }}
-              </div>
+            <div class="flex flex-col gap-4 lg:col-span-1 h-full">
               
-              <div class="flex-1 h-8 bg-gray-200 dark:bg-gray-700 rounded-r-lg rounded-bl-lg relative ml-2 overflow-hidden shadow-inner border border-gray-200 dark:border-gray-600">
-                <div 
-                  class="absolute top-0 left-0 h-full bg-green-600 dark:bg-green-500 flex items-center px-3 transition-all duration-500"
-                  :style="{ width: `${agent.percentage}%` }"
-                >
-                  <span class="text-xs font-bold text-white whitespace-nowrap drop-shadow-sm">
-                    {{ agent.count }} chat
+              <div class="relative overflow-hidden p-5 text-gray-900 dark:text-white rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm group transition-all flex-1 flex flex-col justify-center">
+                <div class="absolute right-0 top-0 p-3 opacity-20 dark:opacity-10 transition-transform duration-500">
+                  <svg class="w-16 h-16 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z"/></svg>
+                </div>
+                <span class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+                  {{ $t('AGENT_REPORTS.HANDOVER_REPORT.TOTAL') }}
+                </span>
+                <div class="flex items-baseline gap-2 relative z-10">
+                  <span class="text-3xl font-extrabold text-gray-900 dark:text-white">
+                    {{ handoverData.totalHandover.toLocaleString() }}
                   </span>
+                  <span class="text-sm font-medium text-gray-400">chat</span>
+                </div>
+              </div>
+
+              <div class="relative overflow-hidden p-5 text-gray-900 dark:text-white rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm group transition-all flex-1 flex flex-col justify-center">
+                <span class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+                  {{ $t('AGENT_REPORTS.HANDOVER_REPORT.RATE') }}
+                </span>
+                <div class="flex items-center gap-3">
+                   <div class="relative w-16 h-16">
+                      <svg class="w-full h-full transform -rotate-90">
+                        <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="6" fill="transparent" class="text-gray-500 dark:text-gray-700" />
+                        <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="6" fill="transparent" 
+                          :stroke-dasharray="2 * Math.PI * 28" 
+                          :stroke-dashoffset="2 * Math.PI * 28 * (1 - handoverData.handoverRate / 100)"
+                          class="text-green-600 dark:text-green-500 transition-all duration-1000 ease-out" />
+                      </svg>
+                      <div class="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-900 dark:text-white">
+                        {{ handoverData.handoverRate }}%
+                      </div>
+                   </div>
+                   <div class="flex flex-col">
+                      <span class="text-xs text-gray-400">{{ $t('AGENT_REPORTS.CON_RATE') }}</span>
+                   </div>
                 </div>
               </div>
             </div>
+
+            <div class="lg:col-span-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-4">
+              
+              <div class="flex items-center justify-between">
+                <h4 class="text-sm font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wide text-xs">
+                  {{ $t('AGENT_REPORTS.HANDOVER_REPORT.TOP_AGENT') }}
+                </h4>
+              </div>
+
+              <div class="flex flex-col gap-6 overflow-y-auto max-h-[280px] pr-2 custom-scrollbar">
+                <div 
+                  v-for="(agent, idx) in handoverData.byAgent" 
+                  :key="idx" 
+                  class="group w-full"
+                >
+                  <div class="flex justify-between items-start mb-3">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400 flex items-center justify-center text-lg font-bold shadow-sm border border-green-200 dark:border-green-800">
+                            {{ agent.name.charAt(0) }}
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-base font-bold text-gray-900 dark:text-white leading-tight">
+                                {{ agent.name }}
+                            </span>
+                            <span class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                {{ agent.count }} {{ $t('AGENT_REPORTS.HANDOVER_REPORT.CHAT_REDIRECTED') }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-lg font-extrabold text-green-600 dark:text-green-400 leading-tight">
+                            {{ agent.percentage }}%
+                        </div>
+                        <span class="text-xs font-medium text-gray-400">
+                            dari total
+                        </span>
+                    </div>
+                  </div>
+
+                  <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden shadow-inner">
+                    <div 
+                      class="bg-[#389947] h-3 rounded-full transition-all duration-1000 ease-out relative"
+                      :style="{ width: `${agent.percentage}%` }"
+                    >
+                        <div class="absolute top-0 left-0 bottom-0 right-0 bg-gradient-to-r from-transparent via-white/20 to-transparent w-full -translate-x-full group-hover:animate-shimmer"></div>
+                    </div>
+                  </div>
+                  </div>
+                
+                <div v-if="!handoverData.byAgent.length" class="flex flex-col items-center justify-center py-10 text-center h-full">
+                   <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 mb-3 text-gray-400">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                    </div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                        {{ $t('REPORT.NO_ENOUGH_DATA') }}
+                    </p>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </MetricCardFull>
 
-      <MetricCardFull v-if="['pertamax', 'pertamax_turbo', 'custom'].includes(userTier)" class="w-full">
+      <MetricCardFull v-if="false" class="w-full">
         <template #header>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            {{ $t('AGENT_REPORTS.HANDOVER_REPORT.DISTRIBUTION') }}
-          </h3>
+          <div class="flex flex-col gap-4 w-full mb-4">
+            <div class="flex items-center gap-2 flex-row">
+              <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                {{ $t('AGENT_REPORTS.HANDOVER_REPORT.DISTRIBUTION') }}
+              </h3>
+              <span class="flex flex-row items-center py-0.5 px-2 rounded bg-green-700 text-white text-xs">
+                <span class="bg-white h-1 w-1 rounded-full mr-1"/>
+                {{ $t('OVERVIEW_REPORTS.LIVE') }}
+              </span>
+            </div>
+          </div>
         </template>
         
         <div class="p-4 pt-0 flex flex-col md:flex-row items-center justify-center gap-8 h-full">
@@ -371,11 +446,18 @@ export default {
       <MetricCardFull class="w-full max-w-full">
         <div class="p-4">
           <div class="rounded-lg">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                {{ $t('AGENT_REPORTS.METRICS.CONVERSATIONS.NAME') }}
-              </h3>
+            <div class="flex flex-col gap-4 w-full mb-4">
+              <div class="flex items-center gap-2 flex-row">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                  {{ $t('AGENT_REPORTS.METRICS.CONVERSATIONS.NAME') }}
+                </h3>
+                <span class="flex flex-row items-center py-0.5 px-2 rounded bg-green-700 text-white text-xs">
+                  <span class="bg-white h-1 w-1 rounded-full mr-1"/>
+                  {{ $t('OVERVIEW_REPORTS.LIVE') }}
+                </span>
+              </div>
             </div>
+            
             <div class="h-80">
               <BarChart
                 v-if="conversationsBarChartData.datasets.length > 0"

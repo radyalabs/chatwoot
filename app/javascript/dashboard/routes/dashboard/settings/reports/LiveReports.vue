@@ -151,7 +151,6 @@ export default {
       const highIntent = num(data.high_intent);
       const assistedBot = num(data.assisted_bot);
       const assistedCs = num(data.assisted_cs);
-      const repeatBuyer = num(data.repeat_buyer);
       const assistedTotal = assistedBot + assistedCs;
 
       const calcPercent = (val, total) => {
@@ -166,41 +165,47 @@ export default {
       return [
         { 
           label: this.$t('OVERVIEW_REPORTS.CONVERSATION_FUNNEL.TOTAL_STARTER'),
-          description: "Jumlah total pengunjung yang memulai percakapan.",
+          description: this.$t('OVERVIEW_REPORTS.CONVERSATION_FUNNEL.DESC.STARTER'),
           count: fmt(totalStarter), 
           percentVal: 100,
           displayPercent: '100%',
           colorClass: '#2563EB',
-          widthStyle: '100%'
+          widthStyle: '100%',
+          type: 'starter'
         },
         { 
           label: this.$t('OVERVIEW_REPORTS.CONVERSATION_FUNNEL.ENGAGE_USER'),
-          description: "Pengunjung yang berinteraksi lebih lanjut.",
+          description: this.$t('OVERVIEW_REPORTS.CONVERSATION_FUNNEL.DESC.ENGAGE'),
           count: fmt(engageUser), 
           percentVal: calcPercent(engageUser, totalStarter),
           displayPercent: `${calcPercent(engageUser, totalStarter)}%`,
           colorClass: '#4F46E5',
-          widthStyle: calcWidth(calcPercent(engageUser, totalStarter))
+          widthStyle: calcWidth(calcPercent(engageUser, totalStarter)),
+          type: 'engage'
         },
         { 
           label: this.$t('OVERVIEW_REPORTS.CONVERSATION_FUNNEL.HIGH_INTENT'),
-          description: "Pengguna yang menunjukkan ketertarikan tinggi.",
+          description: this.$t('OVERVIEW_REPORTS.CONVERSATION_FUNNEL.DESC.INTENT'),
           count: fmt(highIntent), 
           percentVal: calcPercent(highIntent, totalStarter),
           displayPercent: `${calcPercent(highIntent, totalStarter)}%`,
           colorClass: '#0D9488',
-          widthStyle: calcWidth(calcPercent(highIntent, totalStarter))
+          widthStyle: calcWidth(calcPercent(highIntent, totalStarter)),
+          type: 'intent'
         },
         { 
           label: this.$t('OVERVIEW_REPORTS.CONVERSATION_FUNNEL.ASSISTED_USER'),
-          description: "Pengguna yang berhasil dibantu.",
+          description: this.$t('OVERVIEW_REPORTS.CONVERSATION_FUNNEL.DESC.ASSISTED'),
           count: fmt(assistedTotal), 
           percentVal: calcPercent(assistedTotal, totalStarter), 
           displayPercent: `${calcPercent(assistedTotal, totalStarter)}%`,
           colorClass: '#059669',
           widthStyle: calcWidth(calcPercent(assistedTotal, totalStarter)),
-          botPct: calcPercent(assistedBot, assistedTotal),
-          csPct: calcPercent(assistedCs, assistedTotal)
+          type: 'resolved',
+          breakdown: {
+            bot: fmt(assistedBot),
+            cs: fmt(assistedCs)
+          }
         },
       ];
     },
@@ -292,6 +297,10 @@ export default {
       this.$store.dispatch('fetchAgentConversationMetric', {
         type: 'agent',
         page: this.pageIndex + 1,
+        from: this.from,
+        to: this.to,
+        since: this.from,
+        until: this.to,
       });
     },
     fetchCreditUsageMetric() {
@@ -350,7 +359,7 @@ export default {
 
 <template>
   <div class="flex flex-col gap-4 pb-6 w-full h-full bg-slate-25 dark:bg-slate-900 overflow-auto">
-    <div class="sticky top-0 z-50 bg-slate-25 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 pt-6 shadow-sm mb-0">
+    <div class="sticky top-0 z-[100] bg-slate-25 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 pt-6 shadow-sm mb-0">
       
       <div class="max-w-[960px] mx-auto w-full px-4 md:px-0">
         <div class="mb-4">
@@ -550,7 +559,26 @@ export default {
                     <p class="text-gray-300 mb-3 leading-relaxed text-xs">
                       {{ item.description }}
                     </p>
-                    <div class="flex justify-between items-center bg-gray-800 p-2 rounded">
+                    <div v-if="item.type === 'resolved'" class="flex flex-col gap-2">
+                       <div class="flex justify-between items-center bg-gray-800 p-2 rounded">
+                          <span class="text-gray-400 text-xs uppercase font-bold tracking-wider">
+                            Bot
+                          </span>
+                          <span class="font-mono text-green-400 font-bold text-lg">
+                            {{ item.breakdown.bot }}
+                          </span>
+                       </div>
+                       
+                       <div class="flex justify-between items-center bg-gray-800 p-2 rounded">
+                          <span class="text-gray-400 text-xs uppercase font-bold tracking-wider">
+                            Agen
+                          </span>
+                          <span class="font-mono text-blue-400 font-bold text-lg">
+                            {{ item.breakdown.cs }}
+                          </span>
+                       </div>
+                    </div>
+                    <div v-else class="flex justify-between items-center bg-gray-800 p-2 rounded">
                       <span class="text-gray-400 text-xs uppercase font-bold tracking-wider">Total</span>
                       <span class="font-mono text-green-400 font-bold text-lg">{{ item.count }}</span>
                     </div>
@@ -625,7 +653,7 @@ export default {
         </MetricCard>
       </div>
 
-      <div v-if="userTier === 'pertamax' || userTier === 'pertamax_turbo' || userTier === 'pertalite'" class="flex flex-row flex-wrap max-w-full">
+      <div v-if="false" class="flex flex-row flex-wrap max-w-full">
         <MetricCard :header="$t('OVERVIEW_REPORTS.AGENT_CONVERSATIONS.HEADER')">
           <AgentTable
             :agents="agents"

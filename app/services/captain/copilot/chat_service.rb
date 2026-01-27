@@ -62,6 +62,8 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
 
     end_state_processing(response) unless response[:is_handover]
 
+    conversion_processing(response)
+
     message_created(message_content, additional_attributes.except(:reservation_details))
     send_log_reply(is_handover: response[:is_handover])
   rescue StandardError => e
@@ -84,6 +86,15 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
 
     @context.conversation.update!(assignee_id: agent_available.id, is_reminded: false, is_handover_reminded: true) if agent_available
     agent_available ? content : I18n.t('conversations.bot.not_available_agent')
+  end
+
+  def conversion_processing(response)
+    return if @context.conversation.is_convert?
+
+    if response[:has_domain_change]
+      @context.conversation.update(is_convert: true)
+      Rails.logger.info "[BOT] Conversation #{@context.conversation.id} marked as converted (domain change detected)."
+    end
   end
 
   def end_state_processing(response)

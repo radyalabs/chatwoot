@@ -55,13 +55,13 @@ class Api::V2::Internal::SheetNumberingConfigsController < ActionController::API
   private
 
   def authenticate_api_key!
-    api_key = request.headers['X-Internal-Api-Key'] || params[:api_key]
-    expected_key = ENV.fetch('JANGKAU_INTERNAL_API_KEY', nil)
+    api_key = request.headers['X-API-Key'] || request.headers['X-Internal-Api-Key'] || params[:api_key]
+    expected_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
 
-    unless expected_key.present? && ActiveSupport::SecurityUtils.secure_compare(api_key.to_s, expected_key)
-      Rails.logger.warn('[Internal::SheetNumberingConfigs] Invalid API key')
-      render json: { error: 'Unauthorized' }, status: :unauthorized
-    end
+    return if expected_key.present? && ActiveSupport::SecurityUtils.secure_compare(api_key.to_s, expected_key)
+
+    Rails.logger.warn('[Internal::SheetNumberingConfigs] Invalid API key')
+    head :unauthorized
   end
 
   def config_params

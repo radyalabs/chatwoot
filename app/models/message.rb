@@ -324,7 +324,7 @@ class Message < ApplicationRecord
 
   def send_reply
     # Attachment jobs use a separate queue with high priority to avoid being blocked by other jobs
-    # The 2-second delay is no longer needed since file is already uploaded to Azure storage 
+    # The 2-second delay is no longer needed since file is already uploaded to Azure storage
     # before the message is created
     if attachments.blank?
       ::SendReplyJob.perform_later(id)

@@ -52,6 +52,48 @@ class Api::V2::Internal::SheetNumberingConfigsController < ActionController::API
     render json: { error: e.message }, status: :unprocessable_entity
   end
 
+  # PUT /api/v2/internal/sheet_numbering_configs/sync_counter
+  #
+  # Called by jangkau.langgraph after each counter increment to keep
+  # Chatwoot's current_value in sync with the actual counter.
+  #
+  # Required params:
+  #   - account_id: The account ID
+  #   - ai_agent_id: The AI agent ID
+  #   - numbering_key: The numbering key (defaults to 'default')
+  #   - current_value: The current counter value from jangkau
+  #
+  # Response (200 OK):
+  #   { "success": true }
+  #
+  # Response (404 Not Found):
+  #   { "error": "Config not found" }
+  #
+  def sync_counter
+    Rails.logger.info("[Internal::SheetNumberingConfigs] Syncing counter: #{sync_params.inspect}")
+
+    sheet_config = SheetNumberingConfig.find_by!(
+      account_id: sync_params[:account_id],
+      ai_agent_id: sync_params[:ai_agent_id],
+      numbering_key: sync_params[:numbering_key] || 'default'
+    )
+
+    sheet_config.update_column(:current_value, sync_params[:current_value].to_i)
+
+    Rails.logger.info(
+      "[Internal::SheetNumberingConfigs] Counter synced: config_id=#{sheet_config.id}, " \
+      "current_value=#{sync_params[:current_value]}"
+    )
+
+    render json: { success: true }, status: :ok
+  rescue ActiveRecord::RecordNotFound => e
+    Rails.logger.error("[Internal::SheetNumberingConfigs] Config not found for sync: #{e.message}")
+    render json: { error: 'Config not found' }, status: :not_found
+  rescue StandardError => e
+    Rails.logger.error("[Internal::SheetNumberingConfigs] Sync error: #{e.message}")
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
   private
 
   def authenticate_api_key!
@@ -66,5 +108,9 @@ class Api::V2::Internal::SheetNumberingConfigsController < ActionController::API
 
   def config_params
     params.permit(:account_id, :ai_agent_id, :numbering_key)
+  end
+
+  def sync_params
+    params.permit(:account_id, :ai_agent_id, :numbering_key, :current_value)
   end
 end

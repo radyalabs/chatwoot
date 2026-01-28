@@ -242,8 +242,8 @@
                       </svg>
                     </div>
                     <div>
-                      <h3 class="font-medium text-slate-900 dark:text-slate-25">Pesan Follow Up</h3>
-                      <p class="text-sm text-gray-500 mt-1">Kirim pesan pengingat otomatis kepada pelanggan setelah booking</p>
+                      <h3 class="font-medium text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.REMINDER.TITLE') }}</h3>
+                      <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.REMINDER.DESC') }}</p>
                     </div>
                   </div>
                   
@@ -260,7 +260,7 @@
                 >
                   <div>
                     <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
-                      Waktu Follow Up
+                      {{ $t('AGENT_MGMT.REMINDER.TIME') }}
                     </label>
                     <div class="flex items-center gap-3">
                       <select 
@@ -278,22 +278,64 @@
                       </select>                   
                       
                       <span class="text-gray-500 text-sm">
-                        sebelum waktu booking
+                        {{ $t('AGENT_MGMT.REMINDER.TIME_DETAIL') }}
                       </span>
                     </div>
-                    <p class="text-xs text-gray-500 mt-1 italic">Pilih waktu untuk mengirimkan pesan follow up.</p>
+                    <p class="text-xs text-gray-500 mt-1 italic">{{ $t('AGENT_MGMT.REMINDER.TIME_DESC') }}</p>
                   </div>
                   <div>
-                    <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
-                      Pesan Follow Up
-                    </label>
+                    <div class="flex justify-between items-end mb-1">
+                      <label class="block text-sm font-medium text-slate-900 dark:text-slate-25">
+                        {{ $t('AGENT_MGMT.REMINDER.MSG') }}
+                      </label>
+
+                      <div class="relative">
+                        <button 
+                          @click="showVariableDropdown = !showVariableDropdown"
+                          type="button"
+                          class="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-1 px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                          {{ $t('AGENT_MGMT.REMINDER.MSG_VARIABLE') }}
+                        </button>
+
+                        <div 
+                          v-if="showVariableDropdown"
+                          class="absolute right-0 top-full mt-1 z-20 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1"
+                        >
+                          <button
+                            v-for="(item, index) in AVAILABLE_VARIABLES"
+                            :key="index"
+                            @click="insertVariable(item.value)"
+                            class="w-full text-left px-4 py-2 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                          >
+                            {{ item.label }}
+                          </button>
+                        </div>
+                        <div v-if="showVariableDropdown" @click="showVariableDropdown = false" class="fixed inset-0 z-10 cursor-default"></div>
+                      </div>
+                    </div>
+
                     <textarea 
+                      ref="followUpTextarea"
                       v-model="followUpConfig.message"
+                      @click="updateCursorPosition"
+                      @keyup="updateCursorPosition"
+                      @blur="updateCursorPosition"
                       rows="4"
                       placeholder="Halo kak, terima kasih sudah melakukan booking. Apakah ada kendala atau pertanyaan lain?"
                       class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out"
                     ></textarea>
-                    <p class="text-xs text-gray-500 mt-1 italic">Pesan ini akan dikirimkan otomatis ke pelanggan melalui WhatsApp sesuai waktu yang ditentukan.</p>
+                    
+                    <p class="text-xs text-gray-500 mt-1 italic">{{ $t('AGENT_MGMT.REMINDER.MSG_DESC') }}</p>
+
+                    <div class="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded border border-gray-300 dark:border-slate-800 p-3">
+                      <p class="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">{{ $t('AGENT_MGMT.REMINDER.MSG_EXAMPLE') }}</p>
+                      <div class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                        <span v-if="!followUpConfig.message" class="text-slate-400 italic opacity-70">Belum ada pesan yang ditulis...</span>
+                        <span v-else v-html="messagePreview"></span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -341,70 +383,30 @@
                     </svg>
                   </div>
                   <div>
-                    <h3 class="font-medium text-slate-900 dark:text-slate-25">Pengaturan Idle Chat</h3>
-                    <p class="text-sm text-gray-500 mt-1">Atur tindakan otomatis jika tidak ada aktivitas chat</p>
+                    <h3 class="font-medium text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.EOBOT.IDLE_STATE') }}</h3>
+                    <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.EOBOT.IDLE_STATE_DESC') }}</p>
                   </div>
                 </div>
                 
                 <div class="border-t border-gray-200 dark:border-gray-700 p-6">
                   <div>
-                    <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
-                      Batas Waktu Idle (Menit)
+                    <label class="block text-sm font-medium mb-2 text-slate-900 dark:text-slate-25">
+                      {{ $t('AGENT_MGMT.EOBOT.IDLE_TIME') }}
                     </label>
-                    <div class="relative">
-                      <input 
-                        type="number" 
-                        min="1"
-                        v-model="idleConfig.duration"
-                        placeholder="Contoh: 15" 
-                        class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm h-10 !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out" 
-                      />
-                      <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">menit tanpa aktivitas</span>
-                    </div>
-                  </div>
-
-                  <div class="mt-4">
-                    <label class="block text-sm font-medium mb-3 text-slate-900 dark:text-slate-25">
-                      Aksi saat Idle
-                    </label>
-                    <div class="flex flex-col sm:flex-row gap-4">
-                      <div class="flex items-center">
+                    <div class="flex items-center gap-3">
+                      <div class="w-16">
                         <input 
-                          id="action-resolve-lead" 
-                          type="radio" 
-                          value="resolve" 
-                          v-model="idleConfig.action"
-                          class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                        >
-                        <label for="action-resolve-lead" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">
-                          Langsung Resolve Chat
-                        </label>
+                          type="number" 
+                          min="1"
+                          v-model="idleConfig.duration"
+                          class="text-center px-2 py-2 text-sm font-medium border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                          placeholder="30" 
+                        />
                       </div>
-                      <div class="flex items-center">
-                        <input 
-                          id="action-message-lead" 
-                          type="radio" 
-                          value="message" 
-                          v-model="idleConfig.action"
-                          class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                        >
-                        <label for="action-message-lead" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">
-                          Kirim Pesan Follow Up
-                        </label>
-                      </div>
+                      <span class="text-slate-600 dark:text-slate-400 text-sm">
+                        {{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_DESC') }}
+                      </span>
                     </div>
-                  </div>
-
-                  <div v-if="idleConfig.action === 'message'" class="mt-4 animate-fadeIn">
-                    <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
-                      Pesan Idle
-                    </label>
-                    <textarea 
-                      v-model="idleConfig.message"
-                      rows="3"
-                      placeholder="Halo, apakah Anda masih di sana? Sesi ini akan segera berakhir jika tidak ada respon."
-                      class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out"
-                    ></textarea>
                   </div>
                 </div>
               </div>
@@ -519,7 +521,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch, onMounted, reactive } from 'vue'
+import { computed, ref, watch, onMounted, reactive, provide } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Button from 'dashboard/components-next/button/Button.vue';
 import FileKnowledgeSources from '../knowledge-sources/FileKnowledgeSources.vue'
@@ -527,6 +529,8 @@ import QnaKnowledgeSources from '../knowledge-sources/QnaKnowledgeSources.vue'
 import PrioritiesTab from './cs-bot-tabs/PrioritiesTab.vue'
 import googleSheetsExportAPI from '../../../../api/googleSheetsExport'
 import aiAgents from '../../../../api/aiAgents'
+import idleConfigsAPI from '../../../../api/idleConfigs';
+import remindersAPI from '../../../../api/reminders';
 import { useAlert } from 'dashboard/composables';
 import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue';
 
@@ -542,6 +546,9 @@ const props = defineProps({
     required: true,
   },
 })
+
+const emit = defineEmits(['update:data'])
+provide('emitUpdate', () => emit('update:data'))
 
 const defaultLeadPriorities = [
   { 
@@ -571,30 +578,27 @@ const followUpConfig = reactive({
 });
 
 // follow-up options
-const followUpTimeOptions = [
-  { label: '30 Menit', value: 30 },
-  { label: '1 Jam', value: 60 },
-  { label: '4 Jam', value: 240 },
-  { label: '12 Jam', value: 720 },
-  { label: '24 Jam', value: 1440 },
-];
+const followUpTimeOptions = computed(() => [
+  { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.30_MINUTES'), value: 30 },
+  { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.1_HOUR'), value: 60 },
+  { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.2_HOURS'), value: 120 },
+  { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.4_HOURS'), value: 240 },
+  { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.24_HOURS'), value: 1440 },
+]);
 
 // temperature bot
 const creativityLevel = ref(0.3);
-const creativityOptions = [
-  { label: 'Tidak sama sekali', value: 0 },
-  { label: 'Minim', value: 0.1 },
-  { label: 'Normal', value: 0.3 },
-  { label: 'Lebih tinggi', value: 0.6 },
-  { label: 'Maksimal', value: 1 },
-];
+const creativityOptions = computed(() => [
+  { label: t('AGENT_MGMT.CREATIVITY.DETERMINISTIC'), value: 0 },
+  { label: t('AGENT_MGMT.CREATIVITY.CONSERVATIVE'), value: 0.1 },
+  { label: t('AGENT_MGMT.CREATIVITY.NATURAL'), value: 0.3 },
+  { label: t('AGENT_MGMT.CREATIVITY.INNOVATIVE'), value: 0.5 },
+  { label: t('AGENT_MGMT.CREATIVITY.VISIONARY'), value: 0.7 },
+]);
 
 // idle time
 const idleConfig = reactive({
-  enabled: true,
-  duration: 30,      
-  action: 'resolve', 
-  message: ''        
+  duration: 30,       
 });
 
 // Helper function to get agent ID by type
@@ -717,6 +721,8 @@ watch(
   (newData) => {
     if (newData && newData.display_flow_data) {
       loadSavedConfiguration();
+      // Load idle config from API
+      loadIdleConfig();
     }
   },
   { deep: true, immediate: true }
@@ -828,12 +834,6 @@ function loadSavedConfiguration() {
         followUpConfig.message = config.follow_up.message || '';
       }
 
-      if (config?.idle_settings) {
-        idleConfig.enabled = config.idle_settings.enabled !== undefined ? config.idle_settings.enabled : true;
-        idleConfig.duration = config.idle_settings.duration || '';
-        idleConfig.action = config.idle_settings.action || 'resolve';
-        idleConfig.message = config.idle_settings.message || '';
-      }
     }
   }
 }
@@ -843,7 +843,9 @@ async function saveSettings() {
 
   try {
     isSaving.value = true;
-    let flowData = props.data.display_flow_data;
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data));
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
+
     const agentIndex = flowData.enabled_agents.indexOf('lead_generation');
 
     if (agentIndex === -1) {
@@ -856,6 +858,7 @@ async function saveSettings() {
     }
 
     flowData.agents_config[agentIndex].temperature = creativityLevel.value;
+    displayFlowData.agents_config[agentIndex].temperature = creativityLevel.value;
 
     // Update data Follow Up ke payload
     flowData.agents_config[agentIndex].configurations.follow_up = {
@@ -863,19 +866,29 @@ async function saveSettings() {
       delay: followUpConfig.delay,
       message: followUpConfig.message
     };
-
-    flowData.agents_config[agentIndex].configurations.idle_settings = {
-      enabled: true,
-      duration: idleConfig.duration,
-      action: idleConfig.action,
-      message: idleConfig.message
+    displayFlowData.agents_config[agentIndex].configurations.follow_up = {
+      enabled: followUpConfig.enabled,
+      delay: followUpConfig.delay,
+      message: followUpConfig.message
     };
 
     const payload = {
       flow_data: flowData,
+      display_flow_data: displayFlowData,
     };
 
-    await aiAgents.updateAgent(props.data.id, payload);
+    await Promise.all([
+      aiAgents.updateAgent(props.data.id, payload),
+      remindersAPI.updateConfig(props.data.id, {
+        enabled: followUpConfig.enabled,
+        minutes_before_booking: followUpConfig.delay,
+        message_template: followUpConfig.message
+      }),
+      idleConfigsAPI.updateConfig(props.data.id, {
+        duration: idleConfig.duration,
+      })
+    ]);
+    emit('update:data');
 
     showNotification(t('AGENT_MGMT.CSBOT.TICKET.SAVE_SUCCESS'), 'success');
   } catch (e) {
@@ -909,6 +922,49 @@ async function createSheets() {
     props.googleSheetsAuth.loading = false;
   }
 }
+
+// Reminder Message
+const followUpTextarea = ref(null);
+const cursorPosition = ref(0);
+const showVariableDropdown = ref(false);
+
+const AVAILABLE_VARIABLES = computed(() => [
+  { label: t('AGENT_MGMT.REMINDER.VARIABLES.CUSTOMER_NAME'), value: '{{nama_pelanggan}}', mock: 'Budi Santoso' },
+  { label: t('AGENT_MGMT.REMINDER.VARIABLES.LEADGEN.DATE'), value: '{{tanggal_konsultasi}}', mock: '25 Des 2025' },
+  { label: t('AGENT_MGMT.REMINDER.VARIABLES.LEADGEN.TIME'), value: '{{waktu_konsultasi}}', mock: '14:00 WIB' },
+  { label: t('AGENT_MGMT.REMINDER.VARIABLES.SERVICE_NAME'), value: '{{nama_layanan}}', mock: 'Konsultasi Premium' },
+]);
+
+const messagePreview = computed(() => {
+  let text = followUpConfig.message || '';
+  AVAILABLE_VARIABLES.value.forEach(variable => {
+    text = text.replaceAll(variable.value, `<span class="font-bold text-slate-800 dark:text-slate-100">${variable.mock}</span>`);
+  });
+  return text.replace(/\n/g, '<br>');
+});
+
+const updateCursorPosition = () => {
+  if (followUpTextarea.value) {
+    cursorPosition.value = followUpTextarea.value.selectionStart;
+  }
+};
+
+const insertVariable = (variableValue) => {
+  const currentMessage = followUpConfig.message || '';
+  const insertAt = cursorPosition.value;
+  
+  followUpConfig.message = currentMessage.substring(0, insertAt) + variableValue + currentMessage.substring(insertAt);
+  
+  cursorPosition.value = insertAt + variableValue.length; 
+  showVariableDropdown.value = false;
+  
+  if(followUpTextarea.value) {
+    followUpTextarea.value.focus();
+    setTimeout(() => {
+        followUpTextarea.value.setSelectionRange(cursorPosition.value, cursorPosition.value);
+    }, 0);
+  }
+};
 
 // Helper function to split text into chunks
 function splitTextIntoChunks(text, maxChunkSize = 19000) {
@@ -1034,8 +1090,24 @@ async function syncProductColumns() {
   }
 }
 
+
+// Load idle config from API
+async function loadIdleConfig() {
+  if (!props.data?.id) return;
+  try {
+    const response = await idleConfigsAPI.getConfig(props.data.id);
+    if (response.data) {
+      idleConfig.enabled = response.data.enabled !== undefined ? response.data.enabled : true;
+      idleConfig.duration = response.data.duration || 30;
+    }
+  } catch (error) {
+    console.error('Failed to load idle config:', error);
+  }
+}
+
 onMounted(() => {
   loadSavedConfiguration();
+  loadIdleConfig();
 });
 
 </script>

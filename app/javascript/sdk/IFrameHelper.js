@@ -47,10 +47,20 @@ const updateCampaignReadStatus = baseDomain => {
 };
 
 export const IFrameHelper = {
-  getUrl({ baseUrl, websiteToken }) {
-    return `${baseUrl}/widget?website_token=${websiteToken}`;
+  getUrl({ baseUrl, websiteToken, locale }) {
+    // FIXED: Build URL with locale parameter
+    let url = `${baseUrl}/widget?website_token=${websiteToken}`;
+    
+    // Add locale as URL parameter if provided
+    if (locale) {
+      url += `&locale=${locale}`;
+    }
+    
+    console.log('[IFrameHelper] Building widget URL:', url);
+    return url;
   },
-  createFrame: ({ baseUrl, websiteToken }) => {
+  
+  createFrame: ({ baseUrl, websiteToken, locale }) => {
     if (IFrameHelper.getAppFrame()) {
       return;
     }
@@ -58,10 +68,16 @@ export const IFrameHelper = {
     loadCSS();
     const iframe = document.createElement('iframe');
     const cwCookie = Cookies.get('cw_conversation');
-    let widgetUrl = IFrameHelper.getUrl({ baseUrl, websiteToken });
+    
+    // FIXED: Pass locale to getUrl
+    let widgetUrl = IFrameHelper.getUrl({ baseUrl, websiteToken, locale });
+    
     if (cwCookie) {
       widgetUrl = `${widgetUrl}&cw_conversation=${cwCookie}`;
     }
+    
+    console.log('[IFrameHelper] Creating iframe with URL:', widgetUrl);
+    
     iframe.src = widgetUrl;
     iframe.allow =
       'camera;microphone;fullscreen;display-capture;picture-in-picture;clipboard-write;';
@@ -84,8 +100,10 @@ export const IFrameHelper = {
     IFrameHelper.initWindowSizeListener();
     IFrameHelper.preventDefaultScroll();
   },
+  
   getAppFrame: () => document.getElementById('chatwoot_live_chat_widget'),
   getBubbleHolder: () => document.getElementsByClassName('woot--bubble-holder'),
+  
   sendMessage: (key, value) => {
     const element = IFrameHelper.getAppFrame();
     element.contentWindow.postMessage(
@@ -93,6 +111,7 @@ export const IFrameHelper = {
       '*'
     );
   },
+  
   initPostMessageCommunication: () => {
     window.onmessage = e => {
       if (
@@ -107,9 +126,11 @@ export const IFrameHelper = {
       }
     };
   },
+  
   initWindowSizeListener: () => {
     window.addEventListener('resize', () => IFrameHelper.toggleCloseButton());
   },
+  
   preventDefaultScroll: () => {
     widgetHolder.addEventListener('wheel', event => {
       const deltaY = event.deltaY;
@@ -181,6 +202,7 @@ export const IFrameHelper = {
         dispatchWindowEvent({ eventName: CHATWOOT_READY });
       }
     },
+    
     error: ({ errorType, data }) => {
       dispatchWindowEvent({ eventName: CHATWOOT_ERROR, data: data });
 
@@ -188,9 +210,11 @@ export const IFrameHelper = {
         Cookies.remove(getUserCookieName());
       }
     },
+    
     onEvent({ eventIdentifier: eventName, data }) {
       dispatchWindowEvent({ eventName, data });
     },
+    
     setBubbleLabel(message) {
       setBubbleText(window.$chatwoot.launcherTitle || message.label);
     },
@@ -231,12 +255,14 @@ export const IFrameHelper = {
         IFrameHelper.pushEvent('webwidget.triggered');
       }
     },
+    
     onLocationChange: ({ referrerURL, referrerHost }) => {
       IFrameHelper.sendMessage('change-url', {
         referrerURL,
         referrerHost,
       });
     },
+    
     updateIframeHeight: message => {
       const { extraHeight = 0, isFixedHeight } = message;
 
@@ -249,6 +275,7 @@ export const IFrameHelper = {
     },
 
     resetUnreadMode: () => removeUnreadClass(),
+    
     handleNotificationDot: event => {
       if (window.$chatwoot.hideMessageBubble) {
         return;
@@ -273,6 +300,7 @@ export const IFrameHelper = {
       window.playAudioAlert();
     },
   },
+  
   pushEvent: eventName => {
     IFrameHelper.sendMessage('push-event', { eventName });
   },
@@ -316,6 +344,7 @@ export const IFrameHelper = {
     bubbleHolder.appendChild(closeBubble);
     onClickChatBubble();
   },
+  
   toggleCloseButton: () => {
     let isMobile = false;
     if (window.matchMedia('(max-width: 668px)').matches) {

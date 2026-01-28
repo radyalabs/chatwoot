@@ -34,6 +34,9 @@ class AiAgent < ApplicationRecord
   has_one :knowledge_source, dependent: :destroy
   has_many :reminders, dependent: :destroy
   has_one :reminder_config, dependent: :destroy
+  has_one :idle_config, dependent: :destroy
+  has_many :sheet_numbering_configs, dependent: :destroy
+  has_many :shipping_stores, dependent: :destroy
 
   validates :name, :system_prompts, :welcoming_message, presence: true
   validates :timezone, presence: true, inclusion: { in: ActiveSupport::TimeZone.all.map(&:name) }
@@ -50,6 +53,8 @@ class AiAgent < ApplicationRecord
   accepts_nested_attributes_for :ai_agent_selected_labels, allow_destroy: true
 
   before_validation :set_default_messages
+  after_create :create_default_numbering_config
+  after_destroy :cleanup_numbering_counters
 
   def set_default_messages
     self.system_prompts ||= 'Default system prompt'
@@ -134,7 +139,7 @@ class AiAgent < ApplicationRecord
   end
 
   def base_attributes
-    %i[id uid name description welcoming_message agent_type template_type display_flow_data]
+    %i[id uid name description welcoming_message agent_type template_type flow_data display_flow_data]
   end
 
   def included_associations
@@ -158,5 +163,23 @@ class AiAgent < ApplicationRecord
       'ai_agent_selected_labels' => 'selected_labels',
       'ai_agent_followups' => 'followups'
     }[key] || key
+  end
+
+  def create_default_numbering_config
+    sheet_numbering_configs.create!(
+      account: account,
+      numbering_key: 'default',
+      prefix: nil,
+      format_pattern: '[NUMBER]/[MONTH]/[YEAR]',
+      current_value: 1,
+      number_padding: 3,
+      reset_interval: 'never'
+    )
+  rescue ActiveRecord::RecordInvalid => e
+    Rails.logger.error("[AiAgent] Failed to create default numbering config: #{e.message}")
+  end
+
+  def cleanup_numbering_counters
+    CleanupNumberingCountersJob.perform_later(account_id, id)
   end
 end

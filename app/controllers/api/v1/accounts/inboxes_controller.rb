@@ -73,11 +73,25 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController #
 
     begin
       qr_data = @channel.get_qr_code
-      render json: {
-        success: true,
-        qr_code: qr_data.dig('data', 'qr'),
-        message: 'QR Code generated successfully'
-      }
+
+      # Handle already_connected case (GOWA returns this when session is already logged in)
+      if qr_data.dig('data', 'already_connected')
+        render json: {
+          success: true,
+          already_connected: true,
+          status: 'connected',
+          provider: @channel.effective_provider,
+          message: 'WhatsApp session is already connected'
+        }
+      else
+        render json: {
+          success: true,
+          qr_code: qr_data.dig('data', 'qr'),
+          qr_type: qr_data.dig('data', 'qr_type') || 'base64',
+          provider: @channel.effective_provider,
+          message: 'QR Code generated successfully'
+        }
+      end
     rescue StandardError => e
       render json: {
         success: false,
@@ -92,7 +106,13 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController #
     force_real_time = params[:real_time] == 'true'
 
     begin
-      status = if force_real_time && @channel.respond_to?(:real_time_status)
+      # For GOWA provider or when cache is empty, always use real_time_status
+      # to poll the actual API and detect when session becomes connected
+      use_real_time = force_real_time ||
+                      (@channel.respond_to?(:effective_provider) && @channel.effective_provider == 'gowa') ||
+                      @channel.read_session_status_from_cache.blank?
+
+      status = if use_real_time && @channel.respond_to?(:real_time_status)
                  @channel.real_time_status
                else
                  @channel.session_status
@@ -144,6 +164,75 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController #
     end
   end
 
+  def whatsapp_disconnect_session
+    @channel = @inbox.channel
+
+    begin
+      if @channel.respond_to?(:disconnect_session)
+        result = @channel.disconnect_session
+
+        if result[:success]
+          render json: {
+            success: true,
+            message: result[:message],
+            status: result[:status]
+          }
+        else
+          render json: {
+            success: false,
+            message: result[:message]
+          }, status: :unprocessable_entity
+        end
+      else
+        render json: {
+          success: false,
+          message: 'Disconnect session not supported for this channel type'
+        }, status: :unprocessable_entity
+      end
+    rescue StandardError => e
+      Rails.logger.error "WhatsApp disconnect session error: #{e.message}"
+      render json: {
+        success: false,
+        message: "Failed to disconnect session: #{e.message}"
+      }, status: :internal_server_error
+    end
+  end
+
+  def whatsapp_reconnect_session
+    @channel = @inbox.channel
+
+    begin
+      if @channel.respond_to?(:reconnect_session)
+        result = @channel.reconnect_session
+
+        if result[:success]
+          render json: {
+            success: true,
+            message: result[:message],
+            status: result[:status],
+            requires_qr: result[:requires_qr] || false
+          }
+        else
+          render json: {
+            success: false,
+            message: result[:message]
+          }, status: :unprocessable_entity
+        end
+      else
+        render json: {
+          success: false,
+          message: 'Reconnect session not supported for this channel type'
+        }, status: :unprocessable_entity
+      end
+    rescue StandardError => e
+      Rails.logger.error "WhatsApp reconnect session error: #{e.message}"
+      render json: {
+        success: false,
+        message: "Failed to reconnect session: #{e.message}"
+      }, status: :internal_server_error
+    end
+  end
+
   private
 
   def fetch_inbox
@@ -155,39 +244,20 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController #
     @agent_bot = @inbox.agent_bot
   end
 
-  def build_status_response(status) # rubocop:disable Metrics/MethodLength
-    waha_status = map_to_waha_status(status)
+  def build_status_response(status)
+    normalized_status = map_to_waha_status(status)
+    is_connected = normalized_status == 'connected'
 
-    attempts_info = {}
-    if @channel.respond_to?(:read_mismatch_attempts_from_cache)
-      current_attempts = @channel.read_mismatch_attempts_from_cache
-      if current_attempts.positive?
-        attempts_info = {
-          current_attempts: current_attempts,
-          max_attempts: 3,
-          remaining_attempts: 3 - current_attempts
-        }
-      end
-    end
-
-    base_response = {
+    {
       success: true,
       message: 'session info fetched successfully',
-      connected: waha_status == 'logged_in',
-      status: waha_status,
+      connected: is_connected,
+      status: normalized_status,
       data: {
-        status: waha_status,
-        connected: waha_status == 'logged_in'
+        status: normalized_status,
+        connected: is_connected
       }
     }
-
-    # Add attempts info if available
-    if attempts_info.any?
-      base_response[:attempts] = attempts_info
-      base_response[:data][:attempts] = attempts_info
-    end
-
-    base_response
   end
 
   def error_status_response(error_message)
@@ -196,7 +266,7 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController #
       connected: false,
       message: error_message,
       data: {
-        status: 'not_logged_in',
+        status: 'disconnected',
         connected: false
       }
     }
@@ -253,19 +323,16 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController #
 
   def map_to_waha_status(status)
     actual_status = status.dig('data', 'status')
-    status_map = {
-      'connected' => 'logged_in',
-      'authenticated' => 'logged_in',
-      'ready' => 'logged_in',
-      'logged_in' => 'logged_in',
-      'pending_validation' => 'pending_validation',
-      'waiting' => 'pending_validation',
-      'waiting_for_qr' => 'waiting_for_qr',
-      'disconnected' => 'not_logged_in',
-      'not_logged_in' => 'not_logged_in'
-    }
+    connected = status.dig('data', 'connected')
 
-    status_map.fetch(actual_status&.downcase, 'not_logged_in')
+    # Normalize to simple connected/disconnected for UI
+    # Internal statuses (validated, waiting, mismatch, etc.) are kept in logs for debugging
+    return 'connected' if connected
+
+    connected_statuses = %w[connected authenticated ready logged_in validated]
+    return 'connected' if connected_statuses.include?(actual_status&.downcase)
+
+    'disconnected'
   end
 
   def permitted_params(channel_attributes = [])

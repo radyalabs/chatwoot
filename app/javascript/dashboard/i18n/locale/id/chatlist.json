@@ -21,13 +21,13 @@
     },
     "CHAT_STATUS_FILTER_ITEMS": {
       "open": {
-        "TEXT": "Berjalan"
+        "TEXT": "Baru"
       },
       "assigned": {
         "TEXT": "Ditugaskan"
       },
       "resolved": {
-        "TEXT": "Terselesaikan"
+        "TEXT": "Selesai"
       },
       "pending": {
         "TEXT": "Ditunda"

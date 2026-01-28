@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2025_12_12_000002) do
+ActiveRecord::Schema[7.0].define(version: 2026_01_27_030656) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -59,7 +59,6 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_12_000002) do
     t.integer "status", default: 0
     t.bigint "active_subscription_id"
     t.string "subscription_status", default: "free_trial"
-    t.jsonb "internal_attributes", default: {}, null: false
     t.index ["active_subscription_id"], name: "index_accounts_on_active_subscription_id"
     t.index ["status"], name: "index_accounts_on_status"
   end
@@ -224,13 +223,9 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_12_000002) do
     t.string "slug", null: false
     t.integer "position"
     t.string "locale", default: "en", null: false
-    t.index ["account_id"], name: "index_articles_on_account_id"
     t.index ["associated_article_id"], name: "index_articles_on_associated_article_id"
     t.index ["author_id"], name: "index_articles_on_author_id"
-    t.index ["portal_id"], name: "index_articles_on_portal_id"
     t.index ["slug"], name: "index_articles_on_slug", unique: true
-    t.index ["status"], name: "index_articles_on_status"
-    t.index ["views"], name: "index_articles_on_views"
   end
 
   create_table "attachments", id: :serial, force: :cascade do |t|
@@ -244,7 +239,6 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_12_000002) do
     t.datetime "updated_at", precision: nil, null: false
     t.string "fallback_title"
     t.string "extension"
-    t.jsonb "meta", default: {}
     t.index ["account_id"], name: "index_attachments_on_account_id"
     t.index ["message_id"], name: "index_attachments_on_message_id"
   end
@@ -523,7 +517,6 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_12_000002) do
     t.jsonb "pre_chat_form_options", default: {}
     t.boolean "hmac_mandatory", default: false
     t.boolean "continuity_via_email", default: true, null: false
-    t.string "widget_heading"
     t.index ["hmac_token"], name: "index_channel_web_widgets_on_hmac_token", unique: true
     t.index ["website_token"], name: "index_channel_web_widgets_on_website_token", unique: true
   end
@@ -547,8 +540,13 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_12_000002) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "token"
+    t.string "provider"
+    t.string "device_id"
+    t.jsonb "provider_config", default: {}
+    t.string "status", default: "disconnected", null: false
     t.index ["account_id"], name: "index_channel_whatsapp_unofficials_on_account_id"
     t.index ["phone_number"], name: "index_channel_whatsapp_unofficials_on_phone_number", unique: true
+    t.index ["status"], name: "index_channel_whatsapp_unofficials_on_status"
   end
 
   create_table "contact_inboxes", force: :cascade do |t|
@@ -635,6 +633,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_12_000002) do
     t.text "cached_label_list"
     t.boolean "is_reminded", default: false, null: false
     t.boolean "is_handover_reminded", default: false, null: false
+    t.boolean "is_convert", default: false, null: false
     t.index ["account_id", "display_id"], name: "index_conversations_on_account_id_and_display_id", unique: true
     t.index ["account_id", "id"], name: "index_conversations_on_id_and_account_id"
     t.index ["account_id", "inbox_id", "status", "assignee_id"], name: "conv_acid_inbid_stat_asgnid_idx"
@@ -749,6 +748,34 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_12_000002) do
     t.string "name"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
+  end
+
+  create_table "idle_configs", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "ai_agent_id", null: false
+    t.boolean "enabled", default: true, null: false
+    t.integer "duration", default: 30, null: false
+    t.string "action", default: "resolve", null: false
+    t.text "message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "ai_agent_id"], name: "index_idle_configs_on_account_id_and_ai_agent_id", unique: true
+    t.index ["account_id"], name: "index_idle_configs_on_account_id"
+    t.index ["ai_agent_id"], name: "index_idle_configs_on_ai_agent_id"
+  end
+
+  create_table "idle_conversations", force: :cascade do |t|
+    t.bigint "conversation_id", null: false
+    t.integer "inbox_id", null: false
+    t.integer "account_id", null: false
+    t.integer "ai_agent_id", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "step", default: 0, null: false
+    t.datetime "last_sent_at"
+    t.jsonb "additional_attributes", default: {}
+    t.index ["conversation_id"], name: "index_idle_conversations_on_conversation_id"
   end
 
   create_table "inbox_members", id: :serial, force: :cascade do |t|
@@ -1035,6 +1062,15 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_12_000002) do
     t.datetime "updated_at", precision: nil, null: false
   end
 
+  create_table "portal_members", force: :cascade do |t|
+    t.bigint "portal_id"
+    t.bigint "user_id"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
+    t.index ["portal_id", "user_id"], name: "index_portal_members_on_portal_id_and_user_id", unique: true
+    t.index ["user_id", "portal_id"], name: "index_portal_members_on_user_id_and_portal_id", unique: true
+  end
+
   create_table "portals", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "name", null: false
@@ -1130,6 +1166,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_12_000002) do
     t.datetime "updated_at", null: false
     t.string "service_id"
     t.string "message"
+    t.index ["account_id", "inbox_id", "ai_agent_id", "conversation_id", "service_id"], name: "reminders_unique_idx", unique: true
     t.index ["account_id", "scheduled_at"], name: "index_reminders_on_account_id_and_scheduled_at"
     t.index ["account_id"], name: "index_reminders_on_account_id"
     t.index ["ai_agent_id"], name: "index_reminders_on_ai_agent_id"
@@ -1157,6 +1194,39 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_12_000002) do
     t.index ["inbox_id"], name: "index_reporting_events_on_inbox_id"
     t.index ["name"], name: "index_reporting_events_on_name"
     t.index ["user_id"], name: "index_reporting_events_on_user_id"
+  end
+
+  create_table "sheet_numbering_configs", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "ai_agent_id", null: false
+    t.string "prefix"
+    t.string "format_pattern", default: "[NUMBER]/[MONTH]/[YEAR]", null: false
+    t.integer "current_value", default: 1, null: false
+    t.integer "number_padding", default: 3, null: false
+    t.string "reset_interval", default: "never", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "numbering_key", default: "default", null: false
+    t.index ["account_id", "ai_agent_id", "numbering_key"], name: "idx_sheet_numbering_configs_unique_key", unique: true
+    t.index ["account_id"], name: "index_sheet_numbering_configs_on_account_id"
+    t.index ["ai_agent_id"], name: "index_sheet_numbering_configs_on_ai_agent_id"
+  end
+
+  create_table "shipping_stores", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "ai_agent_id", null: false
+    t.string "name", null: false
+    t.text "address", null: false
+    t.decimal "latitude", precision: 10, scale: 6
+    t.decimal "longitude", precision: 10, scale: 6
+    t.jsonb "courier_settings", default: {}, null: false
+    t.jsonb "pickup_settings", default: {}, null: false
+    t.boolean "is_enabled", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_shipping_stores_on_account_id"
+    t.index ["ai_agent_id", "is_enabled"], name: "index_shipping_stores_on_ai_agent_id_and_is_enabled"
+    t.index ["ai_agent_id"], name: "index_shipping_stores_on_ai_agent_id"
   end
 
   create_table "sla_events", force: :cascade do |t|
@@ -1491,6 +1561,9 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_12_000002) do
   add_foreign_key "ai_agent_followups", "ai_agents"
   add_foreign_key "ai_agent_selected_labels", "ai_agents"
   add_foreign_key "ai_agent_selected_labels", "labels"
+  add_foreign_key "idle_configs", "accounts"
+  add_foreign_key "idle_configs", "ai_agents"
+  add_foreign_key "idle_conversations", "conversations", on_delete: :cascade
   add_foreign_key "inboxes", "portals"
   add_foreign_key "knowledge_source_files", "knowledge_sources"
   add_foreign_key "knowledge_source_qnas", "knowledge_sources"
@@ -1505,6 +1578,10 @@ ActiveRecord::Schema[7.0].define(version: 2025_12_12_000002) do
   add_foreign_key "reminders", "ai_agents"
   add_foreign_key "reminders", "conversations"
   add_foreign_key "reminders", "inboxes"
+  add_foreign_key "sheet_numbering_configs", "accounts"
+  add_foreign_key "sheet_numbering_configs", "ai_agents"
+  add_foreign_key "shipping_stores", "accounts"
+  add_foreign_key "shipping_stores", "ai_agents"
   add_foreign_key "subscription_payments", "subscriptions"
   add_foreign_key "subscription_plans", "accounts", column: "owner_account_id"
   add_foreign_key "subscription_topups", "subscriptions"

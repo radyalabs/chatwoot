@@ -79,7 +79,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, provide } from 'vue'
 import { useI18n } from 'vue-i18n'
 import FileKnowledgeSources from '../knowledge-sources/FileKnowledgeSources.vue'
 import QnaKnowledgeSources from '../knowledge-sources/QnaKnowledgeSources.vue'
@@ -101,6 +101,11 @@ const props = defineProps({
     required: true,
   },
 })
+
+const emit = defineEmits(['update:data'])
+
+// ✅ Provide emit function to child tabs
+provide('emitUpdate', () => emit('update:data'))
 
 const config = reactive({
   ticketSystemActive: false,

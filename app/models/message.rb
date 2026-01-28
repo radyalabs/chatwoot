@@ -111,6 +111,7 @@ class Message < ApplicationRecord
   scope :chat, -> { where.not(message_type: :activity).where(private: false) }
   scope :non_activity_messages, -> { where.not(message_type: :activity).reorder('id desc') }
   scope :today, -> { where("date_trunc('day', created_at) = ?", Date.current) }
+  scope :from_ai_or_contact, -> { where(sender_type: %w[AiAgent Contact]) }
 
   # TODO: Get rid of default scope
   # https://stackoverflow.com/a/1834250/939299
@@ -322,9 +323,14 @@ class Message < ApplicationRecord
   end
 
   def send_reply
-    # FIXME: Giving it few seconds for the attachment to be uploaded to the service
-    # active storage attaches the file only after commit
-    attachments.blank? ? ::SendReplyJob.perform_later(id) : ::SendReplyJob.set(wait: 2.seconds).perform_later(id)
+    # Attachment jobs use a separate queue with high priority to avoid being blocked by other jobs
+    # The 2-second delay is no longer needed since file is already uploaded to Azure storage
+    # before the message is created
+    if attachments.blank?
+      ::SendReplyJob.perform_later(id)
+    else
+      ::SendReplyWithAttachmentsJob.perform_later(id)
+    end
   end
 
   def reopen_conversation

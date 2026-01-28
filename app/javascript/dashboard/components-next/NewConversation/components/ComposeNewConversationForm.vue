@@ -220,6 +220,26 @@ const handleAttachFile = files => {
   state.attachedFiles = files;
 };
 
+const handleUpdateAttachment = ({ tempId, blob }) => {
+  const index = state.attachedFiles.findIndex(f => f.tempId === tempId);
+  if (index !== -1) {
+    state.attachedFiles[index] = {
+      ...state.attachedFiles[index],
+      resource: blob,
+      blobSignedId: blob.signed_id,
+      uploading: false,
+    };
+  }
+};
+
+const handleRemoveUploadingAttachment = tempId => {
+  state.attachedFiles = state.attachedFiles.filter(f => f.tempId !== tempId);
+};
+
+const isUploading = computed(() => {
+  return state.attachedFiles.some(file => file.uploading);
+});
+
 const clearForm = () => {
   Object.assign(state, {
     message: '',
@@ -334,7 +354,7 @@ const handleSendWhatsappMessage = async ({ message, templateParams }) => {
       :message-templates="whatsappMessageTemplates"
       :channel-type="inboxChannelType"
       :is-loading="isCreating"
-      :disable-send-button="isCreating"
+      :disable-send-button="isCreating || isUploading"
       :has-selected-inbox="!!targetInbox"
       :has-no-inbox="showNoInboxAlert"
       :is-dropdown-active="isAnyDropdownActive"
@@ -343,6 +363,8 @@ const handleSendWhatsappMessage = async ({ message, templateParams }) => {
       @add-signature="handleAddSignature"
       @remove-signature="handleRemoveSignature"
       @attach-file="handleAttachFile"
+      @update-attachment="handleUpdateAttachment"
+      @remove-uploading-attachment="handleRemoveUploadingAttachment"
       @discard="$emit('discard')"
       @send-message="handleSendMessage"
       @send-whatsapp-message="handleSendWhatsappMessage"

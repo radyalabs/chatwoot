@@ -4,11 +4,11 @@ class Captain::Llm::BaseJangkauService
   include HTTParty
   base_uri ENV.fetch('JANGKAU_AGENT_API_URL', 'https://agent.jangkau.ai/')
 
-  def initialize(account_id, ai_agent, question, session_id, additional_attributes)
+  def initialize(account_id, ai_agent, conversation, question, additional_attributes)
+    @conversation = conversation
     @account_id = account_id
     @ai_agent = ai_agent
     @question = question
-    @session_id = session_id
     @additional_attributes = additional_attributes
   end
 
@@ -45,11 +45,28 @@ class Captain::Llm::BaseJangkauService
   end
 
   def request_body
+    # Get attachments from last message
+    last_message = @conversation.messages.last
+    attachments = if last_message&.attachments&.any?
+                    last_message.attachments.select { |att| att.file.attached? }.map do |att|
+                      {
+                        url: att.file_url,
+                        file_type: att.file_type,
+                        filename: att.file.filename.to_s
+                      }
+                    end
+                  else
+                    []
+                  end
+
     {
       'question' => @question,
+      'attachments' => attachments.any? ? attachments : nil,
       'overrideConfig' => {
-        'session_id' => @session_id.to_s,
-        'agent_id' => @ai_agent.id,
+        'session_id' => @conversation.uuid,
+        'conversation_id' => @conversation.id,
+        'inbox_id' => @conversation.inbox_id,
+        'ai_agent_id' => @ai_agent.id,
         'vars' => {
           'account_id' => @account_id.to_s,
           'customer_name' => @additional_attributes['name'] || '',
@@ -57,7 +74,7 @@ class Captain::Llm::BaseJangkauService
           'channel' => @additional_attributes['channel'] || ''
         }.merge(@ai_agent.flow_data || {})
       }
-    }
+    }.compact
   end
 
   def headers

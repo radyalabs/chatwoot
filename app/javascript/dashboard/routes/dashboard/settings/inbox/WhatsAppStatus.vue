@@ -175,10 +175,9 @@ export default {
       <!-- WhatsApp Status Widget -->
       <div v-if="isWhatsAppUnofficial">
         <WhatsAppStatus
+          ref="whatsappStatus"
           :inbox-id="inboxId"
           :account-id="accountId"
-          :auto-refresh="true"
-          :refresh-interval="10000"
           @status-changed="onStatusChanged"
           @status-error="onStatusError"
           @session-restarted="onSessionRestarted"

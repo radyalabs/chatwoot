@@ -28,6 +28,7 @@
 #  index_reminders_on_conversation_id                   (conversation_id)
 #  index_reminders_on_conversation_id_and_scheduled_at  (conversation_id,scheduled_at)
 #  index_reminders_on_inbox_id                          (inbox_id)
+#  reminders_unique_idx                                 (account_id,inbox_id,ai_agent_id,conversation_id,service_id) UNIQUE
 #
 # Foreign Keys
 #
@@ -47,15 +48,17 @@ class Reminder < ApplicationRecord
 
   scope :pending, -> { where(sent_reminder_count: 0) }
   scope :due_for_reminder, lambda { |minutes_before|
-    where('scheduled_at <= ?', Time.current + minutes_before.minutes)
-      .where('scheduled_at > ?', Time.current)
+    now = Time.current
+    where('scheduled_at <= ?', now + minutes_before.minutes)
+      .where('scheduled_at > ?', now)
       .where(sent_reminder_count: 0)
   }
 
-  def mark_as_sent!
+  def mark_as_sent!(message_content = nil)
     update!(
       sent_reminder_count: sent_reminder_count + 1,
-      last_sent_at: Time.current
+      last_sent_at: Time.current,
+      message: message_content
     )
   end
 end

@@ -19,11 +19,17 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
 
   def status
     # Send GET request to check authorization status
-    api_endpoint = GlobalConfigService.load('EXTERNAL_TOKEN_API_URL', nil)
-    status_url = "#{api_endpoint}/#{Current.account.id}/status"
+    base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
+    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
+    return render json: { error: 'JANGKAU_AGENT_API_URL not configured' }, status: :service_unavailable unless base_url
+
+    status_url = "#{base_url}v2/oauth/google/credentials/#{Current.account.id}/status"
 
     begin
-      response = HTTParty.get(status_url)
+      response = HTTParty.get(
+        status_url,
+        headers: { 'X-API-Key' => api_key }
+      )
 
       if response.success?
         authorized = response.parsed_response['authorized'] || false
@@ -161,18 +167,19 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     account_id = params[:account_id]
     return render json: { error: 'Missing required parameter: account_id' }, status: :bad_request unless account_id
 
-    base_api_url = GlobalConfigService.load('EXTERNAL_TOKEN_API_URL', nil)
-    return render json: { error: 'EXTERNAL_TOKEN_API_URL not configured' }, status: :service_unavailable unless base_api_url
+    base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
+    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
+    return render json: { error: 'JANGKAU_AGENT_API_URL not configured' }, status: :service_unavailable unless base_url
 
-    # Replace base path and append `/disconnect`
-    # Example: http://0.0.0.0:8080/v2/oauth/google/credentials
-    # → http://0.0.0.0:8080/v2/oauth/google/credentials/{account_id}/disconnect
-    target_url = base_api_url.gsub(%r{/v2/oauth/google/.*}, "/v2/oauth/google/credentials/#{account_id}/disconnect")
+    target_url = "#{base_url}v2/oauth/google/credentials/#{account_id}/disconnect"
 
     begin
       response = HTTParty.delete(
         target_url,
-        headers: { 'Content-Type' => 'application/json' },
+        headers: {
+          'Content-Type' => 'application/json',
+          'X-API-Key' => api_key
+        },
         timeout: 15
       )
 
@@ -298,17 +305,19 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     end
 
     # Build external API URL
-    base_api_url = GlobalConfigService.load('EXTERNAL_TOKEN_API_URL', nil)
-    return render json: { error: 'EXTERNAL_TOKEN_API_URL not configured' }, status: :service_unavailable unless base_api_url
+    base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
+    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
+    return render json: { error: 'JANGKAU_AGENT_API_URL not configured' }, status: :service_unavailable unless base_url
 
-    # Replace the base path and append `/spreadsheet`
-    # Example: http://0.0.0.0:8080/v2/oauth/google/credentials → http://0.0.0.0:8080/v2/oauth/google/spreadsheet
-    target_url = base_api_url.gsub(%r{/v2/oauth/google/.*}, '/v2/oauth/google/spreadsheet')
+    target_url = "#{base_url}v2/oauth/google/spreadsheet"
 
     begin
       response = HTTParty.post(
         target_url,
-        headers: { 'Content-Type' => 'application/json' },
+        headers: {
+          'Content-Type' => 'application/json',
+          'X-API-Key' => api_key
+        },
         body: payload.to_json,
         timeout: 10
       )

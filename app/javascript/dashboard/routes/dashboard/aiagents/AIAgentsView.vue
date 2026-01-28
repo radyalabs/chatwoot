@@ -13,13 +13,14 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
 const agentTypes = [
-  { label: 'Single Agent', id: 'single' },
-  { label: 'Multi Agent', id: 'multi' },
-  { label: 'Custom Agent', id: 'custom' }
+  { label: 'Single Agent', id: 'single', disabled: false },
+  { label: 'Multi Agent', id: 'multi', disabled: true },
+  { label: 'Custom Agent', id: 'custom', disabled: true }
 ];
 const selectedAgentType = ref(agentTypes[0].id);
 
 function handleAgentTypeChange(item) {
+  if (item.disabled) return;
   selectedAgentType.value = item.id;
 }
 
@@ -29,7 +30,7 @@ async function fetchAiAgentTemplates() {
   }
 
 const { accountId } = useAccount();
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 onMounted(() => {
   fetchAiAgents();
@@ -74,6 +75,11 @@ async function fetchAiAgents() {
             // Get agents_config
             if (agentData?.display_flow_data?.agents_config) {
               agent.agents_config = agentData.display_flow_data.agents_config;
+            }
+
+            // Get updated_at timestamp
+            if (agentData?.updated_at) {
+              agent.updated_at = agentData.updated_at;
             }
           } catch (err) {
             console.error(`Failed to fetch details for agent ${agent.id}:`, err);
@@ -204,13 +210,35 @@ async function createAiAgent() {
   }
 }
 
-const templates = computed(() =>
-  aiTemplates.value?.map(e => ({
-    label: e.name,
-    id: `${e.id}`,
-    description: e.description,
-  }))
-);
+const templates = computed(() => {
+  if (!aiTemplates.value) return [];
+
+  const targetsToDisable = ['Event Organizer', 'Restoran & Cafe', 'Restaurant & Cafe']; 
+
+  const activeList = [];
+  const disabledList = [];
+
+  aiTemplates.value.forEach(e => {
+    const shouldDisable = targetsToDisable.some(target => 
+      e.name.toLowerCase().includes(target.toLowerCase())
+    );
+
+    const mappedItem = {
+      label: e.name,
+      id: `${e.id}`,
+      description: e.description,
+      disabled: shouldDisable
+    };
+
+    if (shouldDisable) {
+      disabledList.push(mappedItem);
+    } else {
+      activeList.push(mappedItem);
+    }
+  });
+
+  return [...activeList, ...disabledList];
+});
 const selectedTemplate = computed({
   get: () => state.selectedTemplate,
   set: (value) => { state.selectedTemplate = value; }
@@ -352,6 +380,45 @@ function getAgentTypeLabel(agent) {
   return agent.type?.replace(/_/g, ' ') || 'Agent';
 }
 
+// Format updated_at timestamp with relative time or absolute fallback
+function formatUpdatedAt(updatedAt) {
+  if (!updatedAt) return '';
+
+  const date = new Date(updatedAt);
+  if (isNaN(date.getTime())) return '';
+
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMinutes = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+
+  if (diffMinutes < 1) {
+    return t('AGENT_MGMT.TIME_FORMAT.JUST_NOW');
+  }
+
+  if (diffMinutes < 60) {
+    if (diffMinutes === 1 && locale.value !== 'id') {
+      return t('AGENT_MGMT.TIME_FORMAT.MINUTE_AGO');
+    }
+    return t('AGENT_MGMT.TIME_FORMAT.MINUTES_AGO', { count: diffMinutes });
+  }
+
+  if (diffHours < 24) {
+    if (diffHours === 1 && locale.value !== 'id') {
+      return t('AGENT_MGMT.TIME_FORMAT.HOUR_AGO');
+    }
+    return t('AGENT_MGMT.TIME_FORMAT.HOURS_AGO', { count: diffHours });
+  }
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const monthName = t(`AGENT_MGMT.TIME_FORMAT.MONTH_${date.getMonth()}`);
+
+  return `${day} ${monthName} ${year} ${hours}:${minutes}`;
+}
+
 
 </script>
 
@@ -410,32 +477,37 @@ function getAgentTypeLabel(agent) {
           </div>
 
           <!-- Card Footer with Actions -->
-          <div class="px-6 pb-6 flex justify-end gap-2 border-t border-slate-100 dark:border-slate-700 pt-4">
-            <RouterLink
-              :to="`/app/accounts/${accountId}/ai-agents/${agent.id}`"
-            >
+          <div class="px-6 pb-6 flex justify-between items-center gap-2 border-t border-slate-100 dark:border-slate-700 pt-4">
+            <div v-if="agent.updated_at" class="text-xs italic text-slate-400 dark:text-slate-500">
+              {{ $t('SIDEBAR.AI_AGENTS_LAST_MODIFIED') }} {{ formatUpdatedAt(agent.updated_at) }}
+            </div>
+            <div class="flex gap-2">
+              <RouterLink
+                :to="`/app/accounts/${accountId}/ai-agents/${agent.id}`"
+              >
+                <woot-button
+                  v-tooltip.top="$t('AGENT_MGMT.EDIT.BUTTON_TEXT')"
+                  variant="smooth"
+                  color-scheme="secondary"
+                  icon="edit"
+                  class-names="grey-btn"
+                />
+              </RouterLink>
               <woot-button
-                v-tooltip.top="$t('AGENT_MGMT.EDIT.BUTTON_TEXT')"
+                v-tooltip.top="$t('AGENT_MGMT.DELETE.BUTTON_TEXT')"
                 variant="smooth"
-                color-scheme="secondary"
-                icon="edit"
+                color-scheme="alert"
+                icon="dismiss-circle"
                 class-names="grey-btn"
+                :is-loading="loadingCards[agent.id]"
+                @click="
+                  () => {
+                    dataToDelete = agent;
+                    showDeleteModal = true;
+                  }
+                "
               />
-            </RouterLink>
-            <woot-button
-              v-tooltip.top="$t('AGENT_MGMT.DELETE.BUTTON_TEXT')"
-              variant="smooth"
-              color-scheme="alert"
-              icon="dismiss-circle"
-              class-names="grey-btn"
-              :is-loading="loadingCards[agent.id]"
-              @click="
-                () => {
-                  dataToDelete = agent;
-                  showDeleteModal = true;
-                }
-              "
-            />
+            </div>
           </div>
         </div>
       </div>
@@ -493,12 +565,14 @@ function getAgentTypeLabel(agent) {
               v-for="type in agentTypes"
               :key="type.id"
               class="flex items-center gap-2"
+              :class="{ 'opacity-50 cursor-not-allowed': type.disabled }"
             >
               <input
                 type="radio"
                 :value="type.id"
                 v-model="selectedAgentType"
                 name="agentType"
+                :disabled="type.disabled"
               />
               {{ type.label }}
             </label>
@@ -517,13 +591,15 @@ function getAgentTypeLabel(agent) {
             class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             :class="{ 'border-red-500': v$.selectedTemplate.$error }"
           >
-            <option v-if="!selectedTemplate" class="text-gray-500" value="">Select a template...</option>
+            <option v-if="!selectedTemplate" class="text-gray-500" value="">{{ $t('AGENT_MGMT.FORM_CREATE.SELECT_TEMPLATE') }}</option>
             <option
               v-for="template in templates"
               :key="template.id"
               :value="template.id"
+              :disabled="template.disabled"
+              :class="{ 'text-gray-400 bg-gray-100': template.disabled }"
             >
-              {{ template.label }}
+              {{ template.label }} {{ template.disabled ? '(Coming Soon)' : '' }}
             </option>
           </select>
           <div v-if="selectedAgentType === 'single' && selectedTemplateDescription" class="text-xs text-gray-500 mt-1 mb-2">

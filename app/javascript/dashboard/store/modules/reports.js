@@ -63,6 +63,11 @@ const state = {
     accountConversationHeatmap: [],
     agentConversationMetric: [],
     creditUsage: undefined,
+    funnelData: null,
+    trendData: [],
+    handoverData: null,
+    agentDailyData: null,
+    agentPerformanceData: [],
   },
 };
 
@@ -91,6 +96,15 @@ const getters = {
   getCreditUsageMetric(_state) {
     return _state.overview.creditUsage;
   },
+  getFunnelData(_state) {
+    return _state.overview.funnelData;
+  },
+  getTrendData(_state) {
+    return _state.overview.trendData;
+  },
+  getHandoverData(_state) { return _state.overview.handoverData; },
+  getAgentDailyData(_state) { return _state.overview.agentDailyData; },
+  getAgentPerformanceData(_state) { return _state.overview.agentPerformanceData; },
 };
 
 export const actions = {
@@ -272,6 +286,39 @@ export const actions = {
         console.error(error);
       });
   },
+  fetchFunnelData({ commit }, reportObj) {
+    axios.get(`/api/v2/accounts/${reportObj.id}/reports/funnel_metrics`, { params: { since: reportObj.from, until: reportObj.to } })
+      .then(response => {
+        commit('SET_FUNNEL_DATA', response.data);
+      });
+  },
+  fetchTrendData({ commit }, reportObj) {
+    axios.get(`/api/v2/accounts/${reportObj.id}/reports/trend_metrics`, { params: { since: reportObj.from, until: reportObj.to } })
+      .then(response => {
+        commit('SET_TREND_DATA', response.data);
+      });
+  },
+  fetchHandoverMetrics({ commit }, reportObj) {
+    axios.get(`/api/v2/accounts/${reportObj.id}/reports/handover_metrics`, { 
+      params: { since: reportObj.from, until: reportObj.to } 
+    }).then(response => {
+      commit('SET_HANDOVER_DATA', response.data);
+    });
+  },
+  fetchAgentDailyMetrics({ commit }, reportObj) {
+    axios.get(`/api/v2/accounts/${reportObj.id}/reports/agents_daily_metrics`, { 
+      params: { since: reportObj.from, until: reportObj.to } 
+    }).then(response => {
+      commit('SET_AGENT_DAILY_DATA', response.data);
+    });
+  },
+  fetchAgentPerformanceMetrics({ commit }, reportObj) {
+    axios.get(`/api/v2/accounts/${reportObj.id}/reports/agent_performance_metrics`, { 
+      params: { since: reportObj.from, until: reportObj.to } 
+    }).then(response => {
+      commit('SET_AGENT_PERFORMANCE_DATA', response.data);
+    });
+  },
 };
 
 const mutations = {
@@ -310,6 +357,21 @@ const mutations = {
   },
   [types.default.TOGGLE_CREDIT_USAGE_METRIC_LOADING](_state, flag) {
     _state.overview.uiFlags.isFetchingCreditUsage = flag;
+  },
+  SET_FUNNEL_DATA(_state, data) {
+    _state.overview.funnelData = data;
+  },
+  SET_TREND_DATA(_state, data) {
+    _state.overview.trendData = data;
+  },
+  SET_HANDOVER_DATA(_state, data) {
+    _state.overview.handoverData = data;
+  },
+  SET_AGENT_DAILY_DATA(_state, data) {
+    _state.overview.agentDailyData = data;
+  },
+  SET_AGENT_PERFORMANCE_DATA(_state, data) {
+    _state.overview.agentPerformanceData = data;
   },
 };
 

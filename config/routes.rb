@@ -130,6 +130,8 @@ Rails.application.routes.draw do
               get 'whatsapp/qr', to: 'inboxes#whatsapp_qr'
               get 'whatsapp/status', to: 'inboxes#whatsapp_status'
               post 'whatsapp/restart', to: 'inboxes#whatsapp_restart_session'
+              post 'whatsapp/disconnect', to: 'inboxes#whatsapp_disconnect_session'
+              post 'whatsapp/reconnect', to: 'inboxes#whatsapp_reconnect_session'
             end
           end
 
@@ -174,6 +176,8 @@ Rails.application.routes.draw do
             resources :documents, only: [:index, :show, :create, :destroy]
             resources :assistant_responses
           end
+
+          post :translate, to: 'translator#translate'
           resources :agent_bots, only: [:index, :create, :show, :update, :destroy] do
             delete :avatar, on: :member
           end
@@ -394,7 +398,9 @@ Rails.application.routes.draw do
             end
           end
 
-          resources :upload, only: [:create]
+          resources :upload, only: [:create] do
+            delete :destroy, on: :collection
+          end
         end
       end
       # end of account scoped api routes
@@ -465,8 +471,31 @@ Rails.application.routes.draw do
             # Reminders routes
             resources :reminders, only: [:index, :create, :show, :destroy] do
               collection do
-                get :config
+                get :config, action: :show_config
                 put :config, action: :update_config
+              end
+            end
+
+            # Idle configs routes
+            resources :idle_configs, only: [] do
+              collection do
+                get :config, action: :show_config
+                put :config, action: :update_config
+              end
+            end
+
+            # Sheet numbering configs routes
+            resources :sheet_numbering_configs, only: [] do
+              collection do
+                get :config, action: :show_config
+                put :config, action: :update_config
+              end
+            end
+
+            # Shipping configs routes
+            resources :shipping_stores, only: [:index] do
+              collection do
+                post :batch_update
               end
             end
           end
@@ -490,6 +519,11 @@ Rails.application.routes.draw do
               get :conversation_traffic
               get :bot_metrics
               get :credit_usage
+              get :funnel_metrics
+              get :trend_metrics
+              get :handover_metrics
+              get :agents_daily_metrics
+              get :agent_performance_metrics
               get :ai_agent_metrics
             end
           end
@@ -515,7 +549,18 @@ Rails.application.routes.draw do
 
       # Internal API for external services (jangkau.langgraph, etc.)
       namespace :internal do
-        resources :reminders, only: [:create]
+        resources :reminders, only: [:create] do
+          collection do
+            put :upsert
+            delete :delete
+          end
+        end
+
+        resources :sheet_numbering_configs, only: [] do
+          collection do
+            get :config
+          end
+        end
       end
     end
   end
@@ -619,6 +664,8 @@ Rails.application.routes.draw do
   get 'webhooks/instagram', to: 'webhooks/instagram#verify'
   post 'webhooks/instagram', to: 'webhooks/instagram#events'
   post 'webhooks/waha/:phone_number', to: 'webhooks/waha#process_payload'
+  post 'webhooks/gowa', to: 'webhooks/gowa#process_payload'
+  post 'webhooks/whatsapp_unofficial', to: 'webhooks/whatsapp_unofficial#process_payload'
 
   namespace :twitter do
     resource :callback, only: [:show]
@@ -666,6 +713,7 @@ Rails.application.routes.draw do
       resources :accounts, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
         post :seed, on: :member
         post :reset_cache, on: :member
+        resources :contact_conversations, only: [:index], path: 'conversations'
       end
       resources :users, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
         delete :avatar, on: :member, action: :destroy_avatar

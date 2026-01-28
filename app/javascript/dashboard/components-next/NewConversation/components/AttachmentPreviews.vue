@@ -46,14 +46,24 @@ const removeAttachment = id => {
     >
       <div
         v-for="attachment in filteredImageAttachments"
-        :key="attachment.id"
+        :key="attachment.id || attachment.tempId"
         class="relative group/image w-[72px] h-[72px]"
       >
         <img
           class="object-cover w-[72px] h-[72px] rounded-lg"
+          :class="{ 'opacity-50': attachment.uploading }"
           :src="attachment.thumb"
         />
+        <div
+          v-if="attachment.uploading"
+          class="absolute inset-0 flex items-center justify-center"
+        >
+          <div
+            class="w-6 h-6 border-2 border-woot-500 border-t-transparent rounded-full animate-spin"
+          />
+        </div>
         <Button
+          v-else
           variant="ghost"
           icon="i-lucide-trash"
           color="slate"
@@ -68,13 +78,18 @@ const removeAttachment = id => {
     >
       <div
         v-for="attachment in filteredNonImageAttachments"
-        :key="attachment.id"
+        :key="attachment.id || attachment.tempId"
         class="max-w-[300px] inline-flex items-center h-8 min-w-0 bg-n-alpha-2 dark:bg-n-solid-3 rounded-lg gap-3 ltr:pl-3 rtl:pr-3 ltr:pr-2 rtl:pl-2"
       >
         <span class="text-sm font-medium text-n-slate-11">
           {{ fileNameWithEllipsis(attachment.resource) }}
         </span>
+        <div
+          v-if="attachment.uploading"
+          class="w-4 h-4 border-2 border-woot-500 border-t-transparent rounded-full animate-spin shrink-0"
+        />
         <Button
+          v-else
           variant="ghost"
           icon="i-lucide-x"
           color="slate"
@@ -86,3 +101,18 @@ const removeAttachment = id => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>

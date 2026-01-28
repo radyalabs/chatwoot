@@ -42,6 +42,9 @@ function getAgentInformation(id) {
 const totalCount = computed(() => agents.length);
 
 const tableData = computed(() => {
+  if (!Array.isArray(agentMetrics)) {
+    return [];
+  }
   return agentMetrics
     .filter(agentMetric => getAgentInformation(agentMetric.id))
     .map(agent => {

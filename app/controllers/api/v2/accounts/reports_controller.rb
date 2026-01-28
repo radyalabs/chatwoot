@@ -89,51 +89,30 @@ class Api::V2::Accounts::ReportsController < Api::V1::Accounts::BaseController
             end
 
     conversations = Current.account.conversations.where(created_at: range)
-    messages = Current.account.messages.where(created_at: range)
-
-    high_intent_keywords = [
-      'beli', 'order', 'pesan', 'bayar', 'transfer', 'tf', 'trf', 'rek', 'rekening', 
-      'norek', 'payment', 'lunas', 'qris', 'cod', 'invoice', 'nota', 'checkout',
-      
-      'harga', 'berapa', 'brp', 'biaya', 'price', 'pricelist', 'diskon', 'promo',
-      
-      'stok', 'ready', 'ada gak', 'tersedia', 'warna', 'ukuran', 'size', 'spek', 
-      'garansi', 'ori', 'original', 'realpic',
-      
-      'ongkir', 'kirim', 'sampai', 'resi', 'kurir', 'alamat', 'lokasi'
-    ]
-
-    sql_query = high_intent_keywords.map { |w| "%#{w}%" }
-
+    
     total_starter = conversations.count
 
     engage_user = conversations.joins(:messages)
                                .where(messages: { private: false }) 
                                .group('conversations.id')
-                               .having('COUNT(messages.id) >= ?', 10)
+                               .having('COUNT(messages.id) BETWEEN ? AND ?', 5, 10)
                                .count
                                .size
 
-    high_intent_conversation_ids = messages.where(sender_type: 'Contact')
-                                           .where("content ILIKE ANY (array[?])", sql_query)
-                                           .reorder(nil)
-                                           .select(:conversation_id)
-                                           .distinct
-                                           
-    high_intent = conversations.where(id: high_intent_conversation_ids).count
+    high_chat_volume_ids = conversations.joins(:messages)
+                               .where(messages: { private: false })
+                               .group('conversations.id')
+                               .having('COUNT(messages.id) > ?', 10)
+                               .pluck('conversations.id')
 
-    resolved_conversations = conversations.where(status: :resolved)
+    converted_ids = conversations.where(is_convert: true).pluck(:id)
+
+    high_intent = (high_chat_volume_ids + converted_ids).uniq.count
+
+    converted_conversations = conversations.where(id: converted_ids)
     
-    inbox_ids = Current.account.inboxes.pluck(:id)
-    bot_agent_id = AgentBotInbox.where(inbox_id: inbox_ids).pluck(:ai_agent_id).first
-    
-    if bot_agent_id
-      assisted_bot = resolved_conversations.where(assignee_id: bot_agent_id).count
-      assisted_cs  = resolved_conversations.where.not(assignee_id: bot_agent_id).count
-    else
-      assisted_bot = 0
-      assisted_cs  = resolved_conversations.count
-    end
+    assisted_bot = converted_conversations.where(assignee_id: nil).count
+    assisted_cs  = converted_conversations.where.not(assignee_id: nil).count
 
     render json: {
       total_starter: total_starter,
@@ -252,11 +231,15 @@ class Api::V2::Accounts::ReportsController < Api::V1::Accounts::BaseController
   end
 
   def agent_performance_metrics
-    range = Time.at(params[:since].to_i)..Time.at(params[:until].to_i)
+    since_param = params[:since].to_i
+    until_param = params[:until].to_i
+
+    range = Time.at(since_param)..Time.at(until_param)
     
-    agent_ids = Current.account.conversations.where(created_at: range)
-                               .where.not(assignee_id: nil)
-                               .select(:assignee_id).distinct
+    conversations = Current.account.conversations.where(created_at: range).where.not(assignee_id: nil)
+    
+    agent_ids = conversations.select(:assignee_id).distinct
+
     agents = User.where(id: agent_ids)
     
     data = agents.map do |agent|

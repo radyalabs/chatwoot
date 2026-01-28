@@ -273,7 +273,39 @@
         "API_KEY_PLACEHOLDER": "Masukkan API key Anda",
         "MERCHANT_CODE_LABEL": "Merchant Code",
         "MERCHANT_CODE_PLACEHOLDER": "Masukkan merchant code Anda",
-        "SELECT_PROVIDER": "Pilih Penyedia Payment Gateway"
+        "SELECT_PROVIDER": "Pilih Penyedia Payment Gateway",
+        "QRIS_TITLE": "QRIS",
+        "QRIS_DESC": "Pelanggan membayar dengan memindai kode QRIS Anda.",
+        "QRIS_IMAGE_LABEL": "Gambar QRIS",
+        "QRIS_UPLOAD_IMAGE": "Unggah QRIS",
+        "QRIS_CHANGE_IMAGE": "Ganti QRIS",
+        "QRIS_IMAGE_PREVIEW": "Pratinjau",
+        "QRIS_DESCRIPTION_LABEL": "Deskripsi Pembayaran",
+        "QRIS_DESCRIPTION_PLACEHOLDER": "Contoh: Scan QR ini untuk bayar pesanan",
+        "QRIS_DYNAMIC_LABEL": "Gunakan QRIS dinamis per pesanan",
+        "QRIS_DYNAMIC_DESC": "Buat QRIS unik sesuai nominal setiap pesanan.",
+        "QRIS_MERCHANT_ID_LABEL": "Merchant ID (opsional)",
+        "QRIS_MERCHANT_ID_PLACEHOLDER": "Masukkan Merchant ID Anda",
+        "QRIS": {
+          "DELETE_MODAL": {
+            "TITLE": "Hapus QRIS",
+            "MESSAGE": "Apakah Anda yakin ingin menghapus QRIS ini?",
+            "CONFIRM_TEXT": "Hapus",
+            "REJECT_TEXT": "Batal"
+          },
+          "ALERTS": {
+            "UPLOAD_INVALID_FILE": "Harap unggah file gambar yang valid",
+            "UPLOAD_SIZE_LIMIT": "Ukuran gambar harus kurang dari 5MB",
+            "UPLOAD_FAILED": "Gagal mengunggah gambar QRIS",
+            "DELETE_SUCCESS": "QRIS berhasil dihapus dari sistem.",
+            "DELETE_ERROR": "Gagal menghapus QRIS. Silakan coba lagi.",
+            "IMAGE_REQUIRED": "Gambar QRIS wajib diunggah"
+          },
+          "STATUS": {
+            "ENABLED": "QRIS aktif",
+            "DISABLED": "QRIS nonaktif"
+          }
+        }
       },
       "SHIPPING": {
         "HEADER": "Konfigurasi Pengiriman",

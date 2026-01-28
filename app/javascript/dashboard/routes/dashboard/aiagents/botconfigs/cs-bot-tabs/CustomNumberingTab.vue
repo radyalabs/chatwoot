@@ -227,6 +227,7 @@ export default {
       codeOption: '',
       showSuccessModal: false,
       loading: false,
+      storedCurrentValue: null,
     };
   },
   computed: {
@@ -266,11 +267,12 @@ export default {
       handler(newData) {
         // Load from flowData if number_format exists (backward compatibility)
         if (newData &&
-            newData.display_flow_data &&
-            newData.display_flow_data.agents_config &&
-            newData.display_flow_data.agents_config[0] &&
-            newData.display_flow_data.agents_config[0].configurations &&
-            newData.display_flow_data.agents_config[0].configurations.number_format
+          newData.display_flow_data &&
+          newData.display_flow_data.agents_config &&
+          newData.display_flow_data.agents_config[0] &&
+          newData.display_flow_data.agents_config[0].configurations &&
+          newData.display_flow_data.agents_config[0].configurations
+            .number_format
         ) {
           this.form = {
             ...this.form,
@@ -283,7 +285,54 @@ export default {
     }
   },
 
+  async created() {
+    try {
+      const { data } = await sheetNumberingConfigAPI.getConfig(this.data.id);
+      if (data && data.current_value != null) {
+        this.storedCurrentValue = data.current_value;
+      }
+    } catch (e) {
+      // New config, no stored value yet
+    }
+  },
+
   methods: {
+    validateBeforeSave() {
+      const format = this.form.format || '';
+      const warnings = [];
+
+      if (!format.includes('[NUMBER]')) {
+        warnings.push(this.$t('AGENT_MGMT.NUMBERING.WARN_MISSING_NUMBER'));
+      }
+
+      const monthVars = ['[MONTH]', '[MONTH_ROMAN]', '[MONTH_SHORT]', '[MONTH_LONG]'];
+      if (!monthVars.some(v => format.includes(v))) {
+        warnings.push(this.$t('AGENT_MGMT.NUMBERING.WARN_MISSING_MONTH'));
+      }
+
+      const yearVars = ['[YEAR]', '[YEAR_SHORT]'];
+      if (!yearVars.some(v => format.includes(v))) {
+        warnings.push(this.$t('AGENT_MGMT.NUMBERING.WARN_MISSING_YEAR'));
+      }
+
+      if (
+        this.storedCurrentValue != null &&
+        this.form.currentNumber <= this.storedCurrentValue
+      ) {
+        warnings.push(
+          this.$t('AGENT_MGMT.NUMBERING.WARN_CURRENT_VALUE_TOO_LOW', {
+            storedValue: this.storedCurrentValue,
+          })
+        );
+      }
+
+      if (warnings.length > 0) {
+        warnings.forEach(msg => useAlert(msg, { duration: 5000 }));
+        return false;
+      }
+      return true;
+    },
+
     addCode() {
       const token = this.codeOption;
       if (!token) return;
@@ -293,6 +342,7 @@ export default {
 
     async onSave() {
       if (this.loading) return;
+      if (!this.validateBeforeSave()) return;
 
       try {
         this.loading = true;
@@ -328,6 +378,9 @@ export default {
           reset_interval: this.form.resetEvery,
         };
         await sheetNumberingConfigAPI.updateConfig(this.data.id, configPayload);
+
+        // Update stored value after successful save
+        this.storedCurrentValue = this.form.currentNumber;
 
         // trigger parent refresh
         this.emitUpdate();

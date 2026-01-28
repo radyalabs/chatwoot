@@ -653,7 +653,11 @@
       "SAVING": "Saving....",
       "SUCCESS": "Success!",
       "SUCCESS_MESSAGE": "The numbering format data has been successfully saved.",
-      "CLOSE": "Close"
+      "CLOSE": "Close",
+      "WARN_MISSING_NUMBER": "The format must include [NUMBER] to ensure unique IDs.",
+      "WARN_MISSING_MONTH": "The format must include a month variable ([MONTH], [MONTH_ROMAN], [MONTH_SHORT], or [MONTH_LONG]) to avoid duplicate IDs.",
+      "WARN_MISSING_YEAR": "The format must include a year variable ([YEAR] or [YEAR_SHORT]) to avoid duplicate IDs.",
+      "WARN_CURRENT_VALUE_TOO_LOW": "The next number cannot be less than or equal to the current stored value ({storedValue})."
     }
   }
 }

@@ -293,7 +293,7 @@
                         <div class="w-16">
                           <input 
                             type="number" 
-                            min="1"
+                            min="5"
                             v-model="idleConfig.duration"
                             class="text-center px-2 py-2 text-sm font-medium border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors h-10"
                             placeholder="30" 

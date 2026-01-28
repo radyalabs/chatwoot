@@ -448,7 +448,39 @@
         "API_KEY_PLACEHOLDER": "Enter your API key",
         "MERCHANT_CODE_LABEL": "Merchant Code",
         "MERCHANT_CODE_PLACEHOLDER": "Enter your merchant code",
-        "SELECT_PROVIDER": "Select Payment Gateway Provider"
+        "SELECT_PROVIDER": "Select Payment Gateway Provider",
+        "QRIS_TITLE": "QRIS",
+        "QRIS_DESC": "Customers pay by scanning your QRIS code.",
+        "QRIS_IMAGE_LABEL": "QRIS Image",
+        "QRIS_UPLOAD_IMAGE": "Upload QRIS",
+        "QRIS_CHANGE_IMAGE": "Change QRIS",
+        "QRIS_IMAGE_PREVIEW": "Preview",
+        "QRIS_DESCRIPTION_LABEL": "Payment Description",
+        "QRIS_DESCRIPTION_PLACEHOLDER": "e.g., Scan this QR to pay your order",
+        "QRIS_DYNAMIC_LABEL": "Use dynamic QRIS per order",
+        "QRIS_DYNAMIC_DESC": "Generate a unique QRIS for each order amount.",
+        "QRIS_MERCHANT_ID_LABEL": "Merchant ID (optional)",
+        "QRIS_MERCHANT_ID_PLACEHOLDER": "Enter your merchant ID",
+        "QRIS": {
+          "DELETE_MODAL": {
+            "TITLE": "Delete QRIS",
+            "MESSAGE": "Are you sure you want to delete this QRIS?",
+            "CONFIRM_TEXT": "Delete",
+            "REJECT_TEXT": "Cancel"
+          },
+          "ALERTS": {
+            "UPLOAD_INVALID_FILE": "Please upload a valid image file",
+            "UPLOAD_SIZE_LIMIT": "Image size must be less than 5MB",
+            "UPLOAD_FAILED": "Failed to upload QRIS image",
+            "DELETE_SUCCESS": "QRIS has been deleted from the system.",
+            "DELETE_ERROR": "Failed to delete QRIS. Please try again.",
+            "IMAGE_REQUIRED": "QRIS image is required"
+          },
+          "STATUS": {
+            "ENABLED": "QRIS enabled",
+            "DISABLED": "QRIS disabled"
+          }
+        }
       },
       "SHIPPING": {
         "HEADER": "Shipping Configuration",

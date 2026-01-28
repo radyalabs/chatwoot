@@ -1282,6 +1282,77 @@
                       </div>
                     </div>
   
+                    <!-- QRIS Payment -->
+                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
+                      <div class="flex items-center justify-between p-4">
+                        <div class="flex items-center">
+                          <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="stroke-green-600 dark:stroke-white lucide lucide-qr-code"><rect width="8" height="8" x="3" y="3" rx="1"/><rect width="8" height="8" x="13" y="3" rx="1"/><rect width="8" height="8" x="3" y="13" rx="1"/><circle cx="17.5" cy="17.5" r="1.5"/></svg>
+                          </div>
+                          <div>
+                            <h3 class="font-medium">{{ $t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS_TITLE') }}</h3>
+                            <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS_DESC') }}</p>
+                          </div>
+                        </div>
+                        <label class="inline-flex items-center cursor-pointer">
+                          <input type="checkbox" v-model="paymentMethods.qris" class="sr-only peer">
+                          <div
+                            class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
+                          </div>
+                        </label>
+                      </div>
+  
+                      <!-- QRIS Configuration Section -->
+                      <div v-if="paymentMethods.qris" class="border-t border-gray-200 dark:border-gray-700 p-4 space-y-4 transition-all duration-200 ease-in-out">
+    
+                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+                          <div class="flex items-center justify-between mb-4">
+                            <h5 class="font-medium text-slate-700 dark:text-slate-300">
+                              QRIS Code
+                            </h5>
+                            <Button
+                              v-if="qrisConfig.imageUrl"
+                              variant="ghost"
+                              color="ruby"
+                              icon="i-lucide-trash"
+                              size="sm"
+                              @click="deleteQrisImage"
+                              class="opacity-70 hover:opacity-100"
+                            />
+                          </div>
+
+                          <!-- QRIS Image Upload -->
+                          <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              {{ $t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS_IMAGE_LABEL') }} <span class="text-red-500">*</span>
+                            </label>
+                            <div class="flex flex-col gap-3">
+                              <input
+                                type="file"
+                                ref="qrisImageInput"
+                                accept="image/*"
+                                @change="handleQrisImageUpload"
+                                class="hidden"
+                              />
+                              <button
+                                @click="$refs.qrisImageInput?.click()"
+                                class="px-4 py-2 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg text-slate-600 dark:text-slate-400 hover:border-green-400 hover:text-green-600 transition-all bg-white dark:bg-slate-800"
+                              >
+                                {{ qrisConfig.imageUrl ? $t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS_CHANGE_IMAGE') : $t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS_UPLOAD_IMAGE') }}
+                              </button>
+                              <div v-if="qrisConfig.imageUrl" class="flex-1 text-sm text-gray-600 dark:text-gray-400">
+                                <div class="flex flex-col items-center">
+                                  <p class="mb-3 text-center">{{ $t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS_IMAGE_PREVIEW') }}</p>
+                                  <img :src="qrisConfig.imageUrl" class="w-48 h-48 object-contain border border-gray-200 dark:border-gray-700 rounded-lg p-2 bg-white dark:bg-slate-800" />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+  
                     <!-- Payment Gateway -->
                     <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
                       <div class="flex items-center justify-between p-4">
@@ -1562,6 +1633,18 @@
       </div>
     </div>
   </div>
+
+  <!-- Delete QRIS Confirmation Modal -->
+  <woot-delete-modal
+    v-if="showDeleteQrisModal"
+    v-model:show="showDeleteQrisModal"
+    :on-close="() => { showDeleteQrisModal = false; }"
+    :on-confirm="confirmDeleteQrisImage"
+    :title="$t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS.DELETE_MODAL.TITLE')"
+    :message="$t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS.DELETE_MODAL.MESSAGE')"
+    :confirm-text="$t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS.DELETE_MODAL.CONFIRM_TEXT')"
+    :reject-text="$t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS.DELETE_MODAL.REJECT_TEXT')"
+  />
 </template>
 
 <script setup>
@@ -1578,6 +1661,7 @@ import { useI18n } from 'vue-i18n'
 import googleSheetsExportAPI from '../../../../api/googleSheetsExport';
 // AI Agents API
 import aiAgents from '../../../../api/aiAgents';
+import uploadAPI from '../../../../api/upload';
 import idleConfigsAPI from '../../../../api/idleConfigs';
 import shippingStoresAPI from '../../../../api/shippingStores';
 import { useAlert } from 'dashboard/composables';
@@ -1753,6 +1837,7 @@ watch(salesAuthError, (newError) => {
 
 const showRegenerateModal = ref(false);
 const isRegenerating = ref(false);
+const showDeleteQrisModal = ref(false);
 
 function openRegenerateModal() {
   showRegenerateModal.value = true;
@@ -2835,7 +2920,8 @@ watch(mapRef, (newMapRef) => {
 const paymentMethods = reactive({
   cod: false,
   bankTransfer: false,
-  paymentGateway: false
+  paymentGateway: false,
+  qris: false
 });
 
 // Bank Transfer Accounts
@@ -2853,6 +2939,111 @@ function addBankAccount() {
 
 function deleteBankAccount(index) {
   bankAccounts.value.splice(index, 1);
+}
+
+// QRIS Configuration
+const qrisConfig = reactive({
+  enabled: false, // Track if QRIS is enabled in UI (toggle state)
+  imageUrl: '',
+  blobKey: '',
+  blobId: '',
+  description: '',
+});
+
+// QRIS Image Handler
+async function handleQrisImageUpload(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  try {
+    // Validate file is an image
+    if (!file.type.startsWith('image/')) {
+      useAlert(t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS.ALERTS.UPLOAD_INVALID_FILE'));
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      useAlert(t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS.ALERTS.UPLOAD_SIZE_LIMIT'));
+      return;
+    }
+
+
+    const response = await uploadAPI.uploadAttachment(file);
+
+    qrisConfig.imageUrl = response.data.file_url;
+    qrisConfig.blobKey = response.data.blob_key;
+    qrisConfig.blobId = response.data.blob_id;
+  } catch (error) {
+    useAlert(t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS.ALERTS.UPLOAD_FAILED'));
+    console.error('QRIS image upload error:', error);
+  }
+}
+
+
+function deleteQrisImage() {
+  showDeleteQrisModal.value = true;
+}
+
+async function confirmDeleteQrisImage() {
+  try {
+    if (qrisConfig.blobKey || qrisConfig.blobId) {
+      uploadAPI.deleteAttachment({ blobKey: qrisConfig.blobKey, blobId: qrisConfig.blobId }).catch(() => {
+        console.warn('Failed to delete QRIS image from storage, but proceeding with configuration removal.');
+      });
+    }
+
+    // Remove QRIS from flow_data and display_flow_data
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data));
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
+    const agentIndex = flowData.enabled_agents.indexOf('sales');
+    
+    if (agentIndex !== -1) {
+      if (flowData.agents_config[agentIndex].configurations?.payment_options?.methods) {
+        flowData.agents_config[agentIndex].configurations.payment_options.methods.forEach(method => {
+          if (method.type === 'non_cod' && method.qris) {
+            delete method.qris;
+          }
+        });
+      }
+      
+      if (displayFlowData.agents_config[agentIndex].configurations?.payment_options?.methods) {
+        displayFlowData.agents_config[agentIndex].configurations.payment_options.methods.forEach(method => {
+          if (method.type === 'non_cod' && method.qris) {
+            delete method.qris;
+          }
+        });
+      }
+
+      const payload = {
+        flow_data: flowData,
+        display_flow_data: displayFlowData,
+      };
+
+      await aiAgents.updateAgent(props.data.id, payload);
+      emit('update:data');
+    }
+
+    // Reset QRIS configuration
+    qrisConfig.enabled = false;
+    qrisConfig.imageUrl = '';
+    qrisConfig.blobKey = '';
+    qrisConfig.blobId = '';
+    qrisConfig.description = '';
+    paymentMethods.qris = false;
+    
+    const fileInput = document.querySelector('input[type="file"][accept="image/*"]');
+    if (fileInput) {
+      fileInput.value = '';
+    }
+    
+    showDeleteQrisModal.value = false;
+    useAlert(t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS.ALERTS.DELETE_SUCCESS'));
+  } catch (error) {
+    console.error('Failed to delete QRIS:', error);
+    showDeleteQrisModal.value = false;
+    useAlert(t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS.ALERTS.DELETE_ERROR'));
+  }
 }
 
 // Payment Gateway
@@ -2927,6 +3118,12 @@ async function submitPaymentConfig() {
   try {
     isSaving.value = true;
 
+    // Validate QRIS if enabled (toggle is on)
+    if (paymentMethods.qris && !qrisConfig.imageUrl) {
+      useAlert(t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS.ALERTS.IMAGE_REQUIRED'));
+      return;
+    }
+
     // Generate payment configuration
     const paymentConfig = {
       methods: []
@@ -2939,7 +3136,7 @@ async function submitPaymentConfig() {
       });
     }
 
-    if (paymentMethods.bankTransfer || paymentMethods.paymentGateway) {
+    if (paymentMethods.bankTransfer || paymentMethods.paymentGateway || paymentMethods.qris) {
       const nonCodMethod = {
         type: "non_cod",
         name: "Transfer Online"
@@ -2960,6 +3157,17 @@ async function submitPaymentConfig() {
           provider: paymentGateway.provider,
           apiKey: paymentGateway.apiKey,
           merchantCode: paymentGateway.merchantCode
+        };
+      }
+
+
+      if (qrisConfig.imageUrl || qrisConfig.blobKey || qrisConfig.blobId) {
+        nonCodMethod.qris = {
+          enabled: paymentMethods.qris, // Save the toggle state
+          imageUrl: qrisConfig.imageUrl,
+          blobKey: qrisConfig.blobKey,
+          blobId: qrisConfig.blobId,
+          description: qrisConfig.description,
         };
       }
 
@@ -3093,7 +3301,6 @@ async function saveSettings() {
 // Function to load saved configuration from backend
 function loadSavedConfiguration() {
   try {
-    
     const flowData = props.data.display_flow_data;
     if (!flowData) {
       return;
@@ -3331,6 +3538,7 @@ function loadSavedConfiguration() {
     paymentMethods.cod = false;
     paymentMethods.bankTransfer = false;
     paymentMethods.paymentGateway = false;
+    paymentMethods.qris = false;
     
     // Reset payment configs
     bankAccounts.value = [];
@@ -3338,6 +3546,13 @@ function loadSavedConfiguration() {
       provider: 'duitku',
       apiKey: '',
       merchantCode: ''
+    });
+    Object.assign(qrisConfig, {
+      enabled: false,
+      imageUrl: '',
+      blobKey: '',
+      blobId: '',
+      description: '',
     });
 
     // Load Payment Configuration
@@ -3370,6 +3585,17 @@ function loadSavedConfiguration() {
             paymentGateway.provider = method.payment_gateway.provider || 'duitku';
             paymentGateway.apiKey = method.payment_gateway.apiKey || '';
             paymentGateway.merchantCode = method.payment_gateway.merchantCode || '';
+          }
+
+          // Check if QRIS is available
+          if (method.qris) {
+            const isEnabled = method.qris.enabled !== undefined ? method.qris.enabled : true;
+            paymentMethods.qris = isEnabled;
+            qrisConfig.enabled = isEnabled;
+            qrisConfig.imageUrl = method.qris.imageUrl || '';
+            qrisConfig.blobKey = method.qris.blobKey || '';
+            qrisConfig.blobId = method.qris.blobId || '';
+            qrisConfig.description = method.qris.description || '';
           }
         }
       });

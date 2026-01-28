@@ -68,13 +68,15 @@ class Captain::Llm::GenerateIdleMessage
 
   def user_prompt_initial
     <<~PROMPT
-      Generate a follow-up to re-engage based on their last question/topic. Be specific and helpful.
+      Analyze the conversation and generate a short, natural follow-up message.
+      Keep it low-effort, conversational, and appropriate for the current stage of the chat.
     PROMPT
   end
 
   def user_prompt_closure
     <<~PROMPT
-      Generate a final follow-up acknowledging they may be busy. Close politely while keeping the door open.
+      End the conversation warmly because there has been no reply.
+      Use natural chat language, 1-2 sentences, and don't sound like a template.
     PROMPT
   end
 end

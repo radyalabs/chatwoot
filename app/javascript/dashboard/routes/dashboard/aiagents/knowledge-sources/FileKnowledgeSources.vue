@@ -36,6 +36,24 @@ const contextFiles = computed(() => {
   });
 });
 
+const collectionName = computed(() => {
+  if (!props.data?.display_flow_data?.agents_config) return null;
+  
+  const agents = props.data.display_flow_data.agents_config;
+  
+  // For general context, return the first agent's collection_name
+  if (props.context === 'general') {
+    return agents[0]?.collection_name || null;
+  }
+  
+  const targetType = props.context;
+  if (!targetType) return null;
+  
+  // Find agent by type
+  const agent = agents.find(agent => agent.type === targetType);
+  return agent?.collection_name || null;
+});
+
 const detectedCharacters = computed(() =>
   contextFiles.value.reduce((p, i) => p + i.total_chars, 0)
 );
@@ -77,11 +95,12 @@ const deleteLoadingIds = ref({});
 
 async function deleteData() {
   const dataId = deleteModalData.value.id;
+  const collection_name = collectionName.value; // Change this line
   
   try {
     showDeleteModal.value = false;
     deleteLoadingIds.value[dataId] = true;
-    await aiAgents.deleteKnowledgeFile(props.data.id, dataId);
+    await aiAgents.deleteKnowledgeFile(props.data.id, dataId, collection_name);
     files.value = files.value.filter(v => v.id !== dataId);
     fetchKnowledge();
     useAlert('Berhasil hapus data');
@@ -195,6 +214,7 @@ const isSaving = ref(false);
 
 async function save() {
   if (!newFiles.value.length) return;
+  const collection_name = collectionName.value; // Change this line
 
   try {
     isSaving.value = true;
@@ -214,7 +234,8 @@ async function save() {
       });
       
       formData.append('file', renamedFile);
-      
+      formData.append('collection_name', collection_name); // Tambahkan collection_name ke formData
+      console.log('formData:', formData);
       console.log(`[${props.context}] Uploading as: ${newFileName}`);
       await aiAgents.addKnowledgeFile(props.data.id, formData);
     }

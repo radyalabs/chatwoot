@@ -18,14 +18,16 @@ class Api::V1::Accounts::KnowledgeSourceQnaController < Api::V1::Accounts::BaseC
 
   def destroy
     Rails.logger.info('+++++++++++++++++++Deleting knowledge source QnA entry+++++++++++++++++++')
-
+    Rails.logger.info("ALL PARAMS: #{params.inspect}")
+    Rails.logger.info("collection_name param: #{params[:collection_name].inspect}")
     knowledge_source = @ai_agent.knowledge_source
     qna            = knowledge_source.knowledge_source_qnas.find(params[:id])
     doc_ids        = Array(qna.loader_id) # loader_id holds the docId (or ids)
     store_id       = knowledge_source.store_id
-    index_name     = params[:index_name] || 'default_index'
+    index_name     = params[:collection_name]
 
-    Rails.logger.info("Deleting QnA id=#{qna.id}, doc_ids=#{doc_ids.inspect}, store_id=#{store_id}")
+    # log index_name and doc_ids
+    Rails.logger.info("Deleting QnA id=#{qna.id}, doc_ids=#{doc_ids.inspect}, store_id=#{store_id}, index_name=#{index_name}")
 
     # call external delete-knowledge endpoint
     delete_documents(index_name, doc_ids)
@@ -40,7 +42,7 @@ class Api::V1::Accounts::KnowledgeSourceQnaController < Api::V1::Accounts::BaseC
 
   # ---------- private ----------
 
-  def delete_documents(index_name, document_ids)
+  def delete_documents(_index_name, document_ids)
     base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
     api_key  = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
 
@@ -51,7 +53,7 @@ class Api::V1::Accounts::KnowledgeSourceQnaController < Api::V1::Accounts::BaseC
     response = HTTParty.post(
       endpoint,
       body: {
-        index_name: index_name,
+        index_name: _index_name,
         document_ids: document_ids
       }.to_json,
       headers: {
@@ -171,7 +173,7 @@ class Api::V1::Accounts::KnowledgeSourceQnaController < Api::V1::Accounts::BaseC
 
     names = []
     contents = []
-
+    collection_name = qnas.first[:collection_name] || 'default_index'
     qnas.each_with_index do |qna, idx|
       names << "QNA_#{Time.current.strftime('%Y%m%d%H%M%S')}_#{idx}"
       contents << "#{qna[:question]}\n\n#{qna[:answer]}"
@@ -180,7 +182,7 @@ class Api::V1::Accounts::KnowledgeSourceQnaController < Api::V1::Accounts::BaseC
     response = HTTParty.post(
       endpoint,
       body: {
-        index_name: params[:index_name] || 'default_index',
+        index_name: collection_name,
         store_id: store_id,
         loader_id: 'plainText',
         splitter_id: '',
@@ -235,7 +237,7 @@ class Api::V1::Accounts::KnowledgeSourceQnaController < Api::V1::Accounts::BaseC
     response = HTTParty.post(
       endpoint,
       body: {
-        index_name: params[:index_name] || 'default_index',
+        index_name: params[:collection_name] || 'default_index',
         store_id: store_id,
         loader_id: 'plainText',
         splitter_id: '',
@@ -322,7 +324,7 @@ class Api::V1::Accounts::KnowledgeSourceQnaController < Api::V1::Accounts::BaseC
 
   def qna_params
     params.require(:_json).map do |qna|
-      qna.permit(:id, :question, :answer, :agent_id)
+      qna.permit(:id, :question, :answer, :agent_id, :collection_name)
     end
   end
 end

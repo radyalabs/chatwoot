@@ -127,6 +127,25 @@ async function fetchKnowledge() {
   }
 }
 
+// Add this computed property after the existing helper functions, around line 130-140
+const collectionName = computed(() => {
+  if (!props.data?.display_flow_data?.agents_config) return null;
+  
+  const agents = props.data.display_flow_data.agents_config;
+  
+  // For general context, return the first agent's collection_name
+  if (props.context === 'general') {
+    return agents[0]?.collection_name || null;
+  }
+  
+  const targetType = props.context;
+  if (!targetType) return null;
+  
+  // Find agent by type
+  const agent = agents.find(agent => agent.type === targetType);
+  return agent?.collection_name || null;
+});
+
 watch(
   () => props.data,
   v => {
@@ -158,13 +177,17 @@ async function deleteData() {
   const dataId = dataToDelete?.id;
   const indexToDelete = deleteModalIndex.value;
   
+  console.log(`flow_data:`, props.data?.display_flow_data);
+  const collection_name = collectionName.value; // Change this line
+  console.log(`collection_name:`, collection_name);
+  
   try {
     showDeleteModal.value = false;
     deleteLoadingIds.value[dataId] = true;
-    
+    console.log(`Deleting QnA ID: ${dataId} for AI Agent ID: ${props.data.id} with collection: ${collection_name}`);
     // If it has an ID, delete from server
     if (dataId) {
-      await aiAgents.deleteKnowledgeQna(props.data.id, dataId);
+      await aiAgents.deleteKnowledgeQna(props.data.id, dataId, { collection_name });
       if (indexToDelete !== -1) {
         qnas.value.splice(indexToDelete, 1);
       }
@@ -184,9 +207,68 @@ async function deleteData() {
 }
 
 const isSaving = ref(false);
+// async function save() {
+//   console.log(`flow_data:`, props.data?.display_flow_data);
+//   const collection_name = props.data?.display_flow_data?.agents_config[0].collection_name || null;
+//   console.log(`collection_name:`, collection_name);
+//   try {
+//     isSaving.value = true;
+
+//     // Get current agent_id for context
+//     const currentAgentId = getAgentId();
+    
+//     const itemsToSave = qnas.value
+//       .filter(e => {
+//         // For general context, save all QnAs
+//         if (props.context === 'general') return true;
+        
+//         // For specific context, only save QnAs with matching ai_agent_name_id
+//         return e.ai_agent_name_id === currentAgentId || !e.id; // Include new items without ID
+//       })
+//       .map(e => {
+//         const question = e.question?.trim() || '';
+//         const answer = e.answer?.trim() || '';
+        
+//         return {
+//           originalItem: e,
+//           id: e.id || null,
+//           question: question,
+//           answer: answer,
+//           hasContent: question.length > 0 && answer.length > 0
+//         };
+//       })
+//       .filter(t => t.hasContent);
+    
+//     const request = itemsToSave.map(t => ({ 
+//       id: t.id, 
+//       question: addQuestionPrefix(t.question), 
+//       answer: addAnswerPrefix(t.answer),
+//       agent_id: currentAgentId
+//     }));
+    
+//     // Store items that will be saved (to exclude them from unsaved items later)
+//     const itemsThatWillBeSaved = itemsToSave.map(t => t.originalItem);
+    
+//     // log props.data.id, request, and collection_name
+//     console.log(`Saving QnAs for AI Agent ID: ${props.data.id} with collection: ${collection_name}`);
+//     console.log('Request payload:', request);
+
+//     await aiAgents.createOrUpdateKnowledgeQna(props.data.id, request);
+    
+//     qnas.value = qnas.value.filter(qna => !itemsThatWillBeSaved.includes(qna));
+    
+//     fetchKnowledge();
+//     useAlert(t('AGENT_MGMT.QNA.SAVE_SUCCESS'));
+//   } catch (e) {
+//     useAlert(t('AGENT_MGMT.QNA.SAVE_ERROR'));
+//   } finally {
+//     isSaving.value = false;
+//   }
+// }
+
 async function save() {
   console.log(`flow_data:`, props.data?.display_flow_data);
-  const collection_name = props.data?.display_flow_data?.agents_config[0].collection_name || null;
+  const collection_name = collectionName.value; // Change this line
   console.log(`collection_name:`, collection_name);
   try {
     isSaving.value = true;
@@ -220,7 +302,8 @@ async function save() {
       id: t.id, 
       question: addQuestionPrefix(t.question), 
       answer: addAnswerPrefix(t.answer),
-      agent_id: currentAgentId
+      agent_id: currentAgentId,
+      collection_name: collection_name // Include collection_name here
     }));
     
     // Store items that will be saved (to exclude them from unsaved items later)
@@ -230,6 +313,7 @@ async function save() {
     console.log(`Saving QnAs for AI Agent ID: ${props.data.id} with collection: ${collection_name}`);
     console.log('Request payload:', request);
 
+    // Add collection_name parameter here
     await aiAgents.createOrUpdateKnowledgeQna(props.data.id, request);
     
     qnas.value = qnas.value.filter(qna => !itemsThatWillBeSaved.includes(qna));

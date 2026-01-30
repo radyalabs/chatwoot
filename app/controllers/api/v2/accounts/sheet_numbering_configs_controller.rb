@@ -38,7 +38,7 @@ class Api::V2::Accounts::SheetNumberingConfigsController < Api::V1::Accounts::Ba
   end
 
   def numbering_key_param
-    params[:numbering_key] || 'default'
+    params[:numbering_key] || params.dig(:sheet_numbering_config, :numbering_key) || 'default'
   end
 
   def sheet_numbering_config_response
@@ -52,6 +52,8 @@ class Api::V2::Accounts::SheetNumberingConfigsController < Api::V1::Accounts::Ba
       numbering_key: @sheet_numbering_config.numbering_key,
       ai_agent_id: @sheet_numbering_config.ai_agent_id,
       account_id: @sheet_numbering_config.account_id,
+      last_synced_at: @sheet_numbering_config.last_synced_at,
+      last_synced_value: @sheet_numbering_config.last_synced_value,
       created_at: @sheet_numbering_config.created_at,
       updated_at: @sheet_numbering_config.updated_at
     }

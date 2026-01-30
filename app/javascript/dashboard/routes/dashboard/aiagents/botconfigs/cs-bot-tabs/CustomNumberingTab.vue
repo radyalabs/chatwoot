@@ -21,20 +21,22 @@
           <div class="border-t border-gray-200 dark:border-gray-700 p-6 space-y-6">
             
             <div>
-              <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
+              <label :class="labelClass">
                 {{ $t('AGENT_MGMT.NUMBERING.FORMAT') }} <span class="text-red-500">*</span>
               </label>
               <div class="flex flex-col sm:flex-row gap-2 mb-2">
                 <input 
                   v-model="form.format" 
                   type="text" 
-                  class="flex-1 p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 focus:ring-2 focus:ring-green-500 focus:border-transparent text-slate-900 dark:text-slate-100 transition-all placeholder:text-gray-400"
+                  class="flex-1 focus:border-transparent placeholder:text-gray-400"
+                  :class="inputClass"
                   placeholder="[NUMBER]/[MONTH]/[YEAR]"
                 />
                 <select 
                   v-model="codeOption" 
                   @change="addCode"
-                  class="sm:w-64 p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 focus:ring-2 focus:ring-green-500 text-slate-900 dark:text-slate-100 transition-all cursor-pointer"
+                  class="sm:w-64 cursor-pointer"
+                  :class="inputClass"
                 >
                   <option value="" disabled selected hidden>{{ $t('AGENT_MGMT.NUMBERING.ADD_CODE_TITLE') }}</option>
                   <option value="[NUMBER]">{{ $t('AGENT_MGMT.NUMBERING.OPTIONS.NUMBER') }}</option>
@@ -56,78 +58,59 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
               <div>
-                <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
+                <label :class="labelClass">
                   {{ $t('AGENT_MGMT.NUMBERING.NUMBER') }} <span class="text-red-500">*</span>
                 </label>
                 <input 
                   v-model.number="form.currentNumber" 
                   type="number" 
                   min="1" 
-                  class="w-full p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 focus:ring-2 focus:ring-green-500 text-slate-900 dark:text-slate-100 transition-all" 
+                  class="w-full"
+                  :class="inputClass"
                 />
               </div>
 
               <div>
-                <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
+                <label :class="labelClass">
                   {{ $t('AGENT_MGMT.NUMBERING.DIGIT_NUMBER') }}
                 </label>
                 <input 
                   v-model.number="form.number_digits" 
                   type="number" 
                   min="3" 
-                  class="w-full p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 focus:ring-2 focus:ring-green-500 text-slate-900 dark:text-slate-100 transition-all" 
+                  class="w-full"
+                  :class="inputClass"
                 />
                 <p class="text-[10px] text-gray-400 italic">Min: 3 (001)</p>
               </div>
 
               <div>
-                <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
+                <label :class="labelClass">
                   {{ $t('AGENT_MGMT.NUMBERING.PREFIX') }}
                 </label>
                 <input 
                   v-model="form.prefix" 
                   type="text" 
                   :placeholder="$t('AGENT_MGMT.NUMBERING.PREFIX_EXP')"
-                  class="w-full p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 focus:ring-2 focus:ring-green-500 text-slate-900 dark:text-slate-100 transition-all" 
+                  class="w-full"
+                  :class="inputClass"
                 />
               </div>
             </div>
 
             <div>
-              <label class="block text-sm font-medium mb-3 text-slate-900 dark:text-slate-25">
+              <label class="mb-3" :class="labelClass">
                 {{ $t('AGENT_MGMT.NUMBERING.RESET_TITLE') }}
               </label>
               <div class="flex flex-col gap-3">
-                <label class="flex items-center cursor-pointer group">
+                <label v-for="opt in resetOptions" :key="opt.value" class="flex items-center cursor-pointer group">
                   <div class="relative flex items-center">
-                    <input type="radio" value="never" v-model="form.resetEvery" class="peer sr-only" />
+                    <input type="radio" v-model="form.resetEvery" :value="opt.value" class="peer sr-only" />
                     <div class="w-5 h-5 border-2 border-gray-300 dark:border-gray-500 rounded-full peer-checked:border-green-500 peer-checked:bg-green-500 transition-all"></div>
                     <div class="absolute w-2 h-2 bg-white rounded-full left-1.5 top-1.5 opacity-0 peer-checked:opacity-100 transition-all"></div>
                   </div>
                   <span class="ml-3 text-sm text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
-                    {{ $t('AGENT_MGMT.NUMBERING.NEVER_RESET') }}
-                  </span>
-                </label>
-
-                <label class="flex items-center cursor-pointer group">
-                  <div class="relative flex items-center">
-                    <input type="radio" value="month" v-model="form.resetEvery" class="peer sr-only" />
-                    <div class="w-5 h-5 border-2 border-gray-300 dark:border-gray-500 rounded-full peer-checked:border-green-500 peer-checked:bg-green-500 transition-all"></div>
-                    <div class="absolute w-2 h-2 bg-white rounded-full left-1.5 top-1.5 opacity-0 peer-checked:opacity-100 transition-all"></div>
-                  </div>
-                  <span class="ml-3 text-sm text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
-                    {{ $t('AGENT_MGMT.NUMBERING.RESET_MONTHLY') }}
-                  </span>
-                </label>
-
-                <label class="flex items-center cursor-pointer group">
-                  <div class="relative flex items-center">
-                    <input type="radio" value="year" v-model="form.resetEvery" class="peer sr-only" />
-                    <div class="w-5 h-5 border-2 border-gray-300 dark:border-gray-500 rounded-full peer-checked:border-green-500 peer-checked:bg-green-500 transition-all"></div>
-                    <div class="absolute w-2 h-2 bg-white rounded-full left-1.5 top-1.5 opacity-0 peer-checked:opacity-100 transition-all"></div>
-                  </div>
-                  <span class="ml-3 text-sm text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
-                    {{ $t('AGENT_MGMT.NUMBERING.RESET_YEARLY') }}
+                    {{ opt.label }}
                   </span>
                 </label>
               </div>
@@ -231,13 +214,26 @@ export default {
       codeOption: '',
       showSuccessModal: false,
       loading: false,
-      storedCurrentValue: null,
-      lastSyncedValue: null,
+      savedCurrentNumber: null,
+      serverLastSyncedValue: null,
       lastSyncedAt: null,
       storedResetInterval: null,
     };
   },
   computed: {
+    inputClass() {
+      return 'p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 focus:ring-2 focus:ring-green-500 text-slate-900 dark:text-slate-100 transition-all';
+    },
+    labelClass() {
+      return 'block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25';
+    },
+    resetOptions() {
+      return [
+        { value: 'never', label: this.$t('AGENT_MGMT.NUMBERING.NEVER_RESET') },
+        { value: 'month', label: this.$t('AGENT_MGMT.NUMBERING.RESET_MONTHLY') },
+        { value: 'year', label: this.$t('AGENT_MGMT.NUMBERING.RESET_YEARLY') },
+      ];
+    },
     liveSampleOutput() {
       if (!this.form.format) return '...';
 
@@ -271,12 +267,10 @@ export default {
   },
   async created() {
     try {
-      console.log('[CustomNumberingTab] created() called, fetching config for:', this.data.id, this.numberingKey);
-      const { data } = await sheetNumberingConfigAPI.getConfig(this.data.id, this.numberingKey);
-      console.log('[CustomNumberingTab] API response:', JSON.stringify(data));
+          const { data } = await sheetNumberingConfigAPI.getConfig(newId, this.numberingKey);
       if (data && data.current_value != null) {
-        this.storedCurrentValue = data.current_value;
-        this.lastSyncedValue = data.last_synced_value != null ? data.last_synced_value : null;
+            this.savedCurrentNumber = data.current_value;
+            this.serverLastSyncedValue = data.last_synced_value != null ? data.last_synced_value : null;
         this.lastSyncedAt = data.last_synced_at || null;
         this.storedResetInterval = data.reset_interval || 'never';
         // Sync form fields from DB
@@ -315,13 +309,13 @@ export default {
       }
 
       if (
-        this.lastSyncedValue != null &&
+        this.serverLastSyncedValue != null &&
         !this.isCurrentValueEditAllowed() &&
-        this.form.currentNumber <= this.lastSyncedValue
+        this.form.currentNumber <= this.serverLastSyncedValue
       ) {
         warnings.push(
           this.$t('AGENT_MGMT.NUMBERING.WARN_CURRENT_VALUE_TOO_LOW', {
-            storedValue: this.lastSyncedValue,
+            storedValue: this.serverLastSyncedValue,
           })
         );
       }
@@ -366,24 +360,7 @@ export default {
 
       try {
         this.loading = true;
-        const flowData = JSON.parse(JSON.stringify(this.data.flow_data));
-        const displayFlowData = JSON.parse(JSON.stringify(this.data.display_flow_data));
 
-        // Ensure path exists
-        if (flowData.agents_config && flowData.agents_config[0]) {
-          if (!flowData.agents_config[0].configurations) {
-            flowData.agents_config[0].configurations = {};
-          }
-        } else {
-          throw new Error("Format data tidak ditemukan.");
-        }
-
-        const payload = {
-          flow_data: flowData,
-          display_flow_data: displayFlowData,
-        };
-
-        // Save to sheet_numbering_configs (source of truth)
         const configPayload = {
           prefix: this.form.prefix,
           format_pattern: this.form.format,
@@ -394,11 +371,7 @@ export default {
         };
         await sheetNumberingConfigAPI.updateConfig(this.data.id, configPayload);
 
-        // Save flow_data (other config fields, excluding number_format)
-        await aiAgents.updateAgent(this.data.id, payload);
-
-        // Update stored value after successful save
-        this.storedCurrentValue = this.form.currentNumber;
+        this.savedCurrentNumber = this.form.currentNumber;
 
         // trigger parent refresh
         this.emitUpdate();
@@ -414,8 +387,8 @@ export default {
           useAlert(this.$t('AGENT_MGMT.NUMBERING.SAVE_ERROR'), { duration: 5000 });
         }
         // Revert form to last persisted values
-        if (this.storedCurrentValue != null) {
-          this.form.currentNumber = this.storedCurrentValue;
+        if (this.savedCurrentNumber != null) {
+          this.form.currentNumber = this.savedCurrentNumber;
         }
       } finally {
         this.loading = false;

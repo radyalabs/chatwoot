@@ -75,8 +75,10 @@ class Captain::Llm::GenerateIdleMessage
 
   def user_prompt_closure
     <<~PROMPT
-      End the conversation warmly because there has been no reply.
-      Use natural chat language, 1-2 sentences, and don't sound like a template.
+      Write a short soft closing message acknowledging no reply.
+      Limit to 1-2 short sentences.
+      Keep the meaning similar to:
+      "Alright, since there has been no reply, I will end this chat session for now. Please feel free to contact me again anytime."
     PROMPT
   end
 end

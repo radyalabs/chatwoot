@@ -64,7 +64,7 @@ class Api::V1::Accounts::KnowledgeSourceFilesController < Api::V1::Accounts::Bas
     end
   end
 
-  def create_document_loader(store_id, file)
+  def create_document_loader(store_id, file) # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/MethodLength,Metrics/PerceivedComplexity
     file_name = formatted_file_name(file.original_filename)
     ext = File.extname(file_name).downcase
 

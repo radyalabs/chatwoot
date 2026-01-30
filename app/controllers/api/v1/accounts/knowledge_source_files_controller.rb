@@ -11,15 +11,12 @@ class Api::V1::Accounts::KnowledgeSourceFilesController < Api::V1::Accounts::Bas
       render json: { error: 'Knowledge source not found' }, status: :not_found
       return
     end
-    Rails.logger.info("params[:file]: #{params[:file].inspect}")
-    Rails.logger.info("params[:collection_name]: #{params[:collection_name].inspect}")
     if params[:file].blank?
       render json: { error: 'File is required' }, status: :unprocessable_entity
       return
     end
 
     create_source(knowledge_source, params[:file])
-    # upsert_document_store(knowledge_source)
   end
 
   def destroy
@@ -48,33 +45,11 @@ class Api::V1::Accounts::KnowledgeSourceFilesController < Api::V1::Accounts::Bas
     end
   end
 
-  # def destroy
-  #   knowledge_source = @ai_agent.knowledge_source
-  #   return render json: { error: 'Knowledge source not found' }, status: :not_found if knowledge_source.nil?
-
-  #   knowledge_source_file = knowledge_source.knowledge_source_files.find_by(id: params[:id])
-  #   return render json: { error: 'Knowledge source file not found' }, status: :not_found if knowledge_source.nil?
-
-  #   if knowledge_source_file.destroy
-  #     delete_document_loader(store_id: knowledge_source.store_id, loader_id: knowledge_source_file.loader_id)
-  #     # upsert_document_store(knowledge_source) if knowledge_source.not_empty?
-  #     # If the knowledge source is empty, we don't need to upsert the document store
-  #     # because it will be deleted in the destroy method of the knowledge source.
-
-  #     head :no_content
-  #   else
-  #     render json: { error: 'Failed to delete knowledge source file' }, status: :unprocessable_entity
-  #   end
-  # end
-
   private
 
   def create_source(knowledge_source, file)
     document_loader = create_document_loader(knowledge_source.store_id, file)
 
-    # log document loader
-    Rails.logger.info("Document Loader: #{document_loader.inspect}")
-    Rails.logger.info('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
     unless document_loader
       render json: { error: 'Failed to create document loader' }, status: :bad_gateway
       return
@@ -130,8 +105,6 @@ class Api::V1::Accounts::KnowledgeSourceFilesController < Api::V1::Accounts::Bas
       timeout: 60
     )
 
-    Rails.logger.info("Knowledge API file upload response: #{response.code} - #{response.body}")
-
     if response.success?
       parsed = JSON.parse(response.body)
 
@@ -180,53 +153,12 @@ class Api::V1::Accounts::KnowledgeSourceFilesController < Api::V1::Accounts::Bas
       raise StandardError, "Failed to delete documents: #{response.message}"
     end
 
-    parsed = JSON.parse(response.body)
-    Rails.logger.info("Delete result: #{parsed.inspect}")
-    parsed
+    JSON.parse(response.body)
   rescue HTTParty::Error, JSON::ParserError => e
     Rails.logger.error("Error calling delete-knowledge API: #{e.message}")
     raise StandardError, "Failed to communicate with knowledge API: #{e.message}"
   rescue StandardError => e
     Rails.logger.error("Failed to delete document loader: #{e.message}")
-  end
-
-  # def create_document_loader(store_id, file)
-  #   file_name = formatted_file_name(file.original_filename)
-  #   ext = File.extname(file_name).downcase
-
-  #   raise "Unsupported file type: #{ext}" unless %w[.pdf .docx].include?(ext)
-
-  #   loader_id = if ext == '.pdf'
-  #                 'pdfFile'
-  #               else
-  #                 'docxFile'
-  #               end
-
-  #   base64_content = convert_file_to_base64(file, file_name)
-
-  #   AiAgents::FlowiseService.add_document_loader(
-  #     store_id: store_id,
-  #     loader_id: loader_id,
-  #     splitter_id: 'recursiveCharacterTextSplitter',
-  #     name: file_name,
-  #     content: base64_content
-  #   )
-  # rescue StandardError => e
-  #   Rails.logger.error("Failed to add document loader: #{e.message}")
-  #   nil
-  # end
-
-  # def delete_document_loader(store_id:, loader_id:)
-  #   AiAgents::FlowiseService.delete_document_loader(
-  #     store_id: store_id,
-  #     loader_id: loader_id
-  #   )
-  # rescue StandardError => e
-  #   Rails.logger.error("Failed to delete document loader: #{e.message}")
-  # end
-
-  def upsert_document_store(knowledge_source)
-    AiAgents::FlowiseService.upsert_document_store(knowledge_source.store_config)
   end
 
   def formatted_file_name(file_name)

@@ -63,10 +63,7 @@ async function fetchKnowledge() {
   try {
     isFetching.value = true;
     const data = await aiAgents.getKnowledgeSources(props.data.id);
-    console.log('Fetched knowledge source files:', data);
     files.value = data.data?.knowledge_source_files || [];
-    console.log(`[${props.context}] Total files: ${files.value.length} | Context files: ${contextFiles.value.length}`);
-    console.log(`contextFiles:`, contextFiles.value);
   } catch (e) {
     useAlert('Gagal mendapatkan data');
   } finally {
@@ -235,8 +232,6 @@ async function save() {
       
       formData.append('file', renamedFile);
       formData.append('collection_name', collection_name); // Tambahkan collection_name ke formData
-      console.log('formData:', formData);
-      console.log(`[${props.context}] Uploading as: ${newFileName}`);
       await aiAgents.addKnowledgeFile(props.data.id, formData);
     }
 

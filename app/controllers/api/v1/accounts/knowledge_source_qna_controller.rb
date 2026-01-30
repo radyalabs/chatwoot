@@ -7,33 +7,20 @@ class Api::V1::Accounts::KnowledgeSourceQnaController < Api::V1::Accounts::BaseC
       handle_error('Knowledge source not found')
       return
     end
-    Rails.logger.info('+++++++++++++++++++Creating knowledge source QnA entries+++++++++++++++++++')
-    Rails.logger.info("QnA Params: #{qna_params.inspect}")
-    Rails.logger.info("Params: #{params.inspect}")
-    Rails.logger.info("AI Agent: #{@ai_agent.inspect}")
-    Rails.logger.info("Knowledge Source: #{knowledge_source.inspect}")
     create_source(knowledge_source)
-    # upsert_document_store(knowledge_source)
   end
 
   def destroy
-    Rails.logger.info('+++++++++++++++++++Deleting knowledge source QnA entry+++++++++++++++++++')
-    Rails.logger.info("ALL PARAMS: #{params.inspect}")
-    Rails.logger.info("collection_name param: #{params[:collection_name].inspect}")
     knowledge_source = @ai_agent.knowledge_source
     qna            = knowledge_source.knowledge_source_qnas.find(params[:id])
     doc_ids        = Array(qna.loader_id) # loader_id holds the docId (or ids)
-    store_id       = knowledge_source.store_id
+    # store_id       = knowledge_source.store_id
     index_name     = params[:collection_name]
-
-    # log index_name and doc_ids
-    Rails.logger.info("Deleting QnA id=#{qna.id}, doc_ids=#{doc_ids.inspect}, store_id=#{store_id}, index_name=#{index_name}")
 
     # call external delete-knowledge endpoint
     delete_documents(index_name, doc_ids)
 
     if qna.destroy
-      upsert_document_store(knowledge_source) if knowledge_source.not_empty?
       head :no_content
     else
       handle_error('Failed to delete knowledge source')
@@ -68,62 +55,15 @@ class Api::V1::Accounts::KnowledgeSourceQnaController < Api::V1::Accounts::BaseC
       raise StandardError, "Failed to delete documents: #{response.message}"
     end
 
-    parsed = JSON.parse(response.body)
-    Rails.logger.info("Delete result: #{parsed.inspect}")
-    parsed
+    JSON.parse(response.body)
   rescue HTTParty::Error, JSON::ParserError => e
     Rails.logger.error("Error calling delete-knowledge API: #{e.message}")
     raise StandardError, "Failed to communicate with knowledge API: #{e.message}"
   end
 
-  # def destroy
-  #   Rails.logger.info('+++++++++++++++++++Deleting knowledge source QnA entry+++++++++++++++++++')
-
-  #   knowledge_source = @ai_agent.knowledge_source
-  #   qna = knowledge_source.knowledge_source_qnas.find(params[:id])
-
-  #   doc_id = qna.loader_id # ← THIS IS docId
-  #   store_id = knowledge_source.store_id
-
-  #   Rails.logger.info("Deleting QnA id=#{qna.id}, doc_id=#{doc_id}, store_id=#{store_id}")
-
-  #   if qna.destroy
-  #     delete_document_loaders(store_id, [doc_id])
-  #     upsert_document_store(knowledge_source) if knowledge_source.not_empty?
-  #     head :no_content
-  #   else
-  #     handle_error('Failed to delete knowledge source')
-  #   end
-  # end
-
-  # def destroy
-  #   Rails.logger.info('+++++++++++++++++++Deleting knowledge source QnA entry+++++++++++++++++++')
-  #   Rails.logger.info("Params: #{params.inspect}")
-  #   knowledge_source = @ai_agent.knowledge_source
-  #   knowledge_source_qna = knowledge_source.knowledge_source_qnas.find(params[:id])
-  #   loader_payload = knowledge_source_qna.loader_payload # or qna.loader_id / qna.doc_id
-  #   doc_id = loader_payload['docId'] # string
-  #   store_id = knowledge_source.store_id
-  #   Rails.logger.info("AI Agent: #{@ai_agent.inspect}")
-  #   Rails.logger.info("Knowledge Source: #{knowledge_source.inspect}")
-  #   Rails.logger.info("Knowledge Source QnA to be deleted: #{knowledge_source_qna.inspect}")
-  #   if knowledge_source_qna.destroy
-  #     delete_document_loaders(knowledge_source.store_id, [knowledge_source_qna.loader_id])
-  #     upsert_document_store(knowledge_source) if knowledge_source.not_empty?
-  #     # If the knowledge source is empty, we don't need to upsert the document store
-  #     # because it will be deleted in the destroy method of the knowledge source.
-
-  #     head :no_content
-  #   else
-  #     handle_error('Failed to delete knowledge source')
-  #   end
-  # end
-
   private
 
   def create_source(knowledge_source)
-    Rails.logger.info('+++++++++++++++++++In create_source (batch)+++++++++++++++++++')
-
     created_or_updated_qnas = []
     previous_loader_ids_to_delete = []
 
@@ -139,8 +79,6 @@ class Api::V1::Accounts::KnowledgeSourceQnaController < Api::V1::Accounts::BaseC
 
       # 3. Pair each QnA with its loader result
       qna_params.zip(loader_results).each do |qna, document_loader|
-        Rails.logger.info("Processing QnA with docId=#{document_loader['docId']}")
-
         result = knowledge_source.knowledge_source_qnas.create_or_update(
           qna,
           document_loader
@@ -196,8 +134,6 @@ class Api::V1::Accounts::KnowledgeSourceQnaController < Api::V1::Accounts::BaseC
       timeout: 60
     )
 
-    Rails.logger.info("Knowledge API batch response: #{response.code} - #{response.body}")
-    Rails.logger.info('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
     unless response.success?
       Rails.logger.error("Knowledge API batch request failed: #{response.code} - #{response.body}")
       raise StandardError, 'Failed to create document loaders (batch)'
@@ -289,7 +225,6 @@ class Api::V1::Accounts::KnowledgeSourceQnaController < Api::V1::Accounts::BaseC
         store_id: store_id,
         loader_id: loader_id
       )
-      Rails.logger.info("Delete Document Loader Result for #{loader_id}: #{result.inspect}")
     rescue StandardError => e
       Rails.logger.error("Failed to delete document loader #{loader_id}: #{e.message}")
       failed_deletes << loader_id
@@ -298,13 +233,6 @@ class Api::V1::Accounts::KnowledgeSourceQnaController < Api::V1::Accounts::BaseC
     return unless failed_deletes.any?
 
     Rails.logger.warn("Some document loaders failed to delete: #{failed_deletes.join(', ')}")
-  end
-
-  def upsert_document_store(knowledge_source)
-    Rails.logger.info('+++++++++++++++++++Upserting document store+++++++++++++++++++')
-    Rails.logger.info("Knowledge Source Store Config: #{knowledge_source.store_config.inspect}")
-    result = AiAgents::FlowiseService.upsert_document_store(knowledge_source.store_config)
-    Rails.logger.info("Upsert Document Store Result: #{result.inspect}")
   end
 
   def handle_error(message, status: :bad_request, exception: nil)

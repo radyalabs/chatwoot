@@ -94,18 +94,66 @@ class Api::V1::Accounts::KnowledgeSourceTextsController < Api::V1::Accounts::Bas
     end
   end
 
-  def create_document_loader(store_id, name, text)
-    AiAgents::FlowiseService.add_document_loader(
-      store_id: store_id,
-      loader_id: 'plainText',
-      splitter_id: 'recursiveCharacterTextSplitter',
-      name: name,
-      content: text
+  def create_document_loader(store_id, content)
+    base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
+    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
+
+    unless base_url && api_key
+      Rails.logger.error('JANGKAU_AGENT_API_URL or JANGKAU_AGENT_API_KEY not configured')
+      raise StandardError, 'Knowledge management API not configured'
+    end
+
+    endpoint = "#{base_url}v2/knowledge-management/upsert-knowledge"
+
+    response = HTTParty.post(
+      endpoint,
+      body: {
+        index_name: params[:index_name] || 'default_index',
+        store_id: store_id,
+        loader_id: 'plainText',
+        splitter_id: '',
+        name: "QNA_#{Time.current.strftime('%Y%m%d%H%M%S')}",
+        content: "#{content[:question]}\n\n#{content[:answer]}"
+      }.to_json,
+      headers: {
+        'Content-Type' => 'application/json',
+        'X-API-Key' => api_key # ← This was missing!
+      },
+      timeout: 30
     )
-  rescue StandardError => e
-    Rails.logger.error("Failed to add document loader: #{e.message}")
-    nil
+
+    # Parse and validate response
+    if response.success?
+      parsed = JSON.parse(response.body)
+
+      # Validate required fields
+      unless parsed['docId'] && parsed.dig('file', 'totalChunks') && parsed.dig('file', 'totalChars')
+        Rails.logger.error("Invalid response format from knowledge API: #{parsed.inspect}")
+        raise StandardError, 'Invalid response format from knowledge management API'
+      end
+
+      parsed
+    else
+      Rails.logger.error("Knowledge API request failed: #{response.code} - #{response.body}")
+      raise StandardError, "Failed to create document loader: #{response.message}"
+    end
+  rescue HTTParty::Error, JSON::ParserError => e
+    Rails.logger.error("Error calling knowledge API: #{e.message}")
+    raise StandardError, "Failed to communicate with knowledge management API: #{e.message}"
   end
+
+  # def create_document_loader(store_id, name, text)
+  #   AiAgents::FlowiseService.add_document_loader(
+  #     store_id: store_id,
+  #     loader_id: 'plainText',
+  #     splitter_id: 'recursiveCharacterTextSplitter',
+  #     name: name,
+  #     content: text
+  #   )
+  # rescue StandardError => e
+  #   Rails.logger.error("Failed to add document loader: #{e.message}")
+  #   nil
+  # end
 
   def delete_document_loader(store_id:, loader_id:)
     AiAgents::FlowiseService.delete_document_loader(

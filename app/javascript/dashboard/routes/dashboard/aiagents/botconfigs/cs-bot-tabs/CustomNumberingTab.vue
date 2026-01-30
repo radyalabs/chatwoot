@@ -25,9 +25,9 @@
                 {{ $t('AGENT_MGMT.NUMBERING.FORMAT') }} <span class="text-red-500">*</span>
               </label>
               <div class="flex flex-col sm:flex-row gap-2 mb-2">
-                <input 
-                  v-model="form.format" 
-                  type="text" 
+                <input
+                  v-model="form.format"
+                  type="text"
                   class="flex-1 focus:border-transparent placeholder:text-gray-400"
                   :class="inputClass"
                   placeholder="[NUMBER]/[MONTH]/[YEAR]"
@@ -74,10 +74,10 @@
                 <label :class="labelClass">
                   {{ $t('AGENT_MGMT.NUMBERING.DIGIT_NUMBER') }}
                 </label>
-                <input 
-                  v-model.number="form.number_digits" 
-                  type="number" 
-                  min="3" 
+                <input
+                  v-model.number="form.number_digits"
+                  type="number"
+                  min="3"
                   class="w-full"
                   :class="inputClass"
                 />
@@ -88,9 +88,9 @@
                 <label :class="labelClass">
                   {{ $t('AGENT_MGMT.NUMBERING.PREFIX') }}
                 </label>
-                <input 
-                  v-model="form.prefix" 
-                  type="text" 
+                <input
+                  v-model="form.prefix"
+                  type="text"
                   :placeholder="$t('AGENT_MGMT.NUMBERING.PREFIX_EXP')"
                   class="w-full"
                   :class="inputClass"
@@ -176,7 +176,6 @@
 
 <script>
 import { useAlert } from 'dashboard/composables';
-import aiAgents from '../../../../../api/aiAgents';
 import sheetNumberingConfigAPI from '../../../../../api/sheetNumberingConfig';
 import Button from 'dashboard/components-next/button/Button.vue';
 
@@ -265,24 +264,29 @@ export default {
       return (this.form.prefix || '') + processedFormat;
     },
   },
-  async created() {
-    try {
+  watch: {
+    'data.id': {
+      immediate: true,
+      async handler(newId) {
+        if (!newId) return;
+        try {
           const { data } = await sheetNumberingConfigAPI.getConfig(newId, this.numberingKey);
-      if (data && data.current_value != null) {
+          if (data && data.current_value != null) {
             this.savedCurrentNumber = data.current_value;
             this.serverLastSyncedValue = data.last_synced_value != null ? data.last_synced_value : null;
-        this.lastSyncedAt = data.last_synced_at || null;
-        this.storedResetInterval = data.reset_interval || 'never';
-        // Sync form fields from DB
-        this.form.currentNumber = data.current_value;
-        if (data.format_pattern) this.form.format = data.format_pattern;
-        if (data.number_padding) this.form.number_digits = data.number_padding;
-        if (data.reset_interval) this.form.resetEvery = data.reset_interval;
-        if (data.prefix != null) this.form.prefix = data.prefix;
-      }
-    } catch (e) {
-      // New config, no stored value yet
-    }
+            this.lastSyncedAt = data.last_synced_at || null;
+            this.storedResetInterval = data.reset_interval || 'never';
+            this.form.currentNumber = data.current_value;
+            if (data.format_pattern) this.form.format = data.format_pattern;
+            if (data.number_padding) this.form.number_digits = data.number_padding;
+            if (data.reset_interval) this.form.resetEvery = data.reset_interval;
+            if (data.prefix != null) this.form.prefix = data.prefix;
+          }
+        } catch (e) {
+          // New config, no stored value yet
+        }
+      },
+    },
   },
 
   methods: {

@@ -20,7 +20,10 @@ class Api::V2::Accounts::SheetNumberingConfigsController < Api::V1::Accounts::Ba
       numbering_key: numbering_key_param
     )
 
+    previous_current_value = @sheet_numbering_config.current_value
+
     if @sheet_numbering_config.update(sheet_numbering_config_params)
+      sync_counter_to_jangkau if @sheet_numbering_config.current_value != previous_current_value
       render json: sheet_numbering_config_response, status: :ok
     else
       render json: { errors: @sheet_numbering_config.errors.full_messages }, status: :unprocessable_entity
@@ -57,6 +60,15 @@ class Api::V2::Accounts::SheetNumberingConfigsController < Api::V1::Accounts::Ba
       created_at: @sheet_numbering_config.created_at,
       updated_at: @sheet_numbering_config.updated_at
     }
+  end
+
+  def sync_counter_to_jangkau
+    SyncNumberingCounterJob.perform_later(
+      @sheet_numbering_config.account_id,
+      @sheet_numbering_config.ai_agent_id,
+      @sheet_numbering_config.numbering_key,
+      @sheet_numbering_config.current_value
+    )
   end
 
   def sheet_numbering_config_params

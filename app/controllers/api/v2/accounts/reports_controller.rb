@@ -89,28 +89,28 @@ class Api::V2::Accounts::ReportsController < Api::V1::Accounts::BaseController
             end
 
     conversations = Current.account.conversations.where(created_at: range)
-    
+
     total_starter = conversations.count
-
-    engage_user = conversations.joins(:messages)
-                               .where(messages: { private: false }) 
-                               .group('conversations.id')
-                               .having('COUNT(messages.id) BETWEEN ? AND ?', 5, 10)
-                               .count
-                               .size
-
-    high_chat_volume_ids = conversations.joins(:messages)
-                               .where(messages: { private: false })
-                               .group('conversations.id')
-                               .having('COUNT(messages.id) > ?', 10)
-                               .pluck('conversations.id')
 
     converted_ids = conversations.where(is_convert: true).pluck(:id)
 
-    high_intent = (high_chat_volume_ids + converted_ids).uniq.count
+    engage_chat_ids = conversations.joins(:messages)
+                                   .where(messages: { private: false })
+                                   .group('conversations.id')
+                                   .having('COUNT(messages.id) >= ?', 5)
+                                   .pluck('conversations.id')
+    
+    engage_user = (engage_chat_ids + converted_ids).uniq.count
+
+    high_intent_chat_ids = conversations.joins(:messages)
+                                        .where(messages: { private: false })
+                                        .group('conversations.id')
+                                        .having('COUNT(messages.id) >= ?', 10)
+                                        .pluck('conversations.id')
+
+    high_intent = (high_intent_chat_ids + converted_ids).uniq.count
 
     converted_conversations = conversations.where(id: converted_ids)
-    
     assisted_bot = converted_conversations.where(assignee_id: nil).count
     assisted_cs  = converted_conversations.where.not(assignee_id: nil).count
 

@@ -89,9 +89,9 @@ class AiAgents extends ApiClient {
         );
     }
 
-    deleteKnowledgeFile(idAgent, fileId) {
+    deleteKnowledgeFile(idAgent, fileId, collection_name) {
         return axios.delete(
-            `${this.url}/${idAgent}/knowledge_sources/file/${fileId}`
+            `${this.url}/${idAgent}/knowledge_sources/file/${fileId}?collection_name=${collection_name}`
         );
     }
 
@@ -123,9 +123,10 @@ class AiAgents extends ApiClient {
         return axios.post(`${this.url}/${idAgent}/knowledge_sources/qna`, data);
     }
 
-    deleteKnowledgeQna(idAgent, qnaId) {
+    deleteKnowledgeQna(idAgent, qnaId, params = {}) {
         return axios.delete(
-            `${this.url}/${idAgent}/knowledge_sources/qna/${qnaId}`
+            `${this.url}/${idAgent}/knowledge_sources/qna/${qnaId}`,
+            { params }
         );
     }
 

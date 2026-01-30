@@ -119,13 +119,32 @@ async function fetchKnowledge() {
       qnas.value = [...qnas.value, ...unsavedItems];
     }
     
-    console.log(`[${props.context}] Total QnAs: ${qnas.value.length} | Context QnAs: ${contextQnas.value.length}`);
+    // console.log(`[${props.context}] Total QnAs: ${qnas.value.length} | Context QnAs: ${contextQnas.value.length}`);
   } catch (e) {
     useAlert(t('AGENT_MGMT.QNA.FETCH_ERROR'));
   } finally {
     isFetching.value = false;
   }
 }
+
+// Add this computed property after the existing helper functions, around line 130-140
+const collectionName = computed(() => {
+  if (!props.data?.display_flow_data?.agents_config) return null;
+  
+  const agents = props.data.display_flow_data.agents_config;
+  
+  // For general context, return the first agent's collection_name
+  if (props.context === 'general') {
+    return agents[0]?.collection_name || null;
+  }
+  
+  const targetType = props.context;
+  if (!targetType) return null;
+  
+  // Find agent by type
+  const agent = agents.find(agent => agent.type === targetType);
+  return agent?.collection_name || null;
+});
 
 watch(
   () => props.data,
@@ -158,13 +177,14 @@ async function deleteData() {
   const dataId = dataToDelete?.id;
   const indexToDelete = deleteModalIndex.value;
   
+  const collection_name = collectionName.value;
+  
   try {
     showDeleteModal.value = false;
     deleteLoadingIds.value[dataId] = true;
-    
     // If it has an ID, delete from server
     if (dataId) {
-      await aiAgents.deleteKnowledgeQna(props.data.id, dataId);
+      await aiAgents.deleteKnowledgeQna(props.data.id, dataId, { collection_name });
       if (indexToDelete !== -1) {
         qnas.value.splice(indexToDelete, 1);
       }
@@ -185,6 +205,7 @@ async function deleteData() {
 
 const isSaving = ref(false);
 async function save() {
+  const collection_name = collectionName.value;
   try {
     isSaving.value = true;
 
@@ -217,12 +238,15 @@ async function save() {
       id: t.id, 
       question: addQuestionPrefix(t.question), 
       answer: addAnswerPrefix(t.answer),
-      agent_id: currentAgentId
+      agent_id: currentAgentId,
+      collection_name: collection_name // Include collection_name here
     }));
     
     // Store items that will be saved (to exclude them from unsaved items later)
     const itemsThatWillBeSaved = itemsToSave.map(t => t.originalItem);
-      
+    
+
+    // Add collection_name parameter here
     await aiAgents.createOrUpdateKnowledgeQna(props.data.id, request);
     
     qnas.value = qnas.value.filter(qna => !itemsThatWillBeSaved.includes(qna));

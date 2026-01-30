@@ -942,13 +942,13 @@ onMounted(async () => {
                           <div class="w-16">
                             <input 
                               type="number" 
-                              min="1"
+                              min="5"
                               v-model="idleConfig.duration"
                               class="text-center px-2 py-2 text-sm font-medium border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
                               placeholder="30" 
                             />
                           </div>
-                          <span class="text-slate-600 dark:text-slate-400 text-sm">
+                          <span class="text-slate-600 dark:text-slate-400 text-sm leading-10 self-start">
                             {{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_DESC') }}
                           </span>
                         </div>

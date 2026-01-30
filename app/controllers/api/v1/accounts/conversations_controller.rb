@@ -94,7 +94,7 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
   def clear_assignee_if_resolved
     return unless @conversation.status == 'resolved'
 
-    send_closing_message
+    # send_closing_message
     @conversation.assignee_id = nil
   end
 
@@ -160,8 +160,6 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
         "manual_#{@contact.id}_#{@inbox.id}"
     end
   end
-
-
 
   def permitted_update_params
     # TODO: Move the other conversation attributes to this method and remove specific endpoints for each attribute

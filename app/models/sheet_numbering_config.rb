@@ -2,17 +2,19 @@
 #
 # Table name: sheet_numbering_configs
 #
-#  id             :bigint           not null, primary key
-#  current_value  :integer          default(1), not null
-#  format_pattern :string           default("[NUMBER]/[MONTH]/[YEAR]"), not null
-#  number_padding :integer          default(3), not null
-#  numbering_key  :string           default("default"), not null
-#  prefix         :string
-#  reset_interval :string           default("never"), not null
-#  created_at     :datetime         not null
-#  updated_at     :datetime         not null
-#  account_id     :bigint           not null
-#  ai_agent_id    :bigint           not null
+#  id                :bigint           not null, primary key
+#  current_value     :integer          default(1), not null
+#  format_pattern    :string           default("[NUMBER]/[MONTH]/[YEAR]"), not null
+#  last_synced_at    :datetime
+#  last_synced_value :integer
+#  number_padding    :integer          default(3), not null
+#  numbering_key     :string           default("default"), not null
+#  prefix            :string
+#  reset_interval    :string           default("never"), not null
+#  created_at        :datetime         not null
+#  updated_at        :datetime         not null
+#  account_id        :bigint           not null
+#  ai_agent_id       :bigint           not null
 #
 # Indexes
 #
@@ -64,8 +66,29 @@ class SheetNumberingConfig < ApplicationRecord
   def current_value_must_not_decrease
     return unless current_value_changed?
 
-    if current_value <= current_value_was.to_i
-      errors.add(:current_value, "must be greater than current stored value (#{current_value_was})")
+    # No IDs ever generated — free to edit
+    return if last_synced_value.nil?
+
+    # New reset period — counter has reset, free to edit
+    return if new_reset_period?
+
+    # Must be greater than the highest actually-generated ID
+    min_allowed = last_synced_value + 1
+    return if current_value >= min_allowed
+
+    errors.add(:current_value, "must be greater than the last generated value (#{last_synced_value})")
+  end
+
+  def new_reset_period?
+    return true if last_synced_at.nil?
+
+    case reset_interval
+    when 'month'
+      last_synced_at.beginning_of_month < Time.current.beginning_of_month
+    when 'year'
+      last_synced_at.beginning_of_year < Time.current.beginning_of_year
+    else
+      false
     end
   end
 end

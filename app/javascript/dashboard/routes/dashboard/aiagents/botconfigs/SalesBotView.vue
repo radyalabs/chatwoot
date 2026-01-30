@@ -1586,7 +1586,7 @@
 
           <!-- Custom Numbering Content -->
           <div v-show="activeTabIndex === 7" class="w-full">
-            <CustomNumberingTab :data="data" />
+            <CustomNumberingTab :data="data" numbering-key="sales" />
           </div>
 
         </div>

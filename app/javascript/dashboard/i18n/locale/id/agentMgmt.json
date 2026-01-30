@@ -663,7 +663,9 @@
       "WARN_MISSING_NUMBER": "Format harus menyertakan [NUMBER] untuk memastikan ID unik.",
       "WARN_MISSING_MONTH": "Format harus menyertakan variabel bulan ([MONTH], [MONTH_ROMAN], [MONTH_SHORT], atau [MONTH_LONG]) untuk menghindari ID duplikat.",
       "WARN_MISSING_YEAR": "Format harus menyertakan variabel tahun ([YEAR] atau [YEAR_SHORT]) untuk menghindari ID duplikat.",
-      "WARN_CURRENT_VALUE_TOO_LOW": "Nomor berikutnya tidak boleh kurang dari atau sama dengan nilai tersimpan saat ini ({storedValue})."
+      "WARN_CURRENT_VALUE_TOO_LOW": "Nomor berikutnya harus lebih besar dari nilai terakhir yang dibuat ({storedValue}).",
+      "WARN_MIN_VALUE": "Nomor berikutnya harus minimal 1.",
+      "SAVE_ERROR": "Gagal menyimpan konfigurasi penomoran."
     }
   }
 }

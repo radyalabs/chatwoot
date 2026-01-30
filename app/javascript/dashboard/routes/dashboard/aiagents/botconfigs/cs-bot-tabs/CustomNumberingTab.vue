@@ -213,6 +213,10 @@ export default {
       type: Object,
       required: true,
     },
+    numberingKey: {
+      type: String,
+      required: true,
+    },
   },
 
   data() {
@@ -228,6 +232,9 @@ export default {
       showSuccessModal: false,
       loading: false,
       storedCurrentValue: null,
+      lastSyncedValue: null,
+      lastSyncedAt: null,
+      storedResetInterval: null,
     };
   },
   computed: {
@@ -262,34 +269,22 @@ export default {
       return (this.form.prefix || '') + processedFormat;
     },
   },
-  watch: {
-    data: {
-      handler(newData) {
-        // Load from flowData if number_format exists (backward compatibility)
-        if (newData &&
-          newData.display_flow_data &&
-          newData.display_flow_data.agents_config &&
-          newData.display_flow_data.agents_config[0] &&
-          newData.display_flow_data.agents_config[0].configurations &&
-          newData.display_flow_data.agents_config[0].configurations
-            .number_format
-        ) {
-          this.form = {
-            ...this.form,
-            ...newData.display_flow_data.agents_config[0].configurations.number_format
-          };
-        }
-      },
-      immediate: true,
-      deep: true,
-    }
-  },
-
   async created() {
     try {
-      const { data } = await sheetNumberingConfigAPI.getConfig(this.data.id);
+      console.log('[CustomNumberingTab] created() called, fetching config for:', this.data.id, this.numberingKey);
+      const { data } = await sheetNumberingConfigAPI.getConfig(this.data.id, this.numberingKey);
+      console.log('[CustomNumberingTab] API response:', JSON.stringify(data));
       if (data && data.current_value != null) {
         this.storedCurrentValue = data.current_value;
+        this.lastSyncedValue = data.last_synced_value != null ? data.last_synced_value : null;
+        this.lastSyncedAt = data.last_synced_at || null;
+        this.storedResetInterval = data.reset_interval || 'never';
+        // Sync form fields from DB
+        this.form.currentNumber = data.current_value;
+        if (data.format_pattern) this.form.format = data.format_pattern;
+        if (data.number_padding) this.form.number_digits = data.number_padding;
+        if (data.reset_interval) this.form.resetEvery = data.reset_interval;
+        if (data.prefix != null) this.form.prefix = data.prefix;
       }
     } catch (e) {
       // New config, no stored value yet
@@ -315,13 +310,18 @@ export default {
         warnings.push(this.$t('AGENT_MGMT.NUMBERING.WARN_MISSING_YEAR'));
       }
 
+      if (!this.form.currentNumber || this.form.currentNumber < 1) {
+        warnings.push(this.$t('AGENT_MGMT.NUMBERING.WARN_MIN_VALUE'));
+      }
+
       if (
-        this.storedCurrentValue != null &&
-        this.form.currentNumber <= this.storedCurrentValue
+        this.lastSyncedValue != null &&
+        !this.isCurrentValueEditAllowed() &&
+        this.form.currentNumber <= this.lastSyncedValue
       ) {
         warnings.push(
           this.$t('AGENT_MGMT.NUMBERING.WARN_CURRENT_VALUE_TOO_LOW', {
-            storedValue: this.storedCurrentValue,
+            storedValue: this.lastSyncedValue,
           })
         );
       }
@@ -331,6 +331,26 @@ export default {
         return false;
       }
       return true;
+    },
+
+    isCurrentValueEditAllowed() {
+      // Never synced — no IDs ever generated
+      if (!this.lastSyncedAt) return true;
+
+      const syncDate = new Date(this.lastSyncedAt);
+      const now = new Date();
+
+      // For periodic resets, allow free editing if we're in a new period
+      if (this.storedResetInterval === 'month') {
+        return syncDate.getFullYear() < now.getFullYear() ||
+          syncDate.getMonth() < now.getMonth();
+      }
+      if (this.storedResetInterval === 'year') {
+        return syncDate.getFullYear() < now.getFullYear();
+      }
+
+      // 'never' — once synced, always restricted
+      return false;
     },
 
     addCode() {
@@ -354,9 +374,6 @@ export default {
           if (!flowData.agents_config[0].configurations) {
             flowData.agents_config[0].configurations = {};
           }
-          // Save to flow_data (backward compatibility)
-          flowData.agents_config[0].configurations.number_format = this.form;
-          displayFlowData.agents_config[0].configurations.number_format = this.form;
         } else {
           throw new Error("Format data tidak ditemukan.");
         }
@@ -366,18 +383,19 @@ export default {
           display_flow_data: displayFlowData,
         };
 
-        // Save to flow_data and display_flow_data
-        await aiAgents.updateAgent(this.data.id, payload);
-
-        // Also save to sheet_numbering_configs table
+        // Save to sheet_numbering_configs (source of truth)
         const configPayload = {
           prefix: this.form.prefix,
           format_pattern: this.form.format,
           current_value: this.form.currentNumber,
           number_padding: this.form.number_digits,
           reset_interval: this.form.resetEvery,
+          numbering_key: this.numberingKey,
         };
         await sheetNumberingConfigAPI.updateConfig(this.data.id, configPayload);
+
+        // Save flow_data (other config fields, excluding number_format)
+        await aiAgents.updateAgent(this.data.id, payload);
 
         // Update stored value after successful save
         this.storedCurrentValue = this.form.currentNumber;
@@ -389,6 +407,16 @@ export default {
 
       } catch (error) {
         console.error("Gagal menyimpan:", error);
+        const serverErrors = error?.response?.data?.errors;
+        if (serverErrors && Array.isArray(serverErrors)) {
+          serverErrors.forEach(msg => useAlert(msg, { duration: 5000 }));
+        } else {
+          useAlert(this.$t('AGENT_MGMT.NUMBERING.SAVE_ERROR'), { duration: 5000 });
+        }
+        // Revert form to last persisted values
+        if (this.storedCurrentValue != null) {
+          this.form.currentNumber = this.storedCurrentValue;
+        }
       } finally {
         this.loading = false;
       }

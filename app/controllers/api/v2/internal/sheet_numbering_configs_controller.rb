@@ -42,7 +42,9 @@ class Api::V2::Internal::SheetNumberingConfigsController < ActionController::API
       prefix: sheet_config.prefix,
       format_pattern: sheet_config.format_pattern,
       number_padding: sheet_config.number_padding,
-      numbering_key: sheet_config.numbering_key
+      numbering_key: sheet_config.numbering_key,
+      current_value: sheet_config.current_value,
+      reset_interval: sheet_config.reset_interval
     }, status: :ok
   rescue ActiveRecord::RecordNotFound => e
     Rails.logger.error("[Internal::SheetNumberingConfigs] Config not found: #{e.message}")
@@ -78,7 +80,12 @@ class Api::V2::Internal::SheetNumberingConfigsController < ActionController::API
       numbering_key: sync_params[:numbering_key] || 'default'
     )
 
-    sheet_config.update_column(:current_value, sync_params[:current_value].to_i)
+    synced_value = sync_params[:current_value].to_i
+    sheet_config.update_columns(
+      current_value: synced_value + 1,
+      last_synced_at: Time.current,
+      last_synced_value: synced_value
+    )
 
     Rails.logger.info(
       "[Internal::SheetNumberingConfigs] Counter synced: config_id=#{sheet_config.id}, " \

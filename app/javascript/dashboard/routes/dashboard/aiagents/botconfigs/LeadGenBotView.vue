@@ -472,7 +472,7 @@
 
         <!-- Tab 5: Custom Numbering Content -->
         <div v-show="activeIndex === 5" class="w-full">
-          <CustomNumberingTab :data="data" />
+          <CustomNumberingTab :data="data" numbering-key="lead_generation" />
         </div>
 
       </div>

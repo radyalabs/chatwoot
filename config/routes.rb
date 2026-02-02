@@ -559,7 +559,8 @@ Rails.application.routes.draw do
 
         resources :sheet_numbering_configs, only: [] do
           collection do
-            get :config
+            get :config, action: :show_config
+            put :sync_counter, action: :sync_counter
           end
         end
       end

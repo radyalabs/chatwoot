@@ -157,6 +157,7 @@ Rails.application.routes.draw do
                 delete :'text/:id', to: 'knowledge_source_texts#destroy'
                 post :file, to: 'knowledge_source_files#create'
                 delete :'file/:id', to: 'knowledge_source_files#destroy'
+                get :'file/:id/preview', to: 'knowledge_source_files#preview'
                 post :'website/links', to: 'knowledge_source_websites#collect_link'
                 post :website, to: 'knowledge_source_websites#create'
                 patch :website, to: 'knowledge_source_websites#update'

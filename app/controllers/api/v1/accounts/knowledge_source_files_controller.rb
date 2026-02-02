@@ -48,6 +48,16 @@ class Api::V1::Accounts::KnowledgeSourceFilesController < Api::V1::Accounts::Bas
     end
   end
 
+  def preview
+    knowledge_source = @ai_agent.knowledge_source
+    knowledge_source_file = knowledge_source.knowledge_source_files.find_by(id: params[:id])
+    return head :not_found unless knowledge_source_file.file.attached?
+
+    render json: {
+      url: knowledge_source_file.preview_url
+    }
+  end
+
   private
 
   def create_source(knowledge_source, file)
@@ -192,6 +202,10 @@ class Api::V1::Accounts::KnowledgeSourceFilesController < Api::V1::Accounts::Bas
 
     render json: { error: I18n.t('ai_agents.knowledge_source.file_size_error') }, status: :unprocessable_entity
   end
+
+  # def knowledge_source
+  #   @knowledge_source ||= @ai_agent.knowledge_source
+  # end
 
   def set_ai_agent
     @ai_agent = Current.account.ai_agents.find(params[:ai_agent_id])

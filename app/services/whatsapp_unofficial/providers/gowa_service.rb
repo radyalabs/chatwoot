@@ -6,8 +6,8 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
 
     if attachments.any?
       send_attachment_message(message, attachments)
-    elsif message[:link].present?
-      send_message_link(message)
+    # elsif message[:link].present?
+    #   send_message_link(message)
     else
       send_message_text(message)
     end
@@ -65,7 +65,7 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
     process_response(response)
   end
 
-  def send_image(phone_number, attachment, caption: nil)
+  def send_image(phone_number, attachment, caption: nil) # rubocop:disable Metrics/MethodLength
     tempfile = Tempfile.new(
       [File.basename(attachment[:filename], '.*'), File.extname(attachment[:filename])]
     )
@@ -93,7 +93,7 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
     tempfile&.unlink
   end
 
-  def send_document(phone_number, attachment, caption: nil)
+  def send_document(phone_number, attachment, caption: nil) # rubocop:disable Metrics/MethodLength
     tempfile = Tempfile.new(
       [File.basename(attachment[:filename], '.*'), File.extname(attachment[:filename])]
     )

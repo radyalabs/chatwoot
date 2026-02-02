@@ -27,10 +27,13 @@ class WhatsappUnofficial::SendOnWhatsappUnofficialService < Base::SendOnChannelS
     message.attachments.filter_map do |attachment|
       next unless attachment.file.attached?
 
+      file_data = attachment.file.download
+      file_data.force_encoding('BINARY') if file_data.respond_to?(:force_encoding)
+
       {
         filename: attachment.file.filename.to_s,
         content_type: attachment.file.content_type,
-        io: StringIO.new(attachment.file.download),
+        io: StringIO.new(file_data),
         file_type: attachment.file_type,
         download_url: attachment.download_url
       }

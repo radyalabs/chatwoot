@@ -354,7 +354,7 @@ export default {
                 )
               "
             />
-            <label>
+            <!-- <label>
               {{
                 $t('INBOX_MGMT.WIDGET_BUILDER.WIDGET_OPTIONS.REPLY_TIME.LABEL')
               }}
@@ -367,7 +367,7 @@ export default {
                   {{ option.text }}
                 </option>
               </select>
-            </label>
+            </label> -->
             <label>
               {{
                 $t(

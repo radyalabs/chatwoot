@@ -213,31 +213,28 @@ async function createAiAgent() {
 const templates = computed(() => {
   if (!aiTemplates.value) return [];
 
-  const targetsToDisable = ['Event Organizer', 'Restoran & Cafe', 'Restaurant & Cafe']; 
+  const targetsToRemove = ['Event Organizer', 'Restoran & Cafe', 'Restaurant & Cafe']; 
 
-  const activeList = [];
-  const disabledList = [];
+  const filteredList = [];
 
   aiTemplates.value.forEach(e => {
-    const shouldDisable = targetsToDisable.some(target => 
+    const shouldRemove = targetsToRemove.some(target => 
       e.name.toLowerCase().includes(target.toLowerCase())
     );
 
-    const mappedItem = {
+    if (shouldRemove) {
+      return;
+    }
+
+    filteredList.push({
       label: e.name,
       id: `${e.id}`,
       description: e.description,
-      disabled: shouldDisable
-    };
-
-    if (shouldDisable) {
-      disabledList.push(mappedItem);
-    } else {
-      activeList.push(mappedItem);
-    }
+      disabled: false
+    });
   });
 
-  return [...activeList, ...disabledList];
+  return filteredList;
 });
 const selectedTemplate = computed({
   get: () => state.selectedTemplate,

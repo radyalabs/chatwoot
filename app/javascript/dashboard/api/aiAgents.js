@@ -76,6 +76,12 @@ class AiAgents extends ApiClient {
         );
     }
 
+    previewKnowledgeFile(idAgent, fileId) {
+        return axios.get(
+            `${this.url}/${idAgent}/knowledge_sources/file/${fileId}/preview`
+        );
+    }
+
     addExcelKnowledgeFile(idAgent, data) {
         return axios.post(
             `/api/v2/accounts/${this.accountIdFromRoute}/ai_agents/${idAgent}/knowledge_sources/excel_imports`,

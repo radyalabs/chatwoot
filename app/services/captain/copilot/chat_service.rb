@@ -43,9 +43,9 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
 
     return send_reply_failure(I18n.t('conversations.bot.failure')) unless send_message.success?
 
-      @context.usage.increment_ai_responses
-      response = send_message.parsed_response
-      parsed = parsed_response(response, is_custom_agent: @context.ai_agent.custom_agent?)
+    @context.usage.increment_ai_responses
+    response = send_message.parsed_response
+    parsed = parsed_response(response, is_custom_agent: @context.ai_agent.custom_agent?)
 
     send_reply(
       parsed,

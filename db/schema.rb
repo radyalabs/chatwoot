@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_01_08_090113) do
+ActiveRecord::Schema[7.0].define(version: 2026_01_14_024932) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -200,8 +200,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_08_090113) do
     t.bigint "article_id", null: false
     t.text "term", null: false
     t.vector "embedding", limit: 1536
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.index ["embedding"], name: "index_article_embeddings_on_embedding", using: :ivfflat
   end
 
@@ -317,8 +317,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_08_090113) do
     t.bigint "assistant_id", null: false
     t.bigint "documentable_id"
     t.bigint "account_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.integer "status", default: 1, null: false
     t.string "documentable_type"
     t.index ["account_id"], name: "index_captain_assistant_responses_on_account_id"

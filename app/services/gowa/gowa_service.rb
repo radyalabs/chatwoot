@@ -76,6 +76,13 @@ class Gowa::GowaService
     get('/app/status', extra_headers: { 'X-Device-Id' => device_id })
   end
 
+  # List WhatsApp groups for a device
+  # @param device_id [String] Device ID
+  # @return [Hash] Response with groups array
+  def list_groups(device_id:)
+    get('/user/my/groups', extra_headers: { 'X-Device-Id' => device_id })
+  end
+
   def configured?
     @api_url.present? && username.present? && password.present?
   end

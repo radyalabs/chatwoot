@@ -222,6 +222,9 @@
                   </a>
                 </div>
               </div>
+
+              <!-- Notification Settings -->
+              <NotificationSettings :ai-agent-id="data.id" />
             </div>
           </div>
         </div>
@@ -533,6 +536,7 @@ import idleConfigsAPI from '../../../../api/idleConfigs';
 import remindersAPI from '../../../../api/reminders';
 import { useAlert } from 'dashboard/composables';
 import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue';
+import NotificationSettings from './notification-settings/NotificationSettings.vue';
 
 const { t } = useI18n()
 

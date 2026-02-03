@@ -7,21 +7,19 @@ class Api::V1::Accounts::KnowledgeSourceWebsitesController < Api::V1::Accounts::
     return render_error('Knowledge source not found') if find_knowledge_source.nil?
 
     created_document_loader_ids = []
-
+    collection_name = params[:collection_name]
     begin
       scrapes = fetch_scraped_content
     rescue StandardError => e
       return render_error(e.message)
     end
-
     begin
-      processed_scrapes = process_scrapes(find_knowledge_source, scrapes, created_document_loader_ids)
-      upsert_document_store(find_knowledge_source) if find_knowledge_source.not_empty?
+      processed_scrapes = process_scrapes(find_knowledge_source, scrapes, created_document_loader_ids, collection_name)
       # If the knowledge source is empty, we don't need to upsert the document store
       # because it will be deleted in the destroy method of the knowledge source.
       render json: processed_scrapes.compact, status: :created
     rescue StandardError => e
-      cleanup_created_loaders(find_knowledge_source.store_id, created_document_loader_ids)
+      cleanup_created_loaders(find_knowledge_source.store_id, created_document_loader_ids, collection_name)
       handle_error('Failed to create knowledge source websites', e)
     end
   end
@@ -29,6 +27,7 @@ class Api::V1::Accounts::KnowledgeSourceWebsitesController < Api::V1::Accounts::
   def update
     return render json: { error: 'Knowledge source not found' }, status: :not_found if find_knowledge_source.nil?
 
+    collection_name = params[:collection_name]
     scrapes = [
       {
         url: params[:url],
@@ -39,13 +38,12 @@ class Api::V1::Accounts::KnowledgeSourceWebsitesController < Api::V1::Accounts::
     created_document_loader_ids = []
 
     begin
-      processed_scrapes = process_scrapes(find_knowledge_source, scrapes, created_document_loader_ids)
-      upsert_document_store(find_knowledge_source) if find_knowledge_source.not_empty?
+      processed_scrapes = process_scrapes(find_knowledge_source, scrapes, created_document_loader_ids, collection_name)
       # If the knowledge source is empty, we don't need to upsert the document store
       # because it will be deleted in the destroy method of the knowledge source.
       render json: processed_scrapes.compact, status: :created
     rescue StandardError => e
-      cleanup_created_loaders(find_knowledge_source.store_id, created_document_loader_ids)
+      cleanup_created_loaders(find_knowledge_source.store_id, created_document_loader_ids, collection_name)
       handle_error('Failed to create knowledge source websites', e)
     end
   end
@@ -53,6 +51,7 @@ class Api::V1::Accounts::KnowledgeSourceWebsitesController < Api::V1::Accounts::
   def destroy # rubocop:disable Metrics/AbcSize
     return render json: { error: 'No links provided' }, status: :bad_request if params[:ids].blank?
 
+    collection_name = params[:collection_name]
     knowledge_source_websites = find_knowledge_source.knowledge_source_websites.where(id: params[:ids])
     return render json: { error: 'No matching knowledge source websites found' }, status: :not_found if knowledge_source_websites.blank?
 
@@ -64,8 +63,7 @@ class Api::V1::Accounts::KnowledgeSourceWebsitesController < Api::V1::Accounts::
       [website.loader_id, *website.loader_ids]
     end.compact.uniq
 
-    cleanup_created_loaders(find_knowledge_source.store_id, document_loader_ids)
-    upsert_document_store(find_knowledge_source) if find_knowledge_source.not_empty?
+    cleanup_created_loaders(find_knowledge_source.store_id, document_loader_ids, collection_name)
 
     render json: { message: 'Knowledge source websites deleted successfully' }, status: :ok
   rescue StandardError => e
@@ -85,9 +83,45 @@ class Api::V1::Accounts::KnowledgeSourceWebsitesController < Api::V1::Accounts::
     Crawl4ai::CrawlService.new(links: params[:links]).perform
   end
 
-  def process_scrapes(knowledge_source, scrapes, created_ids_array)
+  # def collect_link
+  #   response = {
+  #     links: [
+  #       'https://example.com/page1.html',
+  #       'https://example.com/about',
+  #       'https://example.com/blog/article.htm',
+  #       'https://example.com/products'
+  #     ]
+  #   }
+  #   render json: response, status: :ok
+  # rescue StandardError => e
+  #   handle_error('Failed to collect link', e)
+  # end
+
+  # private
+
+  # def fetch_scraped_content
+  #   params[:links].map do |link|
+  #     {
+  #       url: link,
+  #       title: 'Sample Page Title',
+  #       markdown: "# Sample Page\n\nDummy content here for #{link}.",
+  #       html: '<html><body><h1>Sample</h1><p>Dummy content</p></body></html>',
+  #       content: "This is dummy scraped content from #{link}. Some more text here.",
+  #       text: "Plain text content from #{link}",
+  #       screenshot: '',
+  #       links: { internal: [], external: [] },
+  #       metadata: {
+  #         title: 'Sample Page Title',
+  #         description: 'Sample description',
+  #         language: 'en'
+  #       }
+  #     }
+  #   end
+  # end
+
+  def process_scrapes(knowledge_source, scrapes, created_ids_array, collection_name)
     store_id = knowledge_source.store_id
-    document_loaders = process_scrape_to_create_document_loader(store_id, scrapes)
+    document_loaders = process_scrape_to_create_document_loader(store_id, scrapes, collection_name)
 
     ActiveRecord::Base.transaction do
       scrapes.map do |scrape|
@@ -98,19 +132,19 @@ class Api::V1::Accounts::KnowledgeSourceWebsitesController < Api::V1::Accounts::
     scrapes
   end
 
-  def process_scrape_to_create_document_loader(store_id, scrapes)
+  def process_scrape_to_create_document_loader(store_id, scrapes, collection_name)
     scrapes.map do |scrape|
       url = scrape[:url]
       markdown = scrape[:markdown]
 
       chunks = markdown.chars.each_slice(10_000).map(&:join)
 
-      chunks.map.with_index do |chunk, _index|
-        Rails.logger.info("Chunk: #{chunk}")
-        document_loader = create_document_loader(store_id, url, chunk)
+      chunks.map.with_index do |chunk, index|
+        url_with_index = "#{url}::[#{index + 1}/#{chunks.size}]"
+        document_loader = create_document_loader(store_id, url_with_index, chunk, collection_name)
         if document_loader.nil?
           raise StandardError,
-                "Failed to create document loader for scrape #{scrape[:url]} batch #{idx + 1}"
+                "Failed to create document loader for scrape #{scrape[:url]} batch #{index + 1}"
         end
 
         document_loader
@@ -159,9 +193,9 @@ class Api::V1::Accounts::KnowledgeSourceWebsitesController < Api::V1::Accounts::
     entity
   end
 
-  def cleanup_created_loaders(store_id, loader_ids)
+  def cleanup_created_loaders(store_id, loader_ids, collection_name)
     loader_ids.each do |id|
-      delete_document_loader(store_id: store_id, loader_id: id)
+      delete_document_loader(store_id: store_id, loader_id: id, collection_name: collection_name)
     end
   end
 
@@ -174,7 +208,7 @@ class Api::V1::Accounts::KnowledgeSourceWebsitesController < Api::V1::Accounts::
     render json: { error: message, message: message }, status: status
   end
 
-  def create_document_loader(store_id, content)
+  def create_document_loader(store_id, url, content, collection_name)
     base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
     api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
 
@@ -182,18 +216,17 @@ class Api::V1::Accounts::KnowledgeSourceWebsitesController < Api::V1::Accounts::
       Rails.logger.error('JANGKAU_AGENT_API_URL or JANGKAU_AGENT_API_KEY not configured')
       raise StandardError, 'Knowledge management API not configured'
     end
-
     endpoint = "#{base_url}v2/knowledge-management/upsert-knowledge"
 
     response = HTTParty.post(
       endpoint,
       body: {
-        index_name: params[:index_name] || 'default_index',
+        index_name: collection_name,
         store_id: store_id,
-        loader_id: 'plainText',
+        loader_id: 'website',
         splitter_id: '',
-        name: "QNA_#{Time.current.strftime('%Y%m%d%H%M%S')}",
-        content: "#{content[:question]}\n\n#{content[:answer]}"
+        name: url,
+        content: "#{content}"
       }.to_json,
       headers: {
         'Content-Type' => 'application/json',
@@ -235,18 +268,62 @@ class Api::V1::Accounts::KnowledgeSourceWebsitesController < Api::V1::Accounts::
   #   nil
   # end
 
-  def delete_document_loader(store_id:, loader_id:)
-    AiAgents::FlowiseService.delete_document_loader(
-      store_id: store_id,
-      loader_id: loader_id
+  def delete_document_loader(store_id:, loader_id:, collection_name:)
+    base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
+    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
+
+    unless base_url && api_key
+      Rails.logger.error('JANGKAU_AGENT_API_URL or JANGKAU_AGENT_API_KEY not configured')
+      raise StandardError, 'Knowledge management API not configured'
+    end
+
+    endpoint = "#{base_url}v2/knowledge-management/delete-knowledge"
+
+    # Infer total_chunks from loader_id format: <total_chunks>|<some_hash>
+    total_chunks = begin
+      loader_id.to_s.split('|').first.to_i
+    rescue StandardError
+      0
+    end
+    response = HTTParty.post(
+      endpoint,
+      body: {
+        index_name: collection_name,
+        total_chunks: total_chunks,
+        document_id: loader_id
+      }.to_json,
+      headers: {
+        'Content-Type' => 'application/json',
+        'X-API-Key' => api_key
+      },
+      timeout: 30
     )
+
+    unless response.success?
+      Rails.logger.error("Delete knowledge API failed: #{response.code} - #{response.body}")
+      raise StandardError, "Failed to delete documents: #{response.message}"
+    end
+
+    JSON.parse(response.body)
+  rescue HTTParty::Error, JSON::ParserError => e
+    Rails.logger.error("Error calling delete-knowledge API: #{e.message}")
+    raise StandardError, "Failed to communicate with knowledge API: #{e.message}"
   rescue StandardError => e
     Rails.logger.error("Failed to delete document loader: #{e.message}")
   end
 
-  def upsert_document_store(knowledge_source)
-    AiAgents::FlowiseService.upsert_document_store(knowledge_source.store_config)
-  end
+  # def delete_document_loader(store_id:, loader_id:, collection_name:)
+  #   AiAgents::FlowiseService.delete_document_loader(
+  #     store_id: store_id,
+  #     loader_id: loader_id
+  #   )
+  # rescue StandardError => e
+  #   Rails.logger.error("Failed to delete document loader: #{e.message}")
+  # end
+
+  # def upsert_document_store(knowledge_source)
+  #   AiAgents::FlowiseService.upsert_document_store(knowledge_source.store_config)
+  # end
 
   def get_parent_url(url)
     uri = URI.parse(url)

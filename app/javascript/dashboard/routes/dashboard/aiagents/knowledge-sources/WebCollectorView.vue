@@ -17,6 +17,10 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  collectionName: {
+    type: String,
+    default: null,
+  },
 });
 
 const emits = defineEmits(['onRefresh'])
@@ -84,7 +88,6 @@ async function addUrl() {
   if (!(await v$.value.$validate())) {
     return;
   }
-
   try {
     addingUrl.value = true;
 
@@ -155,6 +158,7 @@ async function train() {
     });
     await aiAgents.addKnowledgeWebsite(props.idAgent, {
       links: selectedLinks,
+      collection_name: props.collectionName,
     });
     emits('onRefresh')
     showModel.value = false

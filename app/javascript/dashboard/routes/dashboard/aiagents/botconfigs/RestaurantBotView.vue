@@ -936,7 +936,7 @@ onMounted(async () => {
 
         <!-- Custom Numbering Content -->
         <div v-show="activeIndex === 3" class="w-full">
-          <CustomNumberingTab :data="data" />
+          <CustomNumberingTab :data="data" numbering-key="restaurant" />
         </div>
 
       </div>

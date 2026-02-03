@@ -143,58 +143,17 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
 
     attrs.merge!(additional_attributes) if additional_attributes.present?
 
-    Rails.logger.info "[BOT] Building outgoing message with #{attachments.present? ? attachments.count : 0} image(s)..."
-    
-    message = @context.conversation.messages.build(attrs)
-    
+    Message.create!(attrs)
+
     if attachments.present?
-      Rails.logger.info "[BOT] Attaching #{attachments.count} image(s) before save..."
-      
+      Rails.logger.info "[BOT] Enqueuing #{attachments.count} image(s) for async attach..."
+
       attachments.each_with_index do |image_url, idx|
-        begin
-          Rails.logger.info "  Downloading image #{idx + 1}: #{image_url}"
-          image_file = Down.download(image_url)
-          Rails.logger.info "image file content type: #{image_file.content_type}"
-          Rails.logger.info "file image: #{image_file.inspect}"
-
-          content_type = image_file.content_type
-
-          # Skip if content_type is blank or not an image
-          if content_type.blank? || !content_type.start_with?('image/')
-            Rails.logger.warn "  Skipping non-image attachment (#{content_type || 'unknown'}): #{image_url}"
-            next
-          end
-
-          # Generate a proper filename with correct extension based on content_type
-          extension = case content_type
-                      when 'image/jpeg', 'image/jpg' then '.jpg'
-                      when 'image/png' then '.png'
-                      when 'image/gif' then '.gif'
-                      when 'image/webp' then '.webp'
-                      else '.jpg'
-                      end
-          filename = "bot_image_#{idx + 1}_#{Time.current.to_i}#{extension}"
-
-          message.attachments.new(
-            account_id: message.account_id,
-            file_type: 'image',
-            file: {
-              io: image_file,
-              filename: filename,
-              content_type: content_type
-            }
-          )
-
-        rescue StandardError => e
-          Rails.logger.error "Failed to attach image #{idx + 1}: #{e.message}"
-        end
+        Captain::Copilot::AttachMessageImageJob.perform_later(
+          attrs, 
+          image_url, 
+          idx + 1)
       end
-      
     end
-    
-    message.save!
-    Rails.logger.info "[BOT] Message saved! ID: #{message.id}, attachments: #{message.attachments.count}"
-    
-    message
   end
 end

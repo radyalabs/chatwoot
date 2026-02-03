@@ -166,17 +166,24 @@ class AiAgent < ApplicationRecord
   end
 
   def create_default_numbering_config
-    sheet_numbering_configs.create!(
-      account: account,
-      numbering_key: 'default',
-      prefix: nil,
-      format_pattern: '[NUMBER]/[MONTH]/[YEAR]',
-      current_value: 1,
-      number_padding: 3,
-      reset_interval: 'never'
-    )
+    enabled_agents_list.each do |agent_key|
+      sheet_numbering_configs.create!(
+        account: account,
+        numbering_key: agent_key,
+        prefix: nil,
+        format_pattern: '[NUMBER]/[MONTH]/[YEAR]',
+        current_value: 1,
+        number_padding: 3,
+        reset_interval: 'never'
+      )
+    end
   rescue ActiveRecord::RecordInvalid => e
-    Rails.logger.error("[AiAgent] Failed to create default numbering config: #{e.message}")
+    Rails.logger.error("[AiAgent] Failed to create numbering config: #{e.message}")
+  end
+
+  def enabled_agents_list
+    agents = flow_data&.dig('enabled_agents') || []
+    agents.presence || ['default']
   end
 
   def cleanup_numbering_counters

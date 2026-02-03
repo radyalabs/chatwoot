@@ -19,7 +19,7 @@ class Api::V1::Accounts::KnowledgeSourceFilesController < Api::V1::Accounts::Bas
     create_source(knowledge_source, params[:file])
   end
 
-  def destroy
+  def destroy # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
     knowledge_source = @ai_agent.knowledge_source
     return render json: { error: 'Knowledge source not found' }, status: :not_found if knowledge_source.nil?
 
@@ -27,22 +27,36 @@ class Api::V1::Accounts::KnowledgeSourceFilesController < Api::V1::Accounts::Bas
     knowledge_source_file = knowledge_source.knowledge_source_files.find_by(id: params[:id])
     return render json: { error: 'Knowledge source file not found' }, status: :not_found if knowledge_source_file.nil?
 
-    if knowledge_source_file.destroy
-      # Access total_chunks here
-      total_chunks = knowledge_source_file.total_chunks
-      doc_id = knowledge_source_file.loader_id
-      collection_name = params[:collection_name]
+    total_chunks = knowledge_source_file.total_chunks
+    doc_id = knowledge_source_file.loader_id
+    chunk_ids = (0...total_chunks).map { |i| "chunk_#{i.to_s.rjust(6, '0')}:#{doc_id}" }
 
-      delete_document_loader(
-        index_name: collection_name,
-        total_chunks: total_chunks,
-        document_id: doc_id # Pass array of chunk IDs instead of single doc_id
-      )
+    begin
+      ActiveRecord::Base.transaction do
+        knowledge_source_file.file.purge if knowledge_source_file.file.attached?
+        knowledge_source_file.destroy!
+
+        delete_document_loader(
+          store_id: knowledge_source.store_id,
+          loader_id: chunk_ids
+        )
+      end
 
       head :no_content
-    else
-      render json: { error: 'Failed to delete knowledge source file' }, status: :unprocessable_entity
+    rescue StandardError => e
+      Rails.logger.error("Failed to delete file: #{e.message}")
+      render json: { error: "Failed to delete: #{e.message}" }, status: :unprocessable_entity
     end
+  end
+
+  def preview
+    knowledge_source = @ai_agent.knowledge_source
+    knowledge_source_file = knowledge_source.knowledge_source_files.find_by(id: params[:id])
+    return head :not_found unless knowledge_source_file.file.attached?
+
+    render json: {
+      url: knowledge_source_file.preview_url
+    }
   end
 
   private
@@ -66,7 +80,7 @@ class Api::V1::Accounts::KnowledgeSourceFilesController < Api::V1::Accounts::Bas
     end
   end
 
-  def create_document_loader(store_id, file)
+  def create_document_loader(store_id, file) # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/MethodLength,Metrics/PerceivedComplexity
     file_name = formatted_file_name(file.original_filename)
     ext = File.extname(file_name).downcase
 
@@ -192,6 +206,10 @@ class Api::V1::Accounts::KnowledgeSourceFilesController < Api::V1::Accounts::Bas
 
     render json: { error: I18n.t('ai_agents.knowledge_source.file_size_error') }, status: :unprocessable_entity
   end
+
+  # def knowledge_source
+  #   @knowledge_source ||= @ai_agent.knowledge_source
+  # end
 
   def set_ai_agent
     @ai_agent = Current.account.ai_agents.find(params[:ai_agent_id])

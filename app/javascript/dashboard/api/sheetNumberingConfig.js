@@ -17,8 +17,9 @@ const buildUrl = (aiAgentId) => {
 };
 
 export default {
-  getConfig(aiAgentId) {
-    return axios.get(`${buildUrl(aiAgentId)}/config`);
+  getConfig(aiAgentId, numberingKey) {
+    const params = numberingKey ? { numbering_key: numberingKey } : {};
+    return axios.get(`${buildUrl(aiAgentId)}/config`, { params });
   },
 
   updateConfig(aiAgentId, data) {

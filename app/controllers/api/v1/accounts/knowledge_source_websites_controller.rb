@@ -83,42 +83,6 @@ class Api::V1::Accounts::KnowledgeSourceWebsitesController < Api::V1::Accounts::
     Crawl4ai::CrawlService.new(links: params[:links]).perform
   end
 
-  # def collect_link
-  #   response = {
-  #     links: [
-  #       'https://example.com/page1.html',
-  #       'https://example.com/about',
-  #       'https://example.com/blog/article.htm',
-  #       'https://example.com/products'
-  #     ]
-  #   }
-  #   render json: response, status: :ok
-  # rescue StandardError => e
-  #   handle_error('Failed to collect link', e)
-  # end
-
-  # private
-
-  # def fetch_scraped_content
-  #   params[:links].map do |link|
-  #     {
-  #       url: link,
-  #       title: 'Sample Page Title',
-  #       markdown: "# Sample Page\n\nDummy content here for #{link}.",
-  #       html: '<html><body><h1>Sample</h1><p>Dummy content</p></body></html>',
-  #       content: "This is dummy scraped content from #{link}. Some more text here.",
-  #       text: "Plain text content from #{link}",
-  #       screenshot: '',
-  #       links: { internal: [], external: [] },
-  #       metadata: {
-  #         title: 'Sample Page Title',
-  #         description: 'Sample description',
-  #         language: 'en'
-  #       }
-  #     }
-  #   end
-  # end
-
   def process_scrapes(knowledge_source, scrapes, created_ids_array, collection_name)
     store_id = knowledge_source.store_id
     document_loaders = process_scrape_to_create_document_loader(store_id, scrapes, collection_name)

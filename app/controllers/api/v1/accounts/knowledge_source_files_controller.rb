@@ -23,6 +23,7 @@ class Api::V1::Accounts::KnowledgeSourceFilesController < Api::V1::Accounts::Bas
     knowledge_source = @ai_agent.knowledge_source
     return render json: { error: 'Knowledge source not found' }, status: :not_found if knowledge_source.nil?
 
+    Rails.logger.info("Attempting to find KnowledgeSourceFile with ID: #{params[:id]} for deletion")
     knowledge_source_file = knowledge_source.knowledge_source_files.find_by(id: params[:id])
     return render json: { error: 'Knowledge source file not found' }, status: :not_found if knowledge_source_file.nil?
 
@@ -30,13 +31,12 @@ class Api::V1::Accounts::KnowledgeSourceFilesController < Api::V1::Accounts::Bas
       # Access total_chunks here
       total_chunks = knowledge_source_file.total_chunks
       doc_id = knowledge_source_file.loader_id
-
-      # Generate chunk IDs in the same format as upsert
-      chunk_ids = (0...total_chunks).map { |i| "chunk_#{i.to_s.rjust(6, '0')}:#{doc_id}" }
+      collection_name = params[:collection_name]
 
       delete_document_loader(
-        store_id: knowledge_source.store_id,
-        loader_id: chunk_ids # Pass array of chunk IDs instead of single doc_id
+        index_name: collection_name,
+        total_chunks: total_chunks,
+        document_id: doc_id # Pass array of chunk IDs instead of single doc_id
       )
 
       head :no_content
@@ -59,7 +59,9 @@ class Api::V1::Accounts::KnowledgeSourceFilesController < Api::V1::Accounts::Bas
       knowledge_source_file = knowledge_source.add_file!(file: file, document_loader: document_loader)
       render json: knowledge_source_file, status: :created
     rescue StandardError => e
-      delete_document_loader(store_id: knowledge_source.store_id, loader_id: document_loader['docId'])
+      # log params[:id]
+      Rails.logger.info("Error creating knowledge file params id: #{params[:id]} | knowledge_source id: #{knowledge_source.id}")
+      # delete_document_loader(store_id: knowledge_source.store_id, loader_id: document_loader['docId'])
       render json: { error: "Failed to create knowledge source: #{e.message}" }, status: :bad_gateway
     end
   end
@@ -127,7 +129,7 @@ class Api::V1::Accounts::KnowledgeSourceFilesController < Api::V1::Accounts::Bas
     nil
   end
 
-  def delete_document_loader(store_id:, loader_id:)
+  def delete_document_loader(index_name:, total_chunks:, document_id:)
     base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
     api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
 
@@ -138,8 +140,9 @@ class Api::V1::Accounts::KnowledgeSourceFilesController < Api::V1::Accounts::Bas
     response = HTTParty.post(
       endpoint,
       body: {
-        index_name: params[:collection_name] || 'default_index',
-        document_ids: Array(loader_id)
+        index_name: index_name,
+        total_chunks: total_chunks,
+        document_id: document_id
       }.to_json,
       headers: {
         'Content-Type' => 'application/json',

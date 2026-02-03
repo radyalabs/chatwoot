@@ -12,13 +12,13 @@ class Api::V1::Accounts::KnowledgeSourceQnaController < Api::V1::Accounts::BaseC
 
   def destroy
     knowledge_source = @ai_agent.knowledge_source
-    qna            = knowledge_source.knowledge_source_qnas.find(params[:id])
-    doc_ids        = Array(qna.loader_id) # loader_id holds the docId (or ids)
+    qna = knowledge_source.knowledge_source_qnas.find(params[:id])
+    doc_id = qna.loader_id # loader_id holds the docId (or ids)
     # store_id       = knowledge_source.store_id
-    index_name     = params[:collection_name]
+    index_name = params[:collection_name]
 
     # call external delete-knowledge endpoint
-    delete_documents(index_name, doc_ids)
+    delete_documents(index_name, doc_id)
 
     if qna.destroy
       head :no_content
@@ -29,7 +29,7 @@ class Api::V1::Accounts::KnowledgeSourceQnaController < Api::V1::Accounts::BaseC
 
   # ---------- private ----------
 
-  def delete_documents(_index_name, document_ids)
+  def delete_documents(_index_name, document_id)
     base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
     api_key  = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
 
@@ -41,7 +41,8 @@ class Api::V1::Accounts::KnowledgeSourceQnaController < Api::V1::Accounts::BaseC
       endpoint,
       body: {
         index_name: _index_name,
-        document_ids: document_ids
+        total_chunks: 1,
+        document_id: document_id
       }.to_json,
       headers: {
         'Content-Type' => 'application/json',
@@ -67,18 +68,30 @@ class Api::V1::Accounts::KnowledgeSourceQnaController < Api::V1::Accounts::BaseC
     created_or_updated_qnas = []
     previous_loader_ids_to_delete = []
 
+    # Get existing QnAs and their loader_ids
+    existing_qna_ids = qna_params.map { |q| q[:id] }.compact
+    updated_qnas = knowledge_source.knowledge_source_qnas.where(id: existing_qna_ids)
+    loader_id_map = updated_qnas.index_by(&:id).transform_values(&:loader_id)
+
+    # Merge loader_ids into a new params array
+    params_with_loader_ids = qna_params.map do |qna|
+      qna_hash = qna.to_h
+      qna_hash[:loader_id] = loader_id_map[qna_hash[:id]] if qna_hash[:id] && loader_id_map[qna_hash[:id]]
+      qna_hash
+    end
+
     ActiveRecord::Base.transaction do
       # 1. Create document loaders in ONE call
       loader_results = create_document_loader_batch(
         knowledge_source.store_id,
-        qna_params
+        params_with_loader_ids
       )
 
       # 2. Sanity check
-      raise StandardError, 'Mismatch between QnAs and document loader results' if loader_results.size != qna_params.size
+      raise StandardError, 'Mismatch between QnAs and document loader results' if loader_results.size != params_with_loader_ids.size
 
       # 3. Pair each QnA with its loader result
-      qna_params.zip(loader_results).each do |qna, document_loader|
+      params_with_loader_ids.zip(loader_results).each do |qna, document_loader|
         result = knowledge_source.knowledge_source_qnas.create_or_update(
           qna,
           document_loader
@@ -112,11 +125,13 @@ class Api::V1::Accounts::KnowledgeSourceQnaController < Api::V1::Accounts::BaseC
     names = []
     contents = []
     collection_name = qnas.first[:collection_name] || 'default_index'
+
     qnas.each_with_index do |qna, idx|
-      names << "QNA_#{Time.current.strftime('%Y%m%d%H%M%S')}_#{idx}"
+      # Use loader_id as name if it exists, otherwise generate new name
+      names << (qna[:loader_id].presence || "QNA_#{Time.current.strftime('%Y%m%d%H%M%S')}_#{idx}")
       contents << "#{qna[:question]}\n\n#{qna[:answer]}"
     end
-
+    # logging names and contents
     response = HTTParty.post(
       endpoint,
       body: {

@@ -222,16 +222,6 @@ class Api::V1::Accounts::KnowledgeSourceQnaController < Api::V1::Accounts::BaseC
     raise StandardError, "Failed to communicate with knowledge management API: #{e.message}"
   end
 
-  # def create_document_loader(store_id, content)
-  #   AiAgents::FlowiseService.add_document_loader(
-  #     store_id: store_id,
-  #     loader_id: 'plainText',
-  #     splitter_id: '',
-  #     name: "QNA_#{Time.current.strftime('%Y%m%d%H%M%S')}",
-  #     content: "#{content[:question]}\n\n#{content[:answer]}"
-  #   )
-  # end
-
   def delete_document_loaders(store_id, loader_ids)
     failed_deletes = []
 

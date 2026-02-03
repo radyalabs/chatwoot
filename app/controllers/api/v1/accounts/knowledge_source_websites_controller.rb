@@ -48,7 +48,7 @@ class Api::V1::Accounts::KnowledgeSourceWebsitesController < Api::V1::Accounts::
     end
   end
 
-  def destroy # rubocop:disable Metrics/AbcSize
+  def destroy
     return render json: { error: 'No links provided' }, status: :bad_request if params[:ids].blank?
 
     collection_name = params[:collection_name]
@@ -255,19 +255,6 @@ class Api::V1::Accounts::KnowledgeSourceWebsitesController < Api::V1::Accounts::
     raise StandardError, "Failed to communicate with knowledge management API: #{e.message}"
   end
 
-  # def create_document_loader(store_id, name, text)
-  #   AiAgents::FlowiseService.add_document_loader(
-  #     store_id: store_id,
-  #     loader_id: 'plainText',
-  #     splitter_id: 'recursiveCharacterTextSplitter',
-  #     name: name,
-  #     content: text
-  #   )
-  # rescue StandardError => e
-  #   Rails.logger.error("Failed to add document loader: #{e.message}")
-  #   nil
-  # end
-
   def delete_document_loader(store_id:, loader_id:, collection_name:)
     base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
     api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
@@ -311,19 +298,6 @@ class Api::V1::Accounts::KnowledgeSourceWebsitesController < Api::V1::Accounts::
   rescue StandardError => e
     Rails.logger.error("Failed to delete document loader: #{e.message}")
   end
-
-  # def delete_document_loader(store_id:, loader_id:, collection_name:)
-  #   AiAgents::FlowiseService.delete_document_loader(
-  #     store_id: store_id,
-  #     loader_id: loader_id
-  #   )
-  # rescue StandardError => e
-  #   Rails.logger.error("Failed to delete document loader: #{e.message}")
-  # end
-
-  # def upsert_document_store(knowledge_source)
-  #   AiAgents::FlowiseService.upsert_document_store(knowledge_source.store_config)
-  # end
 
   def get_parent_url(url)
     uri = URI.parse(url)

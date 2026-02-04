@@ -27,9 +27,9 @@ class Api::V1::Accounts::KnowledgeSourceFilesController < Api::V1::Accounts::Bas
     knowledge_source_file = knowledge_source.knowledge_source_files.find_by(id: params[:id])
     return render json: { error: 'Knowledge source file not found' }, status: :not_found if knowledge_source_file.nil?
 
+    collection_name = params[:collection_name]
     total_chunks = knowledge_source_file.total_chunks
     doc_id = knowledge_source_file.loader_id
-    chunk_ids = (0...total_chunks).map { |i| "chunk_#{i.to_s.rjust(6, '0')}:#{doc_id}" }
 
     begin
       ActiveRecord::Base.transaction do
@@ -37,8 +37,9 @@ class Api::V1::Accounts::KnowledgeSourceFilesController < Api::V1::Accounts::Bas
         knowledge_source_file.destroy!
 
         delete_document_loader(
-          store_id: knowledge_source.store_id,
-          loader_id: chunk_ids
+          index_name: collection_name,
+          total_chunks: total_chunks,
+          document_id: doc_id
         )
       end
 

@@ -460,9 +460,6 @@ Rails.application.routes.draw do
     end
 
     namespace :v2 do
-      namespace :agent do
-        resources :notifications, only: [:create]
-      end
       resources :accounts, only: [:create] do
         scope module: :accounts do
           # AI Agents with nested Excel import routes
@@ -556,6 +553,7 @@ Rails.application.routes.draw do
 
       # Internal API for external services (jangkau.langgraph, etc.)
       namespace :internal do
+        resources :notifications, only: [:create]
         resources :reminders, only: [:create] do
           collection do
             put :upsert

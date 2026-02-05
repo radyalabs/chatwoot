@@ -460,6 +460,9 @@ Rails.application.routes.draw do
     end
 
     namespace :v2 do
+      namespace :agent do
+        resources :notifications, only: [:create]
+      end
       resources :accounts, only: [:create] do
         scope module: :accounts do
           # AI Agents with nested Excel import routes

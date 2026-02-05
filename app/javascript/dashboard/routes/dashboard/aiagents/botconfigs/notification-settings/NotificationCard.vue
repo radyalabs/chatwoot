@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, onMounted, nextTick, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Button from 'dashboard/components-next/button/Button.vue';
 
@@ -66,6 +66,36 @@ const formattedMessage = computed(() => {
     '<span class="inline-block px-1.5 py-0.5 mx-0.5 bg-woot-100 dark:bg-woot-900/30 border border-woot-300 dark:border-woot-600 rounded text-xs font-mono text-woot-700 dark:text-woot-300">$1</span>'
   );
 });
+
+// Expand/collapse state for message preview
+const isExpanded = ref(false);
+const messageRef = ref(null);
+const isOverflowing = ref(false);
+
+const checkOverflow = () => {
+  if (messageRef.value) {
+    isOverflowing.value =
+      messageRef.value.scrollHeight > messageRef.value.clientHeight;
+  }
+};
+
+const toggleExpand = () => {
+  isExpanded.value = !isExpanded.value;
+};
+
+// Check overflow on mount
+onMounted(() => {
+  nextTick(() => checkOverflow());
+});
+
+// Re-check overflow when message template changes
+watch(
+  () => props.rule.message_template,
+  () => {
+    isExpanded.value = false;
+    nextTick(() => checkOverflow());
+  }
+);
 
 const interestKeyMap = {
   low: 'AGENT_MGMT.NOTIFICATION.INTEREST_LOW',
@@ -210,9 +240,25 @@ const interestColors = {
       <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
         <!-- eslint-disable-next-line vue/no-v-html -->
         <p
-          class="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words"
+          ref="messageRef"
+          class="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words mb-0"
+          :class="{ 'line-clamp-4': !isExpanded }"
           v-html="formattedMessage"
         />
+        <!-- Toggle Button -->
+        <button
+          v-if="isOverflowing || isExpanded"
+          type="button"
+          class="mt-2 text-sm font-medium text-woot-500 dark:text-woot-400 hover:text-woot-600 dark:hover:text-woot-300 focus:outline-none focus:underline"
+          :aria-expanded="isExpanded"
+          @click="toggleExpand"
+        >
+          {{
+            isExpanded
+              ? $t('AGENT_MGMT.NOTIFICATION.SHOW_LESS')
+              : $t('AGENT_MGMT.NOTIFICATION.SHOW_MORE')
+          }}
+        </button>
       </div>
     </div>
   </div>

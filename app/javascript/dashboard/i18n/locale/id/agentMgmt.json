@@ -276,7 +276,9 @@
       "NO_GROUPS": "Tidak ada grup yang ditemukan. Pastikan inbox pengirim sudah terhubung.",
       "LOADING_GROUPS": "Memuat grup...",
       "GROUP_SEARCH_PLACEHOLDER": "Ketik nama grup untuk mencari",
-      "NO_GROUPS_FOUND": "Tidak ada grup ditemukan"
+      "NO_GROUPS_FOUND": "Tidak ada grup ditemukan",
+      "SHOW_MORE": "Tampilkan lebih",
+      "SHOW_LESS": "Tampilkan sedikit"
     },
     "COMMON": {
       "REMOVE": "Hapus"

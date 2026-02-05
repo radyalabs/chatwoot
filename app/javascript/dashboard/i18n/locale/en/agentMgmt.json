@@ -276,7 +276,9 @@
       "NO_GROUPS": "No groups found. Ensure the sender inbox is connected.",
       "LOADING_GROUPS": "Loading groups...",
       "GROUP_SEARCH_PLACEHOLDER": "Type group name to search",
-      "NO_GROUPS_FOUND": "No groups found"
+      "NO_GROUPS_FOUND": "No groups found",
+      "SHOW_MORE": "Show more",
+      "SHOW_LESS": "Show less"
     },
     "COMMON": {
       "REMOVE": "Remove"

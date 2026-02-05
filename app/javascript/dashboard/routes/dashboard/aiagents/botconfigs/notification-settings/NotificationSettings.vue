@@ -189,6 +189,7 @@ const handleFormClose = () => {
           :key="rule.id"
           :rule="rule"
           :whatsapp-unofficial-inboxes="whatsappUnofficialInboxes"
+          :whatsapp-groups="[]"
           @edit="openEditForm"
           @delete="handleDelete"
         />

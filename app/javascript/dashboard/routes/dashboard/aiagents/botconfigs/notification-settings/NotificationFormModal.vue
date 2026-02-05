@@ -39,6 +39,7 @@ const messageTemplate = ref('');
 
 const groups = ref([]);
 const isLoadingGroups = ref(false);
+const isPopulating = ref(false);
 
 const isEditing = computed(() => !!props.rule);
 
@@ -57,12 +58,16 @@ const resetForm = () => {
 };
 
 const populateForm = rule => {
+  isPopulating.value = true;
   senderInboxId.value = rule.inbox_id || '';
   category.value = rule.category || '';
   interestLevel.value = rule.interest_level || '';
   messageType.value = rule.message_type || 'personal';
   receiverAddress.value = rule.receiver_address || '';
   messageTemplate.value = rule.message_template || '';
+  nextTick(() => {
+    isPopulating.value = false;
+  });
 };
 
 const open = () => {
@@ -133,6 +138,7 @@ const fetchGroups = async () => {
 
 // Reset receiver address when switching message type; fetch groups when switching to group
 watch(messageType, newType => {
+  if (isPopulating.value) return;
   receiverAddress.value = '';
   if (newType === 'group') {
     fetchGroups();
@@ -141,6 +147,7 @@ watch(messageType, newType => {
 
 // Re-fetch groups when sender inbox changes (if group mode is active)
 watch(senderInboxId, () => {
+  if (isPopulating.value) return;
   receiverAddress.value = '';
   groups.value = [];
   if (messageType.value === 'group') {

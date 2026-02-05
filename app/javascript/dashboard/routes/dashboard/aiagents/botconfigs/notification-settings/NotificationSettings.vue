@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, nextTick } from 'vue';
 import { useStore } from 'dashboard/composables/store';
 import { useMapGetter } from 'dashboard/composables/store';
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
@@ -87,7 +87,9 @@ const openEditForm = id => {
   const rule = notifications.value.find(n => n.id === id);
   if (rule) {
     editingRule.value = { ...rule };
-    formModalRef.value?.open();
+    nextTick(() => {
+      formModalRef.value?.open();
+    });
   }
 };
 

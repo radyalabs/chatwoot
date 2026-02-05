@@ -39,15 +39,9 @@ const senderPhoneNumber = computed(() => {
   return senderInbox.value.phone_number || '';
 });
 
-// Receiver display name (group name or phone number)
+// Receiver display name: prefer stored receiver_name, fallback to receiver_address
 const receiverDisplayName = computed(() => {
-  if (props.rule.message_type === 'group') {
-    const group = props.whatsappGroups?.find(
-      g => g.id === props.rule.receiver_address
-    );
-    return group?.name || props.rule.receiver_address;
-  }
-  return props.rule.receiver_address;
+  return props.rule.receiver_name || props.rule.receiver_address;
 });
 
 // Receiver type label

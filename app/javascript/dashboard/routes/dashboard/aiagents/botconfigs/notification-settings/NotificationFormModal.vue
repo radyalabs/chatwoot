@@ -36,6 +36,7 @@ const category = ref('');
 const interestLevel = ref('');
 const messageType = ref('personal');
 const receiverAddress = ref('');
+const receiverName = ref('');
 const messageTemplate = ref('');
 
 const groups = ref([]);
@@ -55,6 +56,7 @@ const resetForm = () => {
   interestLevel.value = '';
   messageType.value = 'personal';
   receiverAddress.value = '';
+  receiverName.value = '';
   messageTemplate.value = t('AGENT_MGMT.NOTIFICATION.DEFAULT_TEMPLATE');
 };
 
@@ -65,6 +67,7 @@ const populateForm = rule => {
   interestLevel.value = rule.interest_level || '';
   messageType.value = rule.message_type || 'personal';
   receiverAddress.value = rule.receiver_address || '';
+  receiverName.value = rule.receiver_name || '';
   messageTemplate.value = rule.message_template || '';
   nextTick(() => {
     isPopulating.value = false;
@@ -90,6 +93,17 @@ const close = () => {
 };
 
 const handleSave = () => {
+  // For group messages, resolve name from selected group; for personal, use phone number
+  let nameToSave = receiverName.value;
+  if (messageType.value === 'group' && !nameToSave) {
+    const selectedGroup = groups.value.find(
+      g => g.value === receiverAddress.value
+    );
+    nameToSave = selectedGroup?.label || '';
+  } else if (messageType.value === 'personal' && !nameToSave) {
+    nameToSave = receiverAddress.value;
+  }
+
   const payload = {
     inbox_id: senderInboxId.value,
     category: category.value,
@@ -97,6 +111,7 @@ const handleSave = () => {
     message_type: messageType.value,
     receiver_channel_type: 'whatsapp_unofficial',
     receiver_address: receiverAddress.value,
+    receiver_name: nameToSave,
     message_template: messageTemplate.value,
   };
   if (props.rule?.id) {
@@ -137,10 +152,11 @@ const fetchGroups = async () => {
   }
 };
 
-// Reset receiver address when switching message type; fetch groups when switching to group
+// Reset receiver address and name when switching message type; fetch groups when switching to group
 watch(messageType, newType => {
   if (isPopulating.value) return;
   receiverAddress.value = '';
+  receiverName.value = '';
   if (newType === 'group') {
     fetchGroups();
   }
@@ -150,6 +166,7 @@ watch(messageType, newType => {
 watch(senderInboxId, () => {
   if (isPopulating.value) return;
   receiverAddress.value = '';
+  receiverName.value = '';
   groups.value = [];
   if (messageType.value === 'group') {
     fetchGroups();

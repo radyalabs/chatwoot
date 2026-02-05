@@ -38,7 +38,7 @@ class Api::V2::Accounts::AgentNotificationSettingsController < Api::V1::Accounts
     params.require(:agent_notification_setting).permit(
       :inbox_id, :category, :interest_level,
       :message_type, :receiver_channel_type,
-      :receiver_address, :message_template
+      :receiver_address, :receiver_name, :message_template
     )
   end
 
@@ -51,6 +51,7 @@ class Api::V2::Accounts::AgentNotificationSettingsController < Api::V1::Accounts
       message_type: setting.message_type,
       receiver_channel_type: setting.receiver_channel_type,
       receiver_address: setting.receiver_address,
+      receiver_name: setting.receiver_name,
       message_template: setting.message_template,
       created_at: setting.created_at,
       updated_at: setting.updated_at

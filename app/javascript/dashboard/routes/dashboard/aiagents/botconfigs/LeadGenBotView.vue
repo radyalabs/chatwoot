@@ -460,8 +460,13 @@
           <QnaKnowledgeSources :data="data" context="lead_generation"/>
         </div>
         
-        <!-- Tab 4: Priorities -->
+        <!-- Tab 4: Category -->
         <div v-show="activeIndex === 4" class="w-full">
+          <CategoryTab :data="data" agent-type="lead_generation" />
+        </div>
+
+        <!-- Tab 5: Priorities -->
+        <div v-show="activeIndex === 5" class="w-full">
           <PrioritiesTab 
             v-if="data"
             :data="data" 
@@ -473,8 +478,8 @@
           </div>
         </div>
 
-        <!-- Tab 5: Custom Numbering Content -->
-        <div v-show="activeIndex === 5" class="w-full">
+        <!-- Tab 6: Custom Numbering Content -->
+        <div v-show="activeIndex === 6" class="w-full">
           <CustomNumberingTab :data="data" numbering-key="lead_generation" />
         </div>
 
@@ -530,6 +535,7 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import FileKnowledgeSources from '../knowledge-sources/FileKnowledgeSources.vue'
 import QnaKnowledgeSources from '../knowledge-sources/QnaKnowledgeSources.vue'
 import PrioritiesTab from './cs-bot-tabs/PrioritiesTab.vue'
+import CategoryTab from './cs-bot-tabs/CategoryTab.vue'
 import googleSheetsExportAPI from '../../../../api/googleSheetsExport'
 import aiAgents from '../../../../api/aiAgents'
 import idleConfigsAPI from '../../../../api/idleConfigs';
@@ -660,12 +666,18 @@ const tabs = computed(() => [
   {
     key: '4',
     index: 4,
-    name: 'Klasifikasi',
+    name: 'Kategori',
     icon: 'i-lucide-tag',
   },
   {
     key: '5',
     index: 5,
+    name: 'Klasifikasi',
+    icon: 'i-lucide-star',
+  },
+  {
+    key: '6',
+    index: 6,
     name: 'Penomoran Otomatis',
     icon: 'i-lucide-notebook-tabs',
   },

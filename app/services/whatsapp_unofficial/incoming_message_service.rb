@@ -50,28 +50,30 @@ class WhatsappUnofficial::IncomingMessageService
     attach_location
   end
 
-  def attach_files
+  def attach_files # rubocop:disable Metrics/MethodLength
     return unless file
 
     file_download_path = file[:media_path]
     if file_download_path.blank?
-      Rails.logger.info "Telegram file download path is blank for inbox_id: #{inbox.id}"
+      Rails.logger.info "WhatsApp Go file download path is blank for inbox_id: #{inbox.id}"
       return
     end
 
-    attachment_file = Down.download(
-      "#{ENV.fetch('GOWA_API_URL', 'https://gowa.jangkau.ai/')}/#{file_download_path}"
-    )
+    attachment_file = download_file(file_download_path)
+    processed_file = process_file(attachment_file)
 
     @message.attachments.new(
       account_id: @message.account_id,
       file_type: file_content_type,
       file: {
-        io: attachment_file,
-        filename: attachment_file.original_filename,
-        content_type: attachment_file.content_type
+        io: processed_file[:io],
+        filename: processed_file[:filename],
+        content_type: processed_file[:content_type]
       }
     )
+  ensure
+    attachment_file&.close
+    attachment_file&.unlink if attachment_file.respond_to?(:unlink)
   end
 
   def attach_location
@@ -94,5 +96,49 @@ class WhatsappUnofficial::IncomingMessageService
       file_type: :contact,
       fallback_title: extract_phone_from_vcard(contact_card[:vcard])
     )
+  end
+
+  def process_file(attachment_file)
+    if image_file?(attachment_file.content_type)
+      compress_image(attachment_file)
+    else
+      default_file_attributes(attachment_file)
+    end
+  end
+
+  def compress_image(attachment_file)
+    require 'image_processing/mini_magick'
+
+    processed = ImageProcessing::MiniMagick
+                .source(attachment_file)
+                .resize_to_limit(2000, 2000)
+                .strip
+                .saver(quality: 85)
+                .call
+
+    {
+      io: File.open(processed.path),
+      filename: attachment_file.original_filename,
+      content_type: attachment_file.content_type
+    }
+  rescue StandardError => e
+    Rails.logger.error "Image compression failed: #{e.message}"
+    default_file_attributes(attachment_file)
+  end
+
+  def default_file_attributes(attachment_file)
+    {
+      io: attachment_file,
+      filename: attachment_file.original_filename,
+      content_type: attachment_file.content_type
+    }
+  end
+
+  def image_file?(content_type)
+    content_type&.start_with?('image/') && content_type&.exclude?('svg')
+  end
+
+  def download_file(file_path)
+    Down.download("#{ENV.fetch('GOWA_API_URL', 'https://gowa.jangkau.ai/')}/#{file_path}")
   end
 end

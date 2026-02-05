@@ -56,7 +56,7 @@ class Captain::Llm::BaseJangkauService
     last_message_attachments.map do |att|
       {
         key: att.file.key,
-        file_type: att.file_type,
+        file_type: att.file.content_type,
         filename: att.file.filename.to_s
       }
     end

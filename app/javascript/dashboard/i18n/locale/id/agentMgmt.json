@@ -274,7 +274,9 @@
       "CARD_DELETE": "Hapus",
       "NO_INBOX_AVAILABLE": "Tidak ada inbox WhatsApp Unofficial yang tersedia. Silakan buat terlebih dahulu.",
       "NO_GROUPS": "Tidak ada grup yang ditemukan. Pastikan inbox pengirim sudah terhubung.",
-      "LOADING_GROUPS": "Memuat grup..."
+      "LOADING_GROUPS": "Memuat grup...",
+      "GROUP_SEARCH_PLACEHOLDER": "Ketik nama grup untuk mencari",
+      "NO_GROUPS_FOUND": "Tidak ada grup ditemukan"
     },
     "COMMON": {
       "REMOVE": "Hapus"

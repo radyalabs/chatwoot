@@ -3,6 +3,7 @@ import { ref, watch, computed, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import Input from 'dashboard/components-next/input/Input.vue';
+import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
 import MessageTemplateEditor from './MessageTemplateEditor.vue';
 import WhatsAppUnofficialChannels from 'dashboard/api/WhatsAppUnofficialChannels';
 
@@ -271,34 +272,20 @@ defineExpose({ open });
         <label class="mb-0.5 text-sm font-medium text-n-slate-12">
           {{ $t('AGENT_MGMT.NOTIFICATION.RECEIVER_GROUP_LABEL') }}
         </label>
-        <div
-          v-if="isLoadingGroups"
-          class="text-sm text-slate-500 dark:text-slate-400 py-2"
-        >
-          {{ $t('AGENT_MGMT.NOTIFICATION.LOADING_GROUPS') }}
-        </div>
-        <select
-          v-else-if="groups.length"
+        <ComboBox
           v-model="receiverAddress"
-          class="w-full p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 transition-all"
-        >
-          <option value="" disabled>
-            {{ $t('AGENT_MGMT.NOTIFICATION.RECEIVER_GROUP_PLACEHOLDER') }}
-          </option>
-          <option
-            v-for="group in groups"
-            :key="group.value"
-            :value="group.value"
-          >
-            {{ group.label }} ({{ group.value }})
-          </option>
-        </select>
-        <p
-          v-else
-          class="text-sm text-slate-500 dark:text-slate-400 italic py-2"
-        >
-          {{ $t('AGENT_MGMT.NOTIFICATION.NO_GROUPS') }}
-        </p>
+          :options="groups"
+          :placeholder="$t('AGENT_MGMT.NOTIFICATION.RECEIVER_GROUP_PLACEHOLDER')"
+          :search-placeholder="
+            $t('AGENT_MGMT.NOTIFICATION.GROUP_SEARCH_PLACEHOLDER')
+          "
+          :empty-state="$t('AGENT_MGMT.NOTIFICATION.NO_GROUPS_FOUND')"
+          :initial-display-limit="5"
+          :disabled="isLoadingGroups"
+          :message="
+            isLoadingGroups ? $t('AGENT_MGMT.NOTIFICATION.LOADING_GROUPS') : ''
+          "
+        />
       </div>
 
       <!-- Message Template -->

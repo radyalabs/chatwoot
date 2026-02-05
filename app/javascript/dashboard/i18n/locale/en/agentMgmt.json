@@ -274,7 +274,9 @@
       "CARD_DELETE": "Delete",
       "NO_INBOX_AVAILABLE": "No WhatsApp Unofficial inbox available. Please create one first.",
       "NO_GROUPS": "No groups found. Ensure the sender inbox is connected.",
-      "LOADING_GROUPS": "Loading groups..."
+      "LOADING_GROUPS": "Loading groups...",
+      "GROUP_SEARCH_PLACEHOLDER": "Type group name to search",
+      "NO_GROUPS_FOUND": "No groups found"
     },
     "COMMON": {
       "REMOVE": "Remove"

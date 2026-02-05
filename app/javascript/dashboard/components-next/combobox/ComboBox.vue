@@ -41,6 +41,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  initialDisplayLimit: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const emit = defineEmits(['update:modelValue', 'search']);
@@ -55,9 +59,16 @@ const comboboxRef = ref(null);
 
 const filteredOptions = computed(() => {
   const searchTerm = search.value.toLowerCase();
-  return props.options.filter(option =>
+  let results = props.options.filter(option =>
     option.label.toLowerCase().includes(searchTerm)
   );
+
+  // Apply initial limit only when search is empty
+  if (!search.value && props.initialDisplayLimit > 0) {
+    results = results.slice(0, props.initialDisplayLimit);
+  }
+
+  return results;
 });
 const selectPlaceholder = computed(() => {
   return props.placeholder || t('COMBOBOX.PLACEHOLDER');

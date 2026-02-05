@@ -45,36 +45,51 @@ class Captain::Llm::BaseJangkauService
   end
 
   def request_body
-    # Get attachments from last message
-    last_message = @conversation.messages.last
-    attachments = if last_message&.attachments&.any?
-                    last_message.attachments.select { |att| att.file.attached? }.map do |att|
-                      {
-                        url: att.file_url,
-                        file_type: att.file_type,
-                        filename: att.file.filename.to_s
-                      }
-                    end
-                  else
-                    []
-                  end
-
     {
       'question' => @question,
-      'attachments' => attachments.any? ? attachments : nil,
-      'overrideConfig' => {
-        'session_id' => @conversation.uuid,
-        'conversation_id' => @conversation.id,
-        'inbox_id' => @conversation.inbox_id,
-        'ai_agent_id' => @ai_agent.id,
-        'vars' => {
-          'account_id' => @account_id.to_s,
-          'customer_name' => @additional_attributes['name'] || '',
-          'contact' => @additional_attributes['phone_number'] || '',
-          'channel' => @additional_attributes['channel'] || ''
-        }.merge(@ai_agent.flow_data || {})
-      }
+      'attachments' => formatted_attachments,
+      'overrideConfig' => override_config
     }.compact
+  end
+
+  def formatted_attachments
+    last_message_attachments.map do |att|
+      {
+        key: att.file.key,
+        file_type: att.file_type,
+        filename: att.file.filename.to_s
+      }
+    end
+  end
+
+  def last_message_attachments
+    @conversation.messages.last
+      &.attachments
+      &.includes(file_attachment: :blob)
+      &.select(&:file_attached?) || []
+  end
+
+  def file_attached?
+    file.attached?
+  end
+
+  def override_config
+    {
+      'session_id' => @conversation.uuid,
+      'conversation_id' => @conversation.id,
+      'inbox_id' => @conversation.inbox_id,
+      'ai_agent_id' => @ai_agent.id,
+      'vars' => base_vars.merge(@ai_agent.flow_data || {})
+    }
+  end
+
+  def base_vars
+    {
+      'account_id' => @account_id.to_s,
+      'customer_name' => @additional_attributes['name'] || '',
+      'contact' => @additional_attributes['phone_number'] || '',
+      'channel' => @additional_attributes['channel'] || ''
+    }
   end
 
   def headers

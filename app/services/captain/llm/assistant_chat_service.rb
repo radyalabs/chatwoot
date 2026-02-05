@@ -47,19 +47,8 @@ class Captain::Llm::AssistantChatService
       [message, {}]
     else
       # If message has no text content but has attachments, use a placeholder
-      question = message.content.present? ? message.content : ""
+      question = (message.content.presence || '')
       [question, message.additional_attributes || {}]
     end
-  end
-
-  def generate_attachment_placeholder(message)
-    # When user sends only attachment without text, provide a meaningful placeholder
-    return 'Please analyze the attached image' if message.attachments.any? { |att| att.file_type.to_sym == :image }
-    return 'Please analyze the attached audio' if message.attachments.any? { |att| att.file_type.to_sym == :audio }
-    return 'Please analyze the attached video' if message.attachments.any? { |att| att.file_type.to_sym == :video }
-    return 'Please analyze the attached file' if message.attachments.any? { |att| att.file_type.to_sym == :file }
-    
-    # Default placeholder
-    'Please respond'
   end
 end

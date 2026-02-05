@@ -19,36 +19,20 @@ class Captain::Llm::AssistantChatService
   private
 
   def generate_response
-    question, additional_attributes = extract_message_data(@message)
-
-    Rails.logger.info "Additional attributes: #{additional_attributes}"
-
     if @ai_agent.custom_agent?
       ::Captain::Llm::BaseFlowiseService.new(
         @account_id,
         @ai_agent,
         @conversation,
-        question,
-        additional_attributes
+        @message
       ).perform
     else
       ::Captain::Llm::BaseJangkauService.new(
         @account_id,
         @ai_agent,
         @conversation,
-        question,
-        additional_attributes
+        @message
       ).perform
-    end
-  end
-
-  def extract_message_data(message)
-    if message.is_a?(String)
-      [message, {}]
-    else
-      # If message has no text content but has attachments, use a placeholder
-      question = (message.content.presence || '')
-      [question, message.additional_attributes || {}]
     end
   end
 end

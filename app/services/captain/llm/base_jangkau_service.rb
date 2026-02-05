@@ -4,12 +4,12 @@ class Captain::Llm::BaseJangkauService
   include HTTParty
   base_uri ENV.fetch('JANGKAU_AGENT_API_URL', 'https://agent.jangkau.ai/')
 
-  def initialize(account_id, ai_agent, conversation, question, additional_attributes)
+  def initialize(account_id, ai_agent, conversation, message)
     @conversation = conversation
     @account_id = account_id
     @ai_agent = ai_agent
-    @question = question
-    @additional_attributes = additional_attributes
+    @message = message
+    @question, @additional_attributes = extract_message_data
   end
 
   def perform
@@ -63,10 +63,11 @@ class Captain::Llm::BaseJangkauService
   end
 
   def last_message_attachments
-    @conversation.messages.last
-      &.attachments
-      &.includes(file_attachment: :blob)
-      &.select { |att| att.file.attached? } || []
+    return [] unless @message.is_a?(Message)
+
+    @message.attachments
+            .includes(file_attachment: :blob)
+            .select { |att| att.file.attached? }
   end
 
   def override_config
@@ -86,6 +87,16 @@ class Captain::Llm::BaseJangkauService
       'contact' => @additional_attributes['phone_number'] || '',
       'channel' => @additional_attributes['channel'] || ''
     }
+  end
+
+  def extract_message_data
+    if @message.is_a?(String)
+      [@message, {}]
+    else
+      # If message has no text content but has attachments, use a placeholder
+      question = (@message.content.presence || '')
+      [question, @message.additional_attributes || {}]
+    end
   end
 
   def headers

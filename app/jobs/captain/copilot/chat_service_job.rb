@@ -1,7 +1,7 @@
 class Captain::Copilot::ChatServiceJob < ApplicationJob
-  queue_as :default
+  queue_as :send_reply_with_attachments
 
-  def perform(message_id)
+  def perform(message_id) # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity
     message = Message.find_by(id: message_id)
     return unless message
 
@@ -9,15 +9,15 @@ class Captain::Copilot::ChatServiceJob < ApplicationJob
     if message.attachments.any?
       message.attachments.each do |attachment|
         next unless attachment.file.attached?
-        
+
         # Wait for blob to be analyzed
-        if attachment.file.blob.present? && !attachment.file.blob.analyzed?
-          Rails.logger.info "Analyzing attachment blob #{attachment.file.blob.id} before bot processing..."
-          begin
-            attachment.file.blob.analyze
-          rescue StandardError => e
-            Rails.logger.warn "Could not analyze blob: #{e.message}, continuing anyway..."
-          end
+        next unless attachment.file.blob.present? && !attachment.file.blob.analyzed?
+
+        Rails.logger.info "Analyzing attachment blob #{attachment.file.blob.id} before bot processing..."
+        begin
+          attachment.file.blob.analyze
+        rescue StandardError => e
+          Rails.logger.warn "Could not analyze blob: #{e.message}, continuing anyway..."
         end
       end
     end

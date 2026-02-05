@@ -66,11 +66,7 @@ class Captain::Llm::BaseJangkauService
     @conversation.messages.last
       &.attachments
       &.includes(file_attachment: :blob)
-      &.select(&:file_attached?) || []
-  end
-
-  def file_attached?
-    file.attached?
+      &.select { |att| att.file.attached? } || []
   end
 
   def override_config

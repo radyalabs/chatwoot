@@ -100,6 +100,44 @@
       "MSG_DESC": "Pesan ini akan dikirimkan otomatis ke pelanggan melalui platform yang sesuai pada waktu yang ditentukan.",
       "MSG_EXAMPLE": "Contoh"
     },
+    "LEAD_GENERATION": {
+      "GENERAL_TAB": "Pengaturan",
+      "TICKET": {
+        "ERROR": "Field ini wajib diisi",
+        "DUPE_ERROR": "Nama harus unik",
+        "HEADER": "Konfigurasi Lead Generation",
+        "HEADER_DESC": "Halaman ini berisi pengaturan kategori dan klasifikasi untuk Lead Generation Anda.",
+        "CATEGORY_TITLE": "Kategori Lead",
+        "CATEGORY_DESC": "Atur kategori lead dan (opsional) tuliskan kondisi.",
+        "CATEGORY_PLACEHOLDER": "Nama kategori (mis. E-commerce)",
+        "CONDITION_PLACEHOLDER": "Kondisi atau kata kunci opsional...",
+        "ADD_CATEGORY": "Tambah Kategori",
+        "CATEGORY_CONDITION": "Kondisi Kategori",
+        "SAVE_SUCCESS": "Berhasil simpan",
+        "SAVE_ERROR": "Gagal simpan",
+        "SAVE_BUTTON": "Simpan",
+        "VALIDATION_ERROR": "Silakan perbaiki kesalahan validasi"
+      }
+    },
+    "SALES": {
+      "GENERAL_TAB": "Pengaturan",
+      "TICKET": {
+        "ERROR": "Field ini wajib diisi",
+        "DUPE_ERROR": "Nama harus unik",
+        "HEADER": "Konfigurasi Sales",
+        "HEADER_DESC": "Halaman ini berisi pengaturan kategori dan pipeline untuk Sales Anda.",
+        "CATEGORY_TITLE": "Kategori Produk",
+        "CATEGORY_DESC": "Atur kategori produk dan (opsional) tuliskan kondisi.",
+        "CATEGORY_PLACEHOLDER": "Nama kategori (mis. Premium Plan)",
+        "CONDITION_PLACEHOLDER": "Kondisi atau kata kunci opsional...",
+        "ADD_CATEGORY": "Tambah Kategori",
+        "CATEGORY_CONDITION": "Kondisi Kategori",
+        "SAVE_SUCCESS": "Berhasil simpan",
+        "SAVE_ERROR": "Gagal simpan",
+        "SAVE_BUTTON": "Simpan",
+        "VALIDATION_ERROR": "Silakan perbaiki kesalahan validasi"
+      }
+    },
     "CSBOT": {
       "GENERAL_TAB": "Pengaturan",
       "TICKET": {

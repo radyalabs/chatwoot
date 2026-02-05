@@ -11,15 +11,33 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  agentType: {
+    type: String,
+    default: 'customer_service',
+  },
 })
 
 const { t } = useI18n()
 const emitUpdate = inject('emitUpdate', () => {})
 
+// Map agent types to their localization prefixes
+const agentTypeLocaleMap = {
+  customer_service: 'AGENT_MGMT.CSBOT.TICKET',
+  sales_agent: 'AGENT_MGMT.SALES_AGENT.TICKET',
+  support_agent: 'AGENT_MGMT.SUPPORT_AGENT.TICKET',
+  sales: 'AGENT_MGMT.SALES.TICKET',
+  lead_generation: 'AGENT_MGMT.LEAD_GENERATION.TICKET',
+}
+
+const getLocaleKey = (key) => {
+  const prefix = agentTypeLocaleMap[props.agentType] || agentTypeLocaleMap.customer_service
+  return `${prefix}.${key}`
+}
+
 const categories = reactive([
-  { name: 'Komplain', condition: '' },
-  { name: 'Teknis', condition: '' },
-  { name: 'Lainnya', condition: '' }
+  { name: '', condition: '' },
+  { name: '', condition: '' },
+  { name: '', condition: '' }
 ])
 const expandedCategories = ref({}) // Track expanded state for each category
 
@@ -30,7 +48,7 @@ watch(
     if (!newData?.display_flow_data) return
 
     const flowData = newData.display_flow_data
-    const agentIndex = flowData.enabled_agents.indexOf('customer_service')
+    const agentIndex = flowData.enabled_agents.indexOf(props.agentType)
     
     if (agentIndex === -1) return // Skip if agent not in flow
 
@@ -60,7 +78,7 @@ const isSaving = ref(false)
 function validateCategoryName(index) {
   const name = categories[index]?.name?.trim()
   if (!name) {
-    validation.categories[index] = t('AGENT_MGMT.CSBOT.TICKET.ERROR')
+    validation.categories[index] = t(getLocaleKey('ERROR'))
     return false
   }
   
@@ -68,7 +86,7 @@ function validateCategoryName(index) {
     i !== index && c.name?.trim().toLowerCase() === name.toLowerCase()
   )
   if (duplicateIndex !== -1) {
-    validation.categories[index] = t('AGENT_MGMT.CSBOT.TICKET.DUPE_ERROR')
+    validation.categories[index] = t(getLocaleKey('DUPE_ERROR'))
     return false
   }
   
@@ -115,7 +133,7 @@ async function save() {
     });
 
     if (!isValid) {
-      useAlert(t('AGENT_MGMT.CSBOT.TICKET.VALIDATION_ERROR'));
+      useAlert(t(getLocaleKey('VALIDATION_ERROR')));
       return;
     }
     // Build payloads
@@ -144,7 +162,7 @@ async function save() {
 
       // Also set display (original) below
     }
-    const agent_index = flowData.enabled_agents.indexOf('customer_service');
+    const agent_index = flowData.enabled_agents.indexOf(props.agentType);
     flowData.agents_config[agent_index].configurations.category = translatedCategories;
     // For display, store original Indonesian values
     displayFlowData.agents_config[agent_index].configurations.category = categories.map(c => ({
@@ -161,9 +179,9 @@ async function save() {
     // ✅ Properly await the API call
     await aiAgents.updateAgent(props.data.id, payload);
     emitUpdate();
-    useAlert(t('AGENT_MGMT.CSBOT.TICKET.SAVE_SUCCESS'))
+    useAlert(t(getLocaleKey('SAVE_SUCCESS')))
   } catch (e) {
-    useAlert(t('AGENT_MGMT.CSBOT.TICKET.SAVE_ERROR'))
+    useAlert(t(getLocaleKey('SAVE_ERROR')))
   } finally {
     isSaving.value = false
   }
@@ -187,7 +205,7 @@ async function save() {
             <div class="flex items-center gap-3">
               <div class="w-2 h-2 bg-green-500 rounded-full"></div>
               <h3 class="text-sm font-medium text-slate-700 dark:text-slate-300">
-                {{ $t('AGENT_MGMT.CSBOT.TICKET.CATEGORY_TITLE') }} #{{ index + 1 }}
+                {{ $t(getLocaleKey('CATEGORY_TITLE')) }} #{{ index + 1 }}
               </h3>
               <span v-if="category.name" class="text-xs text-slate-500 dark:text-slate-400 truncate max-w-xs">
                 - {{ category.name }}
@@ -222,14 +240,14 @@ async function save() {
             <div class="pt-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div class="space-y-2">
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  {{ $t('AGENT_MGMT.CSBOT.TICKET.CATEGORY_PLACEHOLDER') }}
+                  {{ $t(getLocaleKey('CATEGORY_PLACEHOLDER')) }}
                   <span class="text-red-500">*</span>
                 </label>
                 <textarea
                   v-model="category.name"
                   @blur="validateCategoryName(index)"
                   @input="validateCategoryName(index)"
-                  :placeholder="$t('AGENT_MGMT.CSBOT.TICKET.CATEGORY_PLACEHOLDER')"
+                    :placeholder="$t(getLocaleKey('CATEGORY_PLACEHOLDER'))"
                   :class="[
                     'w-full px-3 py-2.5 text-sm rounded-lg border transition-all duration-200 resize-none',
                     'bg-slate-50 dark:bg-slate-900/50',
@@ -249,11 +267,11 @@ async function save() {
               
               <div class="space-y-2">
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  {{ $t('AGENT_MGMT.CSBOT.TICKET.CATEGORY_CONDITION') }}
+                  {{ $t(getLocaleKey('CATEGORY_CONDITION')) }}
                 </label>
                 <textarea
                   v-model="category.condition"
-                  :placeholder="$t('AGENT_MGMT.CSBOT.TICKET.CONDITION_PLACEHOLDER')"
+                  :placeholder="$t(getLocaleKey('CONDITION_PLACEHOLDER'))"
                   class="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 hover:border-slate-300 dark:hover:border-slate-600 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all duration-200 resize-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   rows="3"
                 ></textarea>
@@ -273,7 +291,7 @@ async function save() {
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
           </svg>
-          {{ $t('AGENT_MGMT.CSBOT.TICKET.ADD_CATEGORY') }}
+          {{ $t(getLocaleKey('ADD_CATEGORY')) }}
         </span>
       </Button>
     </div>
@@ -287,7 +305,7 @@ async function save() {
             </svg>
           </div>
           <div>
-            <h3 class="font-semibold text-slate-700 dark:text-slate-300">{{ $t('AGENT_MGMT.CSBOT.TICKET.CATEGORY_TITLE') }}</h3>
+            <h3 class="font-semibold text-slate-700 dark:text-slate-300">{{ $t(getLocaleKey('CATEGORY_TITLE')) }}</h3>
             <p class="text-sm text-slate-500 dark:text-slate-400">{{ categories.length }} items</p>
           </div>
         </div>
@@ -302,7 +320,7 @@ async function save() {
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
             </svg>
-            {{ $t('AGENT_MGMT.CSBOT.TICKET.SAVE_BUTTON') }}
+            {{ $t(getLocaleKey('SAVE_BUTTON')) }}
           </span>
         </Button>
         

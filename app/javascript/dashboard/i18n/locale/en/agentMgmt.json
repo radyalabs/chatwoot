@@ -100,7 +100,46 @@
       "MSG_DESC": "This message will be sent automatically to customers via the appropriate platform at the specified time.",
       "MSG_EXAMPLE": "Example"
     },
+    "LEAD_GENERATION": {
+      "GENERAL_TAB": "Settings",
+      "TICKET": {
+        "ERROR": "Field is required",
+        "DUPE_ERROR": "Field must be unique",
+        "HEADER": "Lead Generation Configuration",
+        "HEADER_DESC": "This page contains configuration settings for categories and classification of your Lead Generation.",
+        "CATEGORY_TITLE": "Lead Categories",
+        "CATEGORY_DESC": "Set lead categories and optionally define conditions.",
+        "CATEGORY_PLACEHOLDER": "Category name (e.g., E-commerce)",
+        "CONDITION_PLACEHOLDER": "Optional conditions or keywords...",
+        "ADD_CATEGORY": "Add Category",
+        "CATEGORY_CONDITION": "Category Condition",
+        "SAVE_SUCCESS": "Successfully saved",
+        "SAVE_ERROR": "Failed to save",
+        "SAVE_BUTTON": "Save",
+        "VALIDATION_ERROR": "Please fix validation errors"
+      }
+    },
+    "SALES": {
+      "GENERAL_TAB": "Settings",
+      "TICKET": {
+        "ERROR": "Field is required",
+        "DUPE_ERROR": "Field must be unique",
+        "HEADER": "Sales Configuration",
+        "HEADER_DESC": "This page contains configuration settings for categories and sales pipeline.",
+        "CATEGORY_TITLE": "Product Categories",
+        "CATEGORY_DESC": "Set product categories and optionally define conditions.",
+        "CATEGORY_PLACEHOLDER": "Category name (e.g., Premium Plan)",
+        "CONDITION_PLACEHOLDER": "Optional conditions or keywords...",
+        "ADD_CATEGORY": "Add Category",
+        "CATEGORY_CONDITION": "Category Condition",
+        "SAVE_SUCCESS": "Successfully saved",
+        "SAVE_ERROR": "Failed to save",
+        "SAVE_BUTTON": "Save",
+        "VALIDATION_ERROR": "Please fix validation errors"
+      }
+    },
     "CSBOT": {
+      "GENERAL_TAB": "Settings",
       "TICKET": {
         "ERROR": "Field is required",
         "DUPE_ERROR": "Field must be unique",

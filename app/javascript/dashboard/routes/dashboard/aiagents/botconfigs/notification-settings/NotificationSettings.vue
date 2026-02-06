@@ -31,26 +31,19 @@ const props = defineProps({
       helpKey: 'AGENT_MGMT.LEADGENBOT.NOTIFICATION.TEMPLATE_HELP',
       variables: [
         {
-          labelKey: 'AGENT_MGMT.LEADGENBOT.NOTIFICATION.VAR_CUSTOMER_NAME',
-          value: '{{nama_pelanggan}}',
-          example: 'Budi Santoso',
-        },
-        {
-          labelKey:
-            'AGENT_MGMT.LEADGENBOT.NOTIFICATION.VAR_CONSULTATION_DATE',
-          value: '{{tanggal_konsultasi}}',
-          example: '25 Des 2025',
-        },
-        {
-          labelKey:
-            'AGENT_MGMT.LEADGENBOT.NOTIFICATION.VAR_CONSULTATION_TIME',
-          value: '{{waktu_konsultasi}}',
-          example: '10:00',
-        },
-        {
-          labelKey: 'AGENT_MGMT.LEADGENBOT.NOTIFICATION.VAR_SERVICE_NAME',
-          value: '{{nama_layanan}}',
-          example: 'Konsultasi Bisnis',
+          labelKey: 'AGENT_MGMT.NOTIFICATION.VAR_CONTENT_SUMMARY',
+          value: '{{content_summary}}',
+          example: `Lead ID: 001/01/2026
+Nama: Budi Santoso
+No. Telp: 62812345678901
+Email: personal@email.com
+Channel: Whatsapp Go
+Ketertarikan Produk: Paket Sewa Ruangan & Konsumsi Makan Siang
+Klasifikasi Lead: High
+Kategori: Acara Pertemuan
+Jenis Konsultasi: Tanya Harga Paket & Fasilitas Ruangan
+Tanggal Konsultasi: 2026-01-01
+Waktu Konsultasi: 07:00:00`,
         },
       ],
     }),

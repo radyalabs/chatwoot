@@ -125,11 +125,16 @@ const handleSave = () => {
   dialogRef.value?.close();
 };
 
+const hasContentSummary = computed(() => {
+  return messageTemplate.value.includes('{{content_summary}}');
+});
+
 const canSave = computed(() => {
   return (
     senderInboxId.value &&
     receiverAddress.value.trim() &&
-    messageTemplate.value.trim()
+    messageTemplate.value.trim() &&
+    hasContentSummary.value
   );
 });
 

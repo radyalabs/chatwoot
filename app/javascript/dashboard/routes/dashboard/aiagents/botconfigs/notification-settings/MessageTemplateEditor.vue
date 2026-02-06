@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 const props = defineProps({
   modelValue: {
     type: String,
@@ -16,9 +16,6 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue']);
 
-const textareaRef = ref(null);
-const showVariableMenu = ref(false);
-
 const examplePreview = computed(() => {
   let text = props.modelValue;
   props.variableConfig.variables.forEach(v => {
@@ -27,26 +24,9 @@ const examplePreview = computed(() => {
   return text;
 });
 
-const insertVariable = (variable) => {
-  const textarea = textareaRef.value;
-  if (!textarea) return;
-
-  const start = textarea.selectionStart;
-  const end = textarea.selectionEnd;
-  const before = props.modelValue.substring(0, start);
-  const after = props.modelValue.substring(end);
-  const newValue = before + variable.value + after;
-
-  emit('update:modelValue', newValue);
-  showVariableMenu.value = false;
-
-  // Restore cursor position after the inserted variable
-  const cursorPos = start + variable.value.length;
-  requestAnimationFrame(() => {
-    textarea.focus();
-    textarea.setSelectionRange(cursorPos, cursorPos);
-  });
-};
+const hasContentSummary = computed(() => {
+  return props.modelValue.includes('{{content_summary}}');
+});
 
 const handleInput = (event) => {
   emit('update:modelValue', event.target.value);
@@ -55,47 +35,32 @@ const handleInput = (event) => {
 
 <template>
   <div class="flex flex-col gap-1">
-    <div class="flex items-center justify-between mb-0.5">
+    <div class="flex flex-col gap-0.5 mb-0.5">
       <label class="text-sm font-medium text-slate-900 dark:text-slate-25">
         {{ $t('AGENT_MGMT.NOTIFICATION.TEMPLATE_LABEL') }}
       </label>
-      <div class="relative">
-        <button
-          type="button"
-          class="text-sm font-medium text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors"
-          @click="showVariableMenu = !showVariableMenu"
-        >
-          {{ $t('AGENT_MGMT.NOTIFICATION.TEMPLATE_ADD_VARIABLE') }}
-        </button>
-        <div
-          v-if="showVariableMenu"
-          class="absolute right-0 top-full mt-1 z-10 w-52 bg-slate-700 dark:bg-slate-700 rounded-lg shadow-lg border border-slate-600 dark:border-slate-600 overflow-hidden"
-        >
-          <button
-            v-for="variable in variableConfig.variables"
-            :key="variable.value"
-            type="button"
-            class="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-slate-600 dark:hover:bg-slate-600 transition-colors"
-            @click="insertVariable(variable)"
-          >
-            {{ $t(variable.labelKey) }}
-          </button>
-        </div>
-      </div>
+      <span class="text-xs text-amber-600 dark:text-amber-400">
+        {{ $t('AGENT_MGMT.NOTIFICATION.CONTENT_SUMMARY_REQUIRED') }}
+      </span>
     </div>
     <div
       class="flex flex-col gap-2 px-3 pt-3 pb-3 border rounded-lg bg-n-alpha-black2 border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 transition-all duration-500 ease-in-out"
     >
       <textarea
-        ref="textareaRef"
         :value="modelValue"
         rows="4"
         :placeholder="$t('AGENT_MGMT.NOTIFICATION.TEMPLATE_PLACEHOLDER')"
         class="flex w-full reset-base text-sm p-0 !rounded-none !bg-transparent dark:!bg-transparent !border-0 !mb-0 placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 text-n-slate-12 dark:text-n-slate-12"
         @input="handleInput"
-        @click="showVariableMenu = false"
       />
     </div>
+    <!-- Validation warning when {{content_summary}} is missing -->
+    <p
+      v-if="modelValue.trim() && !hasContentSummary"
+      class="text-xs text-red-500 dark:text-red-400 mt-1 mb-0"
+    >
+      {{ $t('AGENT_MGMT.NOTIFICATION.CONTENT_SUMMARY_MISSING_WARNING') }}
+    </p>
     <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0">
       {{ $t(variableConfig.helpKey) }}
     </p>
@@ -108,7 +73,7 @@ const handleInput = (event) => {
       <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
         {{ $t('AGENT_MGMT.NOTIFICATION.TEMPLATE_PREVIEW_LABEL') }}
       </span>
-      <p class="mt-1 mb-0 text-sm font-semibold text-slate-900 dark:text-slate-25">
+      <p class="mt-1 mb-0 text-sm font-semibold text-slate-900 dark:text-slate-25 whitespace-pre-wrap">
         {{ examplePreview }}
       </p>
     </div>

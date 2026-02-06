@@ -637,9 +637,9 @@ const collectionName = computed(() => {
   return getCollectionNameByAgentType('lead_generation');
 });
 
-// Extract categories from display_flow_data for lead_generation agent
+// Extract categories from flow_data for lead_generation agent (uses English/translated values to match Jangkau)
 const leadgenCategories = computed(() => {
-  const flowData = props.data?.display_flow_data;
+  const flowData = props.data?.flow_data;
   if (!flowData?.agents_config) return [];
 
   const agentIndex = flowData.enabled_agents?.indexOf('lead_generation');

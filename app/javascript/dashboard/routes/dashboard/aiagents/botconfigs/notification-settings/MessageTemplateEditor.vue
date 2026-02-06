@@ -39,7 +39,7 @@ const handleInput = (event) => {
       <label class="text-sm font-medium text-slate-900 dark:text-slate-25">
         {{ $t('AGENT_MGMT.NOTIFICATION.TEMPLATE_LABEL') }}
       </label>
-      <span class="text-xs text-amber-600 dark:text-amber-400">
+      <span class="text-xs text-slate-500 dark:text-slate-400">
         {{ $t('AGENT_MGMT.NOTIFICATION.CONTENT_SUMMARY_REQUIRED') }}
       </span>
     </div>

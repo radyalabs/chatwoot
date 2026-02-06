@@ -151,15 +151,11 @@ const handleFormClose = () => {
           </p>
         </div>
       </div>
-    </div>
-
-    <div class="border-t border-blue-200 dark:border-blue-700 pt-4">
       <!-- Add Notification Button -->
-      <div class="mb-4">
+      <div class="flex flex-col items-end">
         <Button
           :label="$t('AGENT_MGMT.NOTIFICATION.ADD_BUTTON')"
-          variant="outline"
-          color="slate"
+          class="bg-green-600 rounded-md hover:bg-green-700 disabled:bg-gray-400"
           size="sm"
           :disabled="!hasInboxes"
           @click="openAddForm"
@@ -171,6 +167,9 @@ const handleFormClose = () => {
           {{ $t('AGENT_MGMT.NOTIFICATION.NO_INBOX_AVAILABLE') }}
         </p>
       </div>
+    </div>
+
+    <div class="border-t border-blue-200 dark:border-blue-700 pt-4">
 
       <!-- Loading State -->
       <div

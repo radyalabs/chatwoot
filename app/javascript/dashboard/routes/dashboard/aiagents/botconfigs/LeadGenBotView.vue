@@ -459,24 +459,25 @@
         <div v-show="activeIndex === 3" class="w-full min-w-0">
           <QnaKnowledgeSources :data="data" context="lead_generation"/>
         </div>
-        
-        <!-- Tab 4: Category -->
-        <div v-show="activeIndex === 4" class="w-full">
-          <CategoryTab :data="data" agent-type="lead_generation" />
-        </div>
 
-        <!-- Tab 5: Priorities -->
-        <div v-show="activeIndex === 5" class="w-full">
+        <!-- Tab 4: Priorities -->
+        <div v-show="activeIndex === 4" class="w-full">
           <PrioritiesTab 
             v-if="data"
             :data="data" 
             agent-type="lead_generation"
-            :default-priorities="defaultLeadPriorities"
           />
           <div v-else class="flex items-center justify-center py-12">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
           </div>
         </div>
+        
+        <!-- Tab 5: Category -->
+        <div v-show="activeIndex === 5" class="w-full">
+          <CategoryTab :data="data" agent-type="lead_generation" />
+        </div>
+
+
 
         <!-- Tab 6: Custom Numbering Content -->
         <div v-show="activeIndex === 6" class="w-full">
@@ -559,27 +560,6 @@ const props = defineProps({
 
 const emit = defineEmits(['update:data'])
 provide('emitUpdate', () => emit('update:data'))
-
-const defaultLeadPriorities = [
-  { 
-    name: 'low', 
-    condition: `- Pertanyaan umum tanpa minat beli jelas
-- Tidak memberikan info pribadi` 
-  },
-  { 
-    name: 'medium', 
-    condition: `- Menanyakan fitur, manfaat, atau perbandingan produk
-- Menjelaskan kebutuhan atau masalah pribadi
-- Mencari rekomendasi produk`
-  },
-  { 
-    name: 'high', 
-    condition: `- Menanyakan cara pembelian atau pemesanan
-- Meminta informasi harga dan ketersediaan produk
-- Memberikan detail kontak dengan sukarela
-- Menyatakan urgensi pembelian (“butuh segera”)`
-  }
-];
 
 const followUpConfig = reactive({
   enabled: false,
@@ -678,14 +658,14 @@ const tabs = computed(() => [
   {
     key: '4',
     index: 4,
-    name: 'Kategori',
-    icon: 'i-lucide-tag',
+    name: 'Klasifikasi',
+    icon: 'i-lucide-star',
   },
   {
     key: '5',
     index: 5,
-    name: 'Klasifikasi',
-    icon: 'i-lucide-star',
+    name: 'Kategori',
+    icon: 'i-lucide-tag',
   },
   {
     key: '6',

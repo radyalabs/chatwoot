@@ -49,23 +49,6 @@ const isPopulating = ref(false);
 
 const isEditing = computed(() => !!props.rule);
 
-// Transform categories for ComboBox
-const categoryOptions = computed(() => {
-  return props.categories.map(cat => ({
-    label: cat.key,
-    value: cat.key,
-  }));
-});
-
-// Check if categories exist
-const hasCategories = computed(() => categoryOptions.value.length > 0);
-
-// Check if current category is orphaned (exists in notification but deleted from Category Sub-Menu)
-const isOrphanedCategory = computed(() => {
-  if (!category.value) return false;
-  return !props.categories.some(cat => cat.key === category.value);
-});
-
 const formatInboxLabel = inbox => {
   const phone = inbox.phone_number ? ` (${inbox.phone_number})` : '';
   return `${inbox.name}${phone}`;
@@ -127,7 +110,7 @@ const handleSave = () => {
 
   const payload = {
     inbox_id: senderInboxId.value,
-    category: category.value,
+    category: category.value || null,
     interest_level: interestLevel.value || null,
     message_type: messageType.value,
     receiver_channel_type: 'whatsapp_unofficial',
@@ -143,11 +126,8 @@ const handleSave = () => {
 };
 
 const canSave = computed(() => {
-  const categoryValid =
-    category.value.trim() && (hasCategories.value || isOrphanedCategory.value);
   return (
     senderInboxId.value &&
-    categoryValid &&
     receiverAddress.value.trim() &&
     messageTemplate.value.trim()
   );
@@ -241,33 +221,21 @@ defineExpose({ open });
         <label class="mb-0.5 text-sm font-medium text-n-slate-12">
           {{ $t('AGENT_MGMT.NOTIFICATION.CATEGORY_LABEL') }}
         </label>
-
-        <!-- Has categories: show dropdown -->
-        <ComboBox
-          v-if="hasCategories || isOrphanedCategory"
+        <select
           v-model="category"
-          :options="categoryOptions"
-          :placeholder="$t('AGENT_MGMT.NOTIFICATION.CATEGORY_SELECT_PLACEHOLDER')"
-          :search-placeholder="$t('AGENT_MGMT.NOTIFICATION.CATEGORY_SEARCH_PLACEHOLDER')"
-          :empty-state="$t('AGENT_MGMT.NOTIFICATION.NO_CATEGORIES_FOUND')"
-        />
-
-        <!-- No categories: show empty state -->
-        <div
-          v-else
-          class="p-3 text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 rounded-lg border border-dashed border-slate-300 dark:border-slate-600"
+          class="w-full p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 transition-all"
         >
-          {{ $t('AGENT_MGMT.NOTIFICATION.NO_CATEGORIES_AVAILABLE') }}
-        </div>
-
-        <!-- Orphaned category warning -->
-        <div
-          v-if="isOrphanedCategory"
-          class="mt-1 p-2 text-xs text-amber-800 dark:text-amber-200 bg-amber-100 dark:bg-amber-900/50 rounded border border-amber-300 dark:border-amber-700 flex items-center gap-1"
-        >
-          <span class="i-lucide-alert-triangle size-3 flex-shrink-0" />
-          {{ $t('AGENT_MGMT.NOTIFICATION.CATEGORY_ORPHANED_WARNING') }}
-        </div>
+          <option value="">
+            {{ $t('AGENT_MGMT.NOTIFICATION.CATEGORY_ALL') }}
+          </option>
+          <option
+            v-for="cat in categories"
+            :key="cat.key"
+            :value="cat.key"
+          >
+            {{ cat.key }}
+          </option>
+        </select>
       </div>
 
       <!-- Interest Level -->
@@ -280,7 +248,7 @@ defineExpose({ open });
           class="w-full p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 transition-all"
         >
           <option value="">
-            {{ $t('AGENT_MGMT.NOTIFICATION.INTEREST_LEVEL_NONE') }}
+            {{ $t('AGENT_MGMT.NOTIFICATION.CLASSIFICATION_ALL') }}
           </option>
           <option value="low">
             {{ $t('AGENT_MGMT.NOTIFICATION.INTEREST_LOW') }}

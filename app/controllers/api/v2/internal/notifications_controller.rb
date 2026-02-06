@@ -3,9 +3,16 @@ class Api::V2::Internal::NotificationsController < ActionController::API
 
   # POST /api/v2/internal/notifications
   # Payload:
-  #   account_id, ai_agent_id, inbox_id, category, interest_level, variables
+  #   account_id, ai_agent_id, inbox_id, idempotency_key, variables
   def create
     Rails.logger.info('[Internal::Notifications] Received notification dispatch request')
+
+    # Check idempotency key to prevent duplicate sends on retries
+    if notification_params[:idempotency_key].present?
+      cache_key = "notification:idempotency:#{notification_params[:idempotency_key]}"
+      cached_result = ::Redis::Alfred.get(cache_key)
+      return render json: JSON.parse(cached_result), status: :ok if cached_result.present?
+    end
 
     account = Account.find_by(id: notification_params[:account_id])
     return render json: { error: 'Account not found' }, status: :not_found unless account
@@ -19,12 +26,20 @@ class Api::V2::Internal::NotificationsController < ActionController::API
     results = settings.map { |setting| dispatch_to_setting(account, setting, notification_params) }
     safe_results = results.map { |result| result.is_a?(Hash) ? result : { status: 'failed', error: result.to_s } }
 
-    render json: {
+    response_data = {
       status: 'ok',
       sent: safe_results.count { |result| result[:status] == 'sent' },
       failed: safe_results.count { |result| result[:status] == 'failed' },
       results: safe_results
-    }, status: :ok
+    }
+
+    # Cache result for idempotency (24 hours)
+    if notification_params[:idempotency_key].present?
+      cache_key = "notification:idempotency:#{notification_params[:idempotency_key]}"
+      ::Redis::Alfred.setex(cache_key, response_data.to_json, 24.hours.to_i)
+    end
+
+    render json: response_data, status: :ok
   rescue StandardError => e
     Rails.logger.error("[Internal::Notifications] Failed to dispatch notifications: #{e.message}")
     render json: { error: 'Failed to dispatch notifications' }, status: :unprocessable_entity
@@ -33,22 +48,28 @@ class Api::V2::Internal::NotificationsController < ActionController::API
   private
 
   def find_matching_settings(account, ai_agent)
-    variables = notification_params[:variables] || {}
+    variables = notification_params[:variables] || {}    
     settings = account.agent_notification_settings.where(ai_agent_id: ai_agent.id)
 
-    settings = settings.where(category: variables['category']) if variables['category'].present?
-    settings = settings.where('interest_level IS NULL OR interest_level = ?', variables['interest_level']) if variables['interest_level'].present?
+
+    if variables['category'].present?
+      category = variables['category'].to_s.downcase
+      settings = settings.where('category IS NULL OR LOWER(category) = ?', category)
+    end
+
+    if variables['interest_level'].present?
+      interest_level = variables['interest_level'].to_s.downcase
+      settings = settings.where('interest_level IS NULL OR LOWER(interest_level) = ?', interest_level)
+    end
 
     settings
   end
 
   def authenticate_api_key!
-    Rails.logger.info('[Internal::Notifications] Authenticating API key')
     api_key = request.headers['X-API-Key'] || request.headers['X-Internal-Api-Key'] || params[:api_key]
     expected_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
 
     unless expected_key.present? && ActiveSupport::SecurityUtils.secure_compare(api_key.to_s, expected_key)
-      Rails.logger.warn('[Internal::Notifications] Invalid API key')
       render json: { error: 'Unauthorized' }, status: :unauthorized
     end
   end
@@ -58,8 +79,7 @@ class Api::V2::Internal::NotificationsController < ActionController::API
       :account_id,
       :ai_agent_id,
       :inbox_id,
-      :category,
-      :interest_level,
+      :idempotency_key,
       variables: {}
     )
   end
@@ -78,11 +98,10 @@ class Api::V2::Internal::NotificationsController < ActionController::API
 
     message_content = render_template(setting.message_template, payload[:variables] || {})
 
-    contact_inbox = set_contact_inbox(inbox, channel_type, setting.receiver_address, receiver_source_id, payload[:variables] || {})
-    conversation = set_conversation(account, inbox, contact_inbox, channel_type, setting.receiver_address)
-    create_outgoing_message(account, inbox, conversation, message_content)
+    # Send directly to channel without creating contact/conversation
+    send_to_channel(inbox, channel_type, receiver_source_id, message_content)
 
-    { id: setting.id, status: 'sent', conversation_id: conversation.id }
+    { id: setting.id, status: 'sent' }
   rescue ActiveRecord::RecordInvalid => e
     error_result(setting, "Validation failed: #{e.record.errors.full_messages.join(', ')}")
   rescue StandardError => e
@@ -90,71 +109,48 @@ class Api::V2::Internal::NotificationsController < ActionController::API
     error_result(setting, e.message)
   end
 
-  def set_contact_inbox(inbox, channel_type, receiver_address, receiver_source_id, variables)
-    phone_number = normalize_phone_number_for_contact(channel_type, receiver_address, receiver_source_id)
-    contact_attrs = build_contact_attributes(channel_type, receiver_address, phone_number, receiver_source_id, variables, inbox)
-
-    ContactInboxWithContactBuilder.new(
-      inbox: inbox,
-      source_id: receiver_source_id,
-      contact_attributes: contact_attrs
-    ).perform
-  end
-
-  def build_contact_attributes(channel_type, receiver_address, phone_number, receiver_source_id, variables, inbox)
-    if channel_type == 'whatsapp_unofficial' && group_jid?(receiver_address)
-      group_info = group_info_for_jid(inbox, receiver_address)
-      group_name = group_info&.fetch(:name, nil) || receiver_address
-      {
-        identifier: receiver_address,
-        name: group_name,
-        additional_attributes: {
-          whatsapp_group_jid: receiver_address,
-          whatsapp_group_name: group_name
-        }
-      }
-    elsif phone_number.present?
-      { phone_number: phone_number, name: receiver_address }
-    elsif channel_type == 'telegram'
-      {
-        name: telegram_contact_name(receiver_address, variables),
-        additional_attributes: telegram_contact_attributes(receiver_source_id, variables)
-      }
-    elsif channel_type == 'instagram'
-      {
-        name: instagram_contact_name(receiver_address, variables),
-        additional_attributes: instagram_contact_attributes(receiver_source_id, variables)
-      }
+  def send_to_channel(inbox, channel_type, receiver_source_id, message_content)
+    case channel_type
+    when 'whatsapp_unofficial'
+      send_whatsapp_unofficial(inbox, receiver_source_id, message_content)
+    when 'whatsapp'
+      send_whatsapp(inbox, receiver_source_id, message_content)
+    when 'telegram'
+      send_telegram(inbox, receiver_source_id, message_content)
+    when 'instagram'
+      send_instagram(inbox, receiver_source_id, message_content)
     else
-      { identifier: receiver_address, name: receiver_address }
+      raise "Unsupported channel type: #{channel_type}"
     end
   end
 
-  def set_conversation(account, inbox, contact_inbox, channel_type, receiver_address)
-    conversation = Conversation.find_or_create_by!(
-      account_id: account.id,
-      inbox_id: inbox.id,
-      contact_inbox_id: contact_inbox.id
-    ) do |conv|
-      conv.contact_id = contact_inbox.contact_id
-      conv.status = :open
-      conv.additional_attributes = conversation_additional_attributes(channel_type, receiver_address)
-    end
-
-    ensure_conversation_attributes(conversation, channel_type, receiver_address)
-    conversation
-  end
-
-  def create_outgoing_message(account, inbox, conversation, message_content)
-    Message.create!(
+  def send_whatsapp_unofficial(inbox, receiver_source_id, message_content)
+    channel = inbox.channel
+    message_params = {
+      phone_number: receiver_source_id,
       content: message_content,
-      account_id: account.id,
-      inbox_id: inbox.id,
-      conversation_id: conversation.id,
-      message_type: :outgoing,
-      content_type: :text,
-      status: :sent
-    )
+      attachments: []
+    }
+    response = channel.send_message(**message_params)
+  end
+
+  def send_whatsapp(inbox, receiver_source_id, message_content)
+    channel = inbox.channel
+    message_params = {
+      phone_number: receiver_source_id,
+      message: message_content
+    }
+    response = channel.send_message(**message_params)
+  end
+
+  def send_telegram(inbox, receiver_source_id, message_content)
+    channel = inbox.channel
+    response = channel.send_message(chat_id: receiver_source_id, text: message_content)
+  end
+
+  def send_instagram(inbox, receiver_source_id, message_content)
+    channel = inbox.channel
+    response = channel.send_message(recipient_id: receiver_source_id, message: message_content)
   end
 
   def error_result(setting, error_message)
@@ -178,72 +174,6 @@ class Api::V2::Internal::NotificationsController < ActionController::API
     nil
   end
 
-  def telegram_contact_name(receiver_address, variables)
-    first_name = variables['first_name'] || variables['telegram_first_name']
-    last_name = variables['last_name'] || variables['telegram_last_name']
-    full_name = [first_name, last_name].compact.join(' ').strip
-    return full_name if full_name.present?
-
-    receiver_address
-  end
-
-  def telegram_contact_attributes(receiver_source_id, variables)
-    username = variables['username'] || variables['telegram_username'] || variables['social_telegram_user_name']
-    language_code = variables['language_code'] || variables['telegram_language_code']
-
-    {
-      username: username,
-      language_code: language_code,
-      social_telegram_user_id: receiver_source_id,
-      social_telegram_user_name: username
-    }.reject { |_, value| value.nil? }
-  end
-
-  def instagram_contact_name(receiver_address, variables)
-    variables['instagram_name'] || variables['name'] || receiver_address
-  end
-
-  def instagram_contact_attributes(receiver_source_id, variables)
-    username = variables['username'] || variables['instagram_username'] || variables['social_instagram_user_name']
-
-    attributes = {
-      social_profiles: { instagram: username },
-      social_instagram_user_name: username,
-      social_instagram_user_id: receiver_source_id
-    }
-
-    optional_fields = %w[
-      follower_count
-      is_user_follow_business
-      is_business_follow_user
-      is_verified_user
-    ]
-
-    optional_fields.each do |field|
-      value = variables[field]
-      next if value.nil?
-
-      attributes["social_instagram_#{field}"] = value
-    end
-
-    attributes.reject { |_, value| value.nil? }
-  end
-
-  def group_info_for_jid(inbox, jid)
-    return nil unless inbox.channel.respond_to?(:list_groups)
-
-    @group_info_cache ||= {}
-    @group_info_cache[inbox.id] ||= begin
-      groups = inbox.channel.list_groups
-      groups.index_by { |group| group[:jid].to_s }
-    end
-
-    @group_info_cache[inbox.id][jid.to_s]
-  rescue StandardError => e
-    Rails.logger.error("[Internal::Notifications] Failed to fetch group info for #{jid}: #{e.message}")
-    nil
-  end
-
   def normalize_receiver_source_id(channel_type, receiver_address)
     return nil if receiver_address.blank?
 
@@ -263,28 +193,9 @@ class Api::V2::Internal::NotificationsController < ActionController::API
 
   def normalize_phone_number_for_contact(channel_type, receiver_address, receiver_source_id)
     return nil if receiver_source_id.blank?
-    return nil if channel_type == 'whatsapp_unofficial' && group_jid?(receiver_address)
     return nil unless %w[whatsapp whatsapp_unofficial].include?(channel_type)
 
     "+#{receiver_source_id}"
-  end
-
-  def conversation_additional_attributes(channel_type, receiver_address)
-    return { chat_id: receiver_address } if channel_type == 'telegram'
-
-    {}
-  end
-
-  def ensure_conversation_attributes(conversation, channel_type, receiver_address)
-    attrs = conversation_additional_attributes(channel_type, receiver_address)
-    return if attrs.blank?
-
-    existing = conversation.additional_attributes || {}
-    normalized_existing = existing.transform_keys(&:to_s)
-    normalized_attrs = attrs.transform_keys(&:to_s)
-    return if normalized_attrs.all? { |key, value| normalized_existing[key] == value }
-
-    conversation.update!(additional_attributes: normalized_existing.merge(normalized_attrs))
   end
 
   def group_jid?(whatsapp_address)
@@ -311,10 +222,7 @@ class Api::V2::Internal::NotificationsController < ActionController::API
 
     variables_hash.each { |key, value| replacements["{{#{key}}}"] = value.to_s }
 
-    replacements['{{nama_pelanggan}}'] = variables_hash['customer_name'].to_s if variables_hash['customer_name'].present?
-    replacements['{{nama_layanan}}'] = variables_hash['product_interest'].to_s if variables_hash['product_interest'].present?
-    replacements['{{tingkat_ketertarikan}}'] = variables_hash['classification_interest'].to_s if variables_hash['classification_interest'].present?
-    replacements['{{kategori}}'] = variables_hash['category'].to_s if variables_hash['category'].present?
+    replacements['{{content_summary}}'] = variables_hash['content_summary'].to_s if variables_hash['content_summary'].present?
 
     replacements
   end

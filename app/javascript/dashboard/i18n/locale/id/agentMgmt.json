@@ -274,7 +274,7 @@
       "CARD_MESSAGE_LABEL": "Pesan",
       "CARD_EDIT": "Edit",
       "CARD_DELETE": "Hapus",
-      "NO_INBOX_AVAILABLE": "Tidak ada inbox WhatsApp Unofficial yang tersedia. Silakan buat terlebih dahulu.",
+      "NO_INBOX_AVAILABLE": "Tidak ada inbox WhatsApp Go yang terhubung. Silakan buat inbox WhatsApp Go baru atau pastikan inbox yang ada sudah terhubung dengan benar.",
       "NO_GROUPS": "Tidak ada grup yang ditemukan. Pastikan inbox pengirim sudah terhubung.",
       "LOADING_GROUPS": "Memuat grup...",
       "GROUP_SEARCH_PLACEHOLDER": "Ketik nama grup untuk mencari",

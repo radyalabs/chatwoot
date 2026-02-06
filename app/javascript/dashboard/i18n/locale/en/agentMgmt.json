@@ -274,7 +274,7 @@
       "CARD_MESSAGE_LABEL": "Message",
       "CARD_EDIT": "Edit",
       "CARD_DELETE": "Delete",
-      "NO_INBOX_AVAILABLE": "No WhatsApp Unofficial inbox available. Please create one first.",
+      "NO_INBOX_AVAILABLE": "No connected WhatsApp Go inbox available. Please create a WhatsApp Go inbox or ensure an existing one is properly connected.",
       "NO_GROUPS": "No groups found. Ensure the sender inbox is connected.",
       "LOADING_GROUPS": "Loading groups...",
       "GROUP_SEARCH_PLACEHOLDER": "Type group name to search",

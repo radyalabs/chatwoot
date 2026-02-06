@@ -59,7 +59,9 @@ const uiFlags = useMapGetter('agentNotificationSettings/getUIFlags');
 
 const whatsappUnofficialInboxes = computed(() => {
   return (allInboxes.value || []).filter(
-    inbox => inbox.channel_type === INBOX_TYPES.WHATSAPP_UNOFFICIAL
+    inbox =>
+      inbox.channel_type === INBOX_TYPES.WHATSAPP_UNOFFICIAL &&
+      inbox.whatsapp_status === 'connected'
   );
 });
 

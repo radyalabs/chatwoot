@@ -147,18 +147,13 @@ async function save() {
       const original = { key: item.name, conditions: item.condition };
 
       // Translate to English for flow_data
-      let translatedKey = item.name;
       let translatedConditions = item.condition;
-      try {
-        const keyResp = await captainTranslator.translate(item.name || '', 'en');
-        translatedKey = keyResp?.data?.translated_text || translatedKey;
-      } catch (e) {}
       try {
         const condResp = await captainTranslator.translate(item.condition || '', 'en');
         translatedConditions = condResp?.data?.translated_text || translatedConditions;
       } catch (e) {}
 
-      translatedCategories.push({ key: translatedKey, conditions: translatedConditions });
+      translatedCategories.push({ key: item.name, conditions: translatedConditions });
 
       // Also set display (original) below
     }

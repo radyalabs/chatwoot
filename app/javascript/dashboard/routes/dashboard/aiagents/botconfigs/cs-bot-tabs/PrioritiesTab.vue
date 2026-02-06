@@ -162,18 +162,12 @@ async function save() {
     // Translate each priority's key and conditions to English for flow_data
     const translatedPriorities = [];
     for (const item of priorities) {
-      // Original (Indonesian) saved to display_flow_data below
-      let translatedKey = item.name;
       let translatedConditions = item.condition;
-      try {
-        const keyResp = await captainTranslator.translate(item.name || '', 'en');
-        translatedKey = keyResp?.data?.translated_text || translatedKey;
-      } catch (e) {}
       try {
         const condResp = await captainTranslator.translate(item.condition || '', 'en');
         translatedConditions = condResp?.data?.translated_text || translatedConditions;
       } catch (e) {}
-      translatedPriorities.push({ key: translatedKey, conditions: translatedConditions });
+      translatedPriorities.push({ key: item.name, conditions: translatedConditions });
     }
     
     const agentIndex = flowData.enabled_agents.indexOf(props.agentType);

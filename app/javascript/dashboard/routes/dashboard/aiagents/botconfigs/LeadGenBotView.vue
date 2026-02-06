@@ -224,7 +224,7 @@
               </div>
 
               <!-- Notification Settings -->
-              <NotificationSettings :ai-agent-id="data.id" />
+              <NotificationSettings :ai-agent-id="data.id" :categories="leadgenCategories" />
             </div>
           </div>
         </div>
@@ -635,6 +635,18 @@ const leadgenAgentId = computed(() => {
 
 const collectionName = computed(() => {
   return getCollectionNameByAgentType('lead_generation');
+});
+
+// Extract categories from display_flow_data for lead_generation agent
+const leadgenCategories = computed(() => {
+  const flowData = props.data?.display_flow_data;
+  if (!flowData?.agents_config) return [];
+
+  const agentIndex = flowData.enabled_agents?.indexOf('lead_generation');
+  if (agentIndex === -1 || agentIndex === undefined) return [];
+
+  const categoryConfig = flowData.agents_config[agentIndex]?.configurations?.category;
+  return Array.isArray(categoryConfig) ? categoryConfig : [];
 });
 
 // Define all tabs for LeadGen Bot

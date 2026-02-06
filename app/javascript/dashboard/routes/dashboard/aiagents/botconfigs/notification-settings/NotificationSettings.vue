@@ -13,6 +13,10 @@ const props = defineProps({
     type: [Number, String],
     required: true,
   },
+  categories: {
+    type: Array,
+    default: () => [],
+  },
   titleKey: {
     type: String,
     default: 'AGENT_MGMT.LEADGENBOT.NOTIFICATION.TITLE',
@@ -209,6 +213,7 @@ const handleFormClose = () => {
       ref="formModalRef"
       :rule="editingRule"
       :whatsapp-unofficial-inboxes="whatsappUnofficialInboxes"
+      :categories="categories"
       :variable-config="variableConfig"
       @save="handleSave"
       @close="handleFormClose"

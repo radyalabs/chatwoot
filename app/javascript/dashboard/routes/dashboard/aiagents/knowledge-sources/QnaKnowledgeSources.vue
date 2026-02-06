@@ -119,7 +119,6 @@ async function fetchKnowledge() {
       qnas.value = [...qnas.value, ...unsavedItems];
     }
     
-    // console.log(`[${props.context}] Total QnAs: ${qnas.value.length} | Context QnAs: ${contextQnas.value.length}`);
   } catch (e) {
     useAlert(t('AGENT_MGMT.QNA.FETCH_ERROR'));
   } finally {

@@ -8,6 +8,8 @@ class NotifyIdleConversationJob < ApplicationJob
   MESSAGE_STATUS_SENT = 0
   DEFAULT_DURATION = ENV.fetch('IDLE_CONVERSATION_DURATION', 5).to_i
   DEFAULT_UNIT = ENV.fetch('IDLE_CONVERSATION_UNIT', 'minutes')
+  DEFAULT_END_STATE_DURATION = ENV.fetch('DEFAULT_END_STATE_DURATION', 5).to_i
+  DEFAULT_END_STATE_UNIT = ENV.fetch('DEFAULT_END_STATE_UNIT', 'minutes')
 
   def perform
     Rails.logger.info('[NotifyIdleConversationJob] Starting processing idle conversations')
@@ -16,10 +18,11 @@ class NotifyIdleConversationJob < ApplicationJob
     preload_durations(conversations)
 
     conversations.each do |idle_conversation|
-      duration = DEFAULT_DURATION # default duration
-      duration = @duration_cache[idle_conversation.ai_agent_id] || duration if idle_conversation.step.zero?
+      duration = DEFAULT_END_STATE_DURATION # default duration
+      duration = @duration_cache[idle_conversation.ai_agent_id] || DEFAULT_DURATION if idle_conversation.step.zero?
+      unit = idle_conversation.step.zero? ? DEFAULT_UNIT : DEFAULT_END_STATE_UNIT
 
-      next unless idle_since?(idle_conversation.conversation.last_activity_at, duration)
+      next unless idle_since?(idle_conversation.conversation.last_activity_at, duration, unit)
 
       idle_conversation_processor(idle_conversation)
     end
@@ -36,8 +39,8 @@ class NotifyIdleConversationJob < ApplicationJob
                                 .to_h
   end
 
-  def idle_since?(last_activity_at, duration)
-    last_activity_at <= duration.send(DEFAULT_UNIT).ago
+  def idle_since?(last_activity_at, duration, unit)
+    last_activity_at <= duration.send(unit).ago
   end
 
   def idle_conversation_processor(idle_conversation)
@@ -55,6 +58,7 @@ class NotifyIdleConversationJob < ApplicationJob
     )
 
     idle_conversation.mark_as_sent!
+    idle_conversation.mark_as_conversation_resolved! if idle_conversation.completed?
   end
 
   def create_message(message, conversation_attr)

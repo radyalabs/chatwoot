@@ -33,7 +33,6 @@ class AgentNotificationSetting < ApplicationRecord
   belongs_to :ai_agent
   belongs_to :inbox
 
-  validates :category, presence: true
   validates :message_type, presence: true, inclusion: { in: %w[personal group] }
   validates :receiver_address, presence: true
   validates :message_template, presence: true

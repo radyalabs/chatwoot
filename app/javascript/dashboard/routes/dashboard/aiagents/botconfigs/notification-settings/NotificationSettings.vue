@@ -48,6 +48,10 @@ Waktu Konsultasi: 07:00:00`,
       ],
     }),
   },
+  showFilters: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const store = useStore();
@@ -209,6 +213,7 @@ const handleFormClose = () => {
       :whatsapp-unofficial-inboxes="whatsappUnofficialInboxes"
       :categories="categories"
       :variable-config="variableConfig"
+      :show-filters="showFilters"
       @save="handleSave"
       @close="handleFormClose"
     />

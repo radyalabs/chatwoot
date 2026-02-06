@@ -29,6 +29,10 @@ const props = defineProps({
       variables: [],
     }),
   },
+  showFilters: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const emit = defineEmits(['save', 'close']);
@@ -222,7 +226,7 @@ defineExpose({ open });
       </div>
 
       <!-- Category Notification - Dropdown -->
-      <div class="flex flex-col gap-1">
+      <div v-if="showFilters" class="flex flex-col gap-1">
         <label class="mb-0.5 text-sm font-medium text-n-slate-12">
           {{ $t('AGENT_MGMT.NOTIFICATION.CATEGORY_LABEL') }}
         </label>
@@ -244,7 +248,7 @@ defineExpose({ open });
       </div>
 
       <!-- Interest Level -->
-      <div class="flex flex-col gap-1">
+      <div v-if="showFilters" class="flex flex-col gap-1">
         <label class="mb-0.5 text-sm font-medium text-n-slate-12">
           {{ $t('AGENT_MGMT.NOTIFICATION.INTEREST_LEVEL_LABEL') }}
         </label>

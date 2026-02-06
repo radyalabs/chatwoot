@@ -661,7 +661,12 @@
       "INDUSTRY_TEMPLATE": "Pilih Template Industri",
       "MIN_DURATION_LABEL": "Durasi minimum sesi (Menit)",
       "SAVE_BTN": "Simpan",
-      "SYNC_BUTTON": "Sinkron data dari Sheet"
+      "SYNC_BUTTON": "Sinkron data dari Sheet",
+      "NOTIFICATION": {
+        "TITLE": "Pengaturan Notifikasi Tim Internal",
+        "DESC": "Atur notifikasi internal otomatis saat booking baru dibuat.",
+        "TEMPLATE_HELP": "Pesan ini akan dikirim otomatis ke tim internal Anda untuk memberitahukan booking yang masuk."
+      }
     },
     "RESTAURANT_BOT": {
       "GENERAL_TAB": "Pengaturan",

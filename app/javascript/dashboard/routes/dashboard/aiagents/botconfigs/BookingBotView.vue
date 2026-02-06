@@ -10,6 +10,7 @@ import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import Button from 'dashboard/components-next/button/Button.vue';
 import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue';
+import NotificationSettings from './notification-settings/NotificationSettings.vue';
 
 const { t } = useI18n();
 
@@ -292,6 +293,27 @@ const AVAILABLE_VARIABLES = computed(() => [
   { label: t('AGENT_MGMT.REMINDER.VARIABLES.SERVICE_NAME'), value: '{{nama_layanan}}', mock: 'Konsultasi Premium' },
   { label: t('AGENT_MGMT.REMINDER.VARIABLES.BOOKING.LOCATION'), value: '{{lokasi}}', mock: 'Klinik Pratama' },
 ]);
+
+const bookingVariableConfig = computed(() => ({
+  helpKey: 'AGENT_MGMT.BOOKING_BOT.NOTIFICATION.TEMPLATE_HELP',
+  variables: [
+    {
+      labelKey: 'AGENT_MGMT.NOTIFICATION.VAR_CONTENT_SUMMARY',
+      value: '{{content_summary}}',
+      example: `ID Pemesanan: BK-001/01/2026
+Nama Pelanggan: Budi Santoso
+No. Telp: 62812345678901
+Layanan: Konsultasi Premium
+Jenis Layanan: Konsultasi
+Kategori Layanan: Kesehatan
+Tanggal: 15/01/2026
+Waktu: 14:00 (Durasi: 60 menit)
+Harga: Rp 250,000
+Status: Confirm
+Catatan: Mohon disiapkan ruangan VIP`,
+    },
+  ],
+}));
 
 const messagePreview = computed(() => {
   let text = followUpConfig.message || '';
@@ -775,6 +797,17 @@ onMounted(async () => {
                       </div>
                     </div>
                   </div>
+
+                  <!-- Notification Settings -->
+                  <NotificationSettings
+                    :ai-agent-id="data.id"
+                    :categories="[]"
+                    :show-filters="false"
+                    title-key="AGENT_MGMT.BOOKING_BOT.NOTIFICATION.TITLE"
+                    desc-key="AGENT_MGMT.BOOKING_BOT.NOTIFICATION.DESC"
+                    :variable-config="bookingVariableConfig"
+                  />
+
                   <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
                     <div class="flex items-center justify-between p-6">
                       <div class="flex items-center">

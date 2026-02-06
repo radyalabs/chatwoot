@@ -459,7 +459,12 @@
       "MIN_DURATION_LABEL": "Minimum duration per session (Minutes)",
       "SAVE_BTN": "Save",
       "SYNC_BUTTON": "Sync data based on Sheet",
-      "CHARACTERS": "characters"
+      "CHARACTERS": "characters",
+      "NOTIFICATION": {
+        "TITLE": "Internal Team Notification Settings",
+        "DESC": "Configure automatic internal notifications when a new booking is created.",
+        "TEMPLATE_HELP": "This message will be sent automatically to your internal team to notify them of new bookings."
+      }
     },
     "RESTAURANT_BOT": {
       "GENERAL_TAB": "General",

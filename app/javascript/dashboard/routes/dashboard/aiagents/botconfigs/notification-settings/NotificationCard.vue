@@ -115,15 +115,28 @@ const interestColors = {
       <div class="flex items-center gap-3 flex-1 min-w-0">
         <div class="flex items-center gap-2 flex-1 min-w-0">
           <span class="i-lucide-bell text-slate-400 dark:text-slate-500 size-5 flex-shrink-0" />
-          <span class="text-sm text-slate-500 dark:text-slate-400">
-            {{ $t('AGENT_MGMT.NOTIFICATION.CARD_CATEGORY_LABEL') }}:
-          </span>
-          <span
-            class="text-base font-semibold text-slate-900 dark:text-slate-100 truncate"
-            :title="rule.category"
-          >
-            {{ rule.category }}
-          </span>
+          <template v-if="rule.category">
+            <span class="text-sm text-slate-500 dark:text-slate-400">
+              {{ $t('AGENT_MGMT.NOTIFICATION.CARD_CATEGORY_LABEL') }}:
+            </span>
+            <span
+              class="text-base font-semibold text-slate-900 dark:text-slate-100 truncate"
+              :title="rule.category"
+            >
+              {{ rule.category }}
+            </span>
+          </template>
+          <template v-else>
+            <span class="text-sm text-slate-500 dark:text-slate-400">
+              {{ $t('AGENT_MGMT.NOTIFICATION.CARD_SEND_TO') }}:
+            </span>
+            <span
+              class="text-base font-semibold text-slate-900 dark:text-slate-100 truncate"
+              :title="rule.receiver_name || rule.receiver_address"
+            >
+              {{ rule.receiver_name || rule.receiver_address }}
+            </span>
+          </template>
         </div>
 
         <!-- Interest Badge -->

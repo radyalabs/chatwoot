@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_01_29_040000) do
+ActiveRecord::Schema[7.0].define(version: 2026_02_06_100000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -120,6 +120,25 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_29_040000) do
     t.integer "bot_type", default: 0
     t.jsonb "bot_config", default: {}
     t.index ["account_id"], name: "index_agent_bots_on_account_id"
+  end
+
+  create_table "agent_notification_settings", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "ai_agent_id", null: false
+    t.bigint "inbox_id", null: false
+    t.string "category"
+    t.string "interest_level"
+    t.string "message_type", default: "personal", null: false
+    t.string "receiver_channel_type", default: "whatsapp_unofficial", null: false
+    t.string "receiver_address", null: false
+    t.text "message_template", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "receiver_name"
+    t.index ["account_id", "ai_agent_id"], name: "idx_agent_notif_settings_on_account_and_agent"
+    t.index ["account_id"], name: "index_agent_notification_settings_on_account_id"
+    t.index ["ai_agent_id"], name: "index_agent_notification_settings_on_ai_agent_id"
+    t.index ["inbox_id"], name: "index_agent_notification_settings_on_inbox_id"
   end
 
   create_table "ai_agent_followups", force: :cascade do |t|
@@ -1560,6 +1579,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_29_040000) do
   add_foreign_key "accounts", "subscriptions", column: "active_subscription_id"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "agent_notification_settings", "accounts"
+  add_foreign_key "agent_notification_settings", "ai_agents"
+  add_foreign_key "agent_notification_settings", "inboxes"
   add_foreign_key "ai_agent_followups", "ai_agents"
   add_foreign_key "ai_agent_selected_labels", "ai_agents"
   add_foreign_key "ai_agent_selected_labels", "labels"

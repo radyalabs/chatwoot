@@ -3,12 +3,13 @@
 # Table name: agent_notification_settings
 #
 #  id                    :bigint           not null, primary key
-#  category              :string           not null
+#  category              :string
 #  interest_level        :string
 #  message_template      :text             not null
 #  message_type          :string           default("personal"), not null
 #  receiver_address      :string           not null
 #  receiver_channel_type :string           default("whatsapp_unofficial"), not null
+#  receiver_name         :string
 #  created_at            :datetime         not null
 #  updated_at            :datetime         not null
 #  account_id            :bigint           not null

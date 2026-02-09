@@ -148,10 +148,10 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
     if attachments.present?
       Rails.logger.info "[BOT] Enqueuing #{attachments.count} image(s) for async attach..."
 
-      attachments.each_with_index do |image_url, idx|
+      attachments.each_with_index do |attachment, idx|
         Captain::Copilot::AttachMessageImageJob.perform_later(
           attrs, 
-          image_url, 
+          attachment,
           idx + 1)
       end
     end

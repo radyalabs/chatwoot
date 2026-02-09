@@ -180,6 +180,11 @@
         "GOOGLE_SHEETS_TITLE": "Integrasi Google Sheets",
         "CONNECT_SHEETS_DESC": "Hubungkan ke Google Sheets untuk secara otomatis membuat spreadsheet yang berisi data tiket dari Bot CS Anda. Setelah otentikasi berhasil, sistem akan segera membuat spreadsheet baru di akun Google Anda.",
         "REMOVE": "Hapus"
+      },
+      "NOTIFICATION": {
+        "TITLE": "Pengaturan Notifikasi Tim Internal",
+        "DESC": "Atur notifikasi internal otomatis saat tiket support baru dibuat.",
+        "TEMPLATE_HELP": "Pesan ini akan dikirim otomatis ke tim internal Anda untuk memberitahukan tiket support yang masuk."
       }
     },
     "LEADGENBOT": {

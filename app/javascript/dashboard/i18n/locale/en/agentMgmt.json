@@ -180,6 +180,11 @@
         "GOOGLE_SHEETS_TITLE": "Ticket Output Integration",
         "CONNECT_SHEETS_DESC": "Connect to Google Sheets to automatically create spreadsheets containing ticket data from your CS Bot. After successful authentication, the system will immediately create a new spreadsheet in your Google account.",
         "REMOVE": "Remove"
+      },
+      "NOTIFICATION": {
+        "TITLE": "Internal Team Notification Settings",
+        "DESC": "Configure automatic internal notifications when a new support ticket is created.",
+        "TEMPLATE_HELP": "This message will be sent automatically to your internal team to notify them of new support tickets."
       }
     },
     "LEADGENBOT": {

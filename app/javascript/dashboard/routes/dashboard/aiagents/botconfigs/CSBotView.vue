@@ -88,7 +88,6 @@ import PrioritiesTab from './cs-bot-tabs/PrioritiesTab.vue'
 import ProductCatalogTab from './cs-bot-tabs/ProductCatalogTab.vue'
 import GeneralTab from './cs-bot-tabs/GeneralTab.vue'
 import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue'
-
 const { t } = useI18n()
 
 const props = defineProps({

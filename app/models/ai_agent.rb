@@ -31,6 +31,7 @@ class AiAgent < ApplicationRecord
   has_many :labels, through: :ai_agent_selected_labels
   has_many :ai_agent_followups, dependent: :destroy
   has_many :agent_bot_inboxes, dependent: :nullify
+  has_many :agent_notification_settings, dependent: :destroy
   has_one :knowledge_source, dependent: :destroy
   has_many :reminders, dependent: :destroy
   has_one :reminder_config, dependent: :destroy

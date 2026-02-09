@@ -132,6 +132,7 @@ Rails.application.routes.draw do
               post 'whatsapp/restart', to: 'inboxes#whatsapp_restart_session'
               post 'whatsapp/disconnect', to: 'inboxes#whatsapp_disconnect_session'
               post 'whatsapp/reconnect', to: 'inboxes#whatsapp_reconnect_session'
+              get 'whatsapp/groups', to: 'inboxes#whatsapp_groups'
             end
           end
 
@@ -485,6 +486,8 @@ Rails.application.routes.draw do
               end
             end
 
+            resources :agent_notification_settings, only: %i[index create update destroy]
+
             # Sheet numbering configs routes
             resources :sheet_numbering_configs, only: [] do
               collection do
@@ -550,6 +553,7 @@ Rails.application.routes.draw do
 
       # Internal API for external services (jangkau.langgraph, etc.)
       namespace :internal do
+        resources :notifications, only: [:create]
         resources :reminders, only: [:create] do
           collection do
             put :upsert

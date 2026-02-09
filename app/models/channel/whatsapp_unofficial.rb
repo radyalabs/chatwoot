@@ -221,6 +221,9 @@ class Channel::WhatsappUnofficial < ApplicationRecord
   # Reconnect session
   delegate :reconnect_session, to: :adapter
 
+  # List WhatsApp groups
+  delegate :list_groups, to: :adapter
+
   # ============================================================================
   # Inbox Management
   # ============================================================================

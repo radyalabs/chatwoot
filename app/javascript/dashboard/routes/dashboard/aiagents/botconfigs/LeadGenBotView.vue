@@ -222,6 +222,9 @@
                   </a>
                 </div>
               </div>
+
+              <!-- Notification Settings -->
+              <NotificationSettings :ai-agent-id="data.id" :categories="leadgenCategories" :priorities="leadgenPriorities" />
             </div>
           </div>
         </div>
@@ -456,22 +459,28 @@
         <div v-show="activeIndex === 3" class="w-full min-w-0">
           <QnaKnowledgeSources :data="data" context="lead_generation"/>
         </div>
-        
+
         <!-- Tab 4: Priorities -->
         <div v-show="activeIndex === 4" class="w-full">
           <PrioritiesTab 
             v-if="data"
             :data="data" 
             agent-type="lead_generation"
-            :default-priorities="defaultLeadPriorities"
           />
           <div v-else class="flex items-center justify-center py-12">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
           </div>
         </div>
-
-        <!-- Tab 5: Custom Numbering Content -->
+        
+        <!-- Tab 5: Category -->
         <div v-show="activeIndex === 5" class="w-full">
+          <CategoryTab :data="data" agent-type="lead_generation" />
+        </div>
+
+
+
+        <!-- Tab 6: Custom Numbering Content -->
+        <div v-show="activeIndex === 6" class="w-full">
           <CustomNumberingTab :data="data" numbering-key="lead_generation" />
         </div>
 
@@ -527,12 +536,14 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import FileKnowledgeSources from '../knowledge-sources/FileKnowledgeSources.vue'
 import QnaKnowledgeSources from '../knowledge-sources/QnaKnowledgeSources.vue'
 import PrioritiesTab from './cs-bot-tabs/PrioritiesTab.vue'
+import CategoryTab from './cs-bot-tabs/CategoryTab.vue'
 import googleSheetsExportAPI from '../../../../api/googleSheetsExport'
 import aiAgents from '../../../../api/aiAgents'
 import idleConfigsAPI from '../../../../api/idleConfigs';
 import remindersAPI from '../../../../api/reminders';
 import { useAlert } from 'dashboard/composables';
 import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue';
+import NotificationSettings from './notification-settings/NotificationSettings.vue';
 
 const { t } = useI18n()
 
@@ -549,27 +560,6 @@ const props = defineProps({
 
 const emit = defineEmits(['update:data'])
 provide('emitUpdate', () => emit('update:data'))
-
-const defaultLeadPriorities = [
-  { 
-    name: 'low', 
-    condition: `- Pertanyaan umum tanpa minat beli jelas
-- Tidak memberikan info pribadi` 
-  },
-  { 
-    name: 'medium', 
-    condition: `- Menanyakan fitur, manfaat, atau perbandingan produk
-- Menjelaskan kebutuhan atau masalah pribadi
-- Mencari rekomendasi produk`
-  },
-  { 
-    name: 'high', 
-    condition: `- Menanyakan cara pembelian atau pemesanan
-- Meminta informasi harga dan ketersediaan produk
-- Memberikan detail kontak dengan sukarela
-- Menyatakan urgensi pembelian (“butuh segera”)`
-  }
-];
 
 const followUpConfig = reactive({
   enabled: false,
@@ -627,6 +617,27 @@ const collectionName = computed(() => {
   return getCollectionNameByAgentType('lead_generation');
 });
 
+// Extract categories from flow_data for lead_generation agent (uses English/translated values to match Jangkau)
+const leadgenCategories = computed(() => {
+  const flowData = props.data?.flow_data;
+  if (!flowData?.agents_config) return [];
+
+  const agentIndex = flowData.enabled_agents?.indexOf('lead_generation');
+  if (agentIndex === -1 || agentIndex === undefined) return [];
+
+  const categoryConfig = flowData.agents_config[agentIndex]?.configurations?.category;
+  return Array.isArray(categoryConfig) ? categoryConfig : [];
+});
+
+const leadgenPriorities = computed(() => {
+  const flowData = props.data?.flow_data;
+  if (!flowData?.agents_config) return [];
+  const agentIndex = flowData.enabled_agents?.indexOf('lead_generation');
+  if (agentIndex === -1 || agentIndex === undefined) return [];
+  const priorityConfig = flowData.agents_config[agentIndex]?.configurations?.priority;
+  return Array.isArray(priorityConfig) ? priorityConfig : [];
+});
+
 // Define all tabs for LeadGen Bot
 const tabs = computed(() => [
   {
@@ -657,11 +668,17 @@ const tabs = computed(() => [
     key: '4',
     index: 4,
     name: 'Klasifikasi',
-    icon: 'i-lucide-tag',
+    icon: 'i-lucide-star',
   },
   {
     key: '5',
     index: 5,
+    name: 'Kategori',
+    icon: 'i-lucide-tag',
+  },
+  {
+    key: '6',
+    index: 6,
     name: 'Penomoran Otomatis',
     icon: 'i-lucide-notebook-tabs',
   },

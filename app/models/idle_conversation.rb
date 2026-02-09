@@ -45,4 +45,8 @@ class IdleConversation < ApplicationRecord
   def auto_complete_on_step_two
     self.status = :completed if step == 2
   end
+
+  def mark_as_conversation_resolved!
+    conversation.resolved!
+  end
 end

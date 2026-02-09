@@ -100,6 +100,44 @@
       "MSG_DESC": "Pesan ini akan dikirimkan otomatis ke pelanggan melalui platform yang sesuai pada waktu yang ditentukan.",
       "MSG_EXAMPLE": "Contoh"
     },
+    "LEAD_GENERATION": {
+      "GENERAL_TAB": "Pengaturan",
+      "TICKET": {
+        "ERROR": "Field ini wajib diisi",
+        "DUPE_ERROR": "Nama harus unik",
+        "HEADER": "Konfigurasi Lead Generation",
+        "HEADER_DESC": "Halaman ini berisi pengaturan kategori dan klasifikasi untuk Lead Generation Anda.",
+        "CATEGORY_TITLE": "Kategori Lead",
+        "CATEGORY_DESC": "Atur kategori lead dan (opsional) tuliskan kondisi.",
+        "CATEGORY_PLACEHOLDER": "Nama kategori (mis. E-commerce)",
+        "CONDITION_PLACEHOLDER": "Kondisi atau kata kunci opsional...",
+        "ADD_CATEGORY": "Tambah Kategori",
+        "CATEGORY_CONDITION": "Kondisi Kategori",
+        "SAVE_SUCCESS": "Berhasil simpan",
+        "SAVE_ERROR": "Gagal simpan",
+        "SAVE_BUTTON": "Simpan",
+        "VALIDATION_ERROR": "Silakan perbaiki kesalahan validasi"
+      }
+    },
+    "SALES": {
+      "GENERAL_TAB": "Pengaturan",
+      "TICKET": {
+        "ERROR": "Field ini wajib diisi",
+        "DUPE_ERROR": "Nama harus unik",
+        "HEADER": "Konfigurasi Sales",
+        "HEADER_DESC": "Halaman ini berisi pengaturan kategori dan pipeline untuk Sales Anda.",
+        "CATEGORY_TITLE": "Kategori Produk",
+        "CATEGORY_DESC": "Atur kategori produk dan (opsional) tuliskan kondisi.",
+        "CATEGORY_PLACEHOLDER": "Nama kategori (mis. Premium Plan)",
+        "CONDITION_PLACEHOLDER": "Kondisi atau kata kunci opsional...",
+        "ADD_CATEGORY": "Tambah Kategori",
+        "CATEGORY_CONDITION": "Kondisi Kategori",
+        "SAVE_SUCCESS": "Berhasil simpan",
+        "SAVE_ERROR": "Gagal simpan",
+        "SAVE_BUTTON": "Simpan",
+        "VALIDATION_ERROR": "Silakan perbaiki kesalahan validasi"
+      }
+    },
     "CSBOT": {
       "GENERAL_TAB": "Pengaturan",
       "TICKET": {
@@ -142,6 +180,11 @@
         "GOOGLE_SHEETS_TITLE": "Integrasi Google Sheets",
         "CONNECT_SHEETS_DESC": "Hubungkan ke Google Sheets untuk secara otomatis membuat spreadsheet yang berisi data tiket dari Bot CS Anda. Setelah otentikasi berhasil, sistem akan segera membuat spreadsheet baru di akun Google Anda.",
         "REMOVE": "Hapus"
+      },
+      "NOTIFICATION": {
+        "TITLE": "Pengaturan Notifikasi Tim Internal",
+        "DESC": "Atur notifikasi internal otomatis saat tiket support baru dibuat.",
+        "TEMPLATE_HELP": "Pesan ini akan dikirim otomatis ke tim internal Anda untuk memberitahukan tiket support yang masuk."
       }
     },
     "LEADGENBOT": {
@@ -184,7 +227,66 @@
         "ADD_CLASSIFICATION": "Tambah Klasifikasi",
         "SAVE_SUCCESS": "Berhasil simpan klasifikasi",
         "SAVE_ERROR": "Gagal simpan klasifikasi"
+      },
+      "NOTIFICATION": {
+        "TITLE": "Pengaturan Notifikasi Tim Internal",
+        "DESC": "Atur notifikasi internal otomatis saat lead baru masuk.",
+        "VAR_CUSTOMER_NAME": "Nama Pelanggan",
+        "VAR_CONSULTATION_DATE": "Tanggal Konsultasi",
+        "VAR_CONSULTATION_TIME": "Waktu Konsultasi",
+        "VAR_SERVICE_NAME": "Nama Layanan",
+        "TEMPLATE_HELP": "Pesan ini akan dikirim otomatis ke tim internal Anda untuk memberitahukan lead yang masuk."
       }
+    },
+    "NOTIFICATION": {
+      "SENDER_INBOX_LABEL": "Inbox Pengirim",
+      "SENDER_INBOX_PLACEHOLDER": "— Pilih inbox pengirim —",
+      "ADD_BUTTON": "+ Tambah Notifikasi",
+      "EMPTY_STATE": "Belum ada notifikasi yang ditambahkan.",
+      "FORM_TITLE_ADD": "Tambah Notifikasi",
+      "FORM_TITLE_EDIT": "Edit Notifikasi",
+      "CATEGORY_LABEL": "Kategori (Opsional)",
+      "CATEGORY_ALL": "Semua",
+      "INTEREST_LEVEL_LABEL": "Klasifikasi (Opsional)",
+      "INTEREST_LEVEL_LABEL_PRIORITY": "Prioritas (Opsional)",
+      "CLASSIFICATION_ALL": "Semua",
+      "INTEREST_LOW": "Rendah",
+      "INTEREST_MEDIUM": "Sedang",
+      "INTEREST_HIGH": "Tinggi",
+      "MESSAGE_TYPE_LABEL": "Tipe Pesan",
+      "MESSAGE_TYPE_PERSONAL": "Pesan Pribadi",
+      "MESSAGE_TYPE_GROUP": "Pesan Grup",
+      "RECEIVER_ADDRESS_LABEL": "Nomor Penerima",
+      "RECEIVER_GROUP_LABEL": "Grup Penerima",
+      "RECEIVER_GROUP_PLACEHOLDER": "— Pilih group —",
+      "RECEIVER_PLACEHOLDER_WHATSAPP": "Contoh: 6281234567890",
+      "TEMPLATE_LABEL": "Isi Pesan",
+      "TEMPLATE_PLACEHOLDER": "Tulis pesan notifikasi internal...",
+      "TEMPLATE_PREVIEW_LABEL": "CONTOH",
+      "DEFAULT_TEMPLATE": "Notifikasi masuk:\n\n{{content_summary}}",
+      "CONTENT_SUMMARY_REQUIRED": "{{content_summary}} wajib ada dan tidak dapat dihapus.",
+      "CONTENT_SUMMARY_MISSING_WARNING": "Peringatan: {{content_summary}} diperlukan. Variabel ini akan diganti dengan informasi lengkap dari sumber data.",
+      "VAR_CONTENT_SUMMARY": "Ringkasan Konten",
+      "SAVE_BUTTON": "Simpan Notifikasi",
+      "SAVE_BUTTON_EDIT": "Simpan Perubahan",
+      "CANCEL_BUTTON": "Batal",
+      "CARD_PERSONAL": "Personal",
+      "CARD_GROUP": "Group",
+      "CARD_CATEGORY_LABEL": "Kategori",
+      "CARD_INTEREST_LABEL": "Klasifikasi",
+      "CARD_INTEREST_HELPER": "Terkirim berdasarkan klasifikasi pelanggan",
+      "CARD_SENT_FROM": "Dikirim dari",
+      "CARD_SEND_TO": "Notifikasi ke",
+      "CARD_MESSAGE_LABEL": "Pesan",
+      "CARD_EDIT": "Edit",
+      "CARD_DELETE": "Hapus",
+      "NO_INBOX_AVAILABLE": "Tidak ada inbox WhatsApp Go yang terhubung. Silakan buat inbox WhatsApp Go baru atau pastikan inbox yang ada sudah terhubung dengan benar.",
+      "NO_GROUPS": "Tidak ada grup yang ditemukan. Pastikan inbox pengirim sudah terhubung.",
+      "LOADING_GROUPS": "Memuat grup...",
+      "GROUP_SEARCH_PLACEHOLDER": "Ketik nama grup untuk mencari",
+      "NO_GROUPS_FOUND": "Tidak ada grup ditemukan",
+      "SHOW_MORE": "Tampilkan lebih",
+      "SHOW_LESS": "Tampilkan sedikit"
     },
     "COMMON": {
       "REMOVE": "Hapus"
@@ -565,7 +667,12 @@
       "INDUSTRY_TEMPLATE": "Pilih Template Industri",
       "MIN_DURATION_LABEL": "Durasi minimum sesi (Menit)",
       "SAVE_BTN": "Simpan",
-      "SYNC_BUTTON": "Sinkron data dari Sheet"
+      "SYNC_BUTTON": "Sinkron data dari Sheet",
+      "NOTIFICATION": {
+        "TITLE": "Pengaturan Notifikasi Tim Internal",
+        "DESC": "Atur notifikasi internal otomatis saat booking baru dibuat.",
+        "TEMPLATE_HELP": "Pesan ini akan dikirim otomatis ke tim internal Anda untuk memberitahukan booking yang masuk."
+      }
     },
     "RESTAURANT_BOT": {
       "GENERAL_TAB": "Pengaturan",

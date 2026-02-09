@@ -233,6 +233,12 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController #
     end
   end
 
+  def whatsapp_groups
+    @channel = @inbox.channel
+    groups = @channel.list_groups
+    render json: { payload: groups }
+  end
+
   private
 
   def fetch_inbox

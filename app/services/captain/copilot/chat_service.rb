@@ -1,4 +1,4 @@
-class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
+class Captain::Copilot::ChatService
   include SwitchLocale
   include ResponseFormatChatHelper
 
@@ -91,10 +91,10 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
   def conversion_processing(response)
     return if @context.conversation.is_convert?
 
-    if response[:has_domain_change]
-      @context.conversation.update(is_convert: true)
-      Rails.logger.info "[BOT] Conversation #{@context.conversation.id} marked as converted (domain change detected)."
-    end
+    return unless response[:has_domain_change]
+
+    @context.conversation.update(is_convert: true)
+    Rails.logger.info "[BOT] Conversation #{@context.conversation.id} marked as converted (domain change detected)."
   end
 
   def end_state_processing(response)
@@ -126,10 +126,10 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
     User.find_by(id: agent_id)
   end
 
-  def message_created(content, additional_attributes)
+  def message_created(content, additional_attributes) # rubocop:disable Metrics/MethodLength
     # Extract image_urls before merging (it's not a Message attribute)
     attachments = additional_attributes&.delete(:attachments)
-    
+
     attrs = {
       content: content,
       account_id: @context.account_id,
@@ -145,15 +145,15 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
 
     Message.create!(attrs)
 
-    if attachments.present?
-      Rails.logger.info "[BOT] Enqueuing #{attachments.count} image(s) for async attach..."
+    return if attachments.blank?
 
-      attachments.each_with_index do |attachment, idx|
-        Captain::Copilot::AttachMessageImageJob.perform_later(
-          attrs, 
-          attachment,
-          idx + 1)
-      end
+    Rails.logger.info "[BOT] Enqueuing #{attachments.count} image(s) for async attach..."
+
+    attachments.each_with_index do |attachment, idx|
+      Captain::Copilot::AttachMessageImageJob.perform_later(
+        attrs, 
+        attachment,
+        idx + 1)
     end
   end
 end

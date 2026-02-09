@@ -248,6 +248,7 @@
       "CATEGORY_LABEL": "Category (Optional)",
       "CATEGORY_ALL": "All",
       "INTEREST_LEVEL_LABEL": "Classification (Optional)",
+      "INTEREST_LEVEL_LABEL_PRIORITY": "Priority (Optional)",
       "CLASSIFICATION_ALL": "All",
       "INTEREST_LOW": "Low",
       "INTEREST_MEDIUM": "Medium",

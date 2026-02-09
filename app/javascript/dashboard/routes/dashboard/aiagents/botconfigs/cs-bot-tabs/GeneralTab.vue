@@ -622,6 +622,7 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
           title-key="AGENT_MGMT.CSBOT.NOTIFICATION.TITLE"
           desc-key="AGENT_MGMT.CSBOT.NOTIFICATION.DESC"
           :variable-config="csVariableConfig"
+          is-customer-service-bot
         />
 
         <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">

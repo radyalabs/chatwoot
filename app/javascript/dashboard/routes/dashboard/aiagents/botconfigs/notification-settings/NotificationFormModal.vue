@@ -33,6 +33,10 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  isCustomerServiceBot: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['save', 'close']);
@@ -52,6 +56,12 @@ const isLoadingGroups = ref(false);
 const isPopulating = ref(false);
 
 const isEditing = computed(() => !!props.rule);
+
+const interestLevelLabel = computed(() =>
+  props.isCustomerServiceBot
+    ? t('AGENT_MGMT.NOTIFICATION.INTEREST_LEVEL_LABEL_PRIORITY')
+    : t('AGENT_MGMT.NOTIFICATION.INTEREST_LEVEL_LABEL')
+);
 
 const formatInboxLabel = inbox => {
   const phone = inbox.phone_number ? ` (${inbox.phone_number})` : '';
@@ -250,7 +260,7 @@ defineExpose({ open });
       <!-- Interest Level -->
       <div v-if="showFilters" class="flex flex-col gap-1">
         <label class="mb-0.5 text-sm font-medium text-n-slate-12">
-          {{ $t('AGENT_MGMT.NOTIFICATION.INTEREST_LEVEL_LABEL') }}
+          {{ interestLevelLabel }}
         </label>
         <select
           v-model="interestLevel"

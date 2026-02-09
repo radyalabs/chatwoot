@@ -248,6 +248,7 @@
       "CATEGORY_LABEL": "Kategori (Opsional)",
       "CATEGORY_ALL": "Semua",
       "INTEREST_LEVEL_LABEL": "Klasifikasi (Opsional)",
+      "INTEREST_LEVEL_LABEL_PRIORITY": "Prioritas (Opsional)",
       "CLASSIFICATION_ALL": "Semua",
       "INTEREST_LOW": "Rendah",
       "INTEREST_MEDIUM": "Sedang",

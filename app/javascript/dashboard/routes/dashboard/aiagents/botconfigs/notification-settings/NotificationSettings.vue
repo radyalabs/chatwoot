@@ -52,6 +52,10 @@ Waktu Konsultasi: 07:00:00`,
     type: Boolean,
     default: true,
   },
+  isCustomerServiceBot: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const store = useStore();
@@ -214,6 +218,7 @@ const handleFormClose = () => {
       :categories="categories"
       :variable-config="variableConfig"
       :show-filters="showFilters"
+      :is-customer-service-bot="isCustomerServiceBot"
       @save="handleSave"
       @close="handleFormClose"
     />

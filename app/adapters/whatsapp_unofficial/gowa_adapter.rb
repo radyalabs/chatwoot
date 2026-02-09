@@ -304,6 +304,20 @@ module WhatsappUnofficial
       }
     end
 
+    # Returns: Array of { name: String, jid: String }
+    def list_groups
+      return [] unless channel.device_id.present?
+
+      log_info "Fetching groups for device #{channel.device_id}"
+      result = gowa_service.list_groups(device_id: channel.device_id)
+      (result.dig('results', 'data') || []).map do |g|
+        { name: g['Name'], jid: g['JID'] }
+      end
+    rescue StandardError => e
+      log_error "Failed to fetch groups for device #{channel.device_id}: #{e.message}"
+      []
+    end
+
     protected
 
     def configured?

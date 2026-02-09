@@ -100,7 +100,46 @@
       "MSG_DESC": "This message will be sent automatically to customers via the appropriate platform at the specified time.",
       "MSG_EXAMPLE": "Example"
     },
+    "LEAD_GENERATION": {
+      "GENERAL_TAB": "Settings",
+      "TICKET": {
+        "ERROR": "Field is required",
+        "DUPE_ERROR": "Field must be unique",
+        "HEADER": "Lead Generation Configuration",
+        "HEADER_DESC": "This page contains configuration settings for categories and classification of your Lead Generation.",
+        "CATEGORY_TITLE": "Lead Categories",
+        "CATEGORY_DESC": "Set lead categories and optionally define conditions.",
+        "CATEGORY_PLACEHOLDER": "Category name (e.g., E-commerce)",
+        "CONDITION_PLACEHOLDER": "Optional conditions or keywords...",
+        "ADD_CATEGORY": "Add Category",
+        "CATEGORY_CONDITION": "Category Condition",
+        "SAVE_SUCCESS": "Successfully saved",
+        "SAVE_ERROR": "Failed to save",
+        "SAVE_BUTTON": "Save",
+        "VALIDATION_ERROR": "Please fix validation errors"
+      }
+    },
+    "SALES": {
+      "GENERAL_TAB": "Settings",
+      "TICKET": {
+        "ERROR": "Field is required",
+        "DUPE_ERROR": "Field must be unique",
+        "HEADER": "Sales Configuration",
+        "HEADER_DESC": "This page contains configuration settings for categories and sales pipeline.",
+        "CATEGORY_TITLE": "Product Categories",
+        "CATEGORY_DESC": "Set product categories and optionally define conditions.",
+        "CATEGORY_PLACEHOLDER": "Category name (e.g., Premium Plan)",
+        "CONDITION_PLACEHOLDER": "Optional conditions or keywords...",
+        "ADD_CATEGORY": "Add Category",
+        "CATEGORY_CONDITION": "Category Condition",
+        "SAVE_SUCCESS": "Successfully saved",
+        "SAVE_ERROR": "Failed to save",
+        "SAVE_BUTTON": "Save",
+        "VALIDATION_ERROR": "Please fix validation errors"
+      }
+    },
     "CSBOT": {
+      "GENERAL_TAB": "Settings",
       "TICKET": {
         "ERROR": "Field is required",
         "DUPE_ERROR": "Field must be unique",
@@ -141,6 +180,11 @@
         "GOOGLE_SHEETS_TITLE": "Ticket Output Integration",
         "CONNECT_SHEETS_DESC": "Connect to Google Sheets to automatically create spreadsheets containing ticket data from your CS Bot. After successful authentication, the system will immediately create a new spreadsheet in your Google account.",
         "REMOVE": "Remove"
+      },
+      "NOTIFICATION": {
+        "TITLE": "Internal Team Notification Settings",
+        "DESC": "Configure automatic internal notifications when a new support ticket is created.",
+        "TEMPLATE_HELP": "This message will be sent automatically to your internal team to notify them of new support tickets."
       }
     },
     "LEADGENBOT": {
@@ -183,7 +227,66 @@
         "ADD_CLASSIFICATION": "Add Classification",
         "SAVE_SUCCESS": "Successfully saved classifications",
         "SAVE_ERROR": "Failed to save classifications"
+      },
+      "NOTIFICATION": {
+        "TITLE": "Internal Team Notification Settings",
+        "DESC": "Configure automatic internal notifications when new leads come in.",
+        "VAR_CUSTOMER_NAME": "Customer Name",
+        "VAR_CONSULTATION_DATE": "Consultation Date",
+        "VAR_CONSULTATION_TIME": "Consultation Time",
+        "VAR_SERVICE_NAME": "Service Name",
+        "TEMPLATE_HELP": "This message will be sent automatically to your internal team to notify them of incoming leads."
       }
+    },
+    "NOTIFICATION": {
+      "SENDER_INBOX_LABEL": "Sender Inbox",
+      "SENDER_INBOX_PLACEHOLDER": "— Select sender inbox —",
+      "ADD_BUTTON": "+ Add Notification",
+      "EMPTY_STATE": "No notifications have been added yet.",
+      "FORM_TITLE_ADD": "Add Notification",
+      "FORM_TITLE_EDIT": "Edit Notification",
+      "CATEGORY_LABEL": "Category (Optional)",
+      "CATEGORY_ALL": "All",
+      "INTEREST_LEVEL_LABEL": "Classification (Optional)",
+      "INTEREST_LEVEL_LABEL_PRIORITY": "Priority (Optional)",
+      "CLASSIFICATION_ALL": "All",
+      "INTEREST_LOW": "Low",
+      "INTEREST_MEDIUM": "Medium",
+      "INTEREST_HIGH": "High",
+      "MESSAGE_TYPE_LABEL": "Message Type",
+      "MESSAGE_TYPE_PERSONAL": "Personal Message",
+      "MESSAGE_TYPE_GROUP": "Group Message",
+      "RECEIVER_ADDRESS_LABEL": "Receiver Number",
+      "RECEIVER_GROUP_LABEL": "Receiver Group",
+      "RECEIVER_GROUP_PLACEHOLDER": "— Select group —",
+      "RECEIVER_PLACEHOLDER_WHATSAPP": "Example: 6281234567890",
+      "TEMPLATE_LABEL": "Message Content",
+      "TEMPLATE_PLACEHOLDER": "Write internal notification message...",
+      "TEMPLATE_PREVIEW_LABEL": "EXAMPLE",
+      "DEFAULT_TEMPLATE": "Incoming notification:\n\n{{content_summary}}",
+      "CONTENT_SUMMARY_REQUIRED": "{{content_summary}} is mandatory and cannot be deleted.",
+      "CONTENT_SUMMARY_MISSING_WARNING": "Warning: {{content_summary}} is required. This variable will be replaced with complete information from the data source.",
+      "VAR_CONTENT_SUMMARY": "Content Summary",
+      "SAVE_BUTTON": "Save Notification",
+      "SAVE_BUTTON_EDIT": "Save Changes",
+      "CANCEL_BUTTON": "Cancel",
+      "CARD_PERSONAL": "Personal",
+      "CARD_GROUP": "Group",
+      "CARD_CATEGORY_LABEL": "Category",
+      "CARD_INTEREST_LABEL": "Classification",
+      "CARD_INTEREST_HELPER": "Send based on customer classification",
+      "CARD_SENT_FROM": "Sent from",
+      "CARD_SEND_TO": "Notify to",
+      "CARD_MESSAGE_LABEL": "Message",
+      "CARD_EDIT": "Edit",
+      "CARD_DELETE": "Delete",
+      "NO_INBOX_AVAILABLE": "No connected WhatsApp Go inbox available. Please create a WhatsApp Go inbox or ensure an existing one is properly connected.",
+      "NO_GROUPS": "No groups found. Ensure the sender inbox is connected.",
+      "LOADING_GROUPS": "Loading groups...",
+      "GROUP_SEARCH_PLACEHOLDER": "Type group name to search",
+      "NO_GROUPS_FOUND": "No groups found",
+      "SHOW_MORE": "Show more",
+      "SHOW_LESS": "Show less"
     },
     "COMMON": {
       "REMOVE": "Remove"
@@ -362,7 +465,12 @@
       "MIN_DURATION_LABEL": "Minimum duration per session (Minutes)",
       "SAVE_BTN": "Save",
       "SYNC_BUTTON": "Sync data based on Sheet",
-      "CHARACTERS": "characters"
+      "CHARACTERS": "characters",
+      "NOTIFICATION": {
+        "TITLE": "Internal Team Notification Settings",
+        "DESC": "Configure automatic internal notifications when a new booking is created.",
+        "TEMPLATE_HELP": "This message will be sent automatically to your internal team to notify them of new bookings."
+      }
     },
     "RESTAURANT_BOT": {
       "GENERAL_TAB": "General",

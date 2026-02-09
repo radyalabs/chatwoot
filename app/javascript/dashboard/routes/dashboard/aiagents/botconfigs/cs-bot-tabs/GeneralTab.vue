@@ -10,6 +10,7 @@ import googleSheetsExportAPI from '../../../../../api/googleSheetsExport';
 // ✅ Add this line to fix the "aiAgents is not defined" error
 import aiAgents from '../../../../../api/aiAgents';
 import idleConfigsAPI from '../../../../../api/idleConfigs';
+import NotificationSettings from '../notification-settings/NotificationSettings.vue';
 
 // ✅ Inject emit function from parent CSBotView
 const emitUpdate = inject('emitUpdate', () => {});
@@ -114,6 +115,35 @@ function getAgentIdByType(type) {
 const agentId = computed(() => {
   return getAgentIdByType('customer_service');
 });
+
+const csCategories = computed(() => {
+  const flowData = props.data?.flow_data;
+  if (!flowData?.agents_config) return [];
+  const agentIndex = flowData.enabled_agents?.indexOf('customer_service');
+  if (agentIndex === -1 || agentIndex === undefined) return [];
+  const categoryConfig = flowData.agents_config[agentIndex]?.configurations?.category;
+  return Array.isArray(categoryConfig) ? categoryConfig : [];
+});
+
+const csPriorities = computed(() => {
+  const flowData = props.data?.flow_data;
+  if (!flowData?.agents_config) return [];
+  const agentIndex = flowData.enabled_agents?.indexOf('customer_service');
+  if (agentIndex === -1 || agentIndex === undefined) return [];
+  const priorityConfig = flowData.agents_config[agentIndex]?.configurations?.priority;
+  return Array.isArray(priorityConfig) ? priorityConfig : [];
+});
+
+const csVariableConfig = computed(() => ({
+  helpKey: 'AGENT_MGMT.CSBOT.NOTIFICATION.TEMPLATE_HELP',
+  variables: [
+    {
+      labelKey: 'AGENT_MGMT.NOTIFICATION.VAR_CONTENT_SUMMARY',
+      value: '{{content_summary}}',
+      example: `No. Tiket: TK-001/01/2026\nNama Pelanggan: Budi Santoso\nKontak: 62812345678901\nChannel: WhatsApp\nJudul: Masalah pembayaran\nKategori: Billing\nPrioritas: High\nStatus: Open\nDeskripsi: Pelanggan mengalami masalah saat melakukan pembayaran`,
+    },
+  ],
+}));
 
 // Load idle config from API
 async function loadIdleConfig() {
@@ -592,6 +622,19 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
             </div>
             </div>
         </div>
+
+        <!-- Notification Settings (only when ticket system is active) -->
+        <NotificationSettings
+          v-if="config.ticketSystemActive && data?.id"
+          :ai-agent-id="data.id"
+          :categories="csCategories"
+          :priorities="csPriorities"
+          title-key="AGENT_MGMT.CSBOT.NOTIFICATION.TITLE"
+          desc-key="AGENT_MGMT.CSBOT.NOTIFICATION.DESC"
+          :variable-config="csVariableConfig"
+          is-customer-service-bot
+        />
+
         <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
           <div class="flex items-start justify-between p-6">
             <div class="flex items-center">

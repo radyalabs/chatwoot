@@ -125,6 +125,15 @@ const csCategories = computed(() => {
   return Array.isArray(categoryConfig) ? categoryConfig : [];
 });
 
+const csPriorities = computed(() => {
+  const flowData = props.data?.flow_data;
+  if (!flowData?.agents_config) return [];
+  const agentIndex = flowData.enabled_agents?.indexOf('customer_service');
+  if (agentIndex === -1 || agentIndex === undefined) return [];
+  const priorityConfig = flowData.agents_config[agentIndex]?.configurations?.priority;
+  return Array.isArray(priorityConfig) ? priorityConfig : [];
+});
+
 const csVariableConfig = computed(() => ({
   helpKey: 'AGENT_MGMT.CSBOT.NOTIFICATION.TEMPLATE_HELP',
   variables: [
@@ -619,6 +628,7 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
           v-if="config.ticketSystemActive && data?.id"
           :ai-agent-id="data.id"
           :categories="csCategories"
+          :priorities="csPriorities"
           title-key="AGENT_MGMT.CSBOT.NOTIFICATION.TITLE"
           desc-key="AGENT_MGMT.CSBOT.NOTIFICATION.DESC"
           :variable-config="csVariableConfig"

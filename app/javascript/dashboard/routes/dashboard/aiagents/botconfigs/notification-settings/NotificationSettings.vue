@@ -17,6 +17,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  priorities: {
+    type: Array,
+    default: () => [],
+  },
   titleKey: {
     type: String,
     default: 'AGENT_MGMT.LEADGENBOT.NOTIFICATION.TITLE',
@@ -216,6 +220,7 @@ const handleFormClose = () => {
       :rule="editingRule"
       :whatsapp-unofficial-inboxes="whatsappUnofficialInboxes"
       :categories="categories"
+      :priorities="priorities"
       :variable-config="variableConfig"
       :show-filters="showFilters"
       :is-customer-service-bot="isCustomerServiceBot"

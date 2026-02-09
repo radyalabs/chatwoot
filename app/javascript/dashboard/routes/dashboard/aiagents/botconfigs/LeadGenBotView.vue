@@ -224,7 +224,7 @@
               </div>
 
               <!-- Notification Settings -->
-              <NotificationSettings :ai-agent-id="data.id" :categories="leadgenCategories" />
+              <NotificationSettings :ai-agent-id="data.id" :categories="leadgenCategories" :priorities="leadgenPriorities" />
             </div>
           </div>
         </div>
@@ -627,6 +627,15 @@ const leadgenCategories = computed(() => {
 
   const categoryConfig = flowData.agents_config[agentIndex]?.configurations?.category;
   return Array.isArray(categoryConfig) ? categoryConfig : [];
+});
+
+const leadgenPriorities = computed(() => {
+  const flowData = props.data?.flow_data;
+  if (!flowData?.agents_config) return [];
+  const agentIndex = flowData.enabled_agents?.indexOf('lead_generation');
+  if (agentIndex === -1 || agentIndex === undefined) return [];
+  const priorityConfig = flowData.agents_config[agentIndex]?.configurations?.priority;
+  return Array.isArray(priorityConfig) ? priorityConfig : [];
 });
 
 // Define all tabs for LeadGen Bot

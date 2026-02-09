@@ -22,6 +22,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  priorities: {
+    type: Array,
+    default: () => [],
+  },
   variableConfig: {
     type: Object,
     default: () => ({
@@ -269,14 +273,8 @@ defineExpose({ open });
           <option value="">
             {{ $t('AGENT_MGMT.NOTIFICATION.CLASSIFICATION_ALL') }}
           </option>
-          <option value="low">
-            {{ $t('AGENT_MGMT.NOTIFICATION.INTEREST_LOW') }}
-          </option>
-          <option value="medium">
-            {{ $t('AGENT_MGMT.NOTIFICATION.INTEREST_MEDIUM') }}
-          </option>
-          <option value="high">
-            {{ $t('AGENT_MGMT.NOTIFICATION.INTEREST_HIGH') }}
+          <option v-for="pri in priorities" :key="pri.key" :value="pri.key">
+            {{ pri.key }}
           </option>
         </select>
       </div>

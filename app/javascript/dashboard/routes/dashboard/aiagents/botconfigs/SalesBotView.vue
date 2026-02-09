@@ -226,6 +226,16 @@
                     </a>
                   </div>
                 </div>
+
+                <!-- Notification Settings -->
+                <NotificationSettings
+                  :ai-agent-id="data.id"
+                  :categories="[]"
+                  :show-filters="false"
+                  title-key="AGENT_MGMT.SALESBOT.NOTIFICATION.TITLE"
+                  desc-key="AGENT_MGMT.SALESBOT.NOTIFICATION.DESC"
+                  :variable-config="salesVariableConfig"
+                />
               </div>
             </div>
           </div>
@@ -1667,6 +1677,7 @@ import shippingStoresAPI from '../../../../api/shippingStores';
 import { useAlert } from 'dashboard/composables';
 import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue';
 import ShippingConfig from './sales-bot-tabs/ShippingConfig.vue';
+import NotificationSettings from './notification-settings/NotificationSettings.vue';
 
 const { t } = useI18n();
 const store = useStore();
@@ -1823,6 +1834,26 @@ const salesAuthError = computed(() => {
 });
 
 const notification = ref(null);
+
+const salesVariableConfig = computed(() => ({
+  helpKey: 'AGENT_MGMT.SALESBOT.NOTIFICATION.TEMPLATE_HELP',
+  variables: [
+    {
+      labelKey: 'AGENT_MGMT.NOTIFICATION.VAR_CONTENT_SUMMARY',
+      value: '{{content_summary}}',
+      example: `ID Pesanan: SO-001/01/2026
+Nama Pelanggan: Budi Santoso
+No. Telp: 62812345678901
+Produk: Paket Premium A
+Jumlah: 2
+Total: Rp 500,000
+Metode Pembayaran: Bank Transfer
+Status: Menunggu Pembayaran
+Catatan: Kirim sebelum jam 5 sore`,
+    },
+  ],
+}));
+
 const productColumns = ref('sku,name,unit_price,quantity,deskripsi');
 const syncingColumns = ref(false);
 const authError = computed(() => props.googleSheetsAuth.error);

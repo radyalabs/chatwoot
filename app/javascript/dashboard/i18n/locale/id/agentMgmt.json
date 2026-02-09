@@ -474,6 +474,11 @@
         "ENABLED_DESC_DETAIL": "Pelanggan dapat menambahkan beberapa produk ke keranjang mereka dan checkout semua item bersamaan",
         "DISABLED_STATUS": "Keranjang belanja dinonaktifkan",
         "DISABLED_DESC_DETAIL": "Pelanggan akan membeli produk secara individual tanpa fungsi keranjang"
+      },
+      "NOTIFICATION": {
+        "TITLE": "Pengaturan Notifikasi Tim Internal",
+        "DESC": "Atur notifikasi internal otomatis saat pesanan baru dibuat.",
+        "TEMPLATE_HELP": "Pesan ini akan dikirim otomatis ke tim internal Anda untuk memberitahukan pesanan yang masuk."
       }
     },
     "EOBOT": {

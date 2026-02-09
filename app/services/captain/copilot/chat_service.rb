@@ -149,12 +149,11 @@ class Captain::Copilot::ChatService
 
     Rails.logger.info "[BOT] Enqueuing #{attachments.count} image(s) for async attach..."
 
-    attachments.each_with_index do |image_url, idx|
+    attachments.each_with_index do |attachment, idx|
       Captain::Copilot::AttachMessageImageJob.perform_later(
-        attrs,
-        image_url,
-        idx + 1
-      )
+        attrs, 
+        attachment,
+        idx + 1)
     end
   end
 end

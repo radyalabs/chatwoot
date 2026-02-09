@@ -7,12 +7,12 @@ class Api::V2::Internal::NotificationsController < ActionController::API
   def create
     Rails.logger.info('[Internal::Notifications] Received notification dispatch request')
 
-    # Check idempotency key to prevent duplicate sends on retries
-    if notification_params[:idempotency_key].present?
-      cache_key = "notification:idempotency:#{notification_params[:idempotency_key]}"
-      cached_result = ::Redis::Alfred.get(cache_key)
-      return render json: JSON.parse(cached_result), status: :ok if cached_result.present?
-    end
+    # # Check idempotency key to prevent duplicate sends on retries
+    # if notification_params[:idempotency_key].present?
+    #   cache_key = "notification:idempotency:#{notification_params[:idempotency_key]}"
+    #   cached_result = ::Redis::Alfred.get(cache_key)
+    #   return render json: JSON.parse(cached_result), status: :ok if cached_result.present?
+    # end
 
     account = Account.find_by(id: notification_params[:account_id])
     return render json: { error: 'Account not found' }, status: :not_found unless account
@@ -33,11 +33,11 @@ class Api::V2::Internal::NotificationsController < ActionController::API
       results: safe_results
     }
 
-    # Cache result for idempotency (24 hours)
-    if notification_params[:idempotency_key].present?
-      cache_key = "notification:idempotency:#{notification_params[:idempotency_key]}"
-      ::Redis::Alfred.setex(cache_key, response_data.to_json, 24.hours.to_i)
-    end
+    # # Cache result for idempotency (24 hours)
+    # if notification_params[:idempotency_key].present?
+    #   cache_key = "notification:idempotency:#{notification_params[:idempotency_key]}"
+    #   ::Redis::Alfred.setex(cache_key, response_data.to_json, 24.hours.to_i)
+    # end
 
     render json: response_data, status: :ok
   rescue StandardError => e
@@ -57,9 +57,9 @@ class Api::V2::Internal::NotificationsController < ActionController::API
       settings = settings.where('category IS NULL OR LOWER(category) = ?', category)
     end
 
-    if variables['interest_level'].present?
-      interest_level = variables['interest_level'].to_s.downcase
-      settings = settings.where('interest_level IS NULL OR LOWER(interest_level) = ?', interest_level)
+    if variables['priority'].present?
+      priority = variables['priority'].to_s.downcase
+      settings = settings.where('interest_level IS NULL OR LOWER(interest_level) = ?', priority)
     end
 
     settings

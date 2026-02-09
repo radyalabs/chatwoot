@@ -655,6 +655,11 @@
         "ENABLED_DESC_DETAIL": "Customers can add multiple products to their cart and checkout all items together",
         "DISABLED_STATUS": "Shopping cart is disabled",
         "DISABLED_DESC_DETAIL": "Customers will purchase products individually without cart functionality"
+      },
+      "NOTIFICATION": {
+        "TITLE": "Internal Team Notification Settings",
+        "DESC": "Configure automatic internal notifications when a new order is placed.",
+        "TEMPLATE_HELP": "This message will be sent automatically to your internal team to notify them of new orders."
       }
     },
     "EOBOT": {

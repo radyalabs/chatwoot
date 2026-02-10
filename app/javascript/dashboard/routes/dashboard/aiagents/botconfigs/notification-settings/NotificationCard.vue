@@ -70,6 +70,12 @@ const formattedMessage = computed(() => {
   );
 });
 
+// Expand/collapse state for the entire card body
+const isCardExpanded = ref(true);
+const toggleCardExpand = () => {
+  isCardExpanded.value = !isCardExpanded.value;
+};
+
 // Expand/collapse state for message preview
 const isExpanded = ref(false);
 const messageRef = ref(null);
@@ -109,7 +115,7 @@ const interestBadgeColor =
     class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-transparent"
   >
     <!-- Header: Category + Interest Badge + Actions -->
-    <div class="flex items-start justify-between gap-3 mb-4">
+    <div class="flex items-start justify-between gap-3" :class="{ 'mb-4': isCardExpanded }">
       <!-- Title Group -->
       <div class="flex items-center gap-3 flex-1 min-w-0">
         <div class="flex items-center gap-2 flex-1 min-w-0">
@@ -174,12 +180,23 @@ const interestBadgeColor =
         >
           {{ $t('AGENT_MGMT.NOTIFICATION.CARD_DELETE') }}
         </Button>
+        <button
+          type="button"
+          class="p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors duration-200"
+          :aria-expanded="isCardExpanded"
+          @click="toggleCardExpand"
+        >
+          <span
+            class="i-lucide-chevron-down size-4 block transition-transform duration-200"
+            :class="{ 'rotate-180': !isCardExpanded }"
+          />
+        </button>
       </div>
     </div>
 
     <!-- Divider -->
+    <div v-show="isCardExpanded">
     <div class="border-t border-gray-200 dark:border-gray-700 mb-4" />
-
     <!-- Sender & Receiver Section (Two Columns) -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
       <!-- Sender -->
@@ -277,6 +294,7 @@ const interestBadgeColor =
           }}
         </button>
       </div>
+    </div>
     </div>
   </div>
 </template>

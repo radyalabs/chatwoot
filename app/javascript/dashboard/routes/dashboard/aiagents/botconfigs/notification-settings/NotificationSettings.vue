@@ -69,11 +69,15 @@ const notifications = useMapGetter(
 );
 const uiFlags = useMapGetter('agentNotificationSettings/getUIFlags');
 
-const whatsappUnofficialInboxes = computed(() => {
+const allWhatsappUnofficialInboxes = computed(() => {
   return (allInboxes.value || []).filter(
-    inbox =>
-      inbox.channel_type === INBOX_TYPES.WHATSAPP_UNOFFICIAL &&
-      inbox.whatsapp_status === 'connected'
+    inbox => inbox.channel_type === INBOX_TYPES.WHATSAPP_UNOFFICIAL
+  );
+});
+
+const whatsappUnofficialInboxes = computed(() => {
+  return allWhatsappUnofficialInboxes.value.filter(
+    inbox => inbox.whatsapp_status === 'connected'
   );
 });
 
@@ -164,24 +168,29 @@ const handleFormClose = () => {
         </div>
       </div>
       <!-- Add Notification Button -->
-      <div class="flex flex-col items-end">
-        <Button
-          :label="$t('AGENT_MGMT.NOTIFICATION.ADD_BUTTON')"
-          class="bg-green-600 rounded-md hover:bg-green-700 disabled:bg-gray-400"
-          size="sm"
-          :disabled="!hasInboxes"
-          @click="openAddForm"
-        />
-        <p
-          v-if="!hasInboxes"
-          class="mt-1 text-xs text-slate-500 dark:text-slate-400 italic"
-        >
-          {{ $t('AGENT_MGMT.NOTIFICATION.NO_INBOX_AVAILABLE') }}
-        </p>
-      </div>
+      <Button
+        :label="$t('AGENT_MGMT.NOTIFICATION.ADD_BUTTON')"
+        class="bg-green-600 rounded-md hover:bg-green-700 disabled:bg-gray-400 shrink-0"
+        size="sm"
+        :disabled="!hasInboxes"
+        @click="openAddForm"
+      />
     </div>
 
-    <div class="border-t border-blue-200 dark:border-blue-700 pt-4">
+    <!-- No Inbox Warning -->
+    <div
+      v-if="!hasInboxes"
+      class="flex items-start gap-2 mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-md"
+    >
+      <span
+        class="i-lucide-triangle-alert w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0 mt-0.5"
+      />
+      <p class="text-sm text-slate-500 dark:text-slate-400">
+        {{ $t('AGENT_MGMT.NOTIFICATION.NO_INBOX_AVAILABLE') }}
+      </p>
+    </div>
+
+    <div class="border-t border-blue-200 dark:border-blue-700 pt-4 mt-4">
 
       <!-- Loading State -->
       <div
@@ -201,6 +210,7 @@ const handleFormClose = () => {
           :key="rule.id"
           :rule="rule"
           :whatsapp-unofficial-inboxes="whatsappUnofficialInboxes"
+          :all-whatsapp-unofficial-inboxes="allWhatsappUnofficialInboxes"
           :whatsapp-groups="[]"
           @edit="openEditForm"
           @delete="handleDelete"
@@ -219,6 +229,7 @@ const handleFormClose = () => {
       ref="formModalRef"
       :rule="editingRule"
       :whatsapp-unofficial-inboxes="whatsappUnofficialInboxes"
+      :all-whatsapp-unofficial-inboxes="allWhatsappUnofficialInboxes"
       :categories="categories"
       :priorities="priorities"
       :variable-config="variableConfig"

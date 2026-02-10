@@ -239,8 +239,8 @@
       }
     },
     "NOTIFICATION": {
-      "SENDER_INBOX_LABEL": "Inbox Pengirim",
-      "SENDER_INBOX_PLACEHOLDER": "— Pilih inbox pengirim —",
+      "SENDER_INBOX_LABEL": "Platform Pengirim",
+      "SENDER_INBOX_PLACEHOLDER": "— Pilih platform pengirim —",
       "ADD_BUTTON": "+ Tambah Notifikasi",
       "EMPTY_STATE": "Belum ada notifikasi yang ditambahkan.",
       "FORM_TITLE_ADD": "Tambah Notifikasi",
@@ -280,8 +280,9 @@
       "CARD_MESSAGE_LABEL": "Pesan",
       "CARD_EDIT": "Edit",
       "CARD_DELETE": "Hapus",
-      "NO_INBOX_AVAILABLE": "Tidak ada inbox WhatsApp Go yang terhubung. Silakan buat inbox WhatsApp Go baru atau pastikan inbox yang ada sudah terhubung dengan benar.",
-      "NO_GROUPS": "Tidak ada grup yang ditemukan. Pastikan inbox pengirim sudah terhubung.",
+      "NO_INBOX_AVAILABLE": "Tidak ada platform WhatsApp Go yang terhubung. Silakan buat platform WhatsApp Go baru atau pastikan platform yang ada sudah terhubung dengan benar.",
+      "INBOX_DISCONNECTED_WARNING": "Platform ini terputus. Silakan hubungkan kembali atau pilih platform lain yang sudah terhubung.",
+      "NO_GROUPS": "Tidak ada grup yang ditemukan. Pastikan platform pengirim sudah terhubung.",
       "LOADING_GROUPS": "Memuat grup...",
       "GROUP_SEARCH_PLACEHOLDER": "Ketik nama grup untuk mencari",
       "NO_GROUPS_FOUND": "Tidak ada grup ditemukan",

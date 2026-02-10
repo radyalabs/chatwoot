@@ -14,6 +14,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  allWhatsappUnofficialInboxes: {
+    type: Array,
+    default: () => [],
+  },
   whatsappGroups: {
     type: Array,
     default: () => [],
@@ -22,11 +26,16 @@ const props = defineProps({
 
 const emit = defineEmits(['edit', 'delete']);
 
-// Sender inbox info
+// Sender inbox info — look up from all inboxes (including disconnected)
 const senderInbox = computed(() => {
-  return props.whatsappUnofficialInboxes.find(
+  return props.allWhatsappUnofficialInboxes.find(
     i => i.id === props.rule.inbox_id
   );
+});
+
+const isInboxDisconnected = computed(() => {
+  if (!senderInbox.value) return false;
+  return senderInbox.value.whatsapp_status !== 'connected';
 });
 
 const senderInboxName = computed(() => {
@@ -174,12 +183,14 @@ const interestBadgeColor =
     <!-- Sender & Receiver Section (Two Columns) -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
       <!-- Sender -->
-      <div>
+      <div class="flex flex-col">
         <div class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-1.5">
           <span class="i-lucide-send text-slate-400 dark:text-slate-500 size-3.5" />
           {{ $t('AGENT_MGMT.NOTIFICATION.CARD_SENT_FROM') }}
         </div>
-        <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+        <div
+          class="flex-1 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"
+        >
           <div class="flex items-center gap-2 mb-1">
             <span class="i-lucide-smartphone text-slate-500 dark:text-slate-400 size-4" />
             <span class="text-sm font-medium text-slate-800 dark:text-slate-200 truncate" :title="senderInboxName">
@@ -195,16 +206,25 @@ const interestBadgeColor =
           >
             {{ senderPhoneNumber }}
           </div>
+          <div
+            v-if="isInboxDisconnected"
+            class="mt-2 flex items-start gap-1.5 text-xs text-slate-500 dark:text-slate-400"
+          >
+            <span class="i-lucide-triangle-alert size-3.5 flex-shrink-0 mt-0.5" />
+            <span>{{ $t('AGENT_MGMT.NOTIFICATION.INBOX_DISCONNECTED_WARNING') }}</span>
+          </div>
         </div>
       </div>
 
       <!-- Receiver -->
-      <div>
+      <div class="flex flex-col">
         <div class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-1.5">
           <span class="i-lucide-inbox text-slate-400 dark:text-slate-500 size-3.5" />
           {{ $t('AGENT_MGMT.NOTIFICATION.CARD_SEND_TO') }}
         </div>
-        <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+        <div
+          class="flex-1 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"
+        >
           <div class="flex items-center gap-2 mb-1">
             <span
               :class="rule.message_type === 'group' ? 'i-lucide-users' : 'i-lucide-user'"

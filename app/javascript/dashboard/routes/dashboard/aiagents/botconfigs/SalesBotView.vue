@@ -1599,6 +1599,14 @@
             <CustomNumberingTab :data="data" numbering-key="sales" />
           </div>
 
+          <!-- Reminder Settings Content -->
+          <div v-show="activeTabIndex === 8" class="w-full">
+            <ReminderSettings
+              v-if="data?.id"
+              :ai-agent-id="data.id"
+            />
+          </div>
+
         </div>
       </div>
     </div>
@@ -1678,6 +1686,7 @@ import { useAlert } from 'dashboard/composables';
 import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue';
 import ShippingConfig from './sales-bot-tabs/ShippingConfig.vue';
 import NotificationSettings from './notification-settings/NotificationSettings.vue';
+import ReminderSettings from './reminder-settings/ReminderSettings.vue';
 
 const { t } = useI18n();
 const store = useStore();
@@ -2064,6 +2073,12 @@ const tabs = computed(() => [
     index: 7,
     name: 'Penomoran Otomatis',
     icon: 'i-lucide-notebook-tabs',
+  },
+  {
+    key: '8',
+    index: 8,
+    name: t('AGENT_MGMT.SALESBOT.REMINDER.HEADER'),
+    icon: 'i-lucide-bell',
   },
 ])
 const activeTabIndex = ref(0);

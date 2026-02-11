@@ -18,6 +18,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  allWhatsappUnofficialInboxes: {
+    type: Array,
+    default: () => [],
+  },
   categories: {
     type: Array,
     default: () => [],
@@ -147,9 +151,19 @@ const hasContentSummary = computed(() => {
   return messageTemplate.value.includes('{{content_summary}}');
 });
 
+const editingDisconnectedInbox = computed(() => {
+  if (!props.rule || !senderInboxId.value) return null;
+  const connectedIds = props.whatsappUnofficialInboxes.map(i => i.id);
+  if (connectedIds.includes(senderInboxId.value)) return null;
+  return props.allWhatsappUnofficialInboxes.find(
+    i => i.id === senderInboxId.value
+  );
+});
+
 const canSave = computed(() => {
   return (
     senderInboxId.value &&
+    !editingDisconnectedInbox.value &&
     receiverAddress.value.trim() &&
     messageTemplate.value.trim() &&
     hasContentSummary.value
@@ -237,6 +251,13 @@ defineExpose({ open });
             {{ formatInboxLabel(inbox) }}
           </option>
         </select>
+        <p
+          v-if="editingDisconnectedInbox"
+          class="mt-1 text-xs text-slate-500 dark:text-slate-400 flex items-start gap-1.5"
+        >
+          <span class="i-lucide-triangle-alert size-3.5 flex-shrink-0 mt-0.5" />
+          <span>{{ $t('AGENT_MGMT.NOTIFICATION.INBOX_DISCONNECTED_WARNING') }}</span>
+        </p>
       </div>
 
       <!-- Category Notification - Dropdown -->

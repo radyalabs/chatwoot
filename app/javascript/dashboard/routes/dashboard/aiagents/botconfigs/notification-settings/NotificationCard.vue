@@ -14,6 +14,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  allWhatsappUnofficialInboxes: {
+    type: Array,
+    default: () => [],
+  },
   whatsappGroups: {
     type: Array,
     default: () => [],
@@ -22,11 +26,16 @@ const props = defineProps({
 
 const emit = defineEmits(['edit', 'delete']);
 
-// Sender inbox info
+// Sender inbox info — look up from all inboxes (including disconnected)
 const senderInbox = computed(() => {
-  return props.whatsappUnofficialInboxes.find(
+  return props.allWhatsappUnofficialInboxes.find(
     i => i.id === props.rule.inbox_id
   );
+});
+
+const isInboxDisconnected = computed(() => {
+  if (!senderInbox.value) return false;
+  return senderInbox.value.whatsapp_status !== 'connected';
 });
 
 const senderInboxName = computed(() => {
@@ -60,6 +69,12 @@ const formattedMessage = computed(() => {
     '<span class="inline-block px-1.5 py-0.5 mx-0.5 bg-woot-100 dark:bg-woot-900/30 border border-woot-300 dark:border-woot-600 rounded text-xs font-mono text-woot-700 dark:text-woot-300">$1</span>'
   );
 });
+
+// Expand/collapse state for the entire card body
+const isCardExpanded = ref(true);
+const toggleCardExpand = () => {
+  isCardExpanded.value = !isCardExpanded.value;
+};
 
 // Expand/collapse state for message preview
 const isExpanded = ref(false);
@@ -100,7 +115,7 @@ const interestBadgeColor =
     class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-transparent"
   >
     <!-- Header: Category + Interest Badge + Actions -->
-    <div class="flex items-start justify-between gap-3 mb-4">
+    <div class="flex items-start justify-between gap-3" :class="{ 'mb-4': isCardExpanded }">
       <!-- Title Group -->
       <div class="flex items-center gap-3 flex-1 min-w-0">
         <div class="flex items-center gap-2 flex-1 min-w-0">
@@ -165,21 +180,34 @@ const interestBadgeColor =
         >
           {{ $t('AGENT_MGMT.NOTIFICATION.CARD_DELETE') }}
         </Button>
+        <button
+          type="button"
+          class="p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors duration-200"
+          :aria-expanded="isCardExpanded"
+          @click="toggleCardExpand"
+        >
+          <span
+            class="i-lucide-chevron-down size-4 block transition-transform duration-200"
+            :class="{ 'rotate-180': !isCardExpanded }"
+          />
+        </button>
       </div>
     </div>
 
     <!-- Divider -->
+    <div v-show="isCardExpanded">
     <div class="border-t border-gray-200 dark:border-gray-700 mb-4" />
-
     <!-- Sender & Receiver Section (Two Columns) -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
       <!-- Sender -->
-      <div>
+      <div class="flex flex-col">
         <div class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-1.5">
           <span class="i-lucide-send text-slate-400 dark:text-slate-500 size-3.5" />
           {{ $t('AGENT_MGMT.NOTIFICATION.CARD_SENT_FROM') }}
         </div>
-        <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+        <div
+          class="flex-1 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"
+        >
           <div class="flex items-center gap-2 mb-1">
             <span class="i-lucide-smartphone text-slate-500 dark:text-slate-400 size-4" />
             <span class="text-sm font-medium text-slate-800 dark:text-slate-200 truncate" :title="senderInboxName">
@@ -195,16 +223,25 @@ const interestBadgeColor =
           >
             {{ senderPhoneNumber }}
           </div>
+          <div
+            v-if="isInboxDisconnected"
+            class="mt-2 flex items-start gap-1.5 text-xs text-slate-500 dark:text-slate-400"
+          >
+            <span class="i-lucide-triangle-alert size-3.5 flex-shrink-0 mt-0.5" />
+            <span>{{ $t('AGENT_MGMT.NOTIFICATION.INBOX_DISCONNECTED_WARNING') }}</span>
+          </div>
         </div>
       </div>
 
       <!-- Receiver -->
-      <div>
+      <div class="flex flex-col">
         <div class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-1.5">
           <span class="i-lucide-inbox text-slate-400 dark:text-slate-500 size-3.5" />
           {{ $t('AGENT_MGMT.NOTIFICATION.CARD_SEND_TO') }}
         </div>
-        <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+        <div
+          class="flex-1 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"
+        >
           <div class="flex items-center gap-2 mb-1">
             <span
               :class="rule.message_type === 'group' ? 'i-lucide-users' : 'i-lucide-user'"
@@ -257,6 +294,7 @@ const interestBadgeColor =
           }}
         </button>
       </div>
+    </div>
     </div>
   </div>
 </template>

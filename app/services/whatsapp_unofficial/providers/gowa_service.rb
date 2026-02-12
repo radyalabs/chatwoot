@@ -6,8 +6,8 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
 
     if attachments.any?
       send_attachment_message(message, attachments)
-    elsif message[:link].present?
-      send_message_link(message)
+    # elsif message[:link].present?
+    #   send_message_link(message)
     else
       send_message_text(message)
     end

@@ -2,7 +2,7 @@
   <div class="w-full">
     <div class="pb-4">
       <h2 class="text-xl font-semibold text-slate-900 dark:text-slate-25 mb-1">
-        {{ $t('AGENT_MGMT.CSBOT.TICKET.HEADER') }}
+        {{ $t('AGENT_MGMT.EOBOT.HEADER') }}
       </h2>
       <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">
         {{ $t('AGENT_MGMT.CSBOT.TICKET.HEADER_DESC') }}
@@ -46,7 +46,12 @@
           <FileKnowledgeSources :data="data" />
         </div>
         <div v-show="activeIndex === 2" class="w-full">
-          <QnaKnowledgeSources :data="data" />
+          <QnaKnowledgeSources :data="data" context="event_organizer"/>
+        </div>
+
+        <!-- Custom Numbering Content -->
+        <div v-show="activeIndex === 3" class="w-full">
+          <CustomNumberingTab :data="data" />
         </div>
       </div>
     </div>
@@ -59,6 +64,7 @@ import { useI18n } from 'vue-i18n'
 import FileKnowledgeSources from '../knowledge-sources/FileKnowledgeSources.vue'
 import QnaKnowledgeSources from '../knowledge-sources/QnaKnowledgeSources.vue'
 import GeneralTab from './eo-bot-tabs/GeneralTab.vue'
+import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue'
 
 const { t } = useI18n()
 
@@ -82,7 +88,7 @@ const tabs = computed(() => [
   {
     key: '0',
     index: 0,
-    name: t('AGENT_MGMT.CSBOT.TICKET.GENERAL_SETTINGS'),
+    name: t('AGENT_MGMT.EOBOT.GENERAL_TAB'),
     icon: 'i-lucide-settings',
   },
   {
@@ -96,6 +102,12 @@ const tabs = computed(() => [
     index: 2,
     name: 'QnA',
     icon: 'i-lucide-help-circle',
+  },
+  {
+    key: '3',
+    index: 3,
+    name: 'Penomoran Otomatis',
+    icon: 'i-lucide-notebook-tabs',
   },
 ])
 

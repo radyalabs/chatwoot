@@ -6,8 +6,8 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
 
     if attachments.any?
       send_attachment_message(message, attachments)
-    elsif message[:link].present?
-      send_message_link(message)
+    # elsif message[:link].present?
+    #   send_message_link(message)
     else
       send_message_text(message)
     end
@@ -43,7 +43,7 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
       "#{api_base_path}/send/message",
       headers: api_headers,
       body: {
-        phone: "#{message[:phone_number]}@s.whatsapp.net",
+        phone: normalize_phone_target(message[:phone_number]),
         message: message[:content]
       }.to_json
     )
@@ -56,7 +56,7 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
       "#{api_base_path}/send/link",
       headers: api_headers,
       body: {
-        phone: "#{message[:phone_number]}@s.whatsapp.net",
+        phone: normalize_phone_target(message[:phone_number]),
         link: message[:link],
         caption: message[:content]
       }.to_json
@@ -65,7 +65,7 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
     process_response(response)
   end
 
-  def send_image(phone_number, attachment, caption: nil)
+  def send_image(phone_number, attachment, caption: nil) # rubocop:disable Metrics/MethodLength
     tempfile = Tempfile.new(
       [File.basename(attachment[:filename], '.*'), File.extname(attachment[:filename])]
     )
@@ -75,7 +75,7 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
     tempfile.rewind
 
     body = {
-      phone: phone_number,
+      phone: normalize_phone_target(phone_number),
       image: Multipart::Post::UploadIO.new(tempfile, attachment[:content_type], attachment[:filename])
     }
     body[:caption] = caption if caption
@@ -93,7 +93,7 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
     tempfile&.unlink
   end
 
-  def send_document(phone_number, attachment, caption: nil)
+  def send_document(phone_number, attachment, caption: nil) # rubocop:disable Metrics/MethodLength
     tempfile = Tempfile.new(
       [File.basename(attachment[:filename], '.*'), File.extname(attachment[:filename])]
     )
@@ -103,7 +103,7 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
     tempfile.rewind
 
     body = {
-      phone: "#{phone_number}@s.whatsapp.net",
+      phone: normalize_phone_target(phone_number),
       file: Multipart::Post::UploadIO.new(tempfile, attachment[:content_type], attachment[:filename])
     }
 
@@ -124,7 +124,7 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
 
   def send_audio(phone_number, audio_url)
     body = {
-      phone: "#{phone_number}@s.whatsapp.net",
+      phone: normalize_phone_target(phone_number),
       audio_url: audio_url
     }
 
@@ -140,7 +140,7 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
 
   def send_video(phone_number, video_url, caption: nil)
     body = {
-      phone: "#{phone_number}@s.whatsapp.net",
+      phone: normalize_phone_target(phone_number),
       video_url: video_url
     }
     body[:caption] = caption if caption
@@ -172,6 +172,12 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
       'X-Device-Id' => whatsapp_channel.device_id,
       'Content-Type' => 'application/json'
     }
+  end
+
+  def normalize_phone_target(phone_number)
+    return phone_number if phone_number.to_s.include?('@')
+
+    "#{phone_number}@s.whatsapp.net"
   end
 
   def api_base_path

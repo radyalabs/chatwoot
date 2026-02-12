@@ -92,6 +92,15 @@ const hasSelectedLink = computed(() => {
   return mappedLinks.value.some(t => t.isSelected.value);
 });
 
+const collectionName = computed(() => {
+  if (!props.data?.display_flow_data?.agents_config) return null;
+  
+  const agents = props.data.display_flow_data.agents_config;
+  
+  // Return the first agent's collection_name
+  return agents[0]?.collection_name || null;
+});
+
 watch(groupedLinks, v => {
   toggleLinks.value = {};
 });
@@ -139,6 +148,7 @@ async function deleteData() {
 
     await aiAgents.deleteKnowledgeWebsite(props.data.id, {
       ids: selectedIds,
+      collection_name: collectionName.value,
     });
 
     fetchKnowledge();
@@ -171,6 +181,7 @@ async function saveContent() {
       id: editContentData.value.id,
       url: editContentData.value.url,
       markdown: contentLink.value.trim(),
+      collection_name: collectionName.value,
     });
 
     showEditContentModal.value = false;
@@ -240,6 +251,7 @@ async function saveContent() {
         :id-agent="props.data?.id"
         :show="showCollectUrlModal"
         :existing-links="collectUrlEditModal"
+        :collection-name="collectionName"
         @onRefresh="() => {
           fetchKnowledge()
         }"

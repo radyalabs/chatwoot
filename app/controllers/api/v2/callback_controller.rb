@@ -88,15 +88,19 @@ class Api::V2::CallbackController < ApplicationController
     require 'net/http'
     require 'json'
 
-    api_endpoint = GlobalConfigService.load('EXTERNAL_TOKEN_API_URL', nil)
-    return if api_endpoint.blank?
+    base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
+    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
+    return if base_url.blank?
 
     begin
-      api_url = URI.parse(api_endpoint)
+      api_url = URI.parse("#{base_url}v2/oauth/google/credentials")
       http = Net::HTTP.new(api_url.host, api_url.port)
       http.use_ssl = (api_url.scheme == 'https')
 
-      request = Net::HTTP::Post.new(api_url.request_uri, { 'Content-Type' => 'application/json' })
+      request = Net::HTTP::Post.new(api_url.request_uri, {
+        'Content-Type' => 'application/json',
+        'X-API-Key' => api_key
+      })
       payload = {
         access_token: access_token['access_token'],
         refresh_token: access_token['refresh_token'],

@@ -106,11 +106,11 @@
           "PLACEHOLDER": "Masukkan domain situs web Anda (Misalnya: tokobatikjaya.co.id)"
         },
         "CHANNEL_WELCOME_TITLE": {
-          "LABEL": "Judul Selamat Datang",
+          "LABEL": "Salam Pembuka",
           "PLACEHOLDER": "Halo!"
         },
         "CHANNEL_WELCOME_TAGLINE": {
-          "LABEL": "Tagline Selamat Datang",
+          "LABEL": "Deskripsi Singkat",
           "PLACEHOLDER": "Kami membuatnya mudah untuk terhubung dengan kami. Tanyakan apa saja kepada kami, atau bagikan tanggapan Anda."
         },
         "CHANNEL_GREETING_MESSAGE": {
@@ -754,6 +754,9 @@
     },
     "NOTE": "Catatan: ",
     "WIDGET_BUILDER": {
+      "START_CONVERSATION": "Buat Percakapan Baru",
+      "START_CONVERSATION_DESC": "Mulai Percakapan dengan Asisten Kami",
+      "PREV_CONVERSATION": "Percakapan Sebelumnya",
       "WIDGET_OPTIONS": {
         "AVATAR": {
           "LABEL": "Website Avatar",
@@ -770,11 +773,11 @@
           "ERROR": "Masukkan nama situs web yang valid"
         },
         "WELCOME_HEADING": {
-          "LABEL": "Judul Selamat Datang",
+          "LABEL": "Salam Pembuka",
           "PLACE_HOLDER": "Hai, yang di sana!"
         },
         "WELCOME_TAGLINE": {
-          "LABEL": "Tagline Selamat Datang",
+          "LABEL": "Deskripsi Singkat",
           "PLACE_HOLDER": "Kami membuatnya mudah untuk terhubung dengan kami. Tanyakan apa saja kepada kami, atau bagikan tanggapan Anda."
         },
         "REPLY_TIME": {

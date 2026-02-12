@@ -132,6 +132,7 @@ async function deleteData() {
 
     await aiAgents.deleteKnowledgeWebsite(props.data.id, {
       ids: selectedIds,
+      collection_name: props.data.collection_name,
     });
 
     fetchKnowledge();
@@ -196,6 +197,7 @@ async function saveContent() {
       id: editContentData.value.id,
       url: editContentData.value.url,
       markdown: contentLink.value.trim(),
+      collection_name: props.data.collection_name,
     });
 
     showEditContentModal.value = false;

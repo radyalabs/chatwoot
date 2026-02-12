@@ -4,12 +4,13 @@ class Captain::Llm::BaseFlowiseService
   include HTTParty
   base_uri ENV.fetch('FLOWISE_API_URL', 'https://ai.radyalabs.id/api/v1')
 
-  def initialize(account_id, ai_agent, question, session_id, additional_attributes)
+  def initialize(account_id, ai_agent, conversation, message)
     @account_id = account_id
     @ai_agent = ai_agent
-    @question = question
-    @session_id = session_id
-    @additional_attributes = additional_attributes
+    @conversation = conversation
+    @message = message
+    @session_id = conversation.uuid
+    @question, @additional_attributes = extract_message_data
   end
 
   def perform
@@ -54,6 +55,16 @@ class Captain::Llm::BaseFlowiseService
         }
       }
     }
+  end
+
+  def extract_message_data
+    if @message.is_a?(String)
+      [@message, {}]
+    else
+      # If message has no text content but has attachments, use a placeholder
+      question = (@message.content.presence || '')
+      [question, @message.additional_attributes || {}]
+    end
   end
 
   def headers

@@ -76,6 +76,12 @@ class AiAgents extends ApiClient {
         );
     }
 
+    previewKnowledgeFile(idAgent, fileId) {
+        return axios.get(
+            `${this.url}/${idAgent}/knowledge_sources/file/${fileId}/preview`
+        );
+    }
+
     addExcelKnowledgeFile(idAgent, data) {
         return axios.post(
             `/api/v2/accounts/${this.accountIdFromRoute}/ai_agents/${idAgent}/knowledge_sources/excel_imports`,
@@ -89,9 +95,9 @@ class AiAgents extends ApiClient {
         );
     }
 
-    deleteKnowledgeFile(idAgent, fileId) {
+    deleteKnowledgeFile(idAgent, fileId, collection_name) {
         return axios.delete(
-            `${this.url}/${idAgent}/knowledge_sources/file/${fileId}`
+            `${this.url}/${idAgent}/knowledge_sources/file/${fileId}?collection_name=${collection_name}`
         );
     }
 
@@ -123,9 +129,10 @@ class AiAgents extends ApiClient {
         return axios.post(`${this.url}/${idAgent}/knowledge_sources/qna`, data);
     }
 
-    deleteKnowledgeQna(idAgent, qnaId) {
+    deleteKnowledgeQna(idAgent, qnaId, params = {}) {
         return axios.delete(
-            `${this.url}/${idAgent}/knowledge_sources/qna/${qnaId}`
+            `${this.url}/${idAgent}/knowledge_sources/qna/${qnaId}`,
+            { params }
         );
     }
 

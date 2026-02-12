@@ -21,10 +21,13 @@
     },
     "CHAT_STATUS_FILTER_ITEMS": {
       "open": {
-        "TEXT": "Terbuka"
+        "TEXT": "Baru"
+      },
+      "assigned": {
+        "TEXT": "Ditugaskan"
       },
       "resolved": {
-        "TEXT": "Terselesaikan"
+        "TEXT": "Selesai"
       },
       "pending": {
         "TEXT": "Ditunda"
@@ -54,28 +57,28 @@
     },
     "SORT_ORDER_ITEMS": {
       "last_activity_at_asc": {
-        "TEXT": "Last activity: Oldest first"
+        "TEXT": "Aktivitas terakhir: Terlama dulu"
       },
       "last_activity_at_desc": {
-        "TEXT": "Last activity: Newest first"
+        "TEXT": "Aktivitas terakhir: Terbaru dulu"
       },
       "created_at_desc": {
-        "TEXT": "Created at: Newest first"
+        "TEXT": "Dibuat pada: Terbaru dulu"
       },
       "created_at_asc": {
-        "TEXT": "Created at: Oldest first"
+        "TEXT": "Dibuat pada: Terlama dulu"
       },
       "priority_desc": {
-        "TEXT": "Priority: Highest first"
+        "TEXT": "Prioritas: Tertinggi dulu"
       },
       "priority_asc": {
-        "TEXT": "Priority: Lowest first"
+        "TEXT": "Prioritas: Terendah dulu"
       },
       "waiting_since_asc": {
-        "TEXT": "Pending Response: Longest first"
+        "TEXT": "Menunggu respons: Terlama dulu"
       },
       "waiting_since_desc": {
-        "TEXT": "Pending Response: Shortest first"
+        "TEXT": "Menunggu respons: Tercepat dulu"
       }
     },
     "ATTACHMENTS": {

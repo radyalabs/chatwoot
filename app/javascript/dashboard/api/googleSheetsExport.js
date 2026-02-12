@@ -20,6 +20,10 @@ class GoogleSheetsExportAPI extends ApiClient {
     return this.delete('disconnect');
   }
 
+  regenerateSpreadsheet(payload) {
+    return this.post('regenerate', payload);
+  }
+
   createSpreadsheet(payload) {
     return axios.post(`${this.url}/generate`, payload);
   }
@@ -30,6 +34,10 @@ class GoogleSheetsExportAPI extends ApiClient {
 
   syncSpreadsheet(payload) {
     return axios.post(`${this.url}/sync`, payload);
+  }
+
+  deleteSpreadsheet(payload) {
+    return axios.post(`${this.url}/delete`, payload);
   }
 }
 

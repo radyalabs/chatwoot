@@ -28,6 +28,7 @@ export default {
     ...mapGetters({
       appConfig: 'appConfig/getAppConfig',
       availableAgents: 'agent/availableAgents',
+      conversationMeta: 'conversation/getConversationMeta',
     }),
     portal() {
       return window.chatwootWebChannel.portal;
@@ -44,7 +45,7 @@ export default {
       );
     },
     showBackButton() {
-      return ['article-viewer', 'messages', 'prechat-form'].includes(
+      return ['article-viewer', 'messages', 'conversation-chat'].includes(
         this.$route.name
       );
     },
@@ -53,6 +54,12 @@ export default {
     },
     isOnHomeView() {
       return ['home'].includes(this.$route.name);
+    },
+    isOnConvListView() {
+      return ['conversation-list'].includes(this.$route.name);
+    },
+    shouldShowHeader() {
+      return !this.isOnHomeView && !this.isOnPrechatView && !this.isOnConvListView;
     },
     opacityClass() {
       if (this.isHeaderCollapsed) {
@@ -74,6 +81,16 @@ export default {
         return { 'opacity-90': true };
       }
       return {};
+    },
+    showBranding() {
+      if (this.conversationMeta?.disable_branding) {
+        return false;
+      }
+      const channelConfig = window.chatwootWebChannel || {};
+      if (channelConfig.disableBranding || channelConfig.disable_branding) {
+        return false;
+      }
+      return true;
     },
   },
   mounted() {
@@ -109,6 +126,7 @@ export default {
   >
     <div class="relative flex flex-col h-full">
       <div
+        v-if="shouldShowHeader"
         class="sticky top-0 z-40 transition-all header-wrap"
         :class="{
           expanded: !isHeaderCollapsed,
@@ -136,7 +154,9 @@ export default {
       <Banner />
       <router-view />
 
-      <Branding v-if="!isOnArticleViewer" :disable-branding="disableBranding" />
+      <div v-if="!isOnArticleViewer" class="w-full py-1">
+         <Branding :disable-branding="!showBranding" />
+      </div>
     </div>
   </div>
 </template>

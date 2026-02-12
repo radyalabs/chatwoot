@@ -729,7 +729,7 @@ function scrollToPackage() {
                 <ul class="feature-list">
                   <li v-for="(feature, index) in plan.features" :key="index" class="feature-item">
                     <span class="icon-check" />
-                    <span class="feature-text text-[#475569] dark:text-[#E0E1E6]">{{ feature }}</span>
+                    <span class="feature-text text-[#475569] dark:text-[#E0E1E6]">{{ $t(`BILLING.${feature.replaceAll('.', '')}`) }}</span>
                   </li>
                 </ul>
               </div>

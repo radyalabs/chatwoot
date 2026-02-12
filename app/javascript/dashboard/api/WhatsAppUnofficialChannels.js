@@ -32,6 +32,10 @@ class WhatsAppUnofficialChannels extends ApiClient {
   reconnectSession(inboxId) {
     return axios.post(`${this.baseUrl()}/inboxes/${inboxId}/whatsapp/reconnect`);
   }
+
+  getGroups(inboxId) {
+    return axios.get(`${this.baseUrl()}/inboxes/${inboxId}/whatsapp/groups`);
+  }
 }
 
 export default new WhatsAppUnofficialChannels();

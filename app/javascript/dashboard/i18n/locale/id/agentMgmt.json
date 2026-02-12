@@ -10,6 +10,13 @@
       "ADMINISTRATOR": "Administrator",
       "AGENT": "Agen"
     },
+    "CREATIVITY": {
+      "DETERMINISTIC": "Rendah Sekali",
+      "CONSERVATIVE": "Rendah",
+      "NATURAL": "Normal",
+      "INNOVATIVE": "Tinggi",
+      "VISIONARY": "Tinggi Sekali"
+    },
     "LIST": {
       "404": "Tidak ada agen yang terkait dengan akun ini",
       "TITLE": "Kelola agen di tim Anda",
@@ -56,12 +63,83 @@
       },
       "CONFIRM": {
         "TITLE": "Konfirmasi Penghapusan",
-        "MESSAGE": "Apakah Anda yakin untuk menghapus ",
+        "MESSAGE": "Apakah anda yakin ingin menghapus bot AI ini?",
+        "DESC": "Aksi ini tidak dapat dibatalkan",
         "YES": "Ya, Hapus ",
         "NO": "Tidak, Simpan "
       }
     },
+    "REMINDER": {
+      "TITLE": "Pesan Pengingat",
+      "DESC": "Kirim pesan pengingat otomatis kepada pelanggan setelah penjadwalan",
+      "TIME": "Kapan pesan dikirim?",
+      "TIME_OPTIONS": {
+        "30_MINUTES": "30 Menit",
+        "1_HOUR": "1 Jam",
+        "2_HOURS": "2 Jam",
+        "4_HOURS": "4 Jam",
+        "24_HOURS": "24 Jam"
+      },
+      "TIME_DETAIL": "sebelum sesi dimulai",
+      "TIME_DESC": "Pilih waktu untuk mengirimkan pesan follow up.",
+      "MSG": "Isi Pesan",
+      "MSG_VARIABLE": "Tambahkan Variabel",
+      "VARIABLES": {
+        "CUSTOMER_NAME": "Nama Pelanggan",
+        "SERVICE_NAME": "Nama Layanan",
+        "BOOKING": {
+          "DATE": "Tanggal Booking",
+          "TIME": "Waktu Booking",
+          "LOCATION": "Lokasi"
+        },
+        "LEADGEN": {
+          "DATE": "Tanggal Konsultasi",
+          "TIME": "Waktu Konsultasi"
+        }
+      },
+      "MSG_DESC": "Pesan ini akan dikirimkan otomatis ke pelanggan melalui platform yang sesuai pada waktu yang ditentukan.",
+      "MSG_EXAMPLE": "Contoh"
+    },
+    "LEAD_GENERATION": {
+      "GENERAL_TAB": "Pengaturan",
+      "TICKET": {
+        "ERROR": "Field ini wajib diisi",
+        "DUPE_ERROR": "Nama harus unik",
+        "HEADER": "Konfigurasi Lead Generation",
+        "HEADER_DESC": "Halaman ini berisi pengaturan kategori dan klasifikasi untuk Lead Generation Anda.",
+        "CATEGORY_TITLE": "Kategori Lead",
+        "CATEGORY_DESC": "Atur kategori lead dan (opsional) tuliskan kondisi.",
+        "CATEGORY_PLACEHOLDER": "Nama kategori (mis. E-commerce)",
+        "CONDITION_PLACEHOLDER": "Kondisi atau kata kunci opsional...",
+        "ADD_CATEGORY": "Tambah Kategori",
+        "CATEGORY_CONDITION": "Kondisi Kategori",
+        "SAVE_SUCCESS": "Berhasil simpan",
+        "SAVE_ERROR": "Gagal simpan",
+        "SAVE_BUTTON": "Simpan",
+        "VALIDATION_ERROR": "Silakan perbaiki kesalahan validasi"
+      }
+    },
+    "SALES": {
+      "GENERAL_TAB": "Pengaturan",
+      "TICKET": {
+        "ERROR": "Field ini wajib diisi",
+        "DUPE_ERROR": "Nama harus unik",
+        "HEADER": "Konfigurasi Sales",
+        "HEADER_DESC": "Halaman ini berisi pengaturan kategori dan pipeline untuk Sales Anda.",
+        "CATEGORY_TITLE": "Kategori Produk",
+        "CATEGORY_DESC": "Atur kategori produk dan (opsional) tuliskan kondisi.",
+        "CATEGORY_PLACEHOLDER": "Nama kategori (mis. Premium Plan)",
+        "CONDITION_PLACEHOLDER": "Kondisi atau kata kunci opsional...",
+        "ADD_CATEGORY": "Tambah Kategori",
+        "CATEGORY_CONDITION": "Kondisi Kategori",
+        "SAVE_SUCCESS": "Berhasil simpan",
+        "SAVE_ERROR": "Gagal simpan",
+        "SAVE_BUTTON": "Simpan",
+        "VALIDATION_ERROR": "Silakan perbaiki kesalahan validasi"
+      }
+    },
     "CSBOT": {
+      "GENERAL_TAB": "Pengaturan",
       "TICKET": {
         "ERROR": "Field ini wajib diisi",
         "DUPE_ERROR": "Nama harus unik",
@@ -102,6 +180,11 @@
         "GOOGLE_SHEETS_TITLE": "Integrasi Google Sheets",
         "CONNECT_SHEETS_DESC": "Hubungkan ke Google Sheets untuk secara otomatis membuat spreadsheet yang berisi data tiket dari Bot CS Anda. Setelah otentikasi berhasil, sistem akan segera membuat spreadsheet baru di akun Google Anda.",
         "REMOVE": "Hapus"
+      },
+      "NOTIFICATION": {
+        "TITLE": "Pengaturan Notifikasi Tim Internal",
+        "DESC": "Atur notifikasi internal otomatis saat tiket support baru dibuat.",
+        "TEMPLATE_HELP": "Pesan ini akan dikirim otomatis ke tim internal Anda untuk memberitahukan tiket support yang masuk."
       }
     },
     "LEADGENBOT": {
@@ -137,24 +220,74 @@
         "REMOVE": "Hapus"
       },
       "CLASSIFICATION": {
-        "HEADER": "Klasifikasi LeadGen",
-        "HEADER_DESC": "Konfigurasi klasifikasi untuk output LeadGen Bot",
-        "ENABLE_TITLE": "Aktifkan Tab Klasifikasi",
-        "ENABLE_DESC": "Tambahkan kolom klasifikasi otomatis pada output sheet LeadGen Bot",
-        "ENABLED_STATUS": "Tab klasifikasi diaktifkan",
-        "ENABLED_DESC_DETAIL": "Output sheet LeadGen Bot akan menyertakan kolom tambahan untuk hasil klasifikasi setiap lead",
-        "DISABLED_STATUS": "Tab klasifikasi dinonaktifkan",
-        "DISABLED_DESC_DETAIL": "Output sheet LeadGen Bot tidak akan menyertakan kolom klasifikasi, hanya data utama lead yang ditampilkan"
-      },
-      "PRIORITY": {
-        "PRIORITY_TITLE": "Prioritas",
-        "PRIORITY_PLACEHOLDER": "Jenis prioritas (mis. Tidak Tertarik)",
-        "PRIORITY_CONDITION": "Kondisi Prioritas",
+        "CLASSIFICATION_TITLE": "Klasifikasi Lead",
+        "CLASSIFICATION_PLACEHOLDER": "Jenis Klasifikasi (mis. low, medium, high)",
+        "CLASSIFICATION_CONDITION": "Kondisi Klasifikasi",
         "CONDITION_PLACEHOLDER": "Kondisi atau kata kunci opsional...",
-        "ADD_PRIORITY": "Tambah Prioritas",
-        "SAVE_SUCCESS": "Berhasil simpan prioritas",
-        "SAVE_ERROR": "Gagal simpan prioritas"
+        "ADD_CLASSIFICATION": "Tambah Klasifikasi",
+        "SAVE_SUCCESS": "Berhasil simpan klasifikasi",
+        "SAVE_ERROR": "Gagal simpan klasifikasi"
+      },
+      "NOTIFICATION": {
+        "TITLE": "Pengaturan Notifikasi Tim Internal",
+        "DESC": "Atur notifikasi internal otomatis saat lead baru masuk.",
+        "VAR_CUSTOMER_NAME": "Nama Pelanggan",
+        "VAR_CONSULTATION_DATE": "Tanggal Konsultasi",
+        "VAR_CONSULTATION_TIME": "Waktu Konsultasi",
+        "VAR_SERVICE_NAME": "Nama Layanan",
+        "TEMPLATE_HELP": "Pesan ini akan dikirim otomatis ke tim internal Anda untuk memberitahukan lead yang masuk."
       }
+    },
+    "NOTIFICATION": {
+      "SENDER_INBOX_LABEL": "Platform Pengirim",
+      "SENDER_INBOX_PLACEHOLDER": "— Pilih platform pengirim —",
+      "ADD_BUTTON": "+ Tambah Notifikasi",
+      "EMPTY_STATE": "Belum ada notifikasi yang ditambahkan.",
+      "FORM_TITLE_ADD": "Tambah Notifikasi",
+      "FORM_TITLE_EDIT": "Edit Notifikasi",
+      "CATEGORY_LABEL": "Kategori (Opsional)",
+      "CATEGORY_ALL": "Semua",
+      "INTEREST_LEVEL_LABEL": "Klasifikasi (Opsional)",
+      "INTEREST_LEVEL_LABEL_PRIORITY": "Prioritas (Opsional)",
+      "CLASSIFICATION_ALL": "Semua",
+      "INTEREST_LOW": "Rendah",
+      "INTEREST_MEDIUM": "Sedang",
+      "INTEREST_HIGH": "Tinggi",
+      "MESSAGE_TYPE_LABEL": "Tipe Pesan",
+      "MESSAGE_TYPE_PERSONAL": "Pesan Pribadi",
+      "MESSAGE_TYPE_GROUP": "Pesan Grup",
+      "RECEIVER_ADDRESS_LABEL": "Nomor Penerima",
+      "RECEIVER_GROUP_LABEL": "Grup Penerima",
+      "RECEIVER_GROUP_PLACEHOLDER": "— Pilih group —",
+      "RECEIVER_PLACEHOLDER_WHATSAPP": "Contoh: 6281234567890",
+      "TEMPLATE_LABEL": "Isi Pesan",
+      "TEMPLATE_PLACEHOLDER": "Tulis pesan notifikasi internal...",
+      "TEMPLATE_PREVIEW_LABEL": "CONTOH",
+      "DEFAULT_TEMPLATE": "Notifikasi masuk:\n\n{'{{content_summary}}'}",
+      "CONTENT_SUMMARY_REQUIRED": "{'{{content_summary}}'} wajib ada dan tidak dapat dihapus.",
+      "CONTENT_SUMMARY_MISSING_WARNING": "Peringatan: {'{{content_summary}}'} diperlukan. Variabel ini akan diganti dengan informasi lengkap dari sumber data.",
+      "VAR_CONTENT_SUMMARY": "Ringkasan Konten",
+      "SAVE_BUTTON": "Simpan Notifikasi",
+      "SAVE_BUTTON_EDIT": "Simpan Perubahan",
+      "CANCEL_BUTTON": "Batal",
+      "CARD_PERSONAL": "Personal",
+      "CARD_GROUP": "Group",
+      "CARD_CATEGORY_LABEL": "Kategori",
+      "CARD_INTEREST_LABEL": "Klasifikasi",
+      "CARD_INTEREST_HELPER": "Terkirim berdasarkan klasifikasi pelanggan",
+      "CARD_SENT_FROM": "Dikirim dari",
+      "CARD_SEND_TO": "Notifikasi ke",
+      "CARD_MESSAGE_LABEL": "Pesan",
+      "CARD_EDIT": "Edit",
+      "CARD_DELETE": "Hapus",
+      "NO_INBOX_AVAILABLE": "Tidak ada platform WhatsApp Go yang terhubung. Silakan buat platform WhatsApp Go baru atau pastikan platform yang ada sudah terhubung dengan benar.",
+      "INBOX_DISCONNECTED_WARNING": "Platform ini terputus. Silakan hubungkan kembali atau pilih platform lain yang sudah terhubung.",
+      "NO_GROUPS": "Tidak ada grup yang ditemukan. Pastikan platform pengirim sudah terhubung.",
+      "LOADING_GROUPS": "Memuat grup...",
+      "GROUP_SEARCH_PLACEHOLDER": "Ketik nama grup untuk mencari",
+      "NO_GROUPS_FOUND": "Tidak ada grup ditemukan",
+      "SHOW_MORE": "Tampilkan lebih",
+      "SHOW_LESS": "Tampilkan sedikit"
     },
     "COMMON": {
       "REMOVE": "Hapus"
@@ -243,63 +376,95 @@
         "API_KEY_PLACEHOLDER": "Masukkan API key Anda",
         "MERCHANT_CODE_LABEL": "Merchant Code",
         "MERCHANT_CODE_PLACEHOLDER": "Masukkan merchant code Anda",
-        "SELECT_PROVIDER": "Pilih Penyedia Payment Gateway"
+        "SELECT_PROVIDER": "Pilih Penyedia Payment Gateway",
+        "QRIS_TITLE": "QRIS",
+        "QRIS_DESC": "Pelanggan membayar dengan memindai kode QRIS Anda.",
+        "QRIS_IMAGE_LABEL": "Gambar QRIS",
+        "QRIS_UPLOAD_IMAGE": "Unggah QRIS",
+        "QRIS_CHANGE_IMAGE": "Ganti QRIS",
+        "QRIS_IMAGE_PREVIEW": "Pratinjau",
+        "QRIS_DESCRIPTION_LABEL": "Deskripsi Pembayaran",
+        "QRIS_DESCRIPTION_PLACEHOLDER": "Contoh: Scan QR ini untuk bayar pesanan",
+        "QRIS_DYNAMIC_LABEL": "Gunakan QRIS dinamis per pesanan",
+        "QRIS_DYNAMIC_DESC": "Buat QRIS unik sesuai nominal setiap pesanan.",
+        "QRIS_MERCHANT_ID_LABEL": "Merchant ID (opsional)",
+        "QRIS_MERCHANT_ID_PLACEHOLDER": "Masukkan Merchant ID Anda",
+        "QRIS": {
+          "DELETE_MODAL": {
+            "TITLE": "Hapus QRIS",
+            "MESSAGE": "Apakah Anda yakin ingin menghapus QRIS ini?",
+            "CONFIRM_TEXT": "Hapus",
+            "REJECT_TEXT": "Batal"
+          },
+          "ALERTS": {
+            "UPLOAD_INVALID_FILE": "Harap unggah file gambar yang valid",
+            "UPLOAD_SIZE_LIMIT": "Ukuran gambar harus kurang dari 5MB",
+            "UPLOAD_FAILED": "Gagal mengunggah gambar QRIS",
+            "DELETE_SUCCESS": "QRIS berhasil dihapus dari sistem.",
+            "DELETE_ERROR": "Gagal menghapus QRIS. Silakan coba lagi.",
+            "IMAGE_REQUIRED": "Gambar QRIS wajib diunggah"
+          },
+          "STATUS": {
+            "ENABLED": "QRIS aktif",
+            "DISABLED": "QRIS nonaktif"
+          }
+        }
       },
       "SHIPPING": {
-        "HEADER": "Pengiriman",
-        "HEADER_DESC": "Atur metode pengiriman",
-        "DESC_STORE_COURIER": "Pengiriman menggunakan kurir toko",
-        "DESC_REGULAR_COURIER": "Pengiriman menggunakan kurir pihak ketiga",
-        "DESC_PICKUP_STORE": "Pelanggan mengambil langsung ke toko",
-        "METHOD_TITLE": "Pilih Metode Pengiriman",
-        "STORE_COURIER": "Kurir Toko",
-        "STORE_ADDRESS": "Alamat Toko",
-        "STORE_ADDRESS_PLACEHOLDER": "Jalan Raya No. 123",
-        "SERVICE_AREA": "Area Layanan",
-        "SERVICE_RADIUS": "Radius (km)",
-        "SERVICE_RADIUS_PLACEHOLDER": "5",
-        "SERVICE_REGION": "Wilayah",
-        "SERVICE_REGION_PLACEHOLDER": "Pilih kecamatan/kota",
-        "SHIPPING_COST": "Biaya Pengiriman (Pilih satu)",
-        "FLAT_RATE": "Tarif Flat",
-        "FLAT_RATE_PLACEHOLDER": "10000",
-        "COST_PER_DISTANCE": "Biaya per Jarak (Rp/km)",
-        "COST_PER_DISTANCE_PLACEHOLDER": "2000",
-        "FREE_SHIPPING": "Gratis Ongkir",
-        "MIN_PURCHASE": "Minimal Belanja",
-        "MIN_PURCHASE_PLACEHOLDER": "100000",
-        "MAP_LOCATION": "Lokasi Toko di Peta",
-        "MAP_INSTRUCTION": "Ketik alamat di atas atau geser pin untuk mengatur lokasi yang tepat",
-        "LATITUDE": "Lintang",
-        "LONGITUDE": "Bujur",
-        "REGULAR_COURIER": "Kurir Biasa",
-        "ORIGIN_ADDRESS": "Alamat Asal Pengiriman",
-        "ORIGIN_ADDRESS_PLACEHOLDER": "Provinsi, Kota, Kecamatan, Kode Pos",
-        "SELECT_COURIER": "Pilih Kurir",
-        "PICKUP_STORE": "Ambil ke Toko",
-        "BRANCH_ADDRESS": "Alamat Toko/Cabang",
-        "BRANCH_ADDRESS_PLACEHOLDER": "Jl. Raya No. 123",
-        "OPERATION_HOURS": "Jam Operasional",
-        "OPERATION_HOURS_PLACEHOLDER": "09:00 - 17:00",
-        "DELIVERY_TIME": "Estimasi Waktu Pengiriman",
-        "PICKUP_TIME": "Estimasi Waktu Pengambilan",
-        "PICKUP_TIME_PLACEHOLDER": "1 jam setelah pembayaran",
-        "SELECT_COURIER_PLACEHOLDER": "Pilih Kurir",
-        "PROVINCE_LABEL": "Provinsi",
-        "PROVINCE_LABEL_PLACEHOLDER": "Pilih Provinsi",
-        "CITY_LABEL": "Kota/Kabupaten",
-        "CITY_LABEL_PLACEHOLDER": "Pilih Kota/Kabupaten",
-        "CITY_SELECT_FIRST": "Pilih provinsi terlebih dahulu",
-        "SUBDISTRICT_LABEL": "Kecamatan",
-        "SUBDISTRICT_LABEL_PLACEHOLDER": "Pilih Kecamatan",
-        "SUBDISTRICT_SELECT_FIRST": "Pilih kota/kabupaten terlebih dahulu",
-        "WARD_LABEL": "Kelurahan",
-        "WARD_LABEL_PLACEHOLDER": "Masukkan Kelurahan",
-        "WARD_SELECT_FIRST": "Pilih kecamatan terlebih dahulu",
-        "STREET_LABEL": "Jalan",
-        "STREET_LABEL_PLACEHOLDER": "Masukkan Jalan",
-        "ZIP_CODE_LABEL": "Kode Pos",
-        "ZIP_CODE_LABEL_PLACEHOLDER": "Masukkan Kode Pos"
+        "HEADER": "Konfigurasi Pengiriman",
+        "HEADER_DESC": "Atur alamat toko dan pengaturan pengiriman untuk Bot Sales Anda.",
+        "CONFIG_TITLE": "Konfigurasi Pengiriman",
+        "CONFIG_DESC": "Kelola alamat toko dan pengaturan pengiriman.",
+        "ADD_ADDRESS_BTN": "Tambah Alamat",
+        "ADD_ADDRESS_EMPTY_BTN": "+ Tambah Alamat Sekarang",
+        "EMPTY_STATE_TITLE": "Belum ada alamat toko",
+        "EMPTY_STATE_DESC": "Tambahkan alamat toko untuk mengaktifkan opsi Kurir Toko atau Ambil di Tempat.",
+        "SAVE_CONFIG_TITLE": "Simpan Konfigurasi",
+        "SAVE_CONFIG_DESC": "Pastikan menyimpan perubahan",
+        "SAVE_BTN": "Simpan Perubahan",
+        "SAVING_BTN": "Menyimpan...",
+        "DELETE_CONFIRM": "Apakah Anda yakin ingin menghapus alamat toko ini?",
+        "STORE_COURIER_LABEL": "Kurir Toko",
+        "STORE_PICKUP_LABEL": "Ambil ke Toko",
+        "STATUS_ACTIVE": "Aktif",
+        "STATUS_INACTIVE": "Nonaktif",
+        "OPEN_HOURS": "Jam Operasional",
+        "MODAL": {
+          "ADD_TITLE": "Tambah Alamat Baru",
+          "EDIT_TITLE": "Edit Alamat",
+          "NAME_LABEL": "Nama Toko/Cabang",
+          "NAME_PLACEHOLDER": "Contoh: Toko Pusat",
+          "ADDRESS_LABEL": "Alamat Lengkap",
+          "ADDRESS_PLACEHOLDER": "Masukkan alamat lengkap",
+          "MAP_LABEL": "Pilih Lokasi di Peta",
+          "MAP_SEARCH_PLACEHOLDER": "Cari lokasi (Jakarta, Bandung, Surabaya...)",
+          "MAP_LOADING": "Memuat Peta...",
+          "MAP_TIPS": "Tips:",
+          "MAP_TIPS_TEXT": "Geser pin merah untuk menyesuaikan titik lokasi toko Anda.",
+          "COURIER_SECTION_TITLE": "Kurir Toko",
+          "COURIER_SECTION_DESC": "Pengiriman menggunakan kurir toko sendiri",
+          "PICKUP_SECTION_TITLE": "Ambil ke Toko",
+          "PICKUP_SECTION_DESC": "Pelanggan mengambil langsung ke toko",
+          "OPERATIONAL_HOURS": "Jam Operasional",
+          "OPEN_LABEL": "Buka",
+          "CLOSE_LABEL": "Tutup",
+          "SERVICE_AREA_LABEL": "Area Layanan",
+          "RADIUS_LABEL": "Radius (km)",
+          "REGION_LABEL": "Ke Area Tertentu",
+          "REGION_PLACEHOLDER": "Contoh: Bandung, Jakarta Selatan...",
+          "ADD_AREA_BTN": "Tambah Area",
+          "SHIPPING_COST_LABEL": "Biaya Pengiriman",
+          "FLAT_RATE_LABEL": "Tarif Flat",
+          "PER_KM_LABEL": "Biaya per KM",
+          "FREE_SHIPPING_LABEL": "Gratis Ongkir",
+          "MIN_PURCHASE_LABEL": "Minimal Belanja",
+          "ESTIMATION_LABEL": "Estimasi Waktu Pengiriman",
+          "ESTIMATION_PICKUP_LABEL": "Estimasi Waktu Pickup",
+          "ESTIMATION_PLACEHOLDER": "Contoh: 1 jam setelah pembayaran",
+          "CANCEL_BTN": "Batal",
+          "SAVE_BTN": "Simpan",
+          "VALIDATION_ALERT": "Mohon lengkapi Nama Toko dan Alamat Lengkap."
+        }
       },
       "CART": {
         "HEADER": "Konfigurasi Keranjang",
@@ -310,6 +475,11 @@
         "ENABLED_DESC_DETAIL": "Pelanggan dapat menambahkan beberapa produk ke keranjang mereka dan checkout semua item bersamaan",
         "DISABLED_STATUS": "Keranjang belanja dinonaktifkan",
         "DISABLED_DESC_DETAIL": "Pelanggan akan membeli produk secara individual tanpa fungsi keranjang"
+      },
+      "NOTIFICATION": {
+        "TITLE": "Pengaturan Notifikasi Tim Internal",
+        "DESC": "Atur notifikasi internal otomatis saat pesanan baru dibuat.",
+        "TEMPLATE_HELP": "Pesan ini akan dikirim otomatis ke tim internal Anda untuk memberitahukan pesanan yang masuk."
       }
     },
     "EOBOT": {
@@ -333,7 +503,7 @@
         "OUTPUT_SHEET_TITLE": "Sheets Pelacakan Pemesanan",
         "OUTPUT_SHEET_DESC": "Menampilkan data pemesanan dan interaksi klien yang ditangani oleh EO Bot."
       },
-      "GENERAL_TAB": "Umum",
+      "GENERAL_TAB": "Pengaturan",
       "KNOWLEDGE_SOURCES_TAB": "Sumber Pengetahuan",
       "HEADER": "Konfigurasi EO Bot",
       "HEADER_DESC": "Halaman ini berisi pengaturan konfigurasi untuk Event Organizer Bot Anda.",
@@ -342,6 +512,17 @@
       "AUTH_BTN": "Mulai Autentikasi dengan Google",
       "CONNECTED_HEADER": "Berhasil Terhubung!",
       "CONNECTED_DESC": "Akun Google Anda telah terhubung.",
+      "CREATIVITY": "Tingkat Kreativitas",
+      "CREATIVITY_DESC": "Tentukan seberapa kreatif bot dalam merespons percakapan",
+      "CREATIVITY_SCALE": "Skala Kreativitas",
+      "IDLE_STATE": "Pengaturan Idle Chat",
+      "IDLE_STATE_DESC": "Atur tindakan otomatis jika tidak ada aktivitas chat",
+      "IDLE_TIME": "Batas Waktu Idle",
+      "IDLE_TIME_DESC": "menit tanpa aktivitas",
+      "REGENERATE_SHEETS": "Membuat Ulang Spreadsheet?",
+      "REGENERATE_SHEETS_DESC": "Tindakan ini akan memutus koneksi ke file spreadsheet input yang lama dan membuat file baru yang kosong. Data di file lama tidak akan hilang di Google Drive, tetapi sistem tidak akan membacanya lagi.",
+      "REGENERATE_SHEETS_BTN": "Ya, Buat Baru",
+      "REGENERATE_SHEETS_CANCEL": "Batal",
       "RETRY_AUTH_BTN": "Coba dan Buat Ulang Sheets",
       "RETRY_AUTH_LOADING": "Membuat Ulang Sheets...",
       "DISC_BTN": "Putuskan Koneksi",
@@ -378,6 +559,23 @@
         }
       }
     },
+    "TIME_FORMAT": {
+      "JUST_NOW": "baru saja",
+      "MINUTES_AGO": "{count} menit yang lalu",
+      "HOURS_AGO": "{count} jam yang lalu",
+      "MONTH_0": "Januari",
+      "MONTH_1": "Februari",
+      "MONTH_2": "Maret",
+      "MONTH_3": "April",
+      "MONTH_4": "Mei",
+      "MONTH_5": "Juni",
+      "MONTH_6": "Juli",
+      "MONTH_7": "Agustus",
+      "MONTH_8": "September",
+      "MONTH_9": "Oktober",
+      "MONTH_10": "November",
+      "MONTH_11": "Desember"
+    },
     "FORM_CREATE": {
       "AI_AGENT_NAME": "Nama Bot AI",
       "AI_AGENT_TEMPLATE": "Template Bot AI",
@@ -406,7 +604,9 @@
       "ROUTING_CONDITION": "Kondisi Pengalihan",
       "ROUTING_CONDITION_PLACEHOLDER": "Tentukan kapan Bot AI harus meneruskan chat ke agen. Setelah itu, status chat akan berubah menjadi Open dan tampil di tab Chat Ditugaskan.",
       "CUSTOM_FLOW_LINK": "Link Bot",
-      "CUSTOM_FLOW_LINK_PLACEHOLDER": "Masukkan link endpoint Bot Anda..."
+      "CUSTOM_FLOW_LINK_PLACEHOLDER": "Masukkan link endpoint Bot Anda...",
+      "ENABLE_HANDOVER": "Aktifkan Pengalihan",
+      "HANDOVER_INSTRUCTION": "Saat diaktifkan, Bot AI akan meneruskan chat ke agen manusia berdasarkan kondisi pengalihan yang ditentukan."
     },
     "TEXT_KNOWLEDGE_PLACEHOLDER": "Tulis informasi penting tentang bisnis, produk, layanan, atau kebijakan Anda di sini.<br><br>Contoh: Toko kami buka setiap hari Senin-Sabtu, pukul 08.00-17.00 WIB. Untuk pengembalian barang, pelanggan wajib menyertakan bukti transaksi dalam 7 hari.",
     "QUESTION_LABEL": "Pertanyaan",
@@ -424,9 +624,23 @@
     "BOOKING_BOT": {
       "FILE_TAB": "File",
       "CHAR": "Kata",
-      "GENERAL_TAB": "Umum",
+      "GENERAL_TAB": "Pengaturan",
       "HEADER": "Konfigurasi Bot Booking",
       "HEADER_DESC": "Halaman ini berisi konfigurasi Sheets dan parameter untuk Bot Booking Anda.",
+      "ALERTS": {
+        "REGENERATE_SUCCESS": "Input spreadsheet berhasil dibuat ulang!",
+        "REGENERATE_ERROR": "Gagal membuat ulang spreadsheet. Silakan coba lagi.",
+        "DISCONNECT_SUCCESS": "Berhasil memutuskan sambungan akun Google.",
+        "DISCONNECT_ERROR": "Gagal memutuskan sambungan akun Google. Silakan coba lagi.",
+        "CREATE_SHEETS_SUCCESS": "Spreadsheet booking berhasil dibuat!",
+        "CREATE_SHEETS_ERROR": "Gagal membuat spreadsheet booking. Silakan coba lagi.",
+        "REDIRECT_AUTH": "Mengalihkan ke Google untuk autentikasi...",
+        "AUTH_URL_ERROR": "Gagal mendapatkan URL otorisasi. Silahkan hubungi admin kami.",
+        "AUTH_FAILED": "Autentikasi gagal. Silakan coba lagi.",
+        "SYNC_START": "Sedang membaca sheet...",
+        "SYNC_SUCCESS": "Data pada sheet berhasil disinkronisasi!",
+        "SYNC_ERROR_DEFAULT": "Gagal membaca sheet. Pastikan nama sheet dan header pada sheet sudah sesuai."
+      },
       "TEMPLATE_OPTIONS": {
         "KLINIK": "Klinik",
         "LAPANGAN": "Lapangan"
@@ -434,6 +648,8 @@
       "AUTH_LABEL": "Autentikasi",
       "AUTH_DESC": "Autentikasi dengan Google untuk membuat spreadsheet otomatis yang berisi data dari AI Agent Anda. Setelah autentikasi berhasil, sistem akan langsung membuat spreadsheet baru di akun Google Anda.",
       "AUTH_BTN": "Mulai Autentikasi dengan Google",
+      "CONFIGURE": "Simpan Perubahan",
+      "CONFIGURE_DESC": "Update konfigurasi bot",
       "CONNECTED_HEADER": "Berhasil Terhubung!",
       "CONNECTED_DESC": "Akun Google Anda telah terhubung.",
       "RETRY_AUTH_BTN": "Coba dan Buat Ulang Sheets",
@@ -457,10 +673,15 @@
       "INDUSTRY_TEMPLATE": "Pilih Template Industri",
       "MIN_DURATION_LABEL": "Durasi minimum sesi (Menit)",
       "SAVE_BTN": "Simpan",
-      "SYNC_BUTTON": "Sinkron data dari Sheet"
+      "SYNC_BUTTON": "Sinkron data dari Sheet",
+      "NOTIFICATION": {
+        "TITLE": "Pengaturan Notifikasi Tim Internal",
+        "DESC": "Atur notifikasi internal otomatis saat booking baru dibuat.",
+        "TEMPLATE_HELP": "Pesan ini akan dikirim otomatis ke tim internal Anda untuk memberitahukan booking yang masuk."
+      }
     },
     "RESTAURANT_BOT": {
-      "GENERAL_TAB": "Umum",
+      "GENERAL_TAB": "Pengaturan",
       "ORDERS_COSTS_TAB": "Pesanan & Biaya",
       "HEADER": "Konfigurasi Bot Restoran",
       "HEADER_DESC": "Halaman ini berisi konfigurasi menu dan pengaturan biaya untuk Bot Restoran Anda.",
@@ -523,6 +744,41 @@
       "SAVE_SUCCESS": "Berhasil simpan konten",
       "SAVE_ERROR": "Gagal simpan konten",
       "AGENT_NOT_FOUND": "Agen tidak ditemukan"
+    },
+    "NUMBERING": {
+      "TITLE": "Konfigurasi Penomoran",
+      "DESC": "Atur format nomor otomatis untuk setiap transaksi.",
+      "FORMAT": "Format Penomoran",
+      "PREVIEW": "Preview: ",
+      "ADD_CODE_TITLE": "+ Tambahkan Kode",
+      "OPTIONS": {
+        "NUMBER": "Nomor Urut (cth: 1 - 10000)",
+        "MONTH": "Bulan (cth: 01 - 12)",
+        "MONTH_ROMAN": "Bulan Romawi (cth: I - XII)",
+        "MONTH_SHORT": "Bulan (cth: JAN - DES)",
+        "MONTH_LONG": "Bulan (cth: JANUARI - DESEMBER)",
+        "YEAR_SHORT": "Tahun (cth: 25)",
+        "YEAR": "Tahun (cth: 2025)"
+      },
+      "NUMBER": "Nomor Berikutnya",
+      "DIGIT_NUMBER": "Jumlah Digit Angka",
+      "PREFIX": "Prefix (Opsional)",
+      "PREFIX_EXP": "Contoh: ORN/",
+      "RESET_TITLE": "Jadwal Reset Nomor",
+      "NEVER_RESET": "Tidak pernah reset (Terus berlanjut)",
+      "RESET_MONTHLY": "Setiap bulan (Nomor kembali ke 1 di awal bulan)",
+      "RESET_YEARLY": "Setiap tahun (Nomor kembali ke 1 di awal tahun)",
+      "SAVE_DESC": "Simpan format penomoran",
+      "SAVING": "Menyimpan....",
+      "SUCCESS": "Sukses!",
+      "SUCCESS_MESSAGE": "Data format penomoran berhasil disimpan.",
+      "CLOSE": "Tutup",
+      "WARN_MISSING_NUMBER": "Format harus menyertakan [NUMBER] untuk memastikan ID unik.",
+      "WARN_MISSING_MONTH": "Format harus menyertakan variabel bulan ([MONTH], [MONTH_ROMAN], [MONTH_SHORT], atau [MONTH_LONG]) untuk menghindari ID duplikat.",
+      "WARN_MISSING_YEAR": "Format harus menyertakan variabel tahun ([YEAR] atau [YEAR_SHORT]) untuk menghindari ID duplikat.",
+      "WARN_CURRENT_VALUE_TOO_LOW": "Nomor berikutnya harus lebih besar dari nilai terakhir yang dibuat ({storedValue}).",
+      "WARN_MIN_VALUE": "Nomor berikutnya harus minimal 1.",
+      "SAVE_ERROR": "Gagal menyimpan konfigurasi penomoran."
     }
   }
 }

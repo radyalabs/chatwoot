@@ -94,6 +94,13 @@ export default {
       labels: 'labels/getLabelsOnSidebar',
       teams: 'teams/getMyTeams',
     }),
+    // Check if current route is reports page
+    isReportsPage() {
+      const routeName = this.$route.name;
+      const routePath = this.$route.path;
+      return routeName === 'account_overview_reports' || 
+             routePath.includes('/reports');
+    },
     activeCustomView() {
       if (this.activePrimaryMenu.key === 'contacts') {
         return 'contact';
@@ -217,6 +224,7 @@ export default {
 </script>
 
 <template>
+  <!-- Only render sidebar if NOT on reports page -->
   <aside class="flex h-full">
     <PrimarySidebar
       :logo-source="globalConfig.logoThumbnail"
@@ -229,18 +237,20 @@ export default {
       @open-key-shortcut-modal="toggleKeyShortcutModal"
       @open-notification-panel="openNotificationPanel"
     />
-    <SecondarySidebar
-      v-if="hasSecondarySidebar"
-      :account-id="accountId"
-      :inboxes="inboxes"
-      :labels="labels"
-      :teams="teams"
-      :custom-views="customViews"
-      :menu-config="activeSecondaryMenu"
-      :current-user="currentUser"
-      :is-on-chatwoot-cloud="isOnChatwootCloud"
-      @add-label="showAddLabelPopup"
-      @toggle-accounts="toggleAccountModal"
-    />
+    <div v-if="!isReportsPage">
+      <SecondarySidebar
+        v-if="hasSecondarySidebar"
+        :account-id="accountId"
+        :inboxes="inboxes"
+        :labels="labels"
+        :teams="teams"
+        :custom-views="customViews"
+        :menu-config="activeSecondaryMenu"
+        :current-user="currentUser"
+        :is-on-chatwoot-cloud="isOnChatwootCloud"
+        @add-label="showAddLabelPopup"
+        @toggle-accounts="toggleAccountModal"
+      />
+    </div>
   </aside>
 </template>

@@ -3,7 +3,9 @@ class Api::V1::Widget::ConversationsController < Api::V1::Widget::BaseController
   before_action :render_not_found_if_empty, only: [:toggle_typing, :toggle_status, :set_custom_attributes, :destroy_custom_attributes]
 
   def index
-    @conversation = conversation
+    @conversations = @contact_inbox.conversations.order(updated_at: :desc)
+
+    @conversations = @conversations.limit(20)
   end
 
   def create

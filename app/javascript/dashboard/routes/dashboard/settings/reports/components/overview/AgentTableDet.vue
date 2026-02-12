@@ -86,22 +86,22 @@ const columns = computed(() => [
       return a - b;
     },
   }),
-  columnHelper.accessor('avg_csat', {
-    header: t('AGENT_REPORTS.AGENT_PERFORMANCE_TABLE.TABLE_HEADER.AVG_CSAT'),
-    cell: cellProps => h(
-      'span',
-      {
-        class: cellProps.getValue() && cellProps.getValue() !== '---' ? '' : 'text-slate-300 dark:text-slate-700',
-      },
-      cellProps.getValue() && cellProps.getValue() !== '---' ? `${cellProps.getValue()}/5.0` : '---'
-    ),
-    size: 100,
-    sortingFn: (rowA, rowB) => {
-      const a = parseFloat(rowA.getValue('avg_csat')) || 0;
-      const b = parseFloat(rowB.getValue('avg_csat')) || 0;
-      return a - b;
-    },
-  }),
+  // columnHelper.accessor('avg_csat', {
+  //   header: t('AGENT_REPORTS.AGENT_PERFORMANCE_TABLE.TABLE_HEADER.AVG_CSAT'),
+  //   cell: cellProps => h(
+  //     'span',
+  //     {
+  //       class: cellProps.getValue() && cellProps.getValue() !== '---' ? '' : 'text-slate-300 dark:text-slate-700',
+  //     },
+  //     cellProps.getValue() && cellProps.getValue() !== '---' ? `${cellProps.getValue()}/5.0` : '---'
+  //   ),
+  //   size: 100,
+  //   sortingFn: (rowA, rowB) => {
+  //     const a = parseFloat(rowA.getValue('avg_csat')) || 0;
+  //     const b = parseFloat(rowB.getValue('avg_csat')) || 0;
+  //     return a - b;
+  //   },
+  // }),
   columnHelper.accessor('work_distribution', {
     header: t('AGENT_REPORTS.AGENT_PERFORMANCE_TABLE.TABLE_HEADER.WORK_DISTRIBUTION'),
     cell: cellProps => h(

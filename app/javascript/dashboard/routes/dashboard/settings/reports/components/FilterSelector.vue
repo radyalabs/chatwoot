@@ -99,18 +99,24 @@ export default {
       return getUnixStartOfDay(fromDate);
     },
     validGroupOptions() {
-      return this.selectedDateRange.groupByOptions;
+      return this.selectedDateRange.groupByOptions || [];
     },
     validGroupBy() {
-      if (!this.selectedGroupByFilter) {
-        return this.validGroupOptions[0];
+      const options = this.validGroupOptions;
+
+      if (!options || options.length === 0) {
+        return null;
       }
 
-      const validIds = this.validGroupOptions.map(opt => opt.id);
+      if (!this.selectedGroupByFilter) {
+        return options[0];
+      }
+
+      const validIds = options.map(opt => opt.id);
       if (validIds.includes(this.selectedGroupByFilter.id)) {
         return this.selectedGroupByFilter;
       }
-      return this.validGroupOptions[0];
+      return options[0];
     },
   },
   watch: {
@@ -149,8 +155,13 @@ export default {
       });
     },
     onDateRangeChange(selectedRange) {
+      console.log('[FilterSelector] onDateRangeChange received:', selectedRange);
+      
       this.selectedDateRange = selectedRange;
       this.selectedGroupByFilter = this.validGroupBy;
+
+      console.log('[FilterSelector] New Offset:', this.selectedDateRange.offset);
+      
       this.emitChange();
     },
     onCustomDateRangeChange(value) {
@@ -195,7 +206,9 @@ export default {
     <div
       class="flex-grow flex gap-4"
     >
-      <ReportsFiltersDateRange @on-range-change="onDateRangeChange" />
+      <ReportsFiltersDateRange
+        :selected-date-range="selectedDateRange" 
+        @on-range-change="onDateRangeChange" />
       <WootDateRangePicker
         v-if="isDateRangeSelected"
         show-range

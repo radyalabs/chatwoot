@@ -15,6 +15,7 @@ import useVuelidate from '@vuelidate/core';
 import { useAlert } from 'dashboard/composables';
 import { useI18n } from 'vue-i18n';
 import aiAgents from '../../../api/aiAgents';
+import captainTranslator from '../../../api/captainTranslator';
 import MarkdownIt from 'markdown-it';
 import { useRoute } from 'vue-router';
 
@@ -32,6 +33,8 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['update:data']);
+
 const { t } = useI18n();
 
 // Check if debug mode is enabled via URL parameter
@@ -47,35 +50,6 @@ const messages = ref([]);
 const sessionId = ref(crypto.randomUUID());
 const loadingChat = ref(false);
 const chatContainer = ref(null);
-const knowledgeSources = ref([]);
-
-// Fetch knowledge sources on mount or when agent data changes
-watch(
-  () => props.data,
-  async v => {
-    chatflowId.value = v?.chat_flow_id;
-    if (v?.id) {
-      try {
-        const res = await aiAgents.getKnowledgeSources(v.id);
-        knowledgeSources.value = res.data?.knowledge_source_texts || [];
-      } catch (err) {
-        console.error('Failed to fetch knowledge sources:', err);
-        knowledgeSources.value = [];
-      }
-    }
-  },
-  { immediate: true }
-);
-
-watch(
-  () => props.data,
-  v => {
-    chatflowId.value = v?.chat_flow_id;
-  },
-  {
-    immediate: true,
-  }
-);
 
 const state = reactive({
   name: '',
@@ -84,6 +58,7 @@ const state = reactive({
   business_info: '',
   welcoming_message: '',
   routing_conditions: '',
+  enable_handover: true,
   has_website: '', // 'yes' or 'no'
   website_url: '',
   full_prompt: '',
@@ -104,69 +79,48 @@ const rules = {
 
 const v$ = useVuelidate(rules, state);
 
-// Inside the watch on props.data, after fetching knowledgeSources
-// 🔁 Replace both watches with this single one:
-
 watch(
   () => props.data,
-  async v => {
+  v => {
     if (!v) return;
 
-    // Sync chatflowId immediately
     chatflowId.value = v?.chat_flow_id;
-    console.log("v:")
-    console.log(v)
-    // Start populating state from props.data
+    
     state.name = v.name || '';
-    // state.description = v.description || '';
-    state.welcoming_message = v.display_flow_data.agents_config[0].bot_prompt.persona;
-    state.routing_conditions = v.display_flow_data.agents_config[0].bot_prompt.handover_conditions;
     
-    // 🚫 Do NOT set state.business_info from v.business_info!
-    // Why? Because the real source of truth is knowledge_sources (tab:1)
-    // If we set it here, it might get overwritten later — or worse, overwrite the real data.
-    
-    if (v.id) {
-      try {
-        const res = await aiAgents.getKnowledgeSources(v.id);
-        knowledgeSources.value = res.data?.knowledge_source_texts || [];
-        console.log("knowledgeSources value:")
-        console.log(knowledgeSources.value)
-        console.log("props.data:")
-        console.log(props.data)
-        console.log(props.data.display_flow_data)
-        const flowData = props.data.display_flow_data;
-        console.log("flowData:")
-        console.log(flowData)
-        const agents_config = flowData.agents_config;
-        console.log(agents_config)
-        // ✅ STEP 2: Update bot_prompt for every agent that is customer_service
-        agents_config.forEach(agent_config => {
+    const flowData = v.display_flow_data;
+    console.log("flowData:", flowData);
+      if (flowData?.agents_config) {
+        // Initialize enable_handover from the first agent's configurations if present
+        const firstAgent = flowData.agents_config[0];
+        state.enable_handover = firstAgent?.configurations?.enable_handover ?? true;
+
+        flowData.agents_config.forEach(agent_config => {
           if (agent_config.bot_prompt) {
-            console.log(agents_config)
-            state.welcoming_message = agent_config.bot_prompt.persona;
-            state.routing_conditions = agent_config.bot_prompt.handover_conditions;
+            state.welcoming_message = agent_config.bot_prompt.persona || '';
+            state.routing_conditions = agent_config.bot_prompt.handover_conditions || '';
             state.instructions = agent_config.bot_prompt.instructions || '';
+            state.business_info = agent_config.bot_prompt.business_info || '';
           }
         });
-        // Now look for tab:1 content
-        const knowledgeTab1 = knowledgeSources.value.find(k => k.tab === 1);
-        if (knowledgeTab1) {
-          state.business_info = knowledgeTab1.text;
-        } else {
-          // If no knowledge source for tab:1 exists, leave as empty (or set default)
-          state.business_info = '';
-        }
-      } catch (err) {
-        console.error('Failed to fetch knowledge sources:', err);
-        state.business_info = ''; // fallback on error
       }
-    }
   },
   { immediate: true }
 );
 
 const loadingSave = ref(false);
+
+async function translateToEnglish(text) {
+  if (!text || text.trim() === '') return text;
+  
+  try {
+    const response = await captainTranslator.translate(text, 'en');
+    return response.data.translated_text;
+  } catch (error) {
+    console.error('Translation error:', error);
+    return text; // Return original text if translation fails
+  }
+}
 
 async function submit() {
   if (loadingSave.value) return;
@@ -178,65 +132,54 @@ async function submit() {
     loadingSave.value = true;
 
     const agentId = props.data.id;
-    const request = { ...state };
-    console.log("state:")
-    console.log(state)
-
-    // 🔎 Find existing knowledge source for tab: 1
-    const existingKnowledge = knowledgeSources.value.find(k => k.tab === 1);
-
-    let knowledgeId = existingKnowledge?.id;
-
-    // 🟡 If no knowledge source for tab:1 exists → create one
-    if (!knowledgeId) {
-      const createRes = await aiAgents.addKnowledgeText(agentId, {
-        id: null,
-        tab: 1,
-        text: state.business_info || '<br>',
-      });
-      knowledgeId = createRes.data?.id;
-
-      // 🛠 Also update local list so future edits work
-      if (knowledgeId) {
-        knowledgeSources.value.push({
-          id: knowledgeId,
-          tab: 1,
-          text: state.business_info || '<br>',
-        });
+    
+    // Translate bot_prompt fields to English
+    const [translatedInstructions, translatedPersona, translatedRoutingConditions, translatedBusinessInfo] = await Promise.all([
+      translateToEnglish(state.instructions),
+      translateToEnglish(state.welcoming_message),
+      translateToEnglish(state.routing_conditions),
+      translateToEnglish(state.business_info),
+    ]);
+    
+    // flow_data: Build from existing flow_data (already translated), then update with new translations
+    const flowData = JSON.parse(JSON.stringify(props.data.flow_data || {}));
+    flowData.agents_config?.forEach(agent_config => {
+      if (agent_config.bot_prompt) {
+        agent_config.bot_prompt.persona = translatedPersona || agent_config.bot_prompt.persona;
+        agent_config.bot_prompt.handover_conditions = translatedRoutingConditions || '';
+        agent_config.bot_prompt.instructions = translatedInstructions || '';
+        agent_config.bot_prompt.business_info = translatedBusinessInfo || '';
       }
-    }
-
-    // ✅ Now safely update with real `id`
-    await aiAgents.updateKnowledgeText(agentId, {
-      id: knowledgeId,
-      tab: 1,
-      text: state.business_info,
+      agent_config.configurations = agent_config.configurations || {};
+      agent_config.configurations.enable_handover = !!state.enable_handover;
     });
 
-    // ✅ Update agent info
-    // ✅ STEP 1: Deep clone flowData to avoid mutating props
-    const flowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
-
-    // ✅ STEP 2: Update bot_prompt for every agent that is customer_service
-    flowData.agents_config.forEach(agent_config => {
+    // display_flow_data: original user input (for display)
+    const displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data || {}));
+    displayFlowData.agents_config?.forEach(agent_config => {
       if (agent_config.bot_prompt) {
         agent_config.bot_prompt.persona = state.welcoming_message || agent_config.bot_prompt.persona;
         agent_config.bot_prompt.handover_conditions = state.routing_conditions || '';
         agent_config.bot_prompt.instructions = state.instructions || '';
-        // Optionally reset to default if empty:
-        // if (!state.routing_conditions) agent_config.bot_prompt.handover_conditions = '...default...'
+        agent_config.bot_prompt.business_info = state.business_info || '';
       }
+      agent_config.configurations = agent_config.configurations || {};
+      agent_config.configurations.enable_handover = !!state.enable_handover;
     });
-    console.log(flowData);
-    console.log(props.config);
+
     const payload = {
       flow_data: flowData,
+      display_flow_data: displayFlowData,
     };
-    // ✅ Properly await the API call
+    
     await aiAgents.updateAgent(props.data.id, payload);
 
-    // 🔄 Refresh agent data to get latest chat_flow_id
+    // Refresh agent data to get latest chat_flow_id
     const detailAgent = await aiAgents.detailAgent(agentId).then(v => v?.data);
+    
+    // ✅ Emit updated data to parent so props.data gets refreshed
+    emit('update:data', detailAgent);
+    
     chatflowId.value = undefined;
     nextTick(() => {
       chatflowId.value = detailAgent?.chat_flow_id;
@@ -379,7 +322,21 @@ function resetChat() {
           </div>
           </div>
 
-          <div>
+          <div class="mb-6">
+            <label class="block font-medium mb-2">{{ t('AGENT_MGMT.FORM_CREATE.ENABLE_HANDOVER') }}</label>
+            <p class="text-sm text-gray-500 mb-3">{{ t('AGENT_MGMT.FORM_CREATE.HANDOVER_INSTRUCTION') }}</p>
+            <label class="inline-flex items-center cursor-pointer">
+              <input type="checkbox" v-model="state.enable_handover" :disabled="isDebugMode" class="sr-only peer">
+              <div
+                class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
+              </div>
+              <span class="ml-3 text-sm text-slate-700 dark:text-slate-300">
+                {{ state.enable_handover ? 'Aktif' : 'Tidak Aktif' }}
+              </span>
+            </label>
+          </div>
+
+          <div v-if="state.enable_handover">
             <label for="routing_conditions">{{ t('AGENT_MGMT.FORM_CREATE.ROUTING_CONDITION') }}</label>
             <TextArea
               id="routing_conditions"
@@ -475,4 +432,5 @@ function resetChat() {
     </div>
     <!-- Chat Preview Section -->
   </div>
+
 </template>

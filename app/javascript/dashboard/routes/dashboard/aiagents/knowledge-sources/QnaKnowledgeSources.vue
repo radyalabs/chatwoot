@@ -16,7 +16,7 @@ const props = defineProps({
   context: {
     type: String,
     default: 'general',
-    validator: (value) => ['booking', 'cs', 'general', 'lead_generation', 'sales'].includes(value)
+    validator: (value) => ['booking', 'customer_service', 'general', 'lead_generation', 'sales', 'event_organizer', 'restaurant'].includes(value)
   }
 });
 
@@ -24,42 +24,84 @@ const maxQna = 25
 const qnas = ref([]);
 const expandedQnas = ref({}); // Track expanded state for each QnA
 
-// Helper function to get prefix for current context
-const getPrefix = () => {
-  return props.context !== 'general' ? `[${props.context.toUpperCase()}] ` : '';
-};
-
-// Helper function to strip prefix from question
+// Helper function to strip existing prefix from question (for cleanup)
 const stripPrefix = (question) => {
-  if (props.context === 'general') return question;
-  const prefix = `[${props.context.toUpperCase()}] `;
-  return question?.startsWith(prefix) ? question.slice(prefix.length) : question;
+  if (!question) return question;
+  
+  // Remove "pertanyaan:" prefix and trim
+  if (question.toLowerCase().startsWith('pertanyaan:')) {
+    return question.slice('pertanyaan:'.length).trim();
+  }
+  
+  // Remove any existing prefix like [BOOKING], [CS], etc. (for backward compatibility)
+  const prefixPattern = /^\[[A-Z_]+\]\s*/;
+  return question.replace(prefixPattern, '');
 };
 
-// Helper function to add prefix to question
-const addPrefix = (question) => {
-  if (props.context === 'general') return question;
-  const prefix = `[${props.context.toUpperCase()}] `;
-  return prefix + question;
+// Helper function to strip prefix from answer
+const stripAnswerPrefix = (answer) => {
+  if (!answer) return answer;
+  
+  // Remove "jawaban:" prefix and trim
+  if (answer.toLowerCase().startsWith('jawaban:')) {
+    return answer.slice('jawaban:'.length).trim();
+  }
+  
+  return answer;
 };
 
-// Filter QnAs based on context prefix in question field
+// Helper function to add prefix to question for saving
+const addQuestionPrefix = (question) => {
+  if (!question?.trim()) return 'pertanyaan:';
+  
+  const cleanQuestion = question.trim();
+  // Check if prefix already exists
+  if (cleanQuestion.toLowerCase().startsWith('pertanyaan:')) {
+    return cleanQuestion;
+  }
+  
+  return `pertanyaan: ${cleanQuestion}`;
+};
+
+// Helper function to add prefix to answer for saving
+const addAnswerPrefix = (answer) => {
+  if (!answer?.trim()) return 'jawaban:';
+  
+  const cleanAnswer = answer.trim();
+  // Check if prefix already exists
+  if (cleanAnswer.toLowerCase().startsWith('jawaban:')) {
+    return cleanAnswer;
+  }
+  
+  return `jawaban: ${cleanAnswer}`;
+};
+
+// Filter QnAs based on ai_agent_name_id
 const contextQnas = computed(() => {
   if (props.context === 'general') {
     return qnas.value;
   }
   
-  // Filter based on prefix [BOOKING], [CS], [SALES] in question
-  const prefix = `[${props.context.toUpperCase()}]`;
+  // Get current context agent_id
+  const currentAgentId = getAgentId();
+  if (!currentAgentId) {
+    return qnas.value;
+  }
+  
+  // Filter based on ai_agent_name_id
   return qnas.value.filter(qna => {
-    const question = qna.question || '';
-    return question.startsWith(prefix);
+    return qna.ai_agent_name_id === currentAgentId;
   });
 });
 
-// Get display question (without prefix) for a QnA item
+// Get display question (clean without any prefix)
 const getDisplayQuestion = (item) => {
   return stripPrefix(item.question || '');
+};
+
+// Get display answer (clean without any prefix)
+const getDisplayAnswer = (item) => {
+  return stripAnswerPrefix(item.answer || '');
 };
 
 const reachedMaxQnas = computed(() => contextQnas.value.length >= maxQna)
@@ -77,13 +119,31 @@ async function fetchKnowledge() {
       qnas.value = [...qnas.value, ...unsavedItems];
     }
     
-    console.log(`[${props.context}] Total QnAs: ${qnas.value.length} | Context QnAs: ${contextQnas.value.length}`);
   } catch (e) {
     useAlert(t('AGENT_MGMT.QNA.FETCH_ERROR'));
   } finally {
     isFetching.value = false;
   }
 }
+
+// Add this computed property after the existing helper functions, around line 130-140
+const collectionName = computed(() => {
+  if (!props.data?.display_flow_data?.agents_config) return null;
+  
+  const agents = props.data.display_flow_data.agents_config;
+  
+  // For general context, return the first agent's collection_name
+  if (props.context === 'general') {
+    return agents[0]?.collection_name || null;
+  }
+  
+  const targetType = props.context;
+  if (!targetType) return null;
+  
+  // Find agent by type
+  const agent = agents.find(agent => agent.type === targetType);
+  return agent?.collection_name || null;
+});
 
 watch(
   () => props.data,
@@ -116,13 +176,14 @@ async function deleteData() {
   const dataId = dataToDelete?.id;
   const indexToDelete = deleteModalIndex.value;
   
+  const collection_name = collectionName.value;
+  
   try {
     showDeleteModal.value = false;
     deleteLoadingIds.value[dataId] = true;
-    
     // If it has an ID, delete from server
     if (dataId) {
-      await aiAgents.deleteKnowledgeQna(props.data.id, dataId);
+      await aiAgents.deleteKnowledgeQna(props.data.id, dataId, { collection_name });
       if (indexToDelete !== -1) {
         qnas.value.splice(indexToDelete, 1);
       }
@@ -143,36 +204,48 @@ async function deleteData() {
 
 const isSaving = ref(false);
 async function save() {
+  const collection_name = collectionName.value;
   try {
     isSaving.value = true;
 
+    // Get current agent_id for context
+    const currentAgentId = getAgentId();
+    
     const itemsToSave = qnas.value
+      .filter(e => {
+        // For general context, save all QnAs
+        if (props.context === 'general') return true;
+        
+        // For specific context, only save QnAs with matching ai_agent_name_id
+        return e.ai_agent_name_id === currentAgentId || !e.id; // Include new items without ID
+      })
       .map(e => {
         const question = e.question?.trim() || '';
         const answer = e.answer?.trim() || '';
-        
-        // Strip prefix to check if there's actual content
-        const questionContent = stripPrefix(question).trim();
         
         return {
           originalItem: e,
           id: e.id || null,
           question: question,
           answer: answer,
-          hasContent: questionContent.length > 0 && answer.length > 0
+          hasContent: question.length > 0 && answer.length > 0
         };
       })
       .filter(t => t.hasContent);
     
     const request = itemsToSave.map(t => ({ 
       id: t.id, 
-      question: t.question, 
-      answer: t.answer 
+      question: addQuestionPrefix(t.question), 
+      answer: addAnswerPrefix(t.answer),
+      agent_id: currentAgentId,
+      collection_name: collection_name // Include collection_name here
     }));
     
     // Store items that will be saved (to exclude them from unsaved items later)
     const itemsThatWillBeSaved = itemsToSave.map(t => t.originalItem);
-      
+    
+
+    // Add collection_name parameter here
     await aiAgents.createOrUpdateKnowledgeQna(props.data.id, request);
     
     qnas.value = qnas.value.filter(qna => !itemsThatWillBeSaved.includes(qna));
@@ -191,11 +264,10 @@ function addQna() {
     return
   }
   
-  // Add prefix to new QnA question (stored in backend, not displayed)
-  const prefix = getPrefix();
   const newQna = {
-    question: prefix,
-    answer: ''
+    question: '',
+    answer: '',
+    ai_agent_name_id: getAgentId() // Set agent_id for new QnA
   };
   
   qnas.value.push(newQna);
@@ -212,8 +284,11 @@ function addQna() {
 }
 
 function updateQuestion(item, displayValue) {
-  const prefix = getPrefix();
-  item.question = prefix + (displayValue || '');
+  item.question = displayValue || '';
+}
+
+function updateAnswer(item, displayValue) {
+  item.answer = displayValue || '';
 }
 
 function toggleQnaExpand(index) {
@@ -226,12 +301,33 @@ const contextLabel = computed(() => {
     case 'cs': return 'CS Bot';
     case 'sales': return 'Sales Bot';
     case 'lead_generation': return 'Lead Generation Bot';
+    case 'event_organizer': return 'Event Organizer Bot';
+    case 'restaurant': return 'Restaurant Bot';
     default: return 'General';
   }
 });
 
 const maxCharQuestion = 150
 const maxCharAnswer = 700
+
+// Helper function to get agent_id based on context
+const getAgentId = () => {
+  if (!props.data?.display_flow_data?.agents_config) return null;
+  
+  const agents = props.data.display_flow_data.agents_config;
+  
+  // For general context, return the first agent's id
+  if (props.context === 'general') {
+    return agents[0]?.agent_id || null;
+  }
+  
+  const targetType = props.context;
+  if (!targetType) return null;
+  
+  // Find agent by type
+  const agent = agents.find(agent => agent.type === targetType);
+  return agent?.agent_id || null;
+};
 </script>
 
 <template>
@@ -310,11 +406,12 @@ const maxCharAnswer = 700
                 </label>
                 <div class="relative">
                   <TextArea 
-                    v-model="item.answer" 
+                    :model-value="getDisplayAnswer(item)"
                     showCharacterCount="true" 
                     :maxLength="maxCharAnswer" 
                     :placeholder="$t('AGENT_MGMT.QNA_PLACEHOLDER.ANSWER')"
                     class="w-full"
+                    @update:model-value="(value) => updateAnswer(item, value)"
                   />
                 </div>
               </div>

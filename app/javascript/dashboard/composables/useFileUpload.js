@@ -14,9 +14,16 @@ import { checkFileSizeLimit } from 'shared/helpers/FileHelper';
  * @param {Object} options - Configuration options
  * @param {boolean} options.isATwilioSMSChannel - Whether the current channel is Twilio SMS
  * @param {Function} options.attachFile - Callback function to handle file attachment
+ * @param {Function} options.updateAttachment - Callback to update attachment when upload completes (tempId, blob) => void
+ * @param {Function} options.removeAttachment - Callback to remove attachment on error (tempId) => void
  * @returns {Object} File upload methods and utilities
  */
-export const useFileUpload = ({ isATwilioSMSChannel, attachFile }) => {
+export const useFileUpload = ({
+  isATwilioSMSChannel,
+  attachFile,
+  updateAttachment,
+  removeAttachment,
+}) => {
   const { t } = useI18n();
 
   const accountId = useMapGetter('getCurrentAccountId');
@@ -34,6 +41,12 @@ export const useFileUpload = ({ isATwilioSMSChannel, attachFile }) => {
     if (!file) return;
 
     if (checkFileSizeLimit(file, maxFileSize.value)) {
+      // Generate a temporary ID to track this upload
+      const tempId = `upload-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+
+      // Immediately attach the file with uploading state so the UI shows it
+      attachFile({ file, uploading: true, tempId });
+
       const upload = new DirectUpload(
         file.file,
         `/api/v1/accounts/${accountId.value}/conversations/${currentChat.value.id}/direct_uploads`,
@@ -50,8 +63,15 @@ export const useFileUpload = ({ isATwilioSMSChannel, attachFile }) => {
       upload.create((error, blob) => {
         if (error) {
           useAlert(error);
+          // Remove the failed upload from the list
+          if (removeAttachment) {
+            removeAttachment(tempId);
+          }
         } else {
-          attachFile({ file, blob });
+          // Update the attachment with the blob data
+          if (updateAttachment) {
+            updateAttachment(tempId, blob);
+          }
         }
       });
     } else {

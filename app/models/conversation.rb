@@ -11,6 +11,7 @@
 #  custom_attributes      :jsonb
 #  first_reply_created_at :datetime
 #  identifier             :string
+#  is_convert             :boolean          default(FALSE), not null
 #  is_handover_reminded   :boolean          default(FALSE), not null
 #  is_reminded            :boolean          default(FALSE), not null
 #  last_activity_at       :datetime         not null
@@ -79,11 +80,16 @@ class Conversation < ApplicationRecord
   scope :resolved, -> { where(status: 1) }
   scope :assigned_to, ->(agent) { where(assignee_id: agent.id) }
   scope :unattended, -> { where(first_reply_created_at: nil).or(where.not(waiting_since: nil)) }
-  scope :resolvable, lambda { |auto_resolve_duration|
-    return none if auto_resolve_duration.to_i.zero?
+  scope :resolvable, lambda { |auto_resolve_duration = nil|
+    duration = auto_resolve_duration.to_i.zero? ? 1 : auto_resolve_duration.to_i
+    unit = ENV.fetch('AUTO_RESOLVE_CONVERSATION_UNIT', 'days') # default: days
 
-    open.where('last_activity_at < ? ', Time.now.utc - auto_resolve_duration.days)
+    open.where('last_activity_at < ? ', duration.send(unit).ago)
   }
+  scope :with_completed_idle, lambda {
+                                joins(:idle_conversation)
+                                  .where(idle_conversations: { status: :completed })
+                              }
 
   scope :last_user_message_at, lambda {
     joins(
@@ -99,6 +105,8 @@ class Conversation < ApplicationRecord
   belongs_to :contact_inbox
   belongs_to :team, optional: true
   belongs_to :campaign, optional: true
+
+  has_one :idle_conversation, dependent: :destroy_async
 
   has_many :mentions, dependent: :destroy_async
   has_many :messages, dependent: :destroy_async, autosave: true

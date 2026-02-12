@@ -42,6 +42,15 @@ class Api::V1::Widget::MessagesController < Api::V1::Widget::BaseController
     end
   end
 
+  def conversation
+    @conversation ||= if permitted_params[:conversation_id].present?
+                        @contact_inbox.conversations.find_by(display_id: permitted_params[:conversation_id])
+                      else
+                        @contact_inbox.conversations.last
+                      end
+    @conversation
+  end
+
   def set_conversation
     @conversation = create_conversation if conversation.nil?
   end
@@ -64,7 +73,7 @@ class Api::V1::Widget::MessagesController < Api::V1::Widget::BaseController
 
   def permitted_params
     # timestamp parameter is used in create conversation method
-    params.permit(:id, :before, :after, :website_token, contact: [:name, :email], message: [:content, :referer_url, :timestamp, :echo_id, :reply_to])
+    params.permit(:id, :conversation_id, :before, :after, :website_token, contact: [:name, :email], message: [:content, :referer_url, :timestamp, :echo_id, :reply_to])
   end
 
   def set_message

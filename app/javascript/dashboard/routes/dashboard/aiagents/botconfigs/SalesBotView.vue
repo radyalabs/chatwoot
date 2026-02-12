@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full min-h-0">
+  <div class="w-full flex flex-col">
     <div v-if="notification"
       :class="['fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transition-all duration-300',
         notification.type === 'success' ? 'bg-green-500 text-white' :
@@ -19,7 +19,7 @@
       </p>
       <div class="border-b border-gray-200 dark:border-gray-700"></div>
     </div>
-    <div class="overflow-y-auto min-h-0">
+    <div>
       <div class="space-y-6 pb-6">
         <!-- Sidebar Navigation (always show) -->
         <div class="flex flex-row justify-stretch gap-2">
@@ -142,7 +142,7 @@
                       <a 
                         :href="catalogSheets.input" 
                         target="_blank" 
-                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors shadow-sm"
+                        class="inline-flex items-center space-x-2 border-2 border-green-600 hover:border-green-700 dark:border-green-600 text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-500 px-4 py-2 rounded-md font-medium transition-colors bg-transparent hover:bg-green-50 dark:hover:bg-green-900/20"
                       >
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
@@ -176,12 +176,12 @@
                       <div class="flex flex-row"> 
                         <div class="text-red-600 text-sm flex items-center gap-2">
                           <button
-                          @click="retryAuthentication"
-                          class="inline-flex items-center space-x-2 border-2 border-green-700 hover:border-green-700 dark:border-green-700 text-green-600 hover:text-green-700 dark:text-grey-400 dark:hover:text-grey-500 pr-4 py-2 rounded-md font-medium transition-colors bg-transparent hover:bg-grey-50 dark:hover:bg-grey-900/20"
-                          :disabled="loading"
+                          @click="openRegenerateModal"
+                          class="btn-retryauth inline-flex items-center space-x-2 px-4 py-2 rounded-md font-medium transition-colors bg-transparent"
+                          :disabled="isRegenerating"
                         >
-                          <span v-if="loading">{{ $t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_LOADING') }}</span>
-                          <span>{{ t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_BTN') }}</span>
+                          <span v-if="isRegenerating">{{ $t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_LOADING') }}</span>
+                          <span v-else>{{ t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_BTN') }}</span>
                         </button>
                       </div>
                       <div class="gap-2 items-center">
@@ -217,7 +217,7 @@
                       v-if="catalogSheets.output && !salesAuthError"
                       :href="catalogSheets.output" 
                       target="_blank" 
-                      class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors shadow-sm"
+                      class="inline-flex items-center space-x-2 border-2 border-green-600 hover:border-green-700 dark:border-green-600 text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-500 px-4 py-2 rounded-md font-medium transition-colors bg-transparent hover:bg-green-50 dark:hover:bg-green-900/20"
                     >
                       <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
@@ -226,23 +226,155 @@
                     </a>
                   </div>
                 </div>
+
+                <!-- Notification Settings -->
+                <NotificationSettings
+                  :ai-agent-id="data.id"
+                  :categories="[]"
+                  :show-filters="false"
+                  title-key="AGENT_MGMT.SALESBOT.NOTIFICATION.TITLE"
+                  desc-key="AGENT_MGMT.SALESBOT.NOTIFICATION.DESC"
+                  :variable-config="salesVariableConfig"
+                />
               </div>
             </div>
           </div>
 
-          <div v-show="activeTabIndex === 1" class="w-full">
+          <!-- Bot Config Tab -->
+          <div v-show="activeTabIndex === 1" class="w-full min-w-0">
+            <div class="flex flex-row gap-4">
+              <div class="flex-1 min-w-0 flex flex-col justify-stretch">
+                
+                <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
+                  <div class="flex items-start justify-between p-6">
+                    <div class="flex items-center">
+                      <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
+                          <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 class="font-medium text-slate-900 dark:text-slate-25">Tingkat Kreativitas</h3>
+                        <p class="text-sm text-gray-500 mt-1">Tentukan seberapa kreatif bot dalam merespons percakapan</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="border-t border-gray-200 dark:border-gray-700 p-6">
+                    <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">Skala Kreativitas</label>
+                    <div class="relative">
+                      <select 
+                        v-model="creativityLevel" 
+                        class="w-full mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      >
+                        <option class="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" v-for="opt in creativityOptions" :key="opt.value" :value="opt.value">
+                          {{ opt.label }}
+                        </option>
+                      </select>
+                      <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500 dark:text-gray-400">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
+                  <div class="flex items-center p-6">
+                    <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="font-medium text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.EOBOT.IDLE_STATE') }}</h3>
+                      <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.EOBOT.IDLE_STATE_DESC') }}</p>
+                    </div>
+                  </div>
+                  
+                  <div class="border-t border-gray-200 dark:border-gray-700 p-6">
+                    <div>
+                      <label class="block text-sm font-medium mb-2 text-slate-900 dark:text-slate-25">
+                        {{ $t('AGENT_MGMT.EOBOT.IDLE_TIME') }}
+                      </label>
+                      <div class="flex items-center gap-3">
+                        <div class="w-16">
+                          <input 
+                            type="number" 
+                            min="5"
+                            v-model="idleConfig.duration"
+                            class="text-center px-2 py-2 text-sm font-medium border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors h-10"
+                            placeholder="30" 
+                          />
+                        </div>
+                        <span class="text-slate-600 dark:text-slate-400 text-sm leading-10 self-start">
+                          {{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_DESC') }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="w-[240px] flex flex-col gap-3">
+                <div class="sticky bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
+                  <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 flex-shrink-0 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                      <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="font-semibold text-slate-700 dark:text-slate-300">{{ $t('AGENT_MGMT.BOOKING_BOT.CONFIGURE') }}</h3>
+                      <p class="text-sm text-slate-500 dark:text-slate-400">{{ $t('AGENT_MGMT.BOOKING_BOT.CONFIGURE_DESC') }}</p>
+                    </div>
+                  </div>
+                  
+                  <Button
+                    class="w-full"
+                    :is-loading="isSaving"
+                    :disabled="isSaving"
+                    @click="() => saveSettings()"
+                  >
+                    <span class="flex items-center gap-2">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                      </svg>
+                      {{ $t('AGENT_MGMT.BOOKING_BOT.SAVE_BTN') }}
+                    </span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-show="activeTabIndex === 2" class="w-full">
             <FileKnowledgeSources :data="data" context="sales"/>
           </div>
-  
+
           <!-- Shipping Tab -->
-          <div v-show="activeTabIndex === 2" class="w-full min-w-0">
+          <div v-show="activeTabIndex === 3" class="w-full min-w-0">
+            <ShippingConfig
+              v-if="data && data.id"
+              :ai-agent-id="data.id"
+              :initial-stores="shippingStores" 
+              :is-saving="isSaving"
+              @save-config="submitShippingConfig"
+            />
+          </div>
+  
+          <!-- Shipping Tab
+          <div v-show="activeTabIndex === 3" class="w-full min-w-0">
             <div class="flex flex-row gap-4">
               <div class="flex-1 min-w-0 flex flex-col justify-stretch gap-6">
                 <div class="space-y-4">
                   <div>
                     <label class="block font-medium mb-1">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.METHOD_TITLE') }}</label>
                 
-                <!-- Kurir Toko -->
+                
                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
                   <div class="flex items-center justify-between p-4">
                     <div class="flex items-center">
@@ -275,7 +407,7 @@
                     v-if="shippingMethods.kurirToko" 
                     class="border-t border-gray-200 dark:border-gray-700 p-4 space-y-4 transition-all duration-200 ease-in-out"
                   >
-                    <!-- Store Address -->
+                    
                     <div>
                       <label class="block font-medium mb-1">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.STORE_ADDRESS') }}</label>
                       <input 
@@ -286,12 +418,12 @@
                       />
                     </div>
   
-                    <!-- Google Maps Integration -->
+                    
                     <div>
                       <label class="block font-medium mb-2">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.MAP_LOCATION') }}</label>
                       <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.MAP_INSTRUCTION') }}</p>
                       
-                      <!-- Map Container -->
+                      
                       <div class="relative bg-gray-100 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
                         <div 
                           ref="mapRef"
@@ -299,7 +431,7 @@
                           style="min-height: 256px;"
                         ></div>
                         
-                        <!-- Loading Overlay -->
+                        
                         <div v-if="!kurirToko.mapLoaded" class="absolute inset-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                           <div class="text-center">
                             <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto mb-2" fill="none" viewBox="0 0 24 24">
@@ -311,7 +443,7 @@
                         </div>
                       </div>
   
-                      <!-- Coordinates Display -->
+                      
                       <div class="grid grid-cols-2 gap-4 mt-3">
                         <div>
                           <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.LATITUDE') }}</label>
@@ -336,11 +468,11 @@
                       </div>
                     </div>
                     
-                    <!-- Service Area -->
+                    
                     <div>
                       <label class="block font-medium mb-3">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.SERVICE_AREA') }}</label>
                       <div class="space-y-4">
-                        <!-- Radius Option -->
+                        
                         <div class="flex items-start space-x-3">
                           <label class="inline-flex items-center cursor-pointer">
                             <input 
@@ -367,7 +499,7 @@
                           </div>
                         </div>
   
-                        <!-- Region Option -->
+                        
                         <div class="flex items-start space-x-3">
                           <label class="inline-flex items-center cursor-pointer">
                             <input 
@@ -422,7 +554,7 @@
                               </div>
                             </div>
                             
-                            <!-- City/District Dropdown for Region -->
+                            
                             <div v-if="kurirToko.serviceAreaType === 'region' && kurirToko.wilayah" class="mt-3">
                               <label class="block text-sm font-medium mb-1">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.CITY_LABEL') }}</label>
                               <div class="dropdown-container" ref="serviceAreaKotaDropdownRef">
@@ -476,13 +608,13 @@
                       </div>
                     </div>
   
-                    <!-- Shipping Cost -->
+                    
                     <div>
                       <label class="block font-medium mb-3">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.SHIPPING_COST') }}</label>
                       <div class="space-y-4">
-                        <!-- Pricing Method Selection -->
+                        
                         <div class="space-y-3">
-                          <!-- Flat Rate Option -->
+                          
                           <div class="flex items-start space-x-3">
                             <label class="inline-flex items-center cursor-pointer">
                               <input 
@@ -508,7 +640,7 @@
                             </div>
                           </div>
   
-                          <!-- Cost per Distance Option -->
+                          
                           <div class="flex items-start space-x-3">
                             <label class="inline-flex items-center cursor-pointer">
                               <input 
@@ -532,7 +664,7 @@
                           </div>
                         </div>
   
-                        <!-- Free Shipping Toggle -->
+                        
                         <div class="flex items-start space-x-3">
                           <label class="inline-flex items-center cursor-pointer">
                             <input type="checkbox" v-model="kurirToko.gratisOngkir" class="sr-only peer">
@@ -542,11 +674,11 @@
                           </label>
                           <div class="flex-1">
                             <label class="block text-sm font-medium">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.FREE_SHIPPING') }}</label>
-                            <!-- <p class="text-xs text-gray-500 mt-1">Aktifkan gratis ongkir dengan syarat minimal belanja</p> -->
+                            <p class="text-xs text-gray-500 mt-1">Aktifkan gratis ongkir dengan syarat minimal belanja</p>
                           </div>
                         </div>
   
-                        <!-- Minimum Purchase (show when free shipping is enabled) -->
+                        
                         <div v-if="kurirToko.gratisOngkir" class="ml-14 transition-all duration-200 ease-in-out">
                           <label class="block text-sm font-medium mb-1">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.MIN_PURCHASE') }}</label>
                           <div class="relative">
@@ -562,7 +694,7 @@
                         </div>
                       </div>
                     </div>
-                    <!-- estimasi pengiriman -->
+                    
                      <div>
                         <label class="block font-medium mb-1">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.DELIVERY_TIME') }}</label>
                         <input 
@@ -575,7 +707,7 @@
                   </div>
                 </div>
   
-                <!-- Kurir Biasa -->
+                
                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
                   <div class="flex items-center justify-between p-4">
                     <div class="flex items-center">
@@ -599,7 +731,7 @@
                     v-if="shippingMethods.kurirBiasa" 
                     class="border-t border-gray-200 dark:border-gray-700 p-4 space-y-4 transition-all duration-200 ease-in-out"
                   >
-                  <!-- Coming Soon Message -->
+                  
                   <div class="flex items-center justify-center py-8">
                     <div class="text-center">
                       <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -611,7 +743,8 @@
                       <h4 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Coming Soon</h4>
                       <p class="text-sm text-gray-500 dark:text-gray-400">Regular courier configuration will be available soon.</p>
                     </div>
-                  </div>
+                  </div> -->
+
                   <!-- DONT DELETE! -->
                     <!-- <div>
                       <label class="block font-medium mb-1">{{ $t('AGENT_MGMT.SALESBOT.SHIPPING.ORIGIN_ADDRESS') }}</label>
@@ -930,11 +1063,11 @@
                           </div>
                         </div>
                       </div>
-                    </div> -->
+                    </div> 
                   </div>
-                </div>
+                </div> -->
   
-                <!-- Ambil ke Toko -->
+                <!-- Ambil ke Toko
                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
                   <div class="flex items-center justify-between p-4">
                     <div class="flex items-center">
@@ -1031,10 +1164,10 @@
                 </div>
               </div>
             </div>
-          </div>
+          </div> -->
   
           <!-- Payment Methods Tab -->
-          <div v-show="activeTabIndex === 3" class="w-full min-w-0">
+          <div v-show="activeTabIndex === 4" class="w-full min-w-0">
             <div class="flex flex-row gap-4">
               <div class="flex-1 min-w-0 flex flex-col justify-stretch gap-6">
                 <div class="space-y-4">
@@ -1159,6 +1292,77 @@
                       </div>
                     </div>
   
+                    <!-- QRIS Payment -->
+                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
+                      <div class="flex items-center justify-between p-4">
+                        <div class="flex items-center">
+                          <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="stroke-green-600 dark:stroke-white lucide lucide-qr-code"><rect width="8" height="8" x="3" y="3" rx="1"/><rect width="8" height="8" x="13" y="3" rx="1"/><rect width="8" height="8" x="3" y="13" rx="1"/><circle cx="17.5" cy="17.5" r="1.5"/></svg>
+                          </div>
+                          <div>
+                            <h3 class="font-medium">{{ $t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS_TITLE') }}</h3>
+                            <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS_DESC') }}</p>
+                          </div>
+                        </div>
+                        <label class="inline-flex items-center cursor-pointer">
+                          <input type="checkbox" v-model="paymentMethods.qris" class="sr-only peer">
+                          <div
+                            class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
+                          </div>
+                        </label>
+                      </div>
+  
+                      <!-- QRIS Configuration Section -->
+                      <div v-if="paymentMethods.qris" class="border-t border-gray-200 dark:border-gray-700 p-4 space-y-4 transition-all duration-200 ease-in-out">
+    
+                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+                          <div class="flex items-center justify-between mb-4">
+                            <h5 class="font-medium text-slate-700 dark:text-slate-300">
+                              QRIS Code
+                            </h5>
+                            <Button
+                              v-if="qrisConfig.imageUrl"
+                              variant="ghost"
+                              color="ruby"
+                              icon="i-lucide-trash"
+                              size="sm"
+                              @click="deleteQrisImage"
+                              class="opacity-70 hover:opacity-100"
+                            />
+                          </div>
+
+                          <!-- QRIS Image Upload -->
+                          <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              {{ $t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS_IMAGE_LABEL') }} <span class="text-red-500">*</span>
+                            </label>
+                            <div class="flex flex-col gap-3">
+                              <input
+                                type="file"
+                                ref="qrisImageInput"
+                                accept="image/*"
+                                @change="handleQrisImageUpload"
+                                class="hidden"
+                              />
+                              <button
+                                @click="$refs.qrisImageInput?.click()"
+                                class="px-4 py-2 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg text-slate-600 dark:text-slate-400 hover:border-green-400 hover:text-green-600 transition-all bg-white dark:bg-slate-800"
+                              >
+                                {{ qrisConfig.imageUrl ? $t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS_CHANGE_IMAGE') : $t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS_UPLOAD_IMAGE') }}
+                              </button>
+                              <div v-if="qrisConfig.imageUrl" class="flex-1 text-sm text-gray-600 dark:text-gray-400">
+                                <div class="flex flex-col items-center">
+                                  <p class="mb-3 text-center">{{ $t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS_IMAGE_PREVIEW') }}</p>
+                                  <img :src="qrisConfig.imageUrl" class="w-48 h-48 object-contain border border-gray-200 dark:border-gray-700 rounded-lg p-2 bg-white dark:bg-slate-800" />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+  
                     <!-- Payment Gateway -->
                     <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
                       <div class="flex items-center justify-between p-4">
@@ -1275,7 +1479,7 @@
           </div>
   
           <!-- Cart Configuration Tab -->
-          <div v-show="activeTabIndex === 4" class="w-full min-w-0">
+          <div v-show="activeTabIndex === 5" class="w-full min-w-0">
             <div class="flex flex-row gap-4">
               <div class="flex-1 min-w-0 flex flex-col justify-stretch gap-6">
                 <div class="space-y-4">
@@ -1383,7 +1587,7 @@
           </div>
 
           <!-- QnA Tab Content -->
-          <div v-show="activeTabIndex === 5" class="w-full min-w-0">
+          <div v-show="activeTabIndex === 6" class="w-full min-w-0">
             <QnaKnowledgeSources
               :data="data"
               context="sales"
@@ -1391,14 +1595,66 @@
           </div>
 
           <!-- Custom Numbering Content -->
-          <div v-show="activeTabIndex === 6" class="w-full">
-            <CustomNumberingTab :data="data" />
+          <div v-show="activeTabIndex === 7" class="w-full">
+            <CustomNumberingTab :data="data" numbering-key="sales" />
           </div>
 
         </div>
       </div>
     </div>
   </div>
+  <div v-if="showRegenerateModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6" role="dialog">
+    <div class="fixed inset-0 bg-slate-900/50 transition-opacity" @click="showRegenerateModal = false"></div>
+
+    <div class="relative w-full max-w-md transform overflow-hidden rounded-xl bg-white dark:bg-slate-800 p-6 text-left shadow-xl transition-all border border-slate-200 dark:border-slate-700">
+      
+      <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/20 mb-4">
+        <svg class="h-6 w-6 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+        </svg>
+      </div>
+
+      <div class="text-center">
+        <h3 class="text-lg font-semibold leading-6 text-slate-900 dark:text-white" id="modal-title">
+          {{ $t('AGENT_MGMT.EOBOT.REGENERATE_SHEETS') }}
+        </h3>
+        <div class="mt-2">
+          <p class="text-sm text-slate-500 dark:text-slate-400">
+            {{ $t('AGENT_MGMT.EOBOT.REGENERATE_SHEETS_DESC') }}
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-6 flex flex-col sm:flex-row-reverse gap-3">
+        <button 
+          type="button" 
+          class="inline-flex w-full justify-center bg-green-600 text-white rounded-md hover:bg-green-700 px-3 py-2 text-sm font-semibold shadow-sm sm:w-auto transition-colors"
+          @click="regenerateSheetsInput"
+        >
+          {{ $t('AGENT_MGMT.EOBOT.REGENERATE_SHEETS_BTN') }}
+        </button>
+        <button 
+          type="button" 
+          class="inline-flex w-full justify-center rounded-lg bg-white dark:bg-transparent px-3 py-2 text-sm font-semibold text-slate-900 dark:text-slate-300 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 sm:w-auto transition-colors"
+          @click="showRegenerateModal = false"
+        >
+          {{ $t('AGENT_MGMT.EOBOT.REGENERATE_SHEETS_CANCEL') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete QRIS Confirmation Modal -->
+  <woot-delete-modal
+    v-if="showDeleteQrisModal"
+    v-model:show="showDeleteQrisModal"
+    :on-close="() => { showDeleteQrisModal = false; }"
+    :on-confirm="confirmDeleteQrisImage"
+    :title="$t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS.DELETE_MODAL.TITLE')"
+    :message="$t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS.DELETE_MODAL.MESSAGE')"
+    :confirm-text="$t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS.DELETE_MODAL.CONFIRM_TEXT')"
+    :reject-text="$t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS.DELETE_MODAL.REJECT_TEXT')"
+  />
 </template>
 
 <script setup>
@@ -1407,16 +1663,24 @@ import Input from 'dashboard/components-next/input/Input.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import provinsiJson from '../wilayah/provinsi/provinsi.json';
 import QnaKnowledgeSources from '../knowledge-sources/QnaKnowledgeSources.vue';
-import { ref, reactive, watch, onMounted, computed } from 'vue';
+import { ref, reactive, watch, onMounted, computed, provide } from 'vue';
+import { useStore } from 'vuex';
 import { useI18n } from 'vue-i18n'
 
 // Google Sheets Auth Flow for Catalog
 import googleSheetsExportAPI from '../../../../api/googleSheetsExport';
 // AI Agents API
 import aiAgents from '../../../../api/aiAgents';
+import uploadAPI from '../../../../api/upload';
+import idleConfigsAPI from '../../../../api/idleConfigs';
+import shippingStoresAPI from '../../../../api/shippingStores';
 import { useAlert } from 'dashboard/composables';
+import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue';
+import ShippingConfig from './sales-bot-tabs/ShippingConfig.vue';
+import NotificationSettings from './notification-settings/NotificationSettings.vue';
 
-const { t } = useI18n()
+const { t } = useI18n();
+const store = useStore();
 
 // Props for data from parent component
 const props = defineProps({
@@ -1430,6 +1694,24 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['update:data']);
+provide('emitUpdate', () => emit('update:data'));
+
+// temperature bot
+const creativityLevel = ref(0.3);
+const creativityOptions = computed(() => [
+  { label: t('AGENT_MGMT.CREATIVITY.DETERMINISTIC'), value: 0 },
+  { label: t('AGENT_MGMT.CREATIVITY.CONSERVATIVE'), value: 0.1 },
+  { label: t('AGENT_MGMT.CREATIVITY.NATURAL'), value: 0.3 },
+  { label: t('AGENT_MGMT.CREATIVITY.INNOVATIVE'), value: 0.5 },
+  { label: t('AGENT_MGMT.CREATIVITY.VISIONARY'), value: 0.7 },
+]);
+
+// idle time
+const idleConfig = reactive({
+  duration: 30,       
+});
+
 // Helper function to get agent ID by type
 function getAgentIdByType(type) {
   const flowData = props.data?.display_flow_data;
@@ -1439,18 +1721,47 @@ function getAgentIdByType(type) {
   return agent?.agent_id || null;
 }
 
+function getCollectionNameByAgentType(type) {
+  const flowData = props.data?.display_flow_data;
+  if (!flowData?.agents_config) return null;
+
+  const agent = flowData.agents_config.find(config => config.type === type);
+  return agent?.collection_name || null;
+}
+
 // Computed property to get sales agent ID
 const salesAgentId = computed(() => {
   return getAgentIdByType('sales');
 });
 
+const collectionName = computed(() => {
+  return getCollectionNameByAgentType('sales');
+});
+
+// Load idle config from API
+async function loadIdleConfig() {
+  if (!props.data?.id) return;
+  try {
+    const response = await idleConfigsAPI.getConfig(props.data.id);
+    if (response.data) {
+      idleConfig.duration = response.data.duration || 30;
+    }
+  } catch (error) {
+    console.error('Failed to load idle config:', error);
+  }
+}
 // Initialize and load provinces on mount
 onMounted(async () => {
   // Load saved configuration first
   loadSavedConfiguration();
+  loadIdleConfig();
   
   // Load provinces for address selection
   loadProvinsi();
+
+  if (props.data?.id) {
+    await store.dispatch('shippingStores/fetch', props.data.id);
+  }
   // Pre-load Google Maps API but don't initialize map yet
   try {
     await loadGoogleMaps();
@@ -1471,15 +1782,20 @@ onMounted(async () => {
   }
 });
 
-// Watch for props data changes and reload configuration
+// Watch for props data changes AFTER initial mount to reload configuration
+// Note: No 'immediate: true' to avoid double-loading on mount (onMounted already calls it)
 watch(
   () => props.data,
-  (newData) => {
+  async (newData) => {
     if (newData && newData.display_flow_data) {
       loadSavedConfiguration();
+      loadIdleConfig();
+      if (newData.id) {
+        await store.dispatch('shippingStores/fetch', newData.id);
+      }
     }
   },
-  { immediate: true, deep: true }
+  { deep: true }
 );
 
 const catalogStep = computed(() => {
@@ -1518,6 +1834,26 @@ const salesAuthError = computed(() => {
 });
 
 const notification = ref(null);
+
+const salesVariableConfig = computed(() => ({
+  helpKey: 'AGENT_MGMT.SALESBOT.NOTIFICATION.TEMPLATE_HELP',
+  variables: [
+    {
+      labelKey: 'AGENT_MGMT.NOTIFICATION.VAR_CONTENT_SUMMARY',
+      value: '{{content_summary}}',
+      example: `ID Pesanan: SO-001/01/2026
+Nama Pelanggan: Budi Santoso
+No. Telp: 62812345678901
+Produk: Paket Premium A
+Jumlah: 2
+Total: Rp 500,000
+Metode Pembayaran: Bank Transfer
+Status: Menunggu Pembayaran
+Catatan: Kirim sebelum jam 5 sore`,
+    },
+  ],
+}));
+
 const productColumns = ref('sku,name,unit_price,quantity,deskripsi');
 const syncingColumns = ref(false);
 const authError = computed(() => props.googleSheetsAuth.error);
@@ -1529,6 +1865,50 @@ watch(salesAuthError, (newError) => {
     notification.value = null;
   }
 }, { immediate: true });
+
+const showRegenerateModal = ref(false);
+const isRegenerating = ref(false);
+const showDeleteQrisModal = ref(false);
+
+function openRegenerateModal() {
+  showRegenerateModal.value = true;
+}
+
+async function regenerateSheetsInput() {
+  showRegenerateModal.value = false;
+
+  try {
+    isRegenerating.value = true;
+    const flowData = props.data.display_flow_data;
+
+    const payload = {
+      account_id: parseInt(flowData.account_id, 10),
+      agent_id: salesAgentId.value,
+      type: 'sales',
+    };
+
+    // Memanggil API wrapper yang baru kita perbaiki
+    const response = await googleSheetsExportAPI.regenerateSpreadsheet(payload);
+
+    if (response.data && response.data.input_spreadsheet_url) {
+        props.googleSheetsAuth.spreadsheetUrls.sales.input = response.data.input_spreadsheet_url;
+
+        if (response.data.output_spreadsheet_url) {
+            props.googleSheetsAuth.spreadsheetUrls.sales.output = response.data.output_spreadsheet_url;
+        }
+
+        showNotification('Input spreadsheet berhasil dibuat ulang!', 'success');
+    } else {
+        throw new Error("Respon server tidak memiliki URL spreadsheet baru.");
+    }
+
+  } catch (error) {
+    console.error('Failed to regenerate sheet:', error);
+    showNotification('Gagal membuat ulang spreadsheet. Silakan coba lagi.', 'error');
+  } finally {
+    isRegenerating.value = false;
+  }
+}
 
 function retryAuthentication() {
   connectGoogle();
@@ -1557,8 +1937,6 @@ function showNotification(message, type = 'success') {
     notification.value = null;
   }, 3000);
 }
-
-
 
 async function connectGoogle() {
   try {
@@ -1609,36 +1987,6 @@ async function createSheets() {
   }
 }
 
-// Helper function to split text into chunks
-function splitTextIntoChunks(text, maxChunkSize = 19000) {
-  const chunks = [];
-  let currentChunk = '';
-  const lines = text.split('\n');
-  
-  for (const line of lines) {
-    // If adding this line would exceed the limit, save current chunk and start a new one
-    if (currentChunk.length + line.length + 1 > maxChunkSize) {
-      if (currentChunk.trim()) {
-        chunks.push(currentChunk.trim());
-        currentChunk = line;
-      } else {
-        // Single line is too long, truncate it
-        chunks.push(line.substring(0, maxChunkSize - 100) + '...[truncated]');
-        currentChunk = '';
-      }
-    } else {
-      currentChunk += (currentChunk ? '\n' : '') + line;
-    }
-  }
-  
-  // Add the last chunk if it exists
-  if (currentChunk.trim()) {
-    chunks.push(currentChunk.trim());
-  }
-  
-  return chunks;
-}
-
 async function syncProductColumns() {
   try {
     syncingColumns.value = true;
@@ -1648,64 +1996,16 @@ async function syncProductColumns() {
       account_id: parseInt(flowData.account_id, 10),
       agent_id: salesAgentId.value,
       type: 'sales',
+      collection_name: collectionName.value,
     };
     const syncDataResponse = await googleSheetsExportAPI.syncSpreadsheet(payload);
-    
-    // Get existing knowledge sources for this agent
-    let knowledgeSources = [];
-    try {
-      const knowledgeResponse = await aiAgents.getKnowledgeSources(props.data.id);
-      knowledgeSources = knowledgeResponse.data?.knowledge_source_texts || [];
-    } catch (error) {
-      // If fetching fails, we'll create a new one
-      knowledgeSources = [];
+    // console.log('Sync response:', syncDataResponse.data.data);
+
+    if (!syncDataResponse.data.data.success) {
+      showNotification(t('AGENT_MGMT.SALESBOT.CATALOG.SYNC_ERROR'), 'error');
+      return;
     }
-    
-    // Find all knowledge sources with tab = 4 (sales bot product)
-    let existingKnowledgeTab4 = knowledgeSources.filter(k => k.tab === 4);
-    
-    // Delete all existing knowledge sources for tab 4 to replace with new chunked data
-    for (const knowledge of existingKnowledgeTab4) {
-      try {
-        await aiAgents.deleteKnowledgeText(props.data.id, knowledge.id);
-      } catch (error) {
-        console.warn('Failed to delete existing knowledge:', error);
-      }
-    }
-    
-    // Split the content into chunks to handle the 20,000 character limit
-    const rawData = syncDataResponse.data.data;
-    const chunks = splitTextIntoChunks(rawData, 19000); // 19K to leave safety margin
-    
-    console.log(`Splitting product data into ${chunks.length} chunks`);
-    
-    // Create knowledge sources for each chunk
-    for (let i = 0; i < chunks.length; i++) {
-      const chunkText = chunks.length > 1 
-        ? `[Product Catalog - Part ${i + 1}/${chunks.length}]\n\n${chunks[i]}`
-        : chunks[i];
-      
-      try {
-        const createRequest = {
-          id: null,
-          tab: 4,
-          text: chunkText,
-        };
-        await aiAgents.addKnowledgeText(props.data.id, createRequest);
-        
-        // Small delay between chunks to avoid overwhelming the server
-        if (i < chunks.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-      } catch (error) {
-        console.error(`Failed to create knowledge chunk ${i + 1}:`, error);
-        showNotification(`Failed to save product data chunk ${i + 1}. Some data may be missing.`, 'error');
-      }
-    }
-    
-    const message = chunks.length > 1 
-      ? `${t('AGENT_MGMT.SALESBOT.CATALOG.SYNC_SUCCESS')} (${chunks.length} chunks created)`
-      : t('AGENT_MGMT.SALESBOT.CATALOG.SYNC_SUCCESS');
+    const message = t('AGENT_MGMT.SALESBOT.CATALOG.SYNC_SUCCESS');
     
     showNotification(message, 'success');
   } catch (error) {
@@ -1726,36 +2026,42 @@ const tabs = computed(() => [
   {
     key: '1',
     index: 1,
-    name: t('AGENT_MGMT.BOOKING_BOT.FILE_TAB'),
-    icon: 'i-lucide-folder',
+    name: 'Pengaturan',
+    icon: 'i-lucide-settings',
   },
   {
     key: '2',
     index: 2,
-    name: t('AGENT_MGMT.SALESBOT.SHIPPING.HEADER'),
-    icon: 'i-lucide-truck',
+    name: t('AGENT_MGMT.BOOKING_BOT.FILE_TAB'),
+    icon: 'i-lucide-folder',
   },
   {
     key: '3',
     index: 3,
-    name: t('AGENT_MGMT.SALESBOT.PAYMENT.HEADER'),
-    icon: 'i-lucide-credit-card',
+    name: t('AGENT_MGMT.SALESBOT.SHIPPING.HEADER'),
+    icon: 'i-lucide-truck',
   },
   {
     key: '4',
     index: 4,
-    name: t('AGENT_MGMT.SALESBOT.CART.HEADER'),
-    icon: 'i-lucide-shopping-cart',
+    name: t('AGENT_MGMT.SALESBOT.PAYMENT.HEADER'),
+    icon: 'i-lucide-credit-card',
   },
   {
     key: '5',
     index: 5,
-    name: 'QnA',
-    icon: 'i-lucide-help-circle',
+    name: t('AGENT_MGMT.SALESBOT.CART.HEADER'),
+    icon: 'i-lucide-shopping-cart',
   },
   {
     key: '6',
     index: 6,
+    name: 'QnA',
+    icon: 'i-lucide-help-circle',
+  },
+  {
+    key: '7',
+    index: 7,
     name: 'Penomoran Otomatis',
     icon: 'i-lucide-notebook-tabs',
   },
@@ -2645,7 +2951,8 @@ watch(mapRef, (newMapRef) => {
 const paymentMethods = reactive({
   cod: false,
   bankTransfer: false,
-  paymentGateway: false
+  paymentGateway: false,
+  qris: false
 });
 
 // Bank Transfer Accounts
@@ -2665,6 +2972,111 @@ function deleteBankAccount(index) {
   bankAccounts.value.splice(index, 1);
 }
 
+// QRIS Configuration
+const qrisConfig = reactive({
+  enabled: false, // Track if QRIS is enabled in UI (toggle state)
+  imageUrl: '',
+  blobKey: '',
+  blobId: '',
+  description: '',
+});
+
+// QRIS Image Handler
+async function handleQrisImageUpload(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  try {
+    // Validate file is an image
+    if (!file.type.startsWith('image/')) {
+      useAlert(t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS.ALERTS.UPLOAD_INVALID_FILE'));
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      useAlert(t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS.ALERTS.UPLOAD_SIZE_LIMIT'));
+      return;
+    }
+
+
+    const response = await uploadAPI.uploadAttachment(file);
+
+    qrisConfig.imageUrl = response.data.file_url;
+    qrisConfig.blobKey = response.data.blob_key;
+    qrisConfig.blobId = response.data.blob_id;
+  } catch (error) {
+    useAlert(t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS.ALERTS.UPLOAD_FAILED'));
+    console.error('QRIS image upload error:', error);
+  }
+}
+
+
+function deleteQrisImage() {
+  showDeleteQrisModal.value = true;
+}
+
+async function confirmDeleteQrisImage() {
+  try {
+    if (qrisConfig.blobKey || qrisConfig.blobId) {
+      uploadAPI.deleteAttachment({ blobKey: qrisConfig.blobKey, blobId: qrisConfig.blobId }).catch(() => {
+        console.warn('Failed to delete QRIS image from storage, but proceeding with configuration removal.');
+      });
+    }
+
+    // Remove QRIS from flow_data and display_flow_data
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data));
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
+    const agentIndex = flowData.enabled_agents.indexOf('sales');
+    
+    if (agentIndex !== -1) {
+      if (flowData.agents_config[agentIndex].configurations?.payment_options?.methods) {
+        flowData.agents_config[agentIndex].configurations.payment_options.methods.forEach(method => {
+          if (method.type === 'non_cod' && method.qris) {
+            delete method.qris;
+          }
+        });
+      }
+      
+      if (displayFlowData.agents_config[agentIndex].configurations?.payment_options?.methods) {
+        displayFlowData.agents_config[agentIndex].configurations.payment_options.methods.forEach(method => {
+          if (method.type === 'non_cod' && method.qris) {
+            delete method.qris;
+          }
+        });
+      }
+
+      const payload = {
+        flow_data: flowData,
+        display_flow_data: displayFlowData,
+      };
+
+      await aiAgents.updateAgent(props.data.id, payload);
+      emit('update:data');
+    }
+
+    // Reset QRIS configuration
+    qrisConfig.enabled = false;
+    qrisConfig.imageUrl = '';
+    qrisConfig.blobKey = '';
+    qrisConfig.blobId = '';
+    qrisConfig.description = '';
+    paymentMethods.qris = false;
+    
+    const fileInput = document.querySelector('input[type="file"][accept="image/*"]');
+    if (fileInput) {
+      fileInput.value = '';
+    }
+    
+    showDeleteQrisModal.value = false;
+    useAlert(t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS.ALERTS.DELETE_SUCCESS'));
+  } catch (error) {
+    console.error('Failed to delete QRIS:', error);
+    showDeleteQrisModal.value = false;
+    useAlert(t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS.ALERTS.DELETE_ERROR'));
+  }
+}
+
 // Payment Gateway
 const paymentGateway = reactive({
   provider: 'duitku',
@@ -2676,159 +3088,56 @@ const paymentGatewayProviders = [
   { label: 'Duitku', id: 'duitku' }
 ];
 
-
-
-async function submitShippingConfig() {
+async function submitShippingConfig(updatedStores) {
   if (isSaving.value) return;
 
   try {
     isSaving.value = true;
     
-    const shippingData = {
-      kurirToko: shippingMethods.kurirToko ? {
-        alamat: kurirToko.alamat,
-        radius: kurirToko.radius,
-        wilayah: kurirToko.wilayah,
-        kotaWilayah: kurirToko.kotaWilayah,
-        serviceAreaType: kurirToko.serviceAreaType,
-        pricingMethod: kurirToko.pricingMethod,
-        flatRate: kurirToko.flatRate,
-        biayaPerJarak: kurirToko.biayaPerJarak,
-        gratisOngkir: kurirToko.gratisOngkir,
-        minimalBelanja: kurirToko.gratisOngkir ? kurirToko.minimalBelanja : null,
-        estimasi: kurirToko.estimasi,
-        coordinates: {
-          latitude: kurirToko.latitude,
-          longitude: kurirToko.longitude
-        }      
-      } : null,
-      kurirBiasa: shippingMethods.kurirBiasa ? {
-        alamat: {
-          provinsi: kurirBiasa.provinsi,
-          kota: kurirBiasa.kota,
-          kecamatan: kurirBiasa.kecamatan,
-          kelurahan: kurirBiasa.kelurahan,
-          jalan: kurirBiasa.jalan,
-          kodePos: kurirBiasa.kodePos
-        },
-        kurir: kurirBiasa.kurir
-      } : null,
-      ambilToko: shippingMethods.ambilToko ? {
-        alamat: ambilToko.alamat,
-        jamOperasional: `${ambilToko.jamBuka} - ${ambilToko.jamTutup}`,
-        estimasi: ambilToko.estimasi
-      } : null
-    };
+    const storeResponse = await shippingStoresAPI.batchUpdate(props.data.id, updatedStores);
+    const savedStoresWithIds = storeResponse.data;
 
-    // Generate shipping configuration
-    const shippingConfig = {
-      methods: []
-    };
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data));
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
 
-    if (shippingMethods.kurirToko) {
-      shippingConfig.methods.push({
-        type: "store_courier",
-        name: "Kurir Toko",
-        store_address: {
-          address: kurirToko.alamat || "",
-          coordinates: {
-            latitude: kurirToko.latitude || -6.2088, // Default to Jakarta
-            longitude: kurirToko.longitude || 106.8456
-          }
-        },
-        // service_area: kurirToko.radius ? `Radius ${kurirToko.radius}km` : "",
-        service_area: (() => {
-          if (kurirToko.serviceAreaType === 'radius' && kurirToko.radius) {
-            return `Radius ${kurirToko.radius} km`;
-          } else if (kurirToko.serviceAreaType === 'region' && kurirToko.wilayah) {
-            let area = "Sekitar";
-            
-            // Add city name if available
-            if (kurirToko.kotaWilayah) {
-              const kotaName = selectedServiceAreaKotaName.value || `Kota-${kurirToko.kotaWilayah}`;
-              area += ` ${kotaName}`;
-            }
-            
-            // Add province name
-            const provinsiName = selectedServiceAreaProvinsiName.value || `Provinsi-${kurirToko.wilayah}`;
-            if (kurirToko.kotaWilayah) {
-              area += `, ${provinsiName}`;
-            } else {
-              area += ` ${provinsiName}`;
-            }
-            
-            return area;
-          }
-          return "";
-        })(),
-        // Generate delivery cost info based on pricing method
-        delivery_cost_info: (() => {
-          let costInfo = "";
-          if (kurirToko.pricingMethod === 'flatRate' && kurirToko.flatRate) {
-            costInfo = `Flat rate: Rp ${kurirToko.flatRate}`;
-          } else if (kurirToko.pricingMethod === 'perDistance' && kurirToko.biayaPerJarak) {
-            costInfo = `Rp ${kurirToko.biayaPerJarak}/km`;
-          }
-          
-          if (kurirToko.gratisOngkir && kurirToko.minimalBelanja) {
-            costInfo += (costInfo ? " | " : "") + `Gratis ongkir dengan minimal belanja Rp ${kurirToko.minimalBelanja}`;
-          }
-          
-          return costInfo;
-        })(),
-        estimated_delivery_time: kurirToko.estimasi || ""
-      });
-    }
-
-    if (shippingMethods.kurirBiasa) {
-      const selectedKurir = kurirBiasa.kurir || [];
-      shippingConfig.methods.push({
-        type: "regular_courier",
-        name: "Kurir Reguler",
-        store_address: `${kurirBiasa.jalan || ''}, ${selectedKecamatanName.value || ''}, ${selectedKotaName.value || ''}, ${selectedProvinsiName.value || ''} ${kurirBiasa.kodePos || ''}`.trim(),
-        available_couriers: selectedKurir
-      });
-    }
-
-    if (shippingMethods.ambilToko) {
-      shippingConfig.methods.push({
-        type: "store_pickup",
-        name: "Ambil di Toko",
-        store_address: ambilToko.alamat || "",
-        operating_hours: `${ambilToko.jamBuka} - ${ambilToko.jamTutup}`,
-        pickup_ready_time: ambilToko.estimasi || ""
-      });
-    }
-
-    // Save to backend
-    let flowData = props.data.display_flow_data;
     const agentIndex = flowData.enabled_agents.indexOf('sales');
     
     if (agentIndex === -1) {
-      useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.AGENT_NOT_FOUND'))
+      useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.AGENT_NOT_FOUND'));
       return;
     }
 
-    // Initialize configurations if not exists
     if (!flowData.agents_config[agentIndex].configurations) {
       flowData.agents_config[agentIndex].configurations = {};
     }
-    
-    // Update shipping options configuration
-    flowData.agents_config[agentIndex].configurations.shipping_options = shippingConfig;
+    if (!displayFlowData.agents_config[agentIndex].configurations) {
+      displayFlowData.agents_config[agentIndex].configurations = {};
+    }
 
-    const payload = {
-      flow_data: flowData,
+    flowData.agents_config[agentIndex].configurations.shipping_options = {
+      ...flowData.agents_config[agentIndex].configurations.shipping_options,
+      stores: savedStoresWithIds 
     };
 
-    await aiAgents.updateAgent(props.data.id, payload);
+    displayFlowData.agents_config[agentIndex].configurations.shipping_options = {
+      ...displayFlowData.agents_config[agentIndex].configurations.shipping_options,
+      stores: savedStoresWithIds 
+    };
+
+    const agentPayload = {
+      flow_data: flowData,
+      display_flow_data: displayFlowData, 
+    };
+
+    await aiAgents.updateAgent(props.data.id, agentPayload);
+    await store.dispatch('shippingStores/fetch', props.data.id);
     
-    // Update local props data to maintain state after update
-    updateLocalPropsData('shipping_options', shippingConfig);
-    
-    useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_SUCCESS'))
+    emit('update:data');
+    useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_SUCCESS')); 
+
   } catch (error) {
-    useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_ERROR'))
+    console.error('Error saving shipping config:', error);
+    useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_ERROR'));
   } finally {
     isSaving.value = false;
   }
@@ -2839,6 +3148,12 @@ async function submitPaymentConfig() {
 
   try {
     isSaving.value = true;
+
+    // Validate QRIS if enabled (toggle is on)
+    if (paymentMethods.qris && !qrisConfig.imageUrl) {
+      useAlert(t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS.ALERTS.IMAGE_REQUIRED'));
+      return;
+    }
 
     // Generate payment configuration
     const paymentConfig = {
@@ -2852,7 +3167,7 @@ async function submitPaymentConfig() {
       });
     }
 
-    if (paymentMethods.bankTransfer || paymentMethods.paymentGateway) {
+    if (paymentMethods.bankTransfer || paymentMethods.paymentGateway || paymentMethods.qris) {
       const nonCodMethod = {
         type: "non_cod",
         name: "Transfer Online"
@@ -2876,11 +3191,23 @@ async function submitPaymentConfig() {
         };
       }
 
+
+      if (qrisConfig.imageUrl || qrisConfig.blobKey || qrisConfig.blobId) {
+        nonCodMethod.qris = {
+          enabled: paymentMethods.qris, // Save the toggle state
+          imageUrl: qrisConfig.imageUrl,
+          blobKey: qrisConfig.blobKey,
+          blobId: qrisConfig.blobId,
+          description: qrisConfig.description,
+        };
+      }
+
       paymentConfig.methods.push(nonCodMethod);
     }
 
     // Save to backend
-    let flowData = props.data.display_flow_data;
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data));
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
     const agentIndex = flowData.enabled_agents.indexOf('sales');
     
     if (agentIndex === -1) {
@@ -2895,15 +3222,15 @@ async function submitPaymentConfig() {
     
     // Update payment options configuration
     flowData.agents_config[agentIndex].configurations.payment_options = paymentConfig;
+    displayFlowData.agents_config[agentIndex].configurations.payment_options = paymentConfig;
 
     const payload = {
       flow_data: flowData,
+      display_flow_data: displayFlowData, 
     };
 
     await aiAgents.updateAgent(props.data.id, payload);
-
-    // Update local props data to maintain state after update
-    updateLocalPropsData('payment_options', paymentConfig);
+    emit('update:data');
 
     useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_SUCCESS'));
   } catch (error) {
@@ -2921,7 +3248,9 @@ async function submitCartConfig() {
     isSaving.value = true;
 
     // Save to backend
-    let flowData = props.data.display_flow_data;
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data)); 
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
+
     const agentIndex = flowData.enabled_agents.indexOf('sales');
     
     if (agentIndex === -1) {
@@ -2936,15 +3265,15 @@ async function submitCartConfig() {
     
     // Update cart configuration
     flowData.agents_config[agentIndex].configurations.cart_enabled = cartEnabled.value;
+    displayFlowData.agents_config[agentIndex].configurations.cart_enabled = cartEnabled.value;
 
     const payload = {
       flow_data: flowData,
+      display_flow_data: displayFlowData, 
     };
 
     await aiAgents.updateAgent(props.data.id, payload);
-
-    // Update local props data to maintain state after update
-    updateLocalPropsData('cart_enabled', cartEnabled.value);
+    emit('update:data');
 
     useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_SUCCESS'));
   } catch (error) {
@@ -2954,10 +3283,55 @@ async function submitCartConfig() {
   }
 }
 
+async function saveSettings() {
+  if (isSaving.value) return;
+
+  try {
+    isSaving.value = true;
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data));
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
+
+    const agentIndex = flowData.enabled_agents.indexOf('sales');
+
+    if (agentIndex === -1) {
+      useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.AGENT_NOT_FOUND'));
+      return;
+    }
+
+    // Pastikan object configurations ada
+    if (!flowData.agents_config[agentIndex].configurations) {
+      flowData.agents_config[agentIndex].configurations = {};
+    }
+
+    // Simpan Tingkat Kreativitas
+    flowData.agents_config[agentIndex].temperature = creativityLevel.value;
+    displayFlowData.agents_config[agentIndex].temperature = creativityLevel.value;
+
+    const payload = {
+      flow_data: flowData,
+      display_flow_data: displayFlowData, 
+    };
+
+    await Promise.all([
+      aiAgents.updateAgent(props.data.id, payload),
+      idleConfigsAPI.updateConfig(props.data.id, {
+        duration: idleConfig.duration,
+      })
+    ]);
+    emit('update:data');
+
+    useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_SUCCESS'));
+  } catch (error) {
+    console.error('Save settings error:', error);
+    useAlert(t('AGENT_MGMT.WEBSITE_SETTINGS.SAVE_ERROR'));
+  } finally {
+    isSaving.value = false;
+  }
+}
+
 // Function to load saved configuration from backend
 function loadSavedConfiguration() {
   try {
-    
     const flowData = props.data.display_flow_data;
     if (!flowData) {
       return;
@@ -2969,11 +3343,18 @@ function loadSavedConfiguration() {
       return;
     }
     
-    const config = flowData.agents_config[agentIndex]?.configurations;
+    const agentData = flowData.agents_config[agentIndex];
+    const config = agentData?.configurations;
     
     if (!config) {
       return;
     }
+
+    // Load Creativity Level
+    if (agentData.temperature !== undefined) {
+      creativityLevel.value = agentData.temperature;
+    }
+
 
     // Reset all shipping methods first
     shippingMethods.kurirToko = false;
@@ -3188,6 +3569,7 @@ function loadSavedConfiguration() {
     paymentMethods.cod = false;
     paymentMethods.bankTransfer = false;
     paymentMethods.paymentGateway = false;
+    paymentMethods.qris = false;
     
     // Reset payment configs
     bankAccounts.value = [];
@@ -3195,6 +3577,13 @@ function loadSavedConfiguration() {
       provider: 'duitku',
       apiKey: '',
       merchantCode: ''
+    });
+    Object.assign(qrisConfig, {
+      enabled: false,
+      imageUrl: '',
+      blobKey: '',
+      blobId: '',
+      description: '',
     });
 
     // Load Payment Configuration
@@ -3228,6 +3617,17 @@ function loadSavedConfiguration() {
             paymentGateway.apiKey = method.payment_gateway.apiKey || '';
             paymentGateway.merchantCode = method.payment_gateway.merchantCode || '';
           }
+
+          // Check if QRIS is available
+          if (method.qris) {
+            const isEnabled = method.qris.enabled !== undefined ? method.qris.enabled : true;
+            paymentMethods.qris = isEnabled;
+            qrisConfig.enabled = isEnabled;
+            qrisConfig.imageUrl = method.qris.imageUrl || '';
+            qrisConfig.blobKey = method.qris.blobKey || '';
+            qrisConfig.blobId = method.qris.blobId || '';
+            qrisConfig.description = method.qris.description || '';
+          }
         }
       });
     }
@@ -3242,23 +3642,8 @@ function loadSavedConfiguration() {
 }
 
 // Function to update local props data after successful save
-function updateLocalPropsData(configType, configData) {
-  try {
-    const flowData = props.data.display_flow_data;
-    const agentIndex = flowData.enabled_agents.indexOf('sales');
-    if (agentIndex === -1) return;
-    
-    // Initialize configurations if not exists
-    if (!flowData.agents_config[agentIndex].configurations) {
-      flowData.agents_config[agentIndex].configurations = {};
-    }
-    
-    // Update the specific configuration
-    flowData.agents_config[agentIndex].configurations[configType] = configData;
-    
-  } catch (error) {
-  }
-}
+// Removed updateLocalPropsData function - it was mutating props directly (Vue anti-pattern)
+// Props updates now handled cleanly via emit('update:data') and parent refresh
 </script>
 
 <style scoped>
@@ -3370,4 +3755,15 @@ function updateLocalPropsData(configType, configData) {
 .dropdown-container:has(.dropdown-menu[style*="display: block"]) {
   z-index: 9999;
 }
+.btn-retryauth {
+    border: 2px solid #B0B1BC !important;
+    color: #B0B1BC !important;
+}
+.btn-retryauth:hover {       
+    background-color: rgba(176, 177, 188, 0.1) !important; 
+}
+.dark .btn-retryauth:hover {
+    background-color: rgba(176, 177, 188, 0.1) !important; 
+}
+
 </style>

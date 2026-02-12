@@ -92,4 +92,10 @@ class InboxPolicy < ApplicationPolicy
 
     Current.user.assigned_inboxes.include? record
   end
+
+  def whatsapp_groups?
+    return true if @account_user.administrator?
+
+    Current.user.assigned_inboxes.include? record
+  end
 end

@@ -31,7 +31,7 @@ export default {
       return statusMap[this.status] || statusMap.pending;
     },
     displayStatus() {
-      return this.status.charAt(0).toUpperCase() + this.status.slice(1);
+      return this.$t(`CHAT_LIST.CHAT_STATUS_FILTER_ITEMS.${this.status}.TEXT`);
     }
   }
 };

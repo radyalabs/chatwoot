@@ -73,7 +73,7 @@ class KnowledgeSource < ApplicationRecord
   end
 
   def add_file!(file:, document_loader:)
-    knowledge_source_files.create!(
+    knowledge_source_file = knowledge_source_files.create!(
       loader_id: document_loader['docId'],
       file_name: document_loader.dig('file', 'loaderName'),
       file_type: file.content_type,
@@ -81,6 +81,9 @@ class KnowledgeSource < ApplicationRecord
       total_chunks: document_loader.dig('file', 'totalChunks'),
       total_chars: document_loader.dig('file', 'totalChars')
     )
+
+    knowledge_source_file.file.attach(file)
+    knowledge_source_file
   rescue ActiveRecord::RecordInvalid => e
     Rails.logger.error("Failed to create knowledge source file: #{e.record.errors.full_messages.join(', ')}")
     raise e

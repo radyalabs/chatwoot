@@ -30,6 +30,12 @@ export default {
         return;
       }
       if (checkFileSizeLimit(file, MAXIMUM_SUPPORTED_FILE_UPLOAD_SIZE)) {
+        // Generate a temporary ID to track this upload
+        const tempId = `upload-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+
+        // Immediately attach the file with uploading state so the UI shows it
+        this.attachFile({ file, uploading: true, tempId });
+
         const upload = new DirectUpload(
           file.file,
           `/api/v1/accounts/${this.accountId}/conversations/${this.currentChat.id}/direct_uploads`,
@@ -46,8 +52,11 @@ export default {
         upload.create((error, blob) => {
           if (error) {
             useAlert(error);
+            // Remove the failed upload from the list
+            this.removeUploadingAttachment(tempId);
           } else {
-            this.attachFile({ file, blob });
+            // Update the attachment with the blob data
+            this.updateAttachmentWithBlob(tempId, blob);
           }
         });
       } else {

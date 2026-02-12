@@ -52,6 +52,9 @@ public/assets/.sprockets-manifest-*.json
 # ignore jetbrains IDE files
 .idea
 
+# ignore claude files
+.claude/
+
 # coverage report
 buildreports
 coverage

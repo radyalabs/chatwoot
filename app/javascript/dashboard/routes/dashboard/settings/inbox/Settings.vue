@@ -509,7 +509,7 @@ export default {
           <input v-model="whatsAppAPIProviderName" type="text" disabled />
         </label>
 
-        <label class="w-3/4 pb-4">
+        <!-- <label class="w-3/4 pb-4">
           {{
             $t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_GREETING_TOGGLE.LABEL')
           }}
@@ -606,7 +606,7 @@ export default {
           <p class="pb-1 text-sm not-italic text-slate-600 dark:text-slate-400">
             {{ $t('INBOX_MGMT.SETTINGS_POPUP.ENABLE_CSAT_SUB_TEXT') }}
           </p>
-        </label>
+        </label> -->
 
         <label v-if="isAWebWidgetInbox" class="w-3/4 pb-4">
           {{ $t('INBOX_MGMT.SETTINGS_POPUP.ALLOW_MESSAGES_AFTER_RESOLVED') }}

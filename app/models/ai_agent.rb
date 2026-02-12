@@ -31,7 +31,13 @@ class AiAgent < ApplicationRecord
   has_many :labels, through: :ai_agent_selected_labels
   has_many :ai_agent_followups, dependent: :destroy
   has_many :agent_bot_inboxes, dependent: :nullify
+  has_many :agent_notification_settings, dependent: :destroy
   has_one :knowledge_source, dependent: :destroy
+  has_many :reminders, dependent: :destroy
+  has_one :reminder_config, dependent: :destroy
+  has_one :idle_config, dependent: :destroy
+  has_many :sheet_numbering_configs, dependent: :destroy
+  has_many :shipping_stores, dependent: :destroy
 
   validates :name, :system_prompts, :welcoming_message, presence: true
   validates :timezone, presence: true, inclusion: { in: ActiveSupport::TimeZone.all.map(&:name) }
@@ -48,6 +54,8 @@ class AiAgent < ApplicationRecord
   accepts_nested_attributes_for :ai_agent_selected_labels, allow_destroy: true
 
   before_validation :set_default_messages
+  after_create :create_default_numbering_config
+  after_destroy :cleanup_numbering_counters
 
   def set_default_messages
     self.system_prompts ||= 'Default system prompt'
@@ -132,7 +140,7 @@ class AiAgent < ApplicationRecord
   end
 
   def base_attributes
-    %i[id uid name description welcoming_message agent_type template_type display_flow_data]
+    %i[id uid name description welcoming_message agent_type template_type flow_data display_flow_data]
   end
 
   def included_associations
@@ -156,5 +164,30 @@ class AiAgent < ApplicationRecord
       'ai_agent_selected_labels' => 'selected_labels',
       'ai_agent_followups' => 'followups'
     }[key] || key
+  end
+
+  def create_default_numbering_config
+    enabled_agents_list.each do |agent_key|
+      sheet_numbering_configs.create!(
+        account: account,
+        numbering_key: agent_key,
+        prefix: nil,
+        format_pattern: '[NUMBER]/[MONTH]/[YEAR]',
+        current_value: 1,
+        number_padding: 3,
+        reset_interval: 'never'
+      )
+    end
+  rescue ActiveRecord::RecordInvalid => e
+    Rails.logger.error("[AiAgent] Failed to create numbering config: #{e.message}")
+  end
+
+  def enabled_agents_list
+    agents = flow_data&.dig('enabled_agents') || []
+    agents.presence || ['default']
+  end
+
+  def cleanup_numbering_counters
+    CleanupNumberingCountersJob.perform_later(account_id, id)
   end
 end

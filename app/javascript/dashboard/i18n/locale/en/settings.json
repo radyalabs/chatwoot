@@ -260,7 +260,7 @@
     "MENTIONED_CONVERSATIONS": "Mentions",
     "PARTICIPATING_CONVERSATIONS": "Participating",
     "UNATTENDED_CONVERSATIONS": "Unattended",
-    "REPORTS": "Reports",
+    "REPORTS": "Analytics",
     "SETTINGS": "Settings",
     "CONTACTS": "Contacts",
     "CAPTAIN": "Captain",
@@ -327,7 +327,8 @@
     },
     "DOCS": "Read docs",
     "AI_AGENTS": "Bot AI",
-    "AI_AGENTS_DESC": "Manage and modify the AI Bots you've created here. Create a new Bot AI whenever you like."
+    "AI_AGENTS_DESC": "Manage and modify the AI Bots you've created here. Create a new Bot AI whenever you like.",
+    "AI_AGENTS_LAST_MODIFIED": "Last modified"
   },
   "BILLING_SETTINGS": {
     "TITLE": "Billing",

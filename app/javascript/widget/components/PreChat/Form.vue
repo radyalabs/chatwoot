@@ -155,6 +155,12 @@ export default {
     },
   },
   methods: {
+    submitFormManually() {
+      const form = this.$refs.preChatForm;
+      if (form && typeof form.submit === 'function') {
+        form.submit();
+      }
+    },
     labelClass(context) {
       const { hasErrors } = context;
       if (!hasErrors) {
@@ -273,6 +279,7 @@ export default {
 <template>
   <!-- hide the default submit button for now -->
   <FormKit
+    ref="preChatForm"
     v-model="formValues"
     type="form"
     form-class="flex flex-col flex-1 w-full p-6 overflow-y-auto"
@@ -342,6 +349,7 @@ export default {
       :bg-color="widgetColor"
       :text-color="textColor"
       :disabled="isCreatingConversation"
+      @click="submitFormManually"
     >
       <Spinner v-if="isCreatingConversation" class="p-0" />
       {{ $t('START_CONVERSATION') }}

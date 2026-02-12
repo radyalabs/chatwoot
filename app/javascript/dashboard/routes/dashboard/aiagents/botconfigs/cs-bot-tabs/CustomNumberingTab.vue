@@ -1,124 +1,462 @@
 <template>
-  <div class="settings--content">
-    <h2 class="text-lg font-semibold mb-4">Konfigurasi Penomoran Otomatis</h2>
+  <div class="w-full">
+    <div class="flex flex-row gap-4">
+      
+      <div class="flex-1 min-w-0 flex flex-col gap-6">
+        
+        <div class="border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-transparent">
+          
+          <div class="flex items-center gap-3 p-6">
+            <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-lg font-medium text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.NUMBERING.TITLE') }}</h2>
+              <p class="text-sm text-gray-500">{{ $t('AGENT_MGMT.NUMBERING.DESC') }}</p>
+            </div>
+          </div>
+          
+          <div class="border-t border-gray-200 dark:border-gray-700 p-6 space-y-6">
+            
+            <div>
+              <label :class="labelClass">
+                {{ $t('AGENT_MGMT.NUMBERING.FORMAT') }} <span class="text-red-500">*</span>
+              </label>
+              <div class="flex flex-col sm:flex-row gap-2 mb-2">
+                <input
+                  v-model="form.format"
+                  type="text"
+                  class="flex-1 focus:border-transparent placeholder:text-gray-400"
+                  :class="inputClass"
+                  placeholder="[NUMBER]/[MONTH]/[YEAR]"
+                />
+                <select 
+                  v-model="codeOption" 
+                  @change="addCode"
+                  class="sm:w-64 cursor-pointer"
+                  :class="inputClass"
+                >
+                  <option value="" disabled selected hidden>{{ $t('AGENT_MGMT.NUMBERING.ADD_CODE_TITLE') }}</option>
+                  <option value="[NUMBER]">{{ $t('AGENT_MGMT.NUMBERING.OPTIONS.NUMBER') }}</option>
+                  <option value="[MONTH]">{{ $t('AGENT_MGMT.NUMBERING.OPTIONS.MONTH') }}</option>
+                  <option value="[MONTH_ROMAN]">{{ $t('AGENT_MGMT.NUMBERING.OPTIONS.MONTH_ROMAN') }}</option>
+                  <option value="[MONTH_SHORT]">{{ $t('AGENT_MGMT.NUMBERING.OPTIONS.MONTH_SHORT') }}</option>
+                  <option value="[MONTH_LONG]">{{ $t('AGENT_MGMT.NUMBERING.OPTIONS.MONTH_LONG') }}</option>
+                  <option value="[YEAR_SHORT]">{{ $t('AGENT_MGMT.NUMBERING.OPTIONS.YEAR_SHORT') }}</option>
+                  <option value="[YEAR]">{{ $t('AGENT_MGMT.NUMBERING.OPTIONS.YEAR') }}</option>
+                </select>
+              </div>
+              <div class="flex items-center gap-2 p-2 bg-gray-50 dark:bg-slate-800/50 rounded text-xs text-gray-500 dark:text-gray-400">
+                <span>{{ $t('AGENT_MGMT.NUMBERING.PREVIEW') }}</span>
+                <span class="font-mono font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded">
+                  {{ liveSampleOutput }}
+                </span>
+              </div>
+            </div>
 
-    <div class="card p-4 space-y-4">
-      <!-- Format Penomoran -->
-      <div>
-        <label class="label">Format Penomoran <span class="text-red-500">*</span></label>
-        <div class="flex gap-2">
-          <input
-            ref="formatInput"
-            v-model="form.format"
-            type="text"
-            class="input flex-1"
-            placeholder="Contoh: INV/[NUMBER]"
-          />
-          <select v-model="form.codeOption" class="input w-60" @change="addCode">
-            <option disabled value="">Tambah Kode Penomoran</option>
-            <option>[NUMBER]</option>
-            <option>[YEAR]</option>
-            <option>[MONTH]</option>
-          </select>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div>
+                <label :class="labelClass">
+                  {{ $t('AGENT_MGMT.NUMBERING.NUMBER') }} <span class="text-red-500">*</span>
+                </label>
+                <input 
+                  v-model.number="form.currentNumber" 
+                  type="number" 
+                  min="1" 
+                  class="w-full"
+                  :class="inputClass"
+                />
+              </div>
+
+              <div>
+                <label :class="labelClass">
+                  {{ $t('AGENT_MGMT.NUMBERING.DIGIT_NUMBER') }}
+                </label>
+                <input
+                  v-model.number="form.number_digits"
+                  type="number"
+                  min="3"
+                  class="w-full"
+                  :class="inputClass"
+                />
+                <p class="text-[10px] text-gray-400 italic">Min: 3 (001)</p>
+              </div>
+
+              <div>
+                <label :class="labelClass">
+                  {{ $t('AGENT_MGMT.NUMBERING.PREFIX') }}
+                </label>
+                <input
+                  v-model="form.prefix"
+                  type="text"
+                  :placeholder="$t('AGENT_MGMT.NUMBERING.PREFIX_EXP')"
+                  class="w-full"
+                  :class="inputClass"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label class="mb-3" :class="labelClass">
+                {{ $t('AGENT_MGMT.NUMBERING.RESET_TITLE') }}
+              </label>
+              <div class="flex flex-col gap-3">
+                <label v-for="opt in resetOptions" :key="opt.value" class="flex items-center cursor-pointer group">
+                  <div class="relative flex items-center">
+                    <input type="radio" v-model="form.resetEvery" :value="opt.value" class="peer sr-only" />
+                    <div class="w-5 h-5 border-2 border-gray-300 dark:border-gray-500 rounded-full peer-checked:border-green-500 peer-checked:bg-green-500 transition-all"></div>
+                    <div class="absolute w-2 h-2 bg-white rounded-full left-1.5 top-1.5 opacity-0 peer-checked:opacity-100 transition-all"></div>
+                  </div>
+                  <span class="ml-3 text-sm text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+                    {{ opt.label }}
+                  </span>
+                </label>
+              </div>
+            </div>
+
+          </div>
         </div>
-        <p class="text-sm text-gray-400 mt-1">
-          Contoh Output: {{ sampleOutput }}
-        </p>
       </div>
 
-      <!-- Nomor Saat Ini -->
-      <div>
-        <label class="label">Nomor Saat Ini <span class="text-red-500">*</span></label>
-        <input
-          v-model="form.currentNumber"
-          type="number"
-          class="input w-full"
-          placeholder="Contoh: 53"
-        />
-      </div>
-
-      <!-- Reset Nomor -->
-      <div>
-        <label class="label">Reset Nomor Setiap</label>
-        <div class="space-y-1">
-          <label><input type="radio" value="never" v-model="form.resetEvery" /> Tidak pernah reset</label><br />
-          <label><input type="radio" value="month" v-model="form.resetEvery" /> Setiap bulan</label><br />
-          <label><input type="radio" value="year" v-model="form.resetEvery" /> Setiap tahun</label>
+      <div class="w-[240px] flex flex-col gap-3">
+        <div class="sticky top-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-slate-700 dark:text-slate-300">{{ $t('AGENT_MGMT.BOOKING_BOT.CONFIGURE') }}</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">{{ $t('AGENT_MGMT.NUMBERING.SAVE_DESC') }}</p>
+            </div>
+          </div>
+          
+          <Button
+            class="w-full"
+            :is-loading="loading"
+            :disabled="loading"
+            @click="onSave"
+          >
+             <span class="flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                {{ $t('AGENT_MGMT.EOBOT.SAVE_BTN') }}
+             </span>
+          </Button>
         </div>
       </div>
 
-      <!-- Tombol Aksi -->
-      <div class="flex justify-end mt-4">
-        <button class="button secondary mr-2" @click="resetForm">Batal</button>
-        <button class="button primary" @click="saveConfig">Simpan</button>
+    </div>
+
+    <div v-if="showSuccessModal" class="success-modal-overlay" @click.self="closeSuccessModal">
+        <div class="success-modal-content dark:bg-slate-800 dark:border dark:border-slate-700">
+          
+          <div class="modal-icon-wrapper dark:bg-green-900/30">
+            <svg class="modal-icon dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </div>
+
+          <h2 class="modal-title dark:text-white">{{ $t('AGENT_MGMT.NUMBERING.SUCCESS') }}</h2>
+          <p class="modal-message dark:text-slate-300">{{ $t('AGENT_MGMT.NUMBERING.SUCCESS_MESSAGE') }}</p>
+
+          <button class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors" @click="closeSuccessModal">
+            {{ $t('AGENT_MGMT.NUMBERING.CLOSE') }}
+          </button>
+
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import { useAlert } from 'dashboard/composables';
+import sheetNumberingConfigAPI from '../../../../../api/sheetNumberingConfig';
+import Button from 'dashboard/components-next/button/Button.vue';
+
 export default {
   name: 'AutoNumbering',
+  components: {
+    Button,
+  },
+  inject: {
+    // Provided by CSBotView -> parent to trigger refresh
+    emitUpdate: {
+      default: () => () => {},
+    },
+  },
+  props: {
+    data: {
+      type: Object,
+      required: true,
+    },
+    numberingKey: {
+      type: String,
+      required: true,
+    },
+  },
+
   data() {
     return {
       form: {
-        format: 'INV/',
+        prefix: '',
+        format: '[NUMBER]/[MONTH]/[YEAR]',
         currentNumber: 1,
         resetEvery: 'never',
-        codeOption: '',
+        number_digits: 3,
       },
+      codeOption: '',
+      showSuccessModal: false,
+      loading: false,
+      savedCurrentNumber: null,
+      serverLastSyncedValue: null,
+      lastSyncedAt: null,
+      storedResetInterval: null,
     };
   },
   computed: {
-    sampleOutput() {
-      const year = new Date().getFullYear();
-      const month = String(new Date().getMonth() + 1).padStart(2, '0');
-      const number = String(this.form.currentNumber).padStart(5, '0');
-      return this.form.format
-        .replace('[YEAR]', year)
-        .replace('[MONTH]', month)
-        .replace('[NUMBER]', number);
+    inputClass() {
+      return 'p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 focus:ring-2 focus:ring-green-500 text-slate-900 dark:text-slate-100 transition-all';
+    },
+    labelClass() {
+      return 'block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25';
+    },
+    resetOptions() {
+      return [
+        { value: 'never', label: this.$t('AGENT_MGMT.NUMBERING.NEVER_RESET') },
+        { value: 'month', label: this.$t('AGENT_MGMT.NUMBERING.RESET_MONTHLY') },
+        { value: 'year', label: this.$t('AGENT_MGMT.NUMBERING.RESET_YEARLY') },
+      ];
+    },
+    liveSampleOutput() {
+      if (!this.form.format) return '...';
+
+      const roman = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
+      const shortMonths = ['JAN','FEB','MAR','APR','MEI','JUN','JUL','AGU','SEP','OKT','NOV','DES'];
+      const longMonths = ['JANUARI','FEBRUARI','MARET','APRIL','MEI','JUNI','JULI','AGUSTUS','SEPTEMBER','OKTOBER','NOVEMBER','DESEMBER'];
+
+      const now = new Date();
+      const year = now.getFullYear();
+      const yearShort = String(year).slice(-2);
+      const monthIndex = now.getMonth();
+      const monthNum = String(monthIndex + 1).padStart(2, '0');
+
+      let padding = this.form.number_digits || 3;
+      if (padding < 3) {
+        padding = 3;
+      }
+      const number = String(this.form.currentNumber || 0).padStart(padding, '0');
+
+      const processedFormat = this.form.format
+        .replace(/\[NUMBER\]/g, number)
+        .replace(/\[YEAR\]/g, year)
+        .replace(/\[YEAR_SHORT\]/g, yearShort)
+        .replace(/\[MONTH\]/g, monthNum)
+        .replace(/\[MONTH_ROMAN\]/g, roman[monthIndex])
+        .replace(/\[MONTH_SHORT\]/g, shortMonths[monthIndex])
+        .replace(/\[MONTH_LONG\]/g, longMonths[monthIndex]);
+
+      return (this.form.prefix || '') + processedFormat;
     },
   },
+  watch: {
+    'data.id': {
+      immediate: true,
+      async handler(newId) {
+        if (!newId) return;
+        try {
+          const { data } = await sheetNumberingConfigAPI.getConfig(newId, this.numberingKey);
+          if (data && data.current_value != null) {
+            this.savedCurrentNumber = data.current_value;
+            this.serverLastSyncedValue = data.last_synced_value != null ? data.last_synced_value : null;
+            this.lastSyncedAt = data.last_synced_at || null;
+            this.storedResetInterval = data.reset_interval || 'never';
+            this.form.currentNumber = data.current_value;
+            if (data.format_pattern) this.form.format = data.format_pattern;
+            if (data.number_padding) this.form.number_digits = data.number_padding;
+            if (data.reset_interval) this.form.resetEvery = data.reset_interval;
+            if (data.prefix != null) this.form.prefix = data.prefix;
+          }
+        } catch (e) {
+          // New config, no stored value yet
+        }
+      },
+    },
+  },
+
   methods: {
+    validateBeforeSave() {
+      const format = this.form.format || '';
+      const warnings = [];
+
+      if (!format.includes('[NUMBER]')) {
+        warnings.push(this.$t('AGENT_MGMT.NUMBERING.WARN_MISSING_NUMBER'));
+      }
+
+      const monthVars = ['[MONTH]', '[MONTH_ROMAN]', '[MONTH_SHORT]', '[MONTH_LONG]'];
+      if (!monthVars.some(v => format.includes(v))) {
+        warnings.push(this.$t('AGENT_MGMT.NUMBERING.WARN_MISSING_MONTH'));
+      }
+
+      const yearVars = ['[YEAR]', '[YEAR_SHORT]'];
+      if (!yearVars.some(v => format.includes(v))) {
+        warnings.push(this.$t('AGENT_MGMT.NUMBERING.WARN_MISSING_YEAR'));
+      }
+
+      if (!this.form.currentNumber || this.form.currentNumber < 1) {
+        warnings.push(this.$t('AGENT_MGMT.NUMBERING.WARN_MIN_VALUE'));
+      }
+
+      if (
+        this.serverLastSyncedValue != null &&
+        !this.isCurrentValueEditAllowed() &&
+        this.form.currentNumber <= this.serverLastSyncedValue
+      ) {
+        warnings.push(
+          this.$t('AGENT_MGMT.NUMBERING.WARN_CURRENT_VALUE_TOO_LOW', {
+            storedValue: this.serverLastSyncedValue,
+          })
+        );
+      }
+
+      if (warnings.length > 0) {
+        warnings.forEach(msg => useAlert(msg, { duration: 5000 }));
+        return false;
+      }
+      return true;
+    },
+
+    isCurrentValueEditAllowed() {
+      // Never synced — no IDs ever generated
+      if (!this.lastSyncedAt) return true;
+
+      const syncDate = new Date(this.lastSyncedAt);
+      const now = new Date();
+
+      // For periodic resets, allow free editing if we're in a new period
+      if (this.storedResetInterval === 'month') {
+        return syncDate.getFullYear() < now.getFullYear() ||
+          syncDate.getMonth() < now.getMonth();
+      }
+      if (this.storedResetInterval === 'year') {
+        return syncDate.getFullYear() < now.getFullYear();
+      }
+
+      // 'never' — once synced, always restricted
+      return false;
+    },
+
     addCode() {
-      const token = this.form.codeOption;
+      const token = this.codeOption;
       if (!token) return;
-
-      const input = this.$refs.formatInput;
-      if (!input) return;
-
-      const start = input.selectionStart || this.form.format.length;
-      const end = input.selectionEnd || this.form.format.length;
-
-      // Sisipkan token di posisi kursor
-      const before = this.form.format.substring(0, start);
-      const after = this.form.format.substring(end);
-      this.form.format = before + token + after;
-
-      // Reset dropdown
-      this.form.codeOption = '';
-
-      // Fokus kembali ke input dan set posisi kursor setelah token
-      this.$nextTick(() => {
-        input.focus();
-        const newPos = start + token.length;
-        input.setSelectionRange(newPos, newPos);
-      });
+      this.form.format = this.form.format + token;
+      this.codeOption = '';
     },
-    saveConfig() {
-      // Simulasi penyimpanan (dummy)
-      console.log('Konfigurasi disimpan:', this.form);
-      alert('Konfigurasi penomoran disimpan (dummy).');
+
+    async onSave() {
+      if (this.loading) return;
+      if (!this.validateBeforeSave()) return;
+
+      try {
+        this.loading = true;
+
+        const configPayload = {
+          prefix: this.form.prefix,
+          format_pattern: this.form.format,
+          current_value: this.form.currentNumber,
+          number_padding: this.form.number_digits,
+          reset_interval: this.form.resetEvery,
+          numbering_key: this.numberingKey,
+        };
+        await sheetNumberingConfigAPI.updateConfig(this.data.id, configPayload);
+
+        this.savedCurrentNumber = this.form.currentNumber;
+
+        // trigger parent refresh
+        this.emitUpdate();
+
+        this.showSuccessModal = true;
+
+      } catch (error) {
+        console.error("Gagal menyimpan:", error);
+        const serverErrors = error?.response?.data?.errors;
+        if (serverErrors && Array.isArray(serverErrors)) {
+          serverErrors.forEach(msg => useAlert(msg, { duration: 5000 }));
+        } else {
+          useAlert(this.$t('AGENT_MGMT.NUMBERING.SAVE_ERROR'), { duration: 5000 });
+        }
+        // Revert form to last persisted values
+        if (this.savedCurrentNumber != null) {
+          this.form.currentNumber = this.savedCurrentNumber;
+        }
+      } finally {
+        this.loading = false;
+      }
     },
-    resetForm() {
-      this.form = {
-        format: 'INV/',
-        currentNumber: 1,
-        resetEvery: 'never',
-        codeOption: '',
-      };
+
+    closeSuccessModal() {
+      this.showSuccessModal = false;
     },
   },
 };
 </script>
+
+<style scoped>
+.success-modal-overlay {
+  position: fixed; 
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999; 
+}
+
+.success-modal-content {
+  background-color: white;
+  padding: 24px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-width: 400px; /* Lebar modal */
+  width: 90%;
+}
+
+.modal-icon-wrapper {
+  width: 72px;
+  height: 72px;
+  background-color: #A7F3D0; 
+  border-radius: 50%; 
+  margin: 0 auto 20px auto; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-icon {
+  width: 36px;
+  height: 36px;
+  color: #065F46; 
+}
+
+.modal-title {
+  font-size: 24px; 
+  font-weight: 600; 
+  margin-bottom: 8px;
+  color: black;
+}
+
+.modal-message {
+  font-size: 16px; 
+  color: black; 
+  margin-bottom: 24px;
+}
+</style>

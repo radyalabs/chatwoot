@@ -15,12 +15,17 @@ export const getters = {
 };
 
 export const actions = {
-  getAttributes: async ({ commit }) => {
+  getAttributes: async ({ commit }, conversationId) => {
     try {
       const { data } = await getConversationAPI();
-      const { contact_last_seen_at: lastSeen } = data;
-      commit(SET_CONVERSATION_ATTRIBUTES, data);
-      commit('conversation/setMetaUserLastSeenAt', lastSeen, { root: true });
+      const conversations = data.payload || data || [];
+      const currentConversation = conversations.find(c => c.id == conversationId);
+
+      if (currentConversation) {
+        const { contact_last_seen_at: lastSeen } = currentConversation;
+        commit(SET_CONVERSATION_ATTRIBUTES, currentConversation);
+        commit('conversation/setMetaUserLastSeenAt', lastSeen, { root: true });
+      }
     } catch (error) {
       // Ignore error
     }
@@ -39,8 +44,10 @@ export const mutations = {
     $state.status = data.status;
   },
   [UPDATE_CONVERSATION_ATTRIBUTES]($state, data) {
-    if (data.id === $state.id) {
+    if (data.id) {
       $state.id = data.id;
+    }
+    if (data.status) {
       $state.status = data.status;
     }
   },

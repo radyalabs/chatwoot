@@ -24,7 +24,20 @@ const props = defineProps({
   },
 });
 
+// temperature bot
+const creativityLevel = ref(0.3);
+const creativityOptions = computed(() => [
+  { label: t('AGENT_MGMT.CREATIVITY.DETERMINISTIC'), value: 0 },
+  { label: t('AGENT_MGMT.CREATIVITY.CONSERVATIVE'), value: 0.1 },
+  { label: t('AGENT_MGMT.CREATIVITY.NATURAL'), value: 0.3 },
+  { label: t('AGENT_MGMT.CREATIVITY.INNOVATIVE'), value: 0.5 },
+  { label: t('AGENT_MGMT.CREATIVITY.VISIONARY'), value: 0.7 },
+]);
 
+// idle time
+const idleConfig = reactive({
+  duration: 30,      
+});
 
 console.log('=== googleSheetsAuth in GeneralTab.vue', props.googleSheetsAuth);
 const { t } = useI18n();
@@ -35,9 +48,9 @@ watch(
     if (!newData?.display_flow_data) return;
 
     const flowData = newData.display_flow_data;
-    const agentIndex = flowData.enabled_agents.indexOf('customer_service');
+    const agentIndex = flowData.enabled_agents.indexOf('event_organizer');
 
-    // If customer_service agent isn't in the flow, skip
+    // If event_organizer agent isn't in the flow, skip
     if (agentIndex === -1) {
       // eslint-disable-next-line vue/no-mutating-props
       props.config.ticketSystemActive = false;
@@ -46,9 +59,11 @@ watch(
       return;
     }
 
-    const ticketSystem = flowData.agents_config?.[agentIndex]?.configurations?.ticket_system;
+    const agentData = flowData.agents_config?.[agentIndex];
+    const config = agentData?.configurations;
 
     // Map backend value to UI
+    const ticketSystem = config?.ticket_system;
     if (ticketSystem === 'always') {
       // eslint-disable-next-line vue/no-mutating-props
       props.config.ticketSystemActive = true;
@@ -66,6 +81,13 @@ watch(
       // eslint-disable-next-line vue/no-mutating-props
       props.config.ticketCreateWhen = 'always';
     }
+
+    if (agentData && agentData.temperature !== undefined) {
+      creativityLevel.value = agentData.temperature;
+    }
+
+    // Load idle config from API
+    loadIdleConfig();
   },
   { immediate: true }  // ← Runs as soon as component mounts
 );
@@ -81,19 +103,20 @@ function getAgentIdByType(type) {
   if (!flowData?.agents_config) return null;
   
   const agent = flowData.agents_config.find(config => config.type === type);
-  return agent?.agent_id || null;
+  return agent?.agent_id || "232";
 }
 
 const agentId = computed(() => {
-  return getAgentIdByType('customer_service');
+  return getAgentIdByType('event_organizer');
 });
 
 // Computed properties based on parent's Google Sheets auth state
 const ticketStep = computed(() => props.googleSheetsAuth.step);
 const ticketLoading = computed(() => props.googleSheetsAuth.loading);
 const ticketAccount = computed(() => props.googleSheetsAuth.account);
-const ticketSheets = computed(() => ({
-  output: props.googleSheetsAuth.spreadsheetUrls.customer_service.output || ''
+const eventSheets = computed(() => ({
+  input: props.googleSheetsAuth.spreadsheetUrls.event_organizer.input || '',
+  output: props.googleSheetsAuth.spreadsheetUrls.event_organizer.output || '',
 }));
 const ticketAuthError = computed(() => props.googleSheetsAuth.error);
 
@@ -149,7 +172,8 @@ function disconnectGoogle() {
       // Clear parent's auth state
       props.googleSheetsAuth.account = null;
       props.googleSheetsAuth.step = 'auth';
-      props.googleSheetsAuth.spreadsheetUrls.customer_service.output = '';
+      props.googleSheetsAuth.spreadsheetUrls.event_organizer.input = '';
+      props.googleSheetsAuth.spreadsheetUrls.event_organizer.output = '';
       props.googleSheetsAuth.error = null;
       showNotification('Google account disconnected successfully.', 'success');
     })
@@ -171,13 +195,14 @@ async function createTicketSheet() {
     const payload = {
       account_id: parseInt(flowData.account_id, 10),
       agent_id: agentId.value,
-      type: 'tickets',
+      type: 'event_organizer',
     };
     
     const response = await googleSheetsExportAPI.createSpreadsheet(payload);
     
     // Update parent's auth state
-    props.googleSheetsAuth.spreadsheetUrls.customer_service.output = response.data.spreadsheet_url;
+    props.googleSheetsAuth.spreadsheetUrls.event_organizer.input = response.data.input_spreadsheet_url;
+    props.googleSheetsAuth.spreadsheetUrls.event_organizer.output = response.data.output_spreadsheet_url;
     props.googleSheetsAuth.step = 'sheetConfig';
     
     showNotification('Ticket output sheet created successfully!', 'success')
@@ -189,6 +214,49 @@ async function createTicketSheet() {
     );
   } finally {
     props.googleSheetsAuth.loading = false;
+  }
+}
+
+const showRegenerateModal = ref(false);
+const isRegenerating = ref(false);
+
+function openRegenerateModal() {
+  showRegenerateModal.value = true;
+}
+
+async function regenerateSheetsInput() {
+  showRegenerateModal.value = false;
+
+  try {
+    isRegenerating.value = true;
+    const flowData = props.data.display_flow_data;
+
+    const payload = {
+      account_id: parseInt(flowData.account_id, 10),
+      agent_id: agentId.value,
+      type: 'event_organizer',
+    };
+
+    // Memanggil API wrapper yang baru kita perbaiki
+    const response = await googleSheetsExportAPI.regenerateSpreadsheet(payload);
+
+    if (response.data && response.data.input_spreadsheet_url) {
+        props.googleSheetsAuth.spreadsheetUrls.event_organizer.input = response.data.input_spreadsheet_url;
+
+        if (response.data.output_spreadsheet_url) {
+            props.googleSheetsAuth.spreadsheetUrls.event_organizer.output = response.data.output_spreadsheet_url;
+        }
+
+        showNotification('Input spreadsheet berhasil dibuat ulang!', 'success');
+    } else {
+        throw new Error("Respon server tidak memiliki URL spreadsheet baru.");
+    }
+
+  } catch (error) {
+    console.error('Failed to regenerate sheet:', error);
+    showNotification('Gagal membuat ulang spreadsheet. Silakan coba lagi.', 'error');
+  } finally {
+    isRegenerating.value = false;
   }
 }
 
@@ -204,19 +272,31 @@ async function save() {
   }
   try {
     isSaving.value = true;
-    // Hardcoded payload, exactly as you had it
-    let flowData = props.data.display_flow_data;
+    // Use translated flow_data, not display_flow_data (Indonesian)
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data));
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
+
     // console.log(flowData)
-    const agent_index = flowData.enabled_agents.indexOf('customer_service');
+    const agent_index = flowData.enabled_agents.indexOf('event_organizer');
+    flowData.agents_config[agent_index].temperature = creativityLevel.value;
+    displayFlowData.agents_config[agent_index].temperature = creativityLevel.value;
+
     flowData.agents_config[agent_index].configurations.ticket_system =
       ticketSystem;
-    // console.log(flowData);
-    // console.log(props.config);
+    displayFlowData.agents_config[agent_index].configurations.ticket_system =
+      ticketSystem;
+
     const payload = {
       flow_data: flowData,
+      display_flow_data: displayFlowData,
     };
     // ✅ Properly await the API call
-    await aiAgents.updateAgent(props.data.id, payload);
+    await Promise.all([
+      aiAgents.updateAgent(props.data.id, payload),
+      idleConfigsAPI.updateConfig(props.data.id, {
+        duration: idleConfig.duration
+      })
+    ]);
 
     // ✅ Show success console.log after success
     useAlert(t('AGENT_MGMT.CSBOT.TICKET.SAVE_SUCCESS'));
@@ -340,11 +420,11 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
                       </div>
                     </div>
                   </div>
-                  <div v-if="ticketSheets.input && !salesAuthError" class="flex flex-col gap-2">
+                  <div v-if="eventSheets.input && !salesAuthError" class="flex flex-col gap-2">
                     <a 
-                      :href="ticketSheets.input" 
+                      :href="eventSheets.input" 
                       target="_blank" 
-                      class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors shadow-sm"
+                      class="inline-flex items-center space-x-2 border-2 border-green-600 hover:border-green-700 dark:border-green-600 text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-500 px-4 py-2 rounded-md font-medium transition-colors bg-transparent hover:bg-green-50 dark:hover:bg-green-900/20"
                     >
                       <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
@@ -355,8 +435,8 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
                 </div>
 
                 <div class="border-t border-blue-200 dark:border-blue-700 pt-6">
-                  <div class="flex justify-end">
-                    <div v-if="ticketSheets.input && !salesAuthError">
+                  <div class="flex items-center justify-between gap-2">
+                    <div v-if="eventSheets.input && !salesAuthError">
                       <button
                         @click="syncProductColumns"
                         :disabled="syncingColumns"
@@ -372,17 +452,15 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
                         {{ syncingColumns ? $t('AGENT_MGMT.EOBOT.CATALOG.SYNC_BUTTON_LOADING') : $t('AGENT_MGMT.EOBOT.CATALOG.SYNC_BUTTON') }}
                       </button>
                     </div>
-                    <div v-else class="text-red-600 text-sm flex items-center gap-2">
+                    <div class="text-red-600 text-sm flex items-center gap-2">
                       <button
-                        @click="retryAuthentication"
-                        class="inline-flex items-center space-x-2 border-2 border-green-700 hover:border-green-700 dark:border-green-700 text-green-600 hover:text-green-700 dark:text-grey-400 dark:hover:text-grey-500 pr-4 py-2 rounded-md font-medium transition-colors bg-transparent hover:bg-grey-50 dark:hover:bg-grey-900/20"
-                        :disabled="loading"
+                        @click="openRegenerateModal"
+                        class="btn-retryauth inline-flex items-center space-x-2 px-4 py-2 rounded-md font-medium transition-colors bg-transparent"
+                        :disabled="isRegenerating"
                       >
-                        <span v-if="loading">{{ $t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_LOADING') }}</span>
-                        <span>{{ t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_BTN') }}</span>
+                        <span v-if="isRegenerating">{{ $t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_LOADING') }}</span>
+                        <span v-else>{{ t('AGENT_MGMT.BOOKING_BOT.RETRY_AUTH_BTN') }}</span>
                       </button>
-                    </div>
-                    <div class="gap-2 items-center">
                       <button
                         @click="disconnectGoogle"
                         class="inline-flex items-center space-x-2 border-2 border-red-600 hover:border-red-700 dark:border-red-400 dark:hover:border-red-500 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500 px-4 py-2 rounded-md font-medium transition-colors bg-transparent hover:bg-red-50 dark:hover:bg-red-900/20 ml-3"
@@ -411,16 +489,86 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
                     </div>
                   </div>
                   <a 
-                    v-if="ticketSheets.output && !salesAuthError"
-                    :href="ticketSheets.output" 
+                    v-if="eventSheets.output && !salesAuthError"
+                    :href="eventSheets.output" 
                     target="_blank" 
-                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors shadow-sm"
+                    class="inline-flex items-center space-x-2 border-2 border-green-600 hover:border-green-700 dark:border-green-600 text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-500 px-4 py-2 rounded-md font-medium transition-colors bg-transparent hover:bg-green-50 dark:hover:bg-green-900/20"
                   >
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                     </svg>
                     {{ $t('AGENT_MGMT.BOOKING_BOT.OPEN_SHEET_BTN') }}
                   </a>
+                </div>
+              </div>
+              <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
+                <div class="flex items-start justify-between p-6">
+                  <div class="flex items-center">
+                    <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
+                        <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="font-medium text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.EOBOT.CREATIVITY') }}</h3>
+                      <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.EOBOT.CREATIVITY_DESC') }}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="border-t border-gray-200 dark:border-gray-700 p-6">
+                  <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.EOBOT.CREATIVITY_SCALE') }}</label>
+                  <div class="relative">
+                    <select 
+                      v-model="creativityLevel" 
+                      class="w-full mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      <option class="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" v-for="opt in creativityOptions" :key="opt.value" :value="opt.value">
+                        {{ opt.label }}
+                      </option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500 dark:text-gray-400">
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
+                <div class="flex items-center p-6">
+                  <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="font-medium text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.EOBOT.IDLE_STATE') }}</h3>
+                    <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.EOBOT.IDLE_STATE_DESC') }}</p>
+                  </div>
+                </div>
+                
+                <div class="border-t border-gray-200 dark:border-gray-700 p-6">
+                  <div>
+                    <label class="block text-sm font-medium mb-2 text-slate-900 dark:text-slate-25">
+                      {{ $t('AGENT_MGMT.EOBOT.IDLE_TIME') }}
+                    </label>
+                    <div class="flex items-center gap-3">
+                      <div class="w-16">
+                        <input 
+                          type="number" 
+                          min="1"
+                          v-model="idleConfig.duration"
+                          class="text-center px-2 py-2 text-sm font-medium border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                          placeholder="30" 
+                        />
+                      </div>
+                      <span class="text-slate-600 dark:text-slate-400 text-sm">
+                        {{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_DESC') }}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -439,8 +587,8 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
             </svg>
           </div>
           <div>
-            <h3 class="font-semibold text-slate-700 dark:text-slate-300">{{ $t('AGENT_MGMT.CSBOT.TICKET.GENERAL_SETTINGS') }}</h3>
-            <p class="text-sm text-slate-500 dark:text-slate-400">{{ $t('AGENT_MGMT.CSBOT.TICKET.SYSTEM_SETTINGS') }}</p>
+            <h3 class="font-semibold text-slate-700 dark:text-slate-300">{{ $t('AGENT_MGMT.BOOKING_BOT.CONFIGURE') }}</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400">{{ $t('AGENT_MGMT.BOOKING_BOT.CONFIGURE_DESC') }}</p>
           </div>
         </div>
         
@@ -462,4 +610,59 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
       </div>
     </div>
   </div>
+  <div v-if="showRegenerateModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6" role="dialog">
+    <div class="fixed inset-0 bg-slate-900/50 transition-opacity" @click="showRegenerateModal = false"></div>
+
+    <div class="relative w-full max-w-md transform overflow-hidden rounded-xl bg-white dark:bg-slate-800 p-6 text-left shadow-xl transition-all border border-slate-200 dark:border-slate-700">
+      
+      <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/20 mb-4">
+        <svg class="h-6 w-6 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+        </svg>
+      </div>
+
+      <div class="text-center">
+        <h3 class="text-lg font-semibold leading-6 text-slate-900 dark:text-white" id="modal-title">
+          {{ $t('AGENT_MGMT.EOBOT.REGENERATE_SHEETS') }}
+        </h3>
+        <div class="mt-2">
+          <p class="text-sm text-slate-500 dark:text-slate-400">
+            {{ $t('AGENT_MGMT.EOBOT.REGENERATE_SHEETS_DESC') }}
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-6 flex flex-col sm:flex-row-reverse gap-3">
+        <button 
+          type="button" 
+          class="inline-flex w-full justify-center bg-green-600 text-white rounded-md hover:bg-green-700 px-3 py-2 text-sm font-semibold shadow-sm sm:w-auto transition-colors"
+          @click="regenerateSheetsInput"
+        >
+          {{ $t('AGENT_MGMT.EOBOT.REGENERATE_SHEETS_BTN') }}
+        </button>
+        <button 
+          type="button" 
+          class="inline-flex w-full justify-center rounded-lg bg-white dark:bg-transparent px-3 py-2 text-sm font-semibold text-slate-900 dark:text-slate-300 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 sm:w-auto transition-colors"
+          @click="showRegenerateModal = false"
+        >
+          {{ $t('AGENT_MGMT.EOBOT.REGENERATE_SHEETS_CANCEL') }}
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
+
+<style scoped>
+.btn-retryauth {
+    border: 2px solid #B0B1BC !important;
+    color: #B0B1BC !important;
+}
+
+.btn-retryauth:hover {       
+    background-color: rgba(176, 177, 188, 0.1) !important; 
+}
+
+.dark .btn-retryauth:hover {
+    background-color: rgba(176, 177, 188, 0.1) !important; 
+}
+</style>

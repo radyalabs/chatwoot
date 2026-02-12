@@ -132,6 +132,7 @@ Rails.application.routes.draw do
               post 'whatsapp/restart', to: 'inboxes#whatsapp_restart_session'
               post 'whatsapp/disconnect', to: 'inboxes#whatsapp_disconnect_session'
               post 'whatsapp/reconnect', to: 'inboxes#whatsapp_reconnect_session'
+              get 'whatsapp/groups', to: 'inboxes#whatsapp_groups'
             end
           end
 
@@ -157,6 +158,7 @@ Rails.application.routes.draw do
                 delete :'text/:id', to: 'knowledge_source_texts#destroy'
                 post :file, to: 'knowledge_source_files#create'
                 delete :'file/:id', to: 'knowledge_source_files#destroy'
+                get :'file/:id/preview', to: 'knowledge_source_files#preview'
                 post :'website/links', to: 'knowledge_source_websites#collect_link'
                 post :website, to: 'knowledge_source_websites#create'
                 patch :website, to: 'knowledge_source_websites#update'
@@ -176,6 +178,8 @@ Rails.application.routes.draw do
             resources :documents, only: [:index, :show, :create, :destroy]
             resources :assistant_responses
           end
+
+          post :translate, to: 'translator#translate'
           resources :agent_bots, only: [:index, :create, :show, :update, :destroy] do
             delete :avatar, on: :member
           end
@@ -396,7 +400,9 @@ Rails.application.routes.draw do
             end
           end
 
-          resources :upload, only: [:create]
+          resources :upload, only: [:create] do
+            delete :destroy, on: :collection
+          end
         end
       end
       # end of account scoped api routes
@@ -463,6 +469,39 @@ Rails.application.routes.draw do
                 get :download
               end
             end
+
+            # Reminders routes
+            resources :reminders, only: [:index, :create, :show, :destroy] do
+              collection do
+                get :config, action: :show_config
+                put :config, action: :update_config
+              end
+            end
+
+            # Idle configs routes
+            resources :idle_configs, only: [] do
+              collection do
+                get :config, action: :show_config
+                put :config, action: :update_config
+              end
+            end
+
+            resources :agent_notification_settings, only: %i[index create update destroy]
+
+            # Sheet numbering configs routes
+            resources :sheet_numbering_configs, only: [] do
+              collection do
+                get :config, action: :show_config
+                put :config, action: :update_config
+              end
+            end
+
+            # Shipping configs routes
+            resources :shipping_stores, only: [:index] do
+              collection do
+                post :batch_update
+              end
+            end
           end
 
           resources :summary_reports, only: [] do
@@ -484,6 +523,11 @@ Rails.application.routes.draw do
               get :conversation_traffic
               get :bot_metrics
               get :credit_usage
+              get :funnel_metrics
+              get :trend_metrics
+              get :handover_metrics
+              get :agents_daily_metrics
+              get :agent_performance_metrics
               get :ai_agent_metrics
             end
           end
@@ -495,6 +539,8 @@ Rails.application.routes.draw do
               post :spreadsheet_url
               post :sync
               delete :disconnect
+              post :regenerate
+              post :delete
             end
           end
         end
@@ -502,6 +548,24 @@ Rails.application.routes.draw do
       resource :callback, only: [:index], controller: 'callback' do
         collection do
           get :index
+        end
+      end
+
+      # Internal API for external services (jangkau.langgraph, etc.)
+      namespace :internal do
+        resources :notifications, only: [:create]
+        resources :reminders, only: [:create] do
+          collection do
+            put :upsert
+            delete :delete
+          end
+        end
+
+        resources :sheet_numbering_configs, only: [] do
+          collection do
+            get :config, action: :show_config
+            put :sync_counter, action: :sync_counter
+          end
         end
       end
     end
@@ -655,6 +719,7 @@ Rails.application.routes.draw do
       resources :accounts, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
         post :seed, on: :member
         post :reset_cache, on: :member
+        resources :contact_conversations, only: [:index], path: 'conversations'
       end
       resources :users, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
         delete :avatar, on: :member, action: :destroy_avatar

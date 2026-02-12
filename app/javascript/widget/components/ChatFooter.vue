@@ -35,9 +35,9 @@ export default {
       return getContrastingTextColor(this.widgetColor);
     },
     hideReplyBox() {
-      const { allowMessagesAfterResolved } = window.chatwootWebChannel;
+      // Mengambil status dari atribut percakapan
       const { status } = this.conversationAttributes;
-      return !allowMessagesAfterResolved && status === 'resolved';
+      return status === 'resolved';
     },
     showEmailTranscriptButton() {
       return this.hasEmail;
@@ -83,16 +83,6 @@ export default {
       });
       this.inReplyTo = null;
     },
-    startNewConversation() {
-      this.clearConversations();
-      this.clearConversationAttributes();
-      this.replaceRoute('prechat-form');
-      IFrameHelper.sendMessage({
-        event: 'onEvent',
-        eventIdentifier: CHATWOOT_ON_START_CONVERSATION,
-        data: { hasConversation: true },
-      });
-    },
     toggleReplyTo(message) {
       this.inReplyTo = message;
     },
@@ -137,15 +127,6 @@ export default {
     />
   </footer>
   <div v-else>
-    <CustomButton
-      class="font-medium"
-      block
-      :bg-color="widgetColor"
-      :text-color="textColor"
-      @click="startNewConversation"
-    >
-      {{ $t('START_NEW_CONVERSATION') }}
-    </CustomButton>
     <CustomButton
       v-if="showEmailTranscriptButton"
       type="clear"

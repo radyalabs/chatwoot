@@ -36,7 +36,7 @@ class V2::AiAgents::FlowData::BaseBuilder
 
   def agent_object(template, collection_name = 'default_collection')
     {
-      agent_id: SecureRandom.alphanumeric(8),
+      agent_id: SecureRandom.uuid.delete('-'),
       type: template.name_id,
       name: template.name,
       bot_prompt: {

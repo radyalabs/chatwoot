@@ -53,6 +53,8 @@ import captainResponses from './captain/response';
 import captainInboxes from './captain/inboxes';
 import billing from './modules/billing';
 import quickReplies from './modules/quickReplies';
+import shippingStores from './modules/shippingStores';
+import agentNotificationSettings from './modules/agentNotificationSettings';
 const plugins = [];
 
 export default createStore({
@@ -110,6 +112,8 @@ export default createStore({
     captainInboxes,
     billing,
     quickReplies,
+    shippingStores,
+    agentNotificationSettings,
   },
   plugins,
 });

@@ -6,32 +6,46 @@ const createConversationAPI = async content => {
   return API.post(urlData.url, urlData.params);
 };
 
-const sendMessageAPI = async (content, replyTo = null) => {
+const sendMessageAPI = async (conversationId, content, replyTo = null) => {
   const urlData = endPoints.sendMessage(content, replyTo);
-  return API.post(urlData.url, urlData.params);
+  const payload = {
+    ...urlData.params,
+    conversation_id: conversationId, 
+  };
+  return API.post(urlData.url, payload);
 };
 
-const sendAttachmentAPI = async (attachment, replyTo = null) => {
+const sendAttachmentAPI = async (conversationId, attachment, replyTo = null) => {
   const urlData = endPoints.sendAttachment(attachment, replyTo);
+  urlData.params.append('conversation_id', conversationId);
   return API.post(urlData.url, urlData.params);
 };
 
-const getMessagesAPI = async ({ before, after }) => {
-  const urlData = endPoints.getConversation({ before, after });
-  return API.get(urlData.url, { params: urlData.params });
+const getMessagesAPI = async ({ conversationId, before, after }) => {
+  const urlData = endPoints.getConversation({ conversationId, before, after });
+  const finalParams = {
+    ...urlData.params,    
+    conversation_id: conversationId
+  };
+  return API.get(urlData.url, { params: finalParams });
+};
+
+const getConversationsListAPI = async () => {
+  return API.get(`/api/v1/widget/conversations${window.location.search}`);
 };
 
 const getConversationAPI = async () => {
   return API.get(`/api/v1/widget/conversations${window.location.search}`);
 };
-
-const toggleTyping = async ({ typingStatus }) => {
+const toggleTyping = async ({ conversationId, typingStatus }) => {
   return API.post(
     `/api/v1/widget/conversations/toggle_typing${window.location.search}`,
-    { typing_status: typingStatus }
+    { 
+      typing_status: typingStatus,
+      conversation_id: conversationId
+    }
   );
 };
-
 const setUserLastSeenAt = async ({ lastSeen }) => {
   return API.post(
     `/api/v1/widget/conversations/update_last_seen${window.location.search}`,
@@ -79,4 +93,5 @@ export {
   toggleStatus,
   setCustomAttributes,
   deleteCustomAttribute,
+  getConversationsListAPI,
 };

@@ -28,7 +28,6 @@ export default {
   data() {
     return {
       previousScrollHeight: 0,
-      previousConversationSize: 0,
     };
   },
   computed: {
@@ -41,6 +40,10 @@ export default {
       isAgentTyping: 'conversation/getIsAgentTyping',
       conversationAttributes: 'conversationAttributes/getConversationParams',
     }),
+    messageCount() {
+      if (!this.groupedMessages) return 0;
+      return this.groupedMessages.reduce((acc, group) => acc + group.messages.length, 0);
+    },
     colorSchemeClass() {
       return `${this.darkMode === 'dark' ? 'dark-scheme' : 'light-scheme'}`;
     },
@@ -54,11 +57,43 @@ export default {
         (isConversationInPendingStatus && isLastMessageIncoming)
       );
     },
+    cleanedGroupedMessages() {
+      if (!this.groupedMessages.length) return [];
+
+      let isFirstMessageRemoved = false;
+
+      return this.groupedMessages.map(group => {
+        const filtered = group.messages.filter((msg, index) => {
+          if (!isFirstMessageRemoved) {
+            const isAutoHalo =
+              msg.sender?.type === 'contact' &&
+              typeof msg.content === 'string' &&
+              msg.content.trim().toLowerCase() === 'halo';
+
+            if (isAutoHalo) {
+              isFirstMessageRemoved = true;
+              return false; // sembunyikan
+            }
+          }
+          return true;
+        });
+
+        return {
+          date: group.date,
+          messages: filtered
+        };
+      });
+    },
   },
   watch: {
     allMessagesLoaded() {
       this.previousScrollHeight = 0;
     },
+    messageCount(newCount, oldCount) {
+      this.$nextTick(() => {
+        this.scrollToBottom();
+      });
+    }
   },
   mounted() {
     this.$el.addEventListener('scroll', this.handleScroll);
@@ -67,7 +102,9 @@ export default {
   updated() {
     if (this.previousConversationSize !== this.conversationSize) {
       this.previousConversationSize = this.conversationSize;
-      this.scrollToBottom();
+      this.$nextTick(() => {
+        this.scrollToBottom();
+      });
     }
   },
   unmounted() {
@@ -77,8 +114,15 @@ export default {
     ...mapActions('conversation', ['fetchOldConversations']),
     scrollToBottom() {
       const container = this.$el;
-      container.scrollTop = container.scrollHeight - this.previousScrollHeight;
-      this.previousScrollHeight = 0;
+      if (this.previousScrollHeight > 0) {
+        container.scrollTop = container.scrollHeight - this.previousScrollHeight;
+        this.previousScrollHeight = 0;
+      } else {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'smooth' 
+        });
+      }
     },
     handleScroll() {
       if (
@@ -89,9 +133,15 @@ export default {
         return;
       }
 
+      if (this.$el.scrollTop > 200) {
+        this.previousScrollHeight = 0;
+      }
+
+      // Logika fetch history (saat di pucuk atas)
       if (this.$el.scrollTop < 100) {
-        this.fetchOldConversations({ before: this.earliestMessage.id });
+        // Simpan tinggi saat ini SEBELUM data baru masuk
         this.previousScrollHeight = this.$el.scrollHeight;
+        this.fetchOldConversations({ before: this.earliestMessage.id });
       }
     },
   },
@@ -105,7 +155,7 @@ export default {
         <Spinner />
       </div>
       <div
-        v-for="groupedMessage in groupedMessages"
+        v-for="groupedMessage in cleanedGroupedMessages"
         :key="groupedMessage.date"
         class="messages-wrap"
       >

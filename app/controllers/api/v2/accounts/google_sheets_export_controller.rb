@@ -19,11 +19,17 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
 
   def status
     # Send GET request to check authorization status
-    api_endpoint = GlobalConfigService.load('EXTERNAL_TOKEN_API_URL', nil)
-    status_url = "#{api_endpoint}/#{Current.account.id}/status"
+    base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
+    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
+    return render json: { error: 'JANGKAU_AGENT_API_URL not configured' }, status: :service_unavailable unless base_url
+
+    status_url = "#{base_url}v2/oauth/google/credentials/#{Current.account.id}/status"
 
     begin
-      response = HTTParty.get(status_url)
+      response = HTTParty.get(
+        status_url,
+        headers: { 'X-API-Key' => api_key }
+      )
 
       if response.success?
         authorized = response.parsed_response['authorized'] || false
@@ -51,7 +57,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     end
   end
 
-  def generate
+  def generate # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/MethodLength,Metrics/PerceivedComplexity
     # Extract and validate payload
     payload = {
       account_id: params[:account_id],
@@ -65,19 +71,23 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     end
 
     # Build external API URL
-    base_api_url = GlobalConfigService.load('EXTERNAL_TOKEN_API_URL', nil)
-    return render json: { error: 'EXTERNAL_TOKEN_API_URL not configured' }, status: :service_unavailable unless base_api_url
+    base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
+    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
+
+    return render json: { error: 'JANGKAU_AGENT_API_URL not configured' }, status: :service_unavailable unless base_url
 
     # Replace the base path and append `/create`
     # Example: http://0.0.0.0:8080/v2/oauth/google/credentials → http://0.0.0.0:8080/v2/oauth/google/spreadsheet/create
-    target_url = base_api_url.gsub(%r{/v2/oauth/google/.*}, '/v2/oauth/google/spreadsheet/create')
+    endpoint = "#{base_url}v2/oauth/google/spreadsheet/create"
 
     begin
       response = HTTParty.post(
-        target_url,
-        headers: { 'Content-Type' => 'application/json' },
+        endpoint,
         body: payload.to_json,
-        timeout: 30
+        headers: {
+          'Content-Type' => 'application/json',
+          'X-API-Key' => api_key
+        }
       )
 
       if response.success?
@@ -157,18 +167,19 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     account_id = params[:account_id]
     return render json: { error: 'Missing required parameter: account_id' }, status: :bad_request unless account_id
 
-    base_api_url = GlobalConfigService.load('EXTERNAL_TOKEN_API_URL', nil)
-    return render json: { error: 'EXTERNAL_TOKEN_API_URL not configured' }, status: :service_unavailable unless base_api_url
+    base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
+    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
+    return render json: { error: 'JANGKAU_AGENT_API_URL not configured' }, status: :service_unavailable unless base_url
 
-    # Replace base path and append `/disconnect`
-    # Example: http://0.0.0.0:8080/v2/oauth/google/credentials
-    # → http://0.0.0.0:8080/v2/oauth/google/credentials/{account_id}/disconnect
-    target_url = base_api_url.gsub(%r{/v2/oauth/google/.*}, "/v2/oauth/google/credentials/#{account_id}/disconnect")
+    target_url = "#{base_url}v2/oauth/google/credentials/#{account_id}/disconnect"
 
     begin
       response = HTTParty.delete(
         target_url,
-        headers: { 'Content-Type' => 'application/json' },
+        headers: {
+          'Content-Type' => 'application/json',
+          'X-API-Key' => api_key
+        },
         timeout: 15
       )
 
@@ -205,6 +216,74 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     end
   end
 
+  def regenerate
+    # Extract and validate payload
+    payload = {
+      account_id: params[:account_id],
+      agent_id: params[:agent_id],
+      type: params[:type]
+    }
+
+    # Validate required fields
+    unless payload[:account_id] && payload[:agent_id] && payload[:type]
+      return render json: { error: 'Missing required parameters: account_id, agent_id, or type', payload: payload }, status: :bad_request
+    end
+
+    # Build external API URL
+    base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
+    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
+
+    return render json: { error: 'JANGKAU_AGENT_API_URL not configured' }, status: :service_unavailable unless base_url
+
+    # Endpoint ke Python Backend
+    # Example: http://0.0.0.0:8080/v2/oauth/google/spreadsheet/regenerate
+    endpoint = "#{base_url}v2/oauth/google/spreadsheet/regenerate"
+
+    begin
+      response = HTTParty.post(
+        endpoint,
+        body: payload.to_json,
+        headers: {
+          'Content-Type' => 'application/json',
+          'X-API-Key' => api_key
+        }
+      )
+
+      if response.success?
+        json_response = response.parsed_response
+
+        # Karena regenerate hanya mengubah input, tapi controller python mengembalikan result dari create()
+        # Kita ambil URL terbaru
+        input_url = json_response['input_spreadsheet_url']
+        output_url = json_response['output_spreadsheet_url'] # Output url mungkin sama, tapi tetap dikembalikan
+
+        if input_url
+          render json: {
+            message: 'Spreadsheet regenerated successfully',
+            input_spreadsheet_url: input_url,
+            output_spreadsheet_url: output_url
+          }, status: :ok
+        else
+          render json: {
+            error: 'Missing input spreadsheet URL in response',
+            response: json_response
+          }, status: :unprocessable_entity
+        end
+      else
+        render json: {
+          error: 'Failed to regenerate spreadsheet',
+          status: response.code,
+          message: response.parsed_response
+        }, status: :service_unavailable
+      end
+    rescue StandardError => e
+      render json: {
+        error: 'Failed to connect to external service',
+        message: e.message
+      }, status: :service_unavailable
+    end
+  end
+
   def spreadsheet_url
     # Extract and validate payload
     payload = {
@@ -219,24 +298,26 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     end
 
     # Validate supported types
-    supported_types = %w[tickets booking restaurant sales lead_generation]
+    supported_types = %w[tickets booking restaurant sales lead_generation event_organizer]
     unless supported_types.include?(payload[:type])
       return render json: { error: "Unsupported spreadsheet type '#{payload[:type]}'. Supported types: #{supported_types.join(', ')}", payload: payload },
                     status: :bad_request
     end
 
     # Build external API URL
-    base_api_url = GlobalConfigService.load('EXTERNAL_TOKEN_API_URL', nil)
-    return render json: { error: 'EXTERNAL_TOKEN_API_URL not configured' }, status: :service_unavailable unless base_api_url
+    base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
+    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
+    return render json: { error: 'JANGKAU_AGENT_API_URL not configured' }, status: :service_unavailable unless base_url
 
-    # Replace the base path and append `/spreadsheet`
-    # Example: http://0.0.0.0:8080/v2/oauth/google/credentials → http://0.0.0.0:8080/v2/oauth/google/spreadsheet
-    target_url = base_api_url.gsub(%r{/v2/oauth/google/.*}, '/v2/oauth/google/spreadsheet')
+    target_url = "#{base_url}v2/oauth/google/spreadsheet"
 
     begin
       response = HTTParty.post(
         target_url,
-        headers: { 'Content-Type' => 'application/json' },
+        headers: {
+          'Content-Type' => 'application/json',
+          'X-API-Key' => api_key
+        },
         body: payload.to_json,
         timeout: 10
       )
@@ -355,74 +436,90 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     end
   end
 
-  def sync # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
+  def sync # rubocop:disable Metrics/MethodLength,Metrics/AbcSize
+    unless params[:account_id] && params[:agent_id] && params[:type] && params[:collection_name]
+      return render json: {
+        error: 'Missing required parameters: account_id, agent_id, or type',
+        payload: payload
+      }, status: :bad_request
+    end
+
+    base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
+    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
+
+    return render json: { error: 'JANGKAU_AGENT_API_URL not configured' }, status: :service_unavailable unless base_url
+
+    endpoint = "#{base_url}v2/knowledge-management/sync-from-google-sheets"
+    response = HTTParty.post(
+      endpoint,
+      body: {
+        'account_id' => params[:account_id],
+        'spreadsheet_id' => params[:agent_id],
+        'index_name' => params[:collection_name],
+        'sheet_type' => params[:type]
+      }.to_json,
+      headers: {
+        'Content-Type' => 'application/json',
+        'X-API-Key' => api_key
+      }
+    )
+
+    if response.success?
+      render json: { message: 'success', data: response.parsed_response }, status: :ok
+    else
+      render json: { error: response.parsed_response }, status: :unprocessable_entity
+    end
+  end
+
+  def delete
     # Extract and validate payload
     payload = {
       account_id: params[:account_id],
       agent_id: params[:agent_id],
-      type: params[:type]
+      collection_name: params[:collection_name]
     }
 
     # Validate required fields
-    unless payload[:account_id] && payload[:agent_id] && payload[:type]
+    unless payload[:account_id] && payload[:agent_id] && payload[:collection_name]
       return render json: { error: 'Missing required parameters: account_id, agent_id, or type', payload: payload }, status: :bad_request
     end
 
     # Build external API URL
-    base_api_url = GlobalConfigService.load('EXTERNAL_TOKEN_API_URL', nil)
-    return render json: { error: 'EXTERNAL_TOKEN_API_URL not configured' }, status: :service_unavailable unless base_api_url
+    base_url = ENV.fetch('JANGKAU_AGENT_API_URL', nil)
+    api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
 
-    # Replace the base path and append `/create`
-    # Example: http://0.0.0.0:8080/v2/oauth/google/credentials → http://0.0.0.0:8080/v2/oauth/google/spreadsheet/create
-    target_url = base_api_url.gsub(%r{/v2/oauth/google/.*}, '/v2/oauth/google/spreadsheet/sync')
+    return render json: { error: 'JANGKAU_AGENT_API_URL not configured' }, status: :service_unavailable unless base_url
+
+    # Endpoint ke Python Backend
+    # Example: http://0.0.0.0:8080/v2/oauth/google/spreadsheet/delete
+    endpoint = "#{base_url}v2/oauth/google/spreadsheet/delete"
 
     begin
       response = HTTParty.post(
-        target_url,
-        headers: { 'Content-Type' => 'application/json' },
+        endpoint,
         body: payload.to_json,
-        timeout: 30
+        headers: {
+          'Content-Type' => 'application/json',
+          'X-API-Key' => api_key
+        }
       )
 
       if response.success?
         json_response = response.parsed_response
 
+        # Karena regenerate hanya mengubah input, tapi controller python mengembalikan result dari create()
+        # Kita ambil URL terbaru
         message = json_response['message']
-        data = json_response['data']
-
         render json: {
-          message: message,
-          data: data
+          message: message
         }, status: :ok
 
       else
-        # Map external API errors to appropriate status codes
-        error_status = case response.code
-                       when 400
-                         :bad_request
-                       when 401
-                         :unauthorized
-                       when 403
-                         :forbidden
-                       when 404
-                         :not_found
-                       when 409
-                         :conflict
-                       when 422
-                         :unprocessable_entity
-                       when 429
-                         :too_many_requests
-                       when 500, 501, 502, 503, 504
-                         :service_unavailable
-                       else
-                         :service_unavailable
-                       end
-
         render json: {
-          error: 'Failed to sync spreadsheet',
+          error: 'Failed to regenerate spreadsheet',
           status: response.code,
           message: response.parsed_response
-        }, status: error_status
+        }, status: :service_unavailable
       end
     rescue StandardError => e
       render json: {

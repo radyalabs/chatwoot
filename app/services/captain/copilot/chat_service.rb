@@ -1,4 +1,4 @@
-class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
+class Captain::Copilot::ChatService
   include SwitchLocale
   include ResponseFormatChatHelper
 
@@ -22,24 +22,9 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
     end
   end
 
-  def notify_if_long_running
-    switch_locale_using_account_locale do
-      return unless @context.active_conversation
-
-      failure_reason = pre_check_failure_reason
-      return send_reply_failure(failure_reason) if failure_reason
-
-      long_running_notify
-    end
-  end
-
   private
 
   def pre_check_failure_reason
-    # return I18n.t('conversations.bot.not_available_ai_agent') unless @context.inbox
-
-    # return I18n.t('conversations.bot.not_available_ai_agent') unless @context.ai_agent
-
     return I18n.t('subscriptions.limit_reached') unless @context.subscription
     return I18n.t('subscriptions.limit_reached') unless @context.usage
 
@@ -51,7 +36,7 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
   def send_messages
     send_message = Captain::Llm::AssistantChatService.new(
       @message,
-      @context.conversation.id,
+      @context.conversation,
       @context.ai_agent,
       @current_account.id
     ).perform
@@ -59,29 +44,41 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
     return send_reply_failure(I18n.t('conversations.bot.failure')) unless send_message.success?
 
     @context.usage.increment_ai_responses
-    parsed = send_message.parsed_response
-    response = json_response(parsed, is_custom_agent: @context.ai_agent.custom_agent?)
-    message, is_handover = parsed_response(response)
-    send_reply(message, is_handover: is_handover, additional_attributes: { message_type: 1, sender_type: 'AiAgent' })
+    response = send_message.parsed_response
+    parsed = parsed_response(response, is_custom_agent: @context.ai_agent.custom_agent?)
+
+    send_reply(
+      parsed,
+      additional_attributes: {
+        message_type: 1,
+        sender_type: 'AiAgent',
+        attachments: parsed[:attachments]
+      }
+    )
   end
 
-  def send_reply(content, is_handover: false, additional_attributes: {})
-    message_content = is_handover ? handover_processing(content) : content
+  def send_reply(response, additional_attributes: {})
+    message_content = response[:is_handover] ? handover_processing(response[:response]) : response[:response]
+
+    end_state_processing(response) unless response[:is_handover]
+
+    conversion_processing(response)
 
     message_created(message_content, additional_attributes.except(:reservation_details))
-    send_log_reply(is_handover: is_handover)
+    send_log_reply(is_handover: response[:is_handover])
   rescue StandardError => e
-    Rails.logger.error("❌ Failed to save AI reply: #{e.message}")
+    Rails.logger.error("Failed to save AI reply: #{e.message}")
   end
 
   def send_reply_failure(reason)
-    Rails.logger.error("❌ Bot failure: #{reason}")
-    send_reply(reason, is_handover: false, additional_attributes: { message_type: 3 })
-  end
-
-  def long_running_notify
-    Rails.logger.info('🤖 Bot is running long time, notifying...')
-    send_reply(I18n.t('conversations.bot.long_running_message'), is_handover: false, additional_attributes: { message_type: 3 })
+    Rails.logger.error("Bot failure: #{reason}")
+    response = {
+      response: reason,
+      is_handover: false,
+      is_end_state: false,
+      has_domain_change: false
+    }
+    send_reply(response, additional_attributes: { message_type: 3 })
   end
 
   def handover_processing(content)
@@ -91,11 +88,31 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
     agent_available ? content : I18n.t('conversations.bot.not_available_agent')
   end
 
+  def conversion_processing(response)
+    return if @context.conversation.is_convert?
+
+    return unless response[:has_domain_change]
+
+    @context.conversation.update(is_convert: true)
+    Rails.logger.info "[BOT] Conversation #{@context.conversation.id} marked as converted (domain change detected)."
+  end
+
+  def end_state_processing(response)
+    attrs = {
+      conversation_id: @context.conversation.id,
+      inbox_id: @context.inbox_id,
+      account_id: @context.account_id,
+      ai_agent_id: @context.ai_agent.id
+    }
+
+    ::Conversations::AddIdleConversationJob.perform_later(response, attrs)
+  end
+
   def send_log_reply(is_handover: false)
     if is_handover
-      Rails.logger.info("🧑‍💼 Handover completed: Conversation #{@context.conversation.id} assigned to Agent!")
+      Rails.logger.info("Handover completed: Conversation #{@context.conversation.id} assigned to Agent!")
     else
-      Rails.logger.info('🤖 Bot completed to reply message')
+      Rails.logger.info('Bot completed to reply message')
     end
   end
 
@@ -109,7 +126,10 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
     User.find_by(id: agent_id)
   end
 
-  def message_created(content, additional_attributes)
+  def message_created(content, additional_attributes) # rubocop:disable Metrics/MethodLength
+    # Extract image_urls before merging (it's not a Message attribute)
+    attachments = additional_attributes&.delete(:attachments)
+
     attrs = {
       content: content,
       account_id: @context.account_id,
@@ -124,5 +144,16 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
     attrs.merge!(additional_attributes) if additional_attributes.present?
 
     Message.create!(attrs)
+
+    return if attachments.blank?
+
+    Rails.logger.info "[BOT] Enqueuing #{attachments.count} image(s) for async attach..."
+
+    attachments.each_with_index do |attachment, idx|
+      Captain::Copilot::AttachMessageImageJob.perform_later(
+        attrs, 
+        attachment,
+        idx + 1)
+    end
   end
 end

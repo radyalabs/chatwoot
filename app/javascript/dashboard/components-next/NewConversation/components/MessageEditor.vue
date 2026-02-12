@@ -75,7 +75,10 @@ const replaceText = async message => {
 </script>
 
 <template>
-  <div class="flex-1 h-full" :class="[!hasAttachments && 'min-h-[200px]']">
+  <div
+    class="flex flex-col flex-1"
+    :class="[!hasAttachments && 'min-h-[200px]']"
+  >
     <template v-if="isEmailOrWebWidgetInbox">
       <Editor
         v-model="modelValue"
@@ -98,7 +101,7 @@ const replaceText = async message => {
         :placeholder="
           t('COMPOSE_NEW_CONVERSATION.FORM.MESSAGE_EDITOR.PLACEHOLDER')
         "
-        class="!px-0 [&>div]:!px-4 [&>div]:!border-transparent [&>div]:!bg-transparent"
+        class="!px-0 flex-1 [&>div]:!px-4 [&>div]:!border-transparent [&>div]:!bg-transparent [&>div]:flex-1 [&_textarea]:flex-1 [&_textarea]:!max-h-none"
         :custom-text-area-class="
           hasErrors
             ? 'placeholder:!text-n-ruby-9 dark:placeholder:!text-n-ruby-9'

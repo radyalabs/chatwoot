@@ -49,16 +49,19 @@
           />
         </div>
         <div v-show="activeIndex === 2" class="w-full">
-          <QnaKnowledgeSources :data="data" context="cs" />
+          <QnaKnowledgeSources :data="data" context="customer_service" />
         </div>
         <div v-show="activeIndex === 3" class="w-full">
           <CategoryTab :data="data" />
         </div>
         <div v-show="activeIndex === 4" class="w-full">
-          <PrioritiesTab :data="data" />
+          <PrioritiesTab :data="data" agent-type="customer_service"/>
         </div>
         <div v-show="activeIndex === 5" class="w-full">
           <ProductCatalogTab :data="data" />
+        </div>
+        <div v-show="activeIndex === 6" class="w-full">
+          <CustomNumberingTab :data="data" numbering-key="customer_service" />
         </div>
       </div>
 
@@ -76,7 +79,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, provide } from 'vue'
 import { useI18n } from 'vue-i18n'
 import FileKnowledgeSources from '../knowledge-sources/FileKnowledgeSources.vue'
 import QnaKnowledgeSources from '../knowledge-sources/QnaKnowledgeSources.vue'
@@ -84,7 +87,7 @@ import CategoryTab from './cs-bot-tabs/CategoryTab.vue'
 import PrioritiesTab from './cs-bot-tabs/PrioritiesTab.vue'
 import ProductCatalogTab from './cs-bot-tabs/ProductCatalogTab.vue'
 import GeneralTab from './cs-bot-tabs/GeneralTab.vue'
-
+import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue'
 const { t } = useI18n()
 
 const props = defineProps({
@@ -98,6 +101,11 @@ const props = defineProps({
   },
 })
 
+const emit = defineEmits(['update:data'])
+
+// ✅ Provide emit function to child tabs
+provide('emitUpdate', () => emit('update:data'))
+
 const config = reactive({
   ticketSystemActive: false,
   ticketCreateWhen: 'always'
@@ -107,7 +115,7 @@ const tabs = computed(() => [
   {
     key: '0',
     index: 0,
-    name: t('AGENT_MGMT.CSBOT.TICKET.GENERAL_SETTINGS'),
+    name: t('AGENT_MGMT.CSBOT.GENERAL_TAB'),
     icon: 'i-lucide-settings',
   },
   {

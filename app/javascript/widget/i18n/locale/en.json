@@ -16,6 +16,15 @@
     "ONLINE": "We are online",
     "OFFLINE": "We are away at the moment"
   },
+  "CONVERSATION_HISTORY": {
+    "TITLE": "Chat History",
+    "START":"Start a new conversation",
+    "NEW": "Create New Conversation",
+    "NEW_DESC": "Start Conversation with our Assistant",
+    "LATEST": "Latest Conversation",
+    "NEW_USER": "No conversations yet",
+    "RECENT": "Recent"
+  },
   "REPLY_TIME": {
     "IN_A_FEW_MINUTES": "Typically replies in a few minutes",
     "IN_A_FEW_HOURS": "Typically replies in a few hours",
@@ -46,6 +55,16 @@
   "BUBBLE": {
     "LABEL": "Chat with us"
   },
+  "LAST_MESSAGE": {
+    "CONVERSATION_RESOLVED": "Conversation resolved",
+    "CONVERSATION_REOPENED": "Conversation reopened",
+    "AGENT_JOINED": "Agent joined the conversation",
+    "AGENT_LEFT": "Agent left the conversation",
+    "USER_JOINED": "User joined the conversation",
+    "USER_LEFT": "User left the conversation",
+    "UPDATED_CONVERSATION": "Conversation updated",
+    "NEW_MESSAGE": "New message"
+},
   "POWERED_BY": "Powered by Jangkau",
   "EMAIL_PLACEHOLDER": "Please enter your email",
   "CHAT_PLACEHOLDER": "Type your message",

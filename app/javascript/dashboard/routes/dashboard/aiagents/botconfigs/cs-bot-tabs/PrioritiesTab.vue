@@ -1,9 +1,10 @@
 <script setup>
-import { reactive, ref, watch, computed } from 'vue';
+import { reactive, ref, watch, computed, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import Button from 'dashboard/components-next/button/Button.vue';
 import aiAgents from '../../../../../api/aiAgents';
+import captainTranslator from '../../../../../api/captainTranslator';
 
 const props = defineProps({
   data: {
@@ -22,6 +23,7 @@ const props = defineProps({
 });
 
 const { t } = useI18n();
+const emitUpdate = inject('emitUpdate', () => {});
 
 const priorities = reactive([]);
 const expandedPriorities = ref({});
@@ -45,13 +47,13 @@ const agentConfig = {
     dupeErrorKey: 'AGENT_MGMT.CSBOT.TICKET.DUPE_ERROR'
   },
   lead_generation: {
-    titleKey: 'AGENT_MGMT.LEADGENBOT.PRIORITY.PRIORITY_TITLE',
-    nameLabel: 'AGENT_MGMT.LEADGENBOT.PRIORITY.PRIORITY_PLACEHOLDER',
-    conditionLabel: 'AGENT_MGMT.LEADGENBOT.PRIORITY.PRIORITY_CONDITION',
-    conditionPlaceholder: 'AGENT_MGMT.LEADGENBOT.PRIORITY.CONDITION_PLACEHOLDER',
-    addButton: 'AGENT_MGMT.LEADGENBOT.PRIORITY.ADD_PRIORITY',
-    saveSuccess: 'AGENT_MGMT.LEADGENBOT.PRIORITY.SAVE_SUCCESS',
-    saveError: 'AGENT_MGMT.LEADGENBOT.PRIORITY.SAVE_ERROR',
+    titleKey: 'AGENT_MGMT.LEADGENBOT.CLASSIFICATION.CLASSIFICATION_TITLE',
+    nameLabel: 'AGENT_MGMT.LEADGENBOT.CLASSIFICATION.CLASSIFICATION_PLACEHOLDER',
+    conditionLabel: 'AGENT_MGMT.LEADGENBOT.CLASSIFICATION.CLASSIFICATION_CONDITION',
+    conditionPlaceholder: 'AGENT_MGMT.LEADGENBOT.CLASSIFICATION.CONDITION_PLACEHOLDER',
+    addButton: 'AGENT_MGMT.LEADGENBOT.CLASSIFICATION.ADD_CLASSIFICATION',
+    saveSuccess: 'AGENT_MGMT.LEADGENBOT.CLASSIFICATION.SAVE_SUCCESS',
+    saveError: 'AGENT_MGMT.LEADGENBOT.CLASSIFICATION.SAVE_ERROR',
     validationError: 'AGENT_MGMT.CSBOT.TICKET.VALIDATION_ERROR',
     errorKey: 'AGENT_MGMT.CSBOT.TICKET.ERROR',
     dupeErrorKey: 'AGENT_MGMT.CSBOT.TICKET.DUPE_ERROR'
@@ -154,16 +156,22 @@ async function save() {
       return;
     }
 
-    let flowData = props.data.display_flow_data;
-    let priorityItems = [];
-    priorities.forEach((item,  _) => {
-      priorityItems.push({
-        key: item.name,
-        conditions: item.condition,
-      });
-    });
+    let flowData = JSON.parse(JSON.stringify(props.data.flow_data));
+    let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data));
+
+    // Translate each priority's key and conditions to English for flow_data
+    const translatedPriorities = [];
+    for (const item of priorities) {
+      let translatedConditions = item.condition;
+      try {
+        const condResp = await captainTranslator.translate(item.condition || '', 'en');
+        translatedConditions = condResp?.data?.translated_text || translatedConditions;
+      } catch (e) {}
+      translatedPriorities.push({ key: item.name, conditions: translatedConditions });
+    }
     
     const agentIndex = flowData.enabled_agents.indexOf(props.agentType);
+    console.log('Agent Index:', agentIndex);
     
     if (agentIndex === -1) {
       useAlert('Agent not found in flow');
@@ -175,13 +183,20 @@ async function save() {
       flowData.agents_config[agentIndex].configurations = {};
     }
     
-    flowData.agents_config[agentIndex].configurations.priority = priorityItems;
+    flowData.agents_config[agentIndex].configurations.priority = translatedPriorities;
+    // For display, store original Indonesian values
+    displayFlowData.agents_config[agentIndex].configurations.priority = priorities.map(p => ({
+      key: p.name,
+      conditions: p.condition,
+    }));
 
     const payload = {
       flow_data: flowData,
+      display_flow_data: displayFlowData, 
     };
     
     await aiAgents.updateAgent(props.data.id, payload);
+    emitUpdate();
     useAlert(t(config.value.saveSuccess));
   } catch (e) {
     console.error(e);

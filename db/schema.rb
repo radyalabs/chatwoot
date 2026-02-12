@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_01_14_024932) do
+ActiveRecord::Schema[7.0].define(version: 2026_02_06_100000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -120,6 +120,25 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_14_024932) do
     t.integer "bot_type", default: 0
     t.jsonb "bot_config", default: {}
     t.index ["account_id"], name: "index_agent_bots_on_account_id"
+  end
+
+  create_table "agent_notification_settings", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "ai_agent_id", null: false
+    t.bigint "inbox_id", null: false
+    t.string "category"
+    t.string "interest_level"
+    t.string "message_type", default: "personal", null: false
+    t.string "receiver_channel_type", default: "whatsapp_unofficial", null: false
+    t.string "receiver_address", null: false
+    t.text "message_template", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "receiver_name"
+    t.index ["account_id", "ai_agent_id"], name: "idx_agent_notif_settings_on_account_and_agent"
+    t.index ["account_id"], name: "index_agent_notification_settings_on_account_id"
+    t.index ["ai_agent_id"], name: "index_agent_notification_settings_on_ai_agent_id"
+    t.index ["inbox_id"], name: "index_agent_notification_settings_on_inbox_id"
   end
 
   create_table "ai_agent_followups", force: :cascade do |t|
@@ -633,6 +652,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_14_024932) do
     t.text "cached_label_list"
     t.boolean "is_reminded", default: false, null: false
     t.boolean "is_handover_reminded", default: false, null: false
+    t.boolean "is_convert", default: false, null: false
     t.index ["account_id", "display_id"], name: "index_conversations_on_account_id_and_display_id", unique: true
     t.index ["account_id", "id"], name: "index_conversations_on_id_and_account_id"
     t.index ["account_id", "inbox_id", "status", "assignee_id"], name: "conv_acid_inbid_stat_asgnid_idx"
@@ -747,6 +767,34 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_14_024932) do
     t.string "name"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
+  end
+
+  create_table "idle_configs", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "ai_agent_id", null: false
+    t.boolean "enabled", default: true, null: false
+    t.integer "duration", default: 30, null: false
+    t.string "action", default: "resolve", null: false
+    t.text "message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "ai_agent_id"], name: "index_idle_configs_on_account_id_and_ai_agent_id", unique: true
+    t.index ["account_id"], name: "index_idle_configs_on_account_id"
+    t.index ["ai_agent_id"], name: "index_idle_configs_on_ai_agent_id"
+  end
+
+  create_table "idle_conversations", force: :cascade do |t|
+    t.bigint "conversation_id", null: false
+    t.integer "inbox_id", null: false
+    t.integer "account_id", null: false
+    t.integer "ai_agent_id", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "step", default: 0, null: false
+    t.datetime "last_sent_at"
+    t.jsonb "additional_attributes", default: {}
+    t.index ["conversation_id"], name: "index_idle_conversations_on_conversation_id"
   end
 
   create_table "inbox_members", id: :serial, force: :cascade do |t|
@@ -999,16 +1047,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_14_024932) do
     t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
-  create_table "number_format_configs", force: :cascade do |t|
-    t.string "format", default: "INV/"
-    t.integer "current_number", default: 1
-    t.string "reset_every", default: "never"
-    t.bigint "account_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["account_id"], name: "index_number_format_configs_on_account_id", unique: true
-  end
-
   create_table "otps", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "code", limit: 6, null: false
@@ -1117,6 +1155,45 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_14_024932) do
     t.index ["related_category_id", "category_id"], name: "index_related_categories_on_related_category_id_and_category_id", unique: true
   end
 
+  create_table "reminder_configs", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "ai_agent_id", null: false
+    t.boolean "enabled", default: false, null: false
+    t.integer "minutes_before_booking", default: 60, null: false
+    t.text "message_template"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "ai_agent_id"], name: "index_reminder_configs_on_account_id_and_ai_agent_id", unique: true
+    t.index ["account_id"], name: "index_reminder_configs_on_account_id"
+    t.index ["ai_agent_id"], name: "index_reminder_configs_on_ai_agent_id"
+  end
+
+  create_table "reminders", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "inbox_id", null: false
+    t.bigint "ai_agent_id", null: false
+    t.bigint "conversation_id", null: false
+    t.datetime "scheduled_at", null: false
+    t.string "contact"
+    t.string "customer_name"
+    t.string "service_name"
+    t.string "service_type"
+    t.string "service_location"
+    t.integer "sent_reminder_count", default: 0, null: false
+    t.datetime "last_sent_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "service_id"
+    t.string "message"
+    t.index ["account_id", "inbox_id", "ai_agent_id", "conversation_id", "service_id"], name: "reminders_unique_idx", unique: true
+    t.index ["account_id", "scheduled_at"], name: "index_reminders_on_account_id_and_scheduled_at"
+    t.index ["account_id"], name: "index_reminders_on_account_id"
+    t.index ["ai_agent_id"], name: "index_reminders_on_ai_agent_id"
+    t.index ["conversation_id", "scheduled_at"], name: "index_reminders_on_conversation_id_and_scheduled_at"
+    t.index ["conversation_id"], name: "index_reminders_on_conversation_id"
+    t.index ["inbox_id"], name: "index_reminders_on_inbox_id"
+  end
+
   create_table "reporting_events", force: :cascade do |t|
     t.string "name"
     t.float "value"
@@ -1136,6 +1213,41 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_14_024932) do
     t.index ["inbox_id"], name: "index_reporting_events_on_inbox_id"
     t.index ["name"], name: "index_reporting_events_on_name"
     t.index ["user_id"], name: "index_reporting_events_on_user_id"
+  end
+
+  create_table "sheet_numbering_configs", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "ai_agent_id", null: false
+    t.string "prefix"
+    t.string "format_pattern", default: "[NUMBER]/[MONTH]/[YEAR]", null: false
+    t.integer "current_value", default: 1, null: false
+    t.integer "number_padding", default: 3, null: false
+    t.string "reset_interval", default: "never", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "numbering_key", default: "default", null: false
+    t.datetime "last_synced_at"
+    t.integer "last_synced_value"
+    t.index ["account_id", "ai_agent_id", "numbering_key"], name: "idx_sheet_numbering_configs_unique_key", unique: true
+    t.index ["account_id"], name: "index_sheet_numbering_configs_on_account_id"
+    t.index ["ai_agent_id"], name: "index_sheet_numbering_configs_on_ai_agent_id"
+  end
+
+  create_table "shipping_stores", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "ai_agent_id", null: false
+    t.string "name", null: false
+    t.text "address", null: false
+    t.decimal "latitude", precision: 10, scale: 6
+    t.decimal "longitude", precision: 10, scale: 6
+    t.jsonb "courier_settings", default: {}, null: false
+    t.jsonb "pickup_settings", default: {}, null: false
+    t.boolean "is_enabled", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_shipping_stores_on_account_id"
+    t.index ["ai_agent_id", "is_enabled"], name: "index_shipping_stores_on_ai_agent_id_and_is_enabled"
+    t.index ["ai_agent_id"], name: "index_shipping_stores_on_ai_agent_id"
   end
 
   create_table "sla_events", force: :cascade do |t|
@@ -1209,9 +1321,10 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_14_024932) do
     t.index ["owner_account_id"], name: "index_subscription_plans_on_owner_account_id"
   end
 
-  create_table "subscription_plans_vouchers", id: false, force: :cascade do |t|
+  create_table "subscription_plans_vouchers", force: :cascade do |t|
     t.bigint "subscription_plan_id", null: false
     t.bigint "voucher_id", null: false
+    t.text "applicable_billing_cycles", default: ["monthly", "quarterly", "halfyear", "yearly"], array: true
     t.index ["subscription_plan_id", "voucher_id"], name: "index_plan_voucher"
   end
 
@@ -1466,18 +1579,33 @@ ActiveRecord::Schema[7.0].define(version: 2026_01_14_024932) do
   add_foreign_key "accounts", "subscriptions", column: "active_subscription_id"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "agent_notification_settings", "accounts"
+  add_foreign_key "agent_notification_settings", "ai_agents"
+  add_foreign_key "agent_notification_settings", "inboxes"
   add_foreign_key "ai_agent_followups", "ai_agents"
   add_foreign_key "ai_agent_selected_labels", "ai_agents"
   add_foreign_key "ai_agent_selected_labels", "labels"
+  add_foreign_key "idle_configs", "accounts"
+  add_foreign_key "idle_configs", "ai_agents"
+  add_foreign_key "idle_conversations", "conversations", on_delete: :cascade
   add_foreign_key "inboxes", "portals"
   add_foreign_key "knowledge_source_files", "knowledge_sources"
   add_foreign_key "knowledge_source_qnas", "knowledge_sources"
   add_foreign_key "knowledge_source_texts", "knowledge_sources"
   add_foreign_key "knowledge_source_websites", "knowledge_sources"
   add_foreign_key "knowledge_sources", "ai_agents"
-  add_foreign_key "number_format_configs", "accounts"
   add_foreign_key "otps", "users"
   add_foreign_key "quick_replies", "accounts"
+  add_foreign_key "reminder_configs", "accounts"
+  add_foreign_key "reminder_configs", "ai_agents"
+  add_foreign_key "reminders", "accounts"
+  add_foreign_key "reminders", "ai_agents"
+  add_foreign_key "reminders", "conversations"
+  add_foreign_key "reminders", "inboxes"
+  add_foreign_key "sheet_numbering_configs", "accounts"
+  add_foreign_key "sheet_numbering_configs", "ai_agents"
+  add_foreign_key "shipping_stores", "accounts"
+  add_foreign_key "shipping_stores", "ai_agents"
   add_foreign_key "subscription_payments", "subscriptions"
   add_foreign_key "subscription_plans", "accounts", column: "owner_account_id"
   add_foreign_key "subscription_topups", "subscriptions"

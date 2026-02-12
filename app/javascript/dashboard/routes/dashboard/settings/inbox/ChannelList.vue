@@ -75,7 +75,7 @@ export default {
         { key: 'whatsapp', name: 'WhatsApp Official' },
         {
           key: 'whatsapp_unofficial',
-          name: 'WhatsApp',
+          name: 'WhatsApp Go',
           thumbnail: '/assets/images/channels/whatsapp_unofficial.png',
         },
         {

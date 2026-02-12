@@ -36,6 +36,24 @@ const contextFiles = computed(() => {
   });
 });
 
+const collectionName = computed(() => {
+  if (!props.data?.display_flow_data?.agents_config) return null;
+  
+  const agents = props.data.display_flow_data.agents_config;
+  
+  // For general context, return the first agent's collection_name
+  if (props.context === 'general') {
+    return agents[0]?.collection_name || null;
+  }
+  
+  const targetType = props.context;
+  if (!targetType) return null;
+  
+  // Find agent by type
+  const agent = agents.find(agent => agent.type === targetType);
+  return agent?.collection_name || null;
+});
+
 const detectedCharacters = computed(() =>
   contextFiles.value.reduce((p, i) => p + i.total_chars, 0)
 );
@@ -46,7 +64,6 @@ async function fetchKnowledge() {
     isFetching.value = true;
     const data = await aiAgents.getKnowledgeSources(props.data.id);
     files.value = data.data?.knowledge_source_files || [];
-    console.log(`[${props.context}] Total files: ${files.value.length} | Context files: ${contextFiles.value.length}`);
   } catch (e) {
     useAlert('Gagal mendapatkan data');
   } finally {
@@ -75,11 +92,12 @@ const deleteLoadingIds = ref({});
 
 async function deleteData() {
   const dataId = deleteModalData.value.id;
+  const collection_name = collectionName.value; // Change this line
   
   try {
     showDeleteModal.value = false;
     deleteLoadingIds.value[dataId] = true;
-    await aiAgents.deleteKnowledgeFile(props.data.id, dataId);
+    await aiAgents.deleteKnowledgeFile(props.data.id, dataId, collection_name);
     files.value = files.value.filter(v => v.id !== dataId);
     fetchKnowledge();
     useAlert('Berhasil hapus data');
@@ -129,70 +147,11 @@ function addFile(file) {
   newFiles.value.push(file);
 }
 
-// Commented out Excel preview functions
-// async function previewExcelFile(file) {
-//   try {
-//     const arrayBuffer = await file.arrayBuffer();
-//     const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-//     
-//     const firstSheetName = workbook.SheetNames[0];
-//     const worksheet = workbook.Sheets[firstSheetName];
-//     
-//     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-//     
-//     if (jsonData.length > 0) {
-//       const headers = jsonData[0] || [];
-//       const rows = jsonData.slice(1);
-//       
-//       parsedExcelData.value = {
-//         headers,
-//         rows,
-//         file_name: file.name,
-//         file_type: file.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-//         file_size: file.size
-//       };
-//       
-//       excelHeaders.value = headers;
-//       excelPreviewData.value = rows.slice(0, 10);
-//       pendingExcelFile.value = file;
-//       showExcelPreviewModal.value = true;
-//     } else {
-//       useAlert('Excel file appears to be empty');
-//     }
-//   } catch (error) {
-//     useAlert('Error reading Excel file: ' + error.message);
-//   }
-// }
-
-// function closeExcelPreview() {
-//   showExcelPreviewModal.value = false;
-//   excelPreviewData.value = [];
-//   excelHeaders.value = [];
-//   pendingExcelFile.value = null;
-//   parsedExcelData.value = null;
-//   excelDescription.value = '';
-// }
-
-// function confirmExcelUpload() {
-//   if (pendingExcelFile.value && parsedExcelData.value) {
-//     const fileWithParsedData = {
-//       name: pendingExcelFile.value.name,
-//       size: pendingExcelFile.value.size,
-//       type: pendingExcelFile.value.type,
-//       lastModified: pendingExcelFile.value.lastModified,
-//       ...pendingExcelFile.value,
-//       parsedData: parsedExcelData.value,
-//       description: excelDescription.value
-//     };
-//     newFiles.value.push(fileWithParsedData);
-//     closeExcelPreview();
-//   }
-// }
-
 const isSaving = ref(false);
 
 async function save() {
   if (!newFiles.value.length) return;
+  const collection_name = collectionName.value; // Change this line
 
   try {
     isSaving.value = true;
@@ -212,8 +171,7 @@ async function save() {
       });
       
       formData.append('file', renamedFile);
-      
-      console.log(`[${props.context}] Uploading as: ${newFileName}`);
+      formData.append('collection_name', collection_name); // Tambahkan collection_name ke formData
       await aiAgents.addKnowledgeFile(props.data.id, formData);
     }
 
@@ -227,38 +185,6 @@ async function save() {
     isSaving.value = false;
   }
 }
-
-// Commented out Excel-specific upload handler
-// async function handleExcelFileUpload(file) {
-//   try {
-//     if (file.parsedData) {
-//       const { headers, rows, file_name, file_type, file_size } = file.parsedData;
-//       
-//       const dataArray = rows.map(row => {
-//         const obj = {};
-//         headers.forEach((header, index) => {
-//           obj[header] = row[index] || '';
-//         });
-//         return obj;
-//       });
-//       
-//       const payload = {
-//         file_name,
-//         file_type,
-//         file_size,
-//         data: dataArray,
-//         description: file.description || ''
-//       };
-//       
-//       await aiAgents.addExcelKnowledgeFile(props.data.id, payload);
-//     } else {
-//       throw new Error('No parsed data found for Excel file');
-//     }
-//   } catch (error) {
-//     console.error('Error processing Excel file:', error);
-//     throw error;
-//   }
-// }
 
 const handleDragOver = () => {
 }
@@ -287,10 +213,23 @@ const contextLabel = computed(() => {
 });
 
 // Preview how filename will look after upload
-const previewFileName = (fileName) => {
+const formattedFileName = (fileName) => {
   if (props.context === 'general') return fileName;
   return `[${props.context.toUpperCase()}] ${fileName}`;
 };
+
+async function previewFile(item) {
+  try {
+    const res = await aiAgents.previewKnowledgeFile(
+      props.data.id,
+      item.id
+    );
+
+    window.open(res.data.url, '_blank');
+  } catch (e) {
+    useAlert('File preview failed');
+  }
+}
 </script>
 
 <template>
@@ -355,7 +294,12 @@ const previewFileName = (fileName) => {
             <svg class="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
-            <span class="flex-1 text-sm truncate text-gray-900 dark:text-gray-100">{{ item.file_name }}</span>
+            <span 
+              class="flex-1 text-sm truncate cursor-pointer text-gray-900 hover:underline dark:text-gray-100"
+              @click="previewFile(item)"
+            >
+              {{ item.file_name }}
+            </span>
             <span class="text-xs font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">{{ item.total_chars }} {{ $t("AGENT_MGMT.BOOKING_BOT.CHAR") }}</span>
             <Button
               variant="ghost"
@@ -394,7 +338,7 @@ const previewFileName = (fileName) => {
             </svg>
             <div class="flex-1 min-w-0">
               <div class="text-sm text-gray-900 dark:text-gray-100 truncate font-medium">
-                {{ previewFileName(item.name) }}
+                {{ formattedFileName(item.name) }}
               </div>
               <div class="text-xs text-gray-500 dark:text-gray-400">
                 {{ (item.size / 1024).toFixed(2) }} KB
@@ -421,81 +365,6 @@ const previewFileName = (fileName) => {
         :confirm-text="$t('CONVERSATION.CONTEXT_MENU.DELETE_CONFIRMATION.DELETE')"
         :reject-text="$t('CONVERSATION.CONTEXT_MENU.DELETE_CONFIRMATION.CANCEL')"
       />
-
-      <!-- Commented out Excel preview modal
-      <woot-modal
-        class="max-h-screen flex flex-col"
-        :show="showExcelPreviewModal"
-        :on-close="() => closeExcelPreview()"
-      >
-        <woot-modal-header 
-          class="mb-4"
-          :header-title="`Excel File Preview: ${pendingExcelFile?.name}`"
-          :header-content="`Menampilkan 10 baris pertama. Total baris dalam file mungkin lebih banyak.`"
-        />
-        
-        <div class="flex flex-col max-h-96 p-6 overflow-auto mb-4 flex-1">
-          
-          <table class="min-w-full border-collapse border border-gray-300">
-            <thead>
-              <tr class="bg-gray-50">
-                <th
-                  v-for="(header, index) in excelHeaders"
-                  :key="index"
-                  class="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700"
-                >
-                  {{ header || `Column ${index + 1}` }}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="(row, rowIndex) in excelPreviewData"
-                :key="rowIndex"
-                :class="rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'"
-              >
-                <td
-                  v-for="(cell, cellIndex) in excelHeaders"
-                  :key="cellIndex"
-                  class="border border-gray-300 px-4 py-2 text-sm text-gray-900"
-                >
-                  {{ row[cellIndex] || '' }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          
-          <div v-if="excelPreviewData.length === 0" class="text-center py-8 text-gray-500">
-            No data found in Excel file
-          </div>
-
-          <div class="mt-6">
-            <label for="excel-description" class="block text-sm font-medium text-gray-700 mb-2">
-              Deskripsi File (Opsional)
-            </label>
-            <textarea
-              id="excel-description"
-              v-model="excelDescription"
-              rows="3"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none overflow-auto"
-              placeholder="Tambahkan deskripsi atau catatan untuk file Excel ini..."
-            ></textarea>
-          </div>
-        </div>
-        
-        <div class="p-6 flex justify-end space-x-3 border-t border-gray-200">
-          <woot-button data-testid="excel-confirm" @click.prevent="confirmExcelUpload">
-            Tambahkan ke Antrian
-          </woot-button>
-          <woot-button 
-            class="button clear" 
-            @click.prevent="closeExcelPreview"
-          >
-            Batal
-          </woot-button>
-        </div>
-      </woot-modal>
-      -->
     </div>
     
     <!-- Sidebar -->

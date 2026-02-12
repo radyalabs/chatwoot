@@ -27,10 +27,13 @@ class WhatsappUnofficial::SendOnWhatsappUnofficialService < Base::SendOnChannelS
     message.attachments.filter_map do |attachment|
       next unless attachment.file.attached?
 
+      file_data = attachment.file.download
+      file_data.force_encoding('BINARY') if file_data.respond_to?(:force_encoding)
+
       {
         filename: attachment.file.filename.to_s,
         content_type: attachment.file.content_type,
-        io: StringIO.new(attachment.file.download),
+        io: StringIO.new(file_data),
         file_type: attachment.file_type,
         download_url: attachment.download_url
       }
@@ -38,6 +41,10 @@ class WhatsappUnofficial::SendOnWhatsappUnofficialService < Base::SendOnChannelS
   end
 
   def link(message)
+    # First check content_attributes for link (from attach_message_image_job)
+    return message.content_attributes['link'] if message.content_attributes&.dig('link').present?
+
+    # Fallback to extract link from content
     return nil if message.content.blank?
 
     message.content[%r{https?://[^\s]+}]

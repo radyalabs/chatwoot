@@ -102,11 +102,11 @@
           "PLACEHOLDER": "Enter your website domain (eg: acme.com)"
         },
         "CHANNEL_WELCOME_TITLE": {
-          "LABEL": "Welcome Heading",
+          "LABEL": "Welcome Headline",
           "PLACEHOLDER": "Hi there !"
         },
         "CHANNEL_WELCOME_TAGLINE": {
-          "LABEL": "Welcome Tagline",
+          "LABEL": "Welcome Subtitle",
           "PLACEHOLDER": "We make it simple to connect with us. Ask us anything, or share your feedback."
         },
         "CHANNEL_GREETING_MESSAGE": {
@@ -712,11 +712,11 @@
           "ERROR": "Please enter a valid website name"
         },
         "WELCOME_HEADING": {
-          "LABEL": "Welcome Heading",
+          "LABEL": "Welcome Headline",
           "PLACE_HOLDER": "Hi there!"
         },
         "WELCOME_TAGLINE": {
-          "LABEL": "Welcome Tagline",
+          "LABEL": "Welcome Subtitle",
           "PLACE_HOLDER": "We make it simple to connect with us. Ask us anything, or share your feedback."
         },
         "REPLY_TIME": {

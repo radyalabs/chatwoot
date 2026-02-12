@@ -46,11 +46,13 @@ class ReportsAPI extends ApiClient {
     });
   }
 
-  getConversationMetric(type = 'account', page = 1) {
+  getConversationMetric({type = 'account', page = 1, from, to }) {
     return axios.get(`${this.url}/conversations`, {
       params: {
         type,
         page,
+        since: from,
+        until: to,
       },
     });
   }
@@ -111,6 +113,30 @@ class ReportsAPI extends ApiClient {
 
   getCreditUsage() {
     return axios.get(`${this.url}/credit_usage`);
+  }
+
+  getFunnelMetrics({ from, to }) {
+    return axios.get(`${this.url}/funnel_metrics`, {
+      params: { since: from, until: to },
+    });
+  }
+
+  getTrendMetrics({ from, to }) {
+    return axios.get(`${this.url}/trend_metrics`, {
+      params: { since: from, until: to },
+    });
+  }
+  
+  getAgentReportsSummary({ from, to }) {
+    return axios.get(`${this.url}`, {
+      params: {
+        metric: 'conversations_count',
+        type: 'agent',
+        since: from,
+        until: to,
+        timezone_offset: getTimeOffset(),
+      }
+    });
   }
 }
 

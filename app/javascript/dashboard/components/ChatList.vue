@@ -545,7 +545,7 @@ function onToggleAdvanceFiltersModal() {
 }
 
 function fetchConversations() {
-  activeStatus.value = wootConstants.STATUS_TYPE.ALL
+  // activeStatus.value = wootConstants.STATUS_TYPE.ALL
   store.dispatch('updateChatListFilters', conversationFilters.value);
   store.dispatch('fetchAllConversations').then(emitConversationLoaded);
 }
@@ -568,6 +568,10 @@ function resetAndFetchData() {
 
 function loadMoreConversations() {
   if (hasCurrentPageEndReached.value || chatListLoading.value) {
+    return;
+  }
+
+  if (conversationListPagination.value === 1 && conversationList.value.length > 0) {
     return;
   }
 

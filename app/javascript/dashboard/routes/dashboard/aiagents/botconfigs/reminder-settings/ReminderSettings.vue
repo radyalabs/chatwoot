@@ -4,7 +4,6 @@ import { useStore } from 'dashboard/composables/store';
 import { useMapGetter } from 'dashboard/composables/store';
 import { useI18n } from 'vue-i18n';
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
-import Button from 'dashboard/components-next/button/Button.vue';
 import ReminderCard from './ReminderCard.vue';
 import ReminderFormModal from './ReminderFormModal.vue';
 
@@ -158,60 +157,73 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-4">
+  <div class="flex flex-col gap-6">
     <!-- Header -->
-    <div class="flex items-start justify-between">
-      <div>
+    <div class="flex items-start justify-between gap-4">
+      <div class="flex flex-col gap-1">
         <h3
-          class="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2"
+          class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2"
         >
-          <span class="i-lucide-bell w-5 h-5 text-woot-500" />
+          <span class="i-lucide-bell w-5 h-5 text-green-600 dark:text-green-400" />
           {{ t('AGENT_MGMT.SALESBOT.REMINDER.HEADER') }}
         </h3>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        <p class="text-sm text-gray-500">
           {{ t('AGENT_MGMT.SALESBOT.REMINDER.DESC') }}
         </p>
       </div>
-      <Button
-        variant="solid"
-        color-scheme="primary"
-        size="small"
+      <button
         :disabled="!hasAnyConnectedInbox"
+        class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all font-medium shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 flex-shrink-0"
         @click="openAddForm"
       >
-        <span class="i-lucide-plus w-4 h-4 mr-1" />
+        <svg
+          class="w-5 h-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 4v16m8-8H4"
+          />
+        </svg>
         {{ t('AGENT_MGMT.SALESBOT.REMINDER.ADD_BUTTON') }}
-      </Button>
+      </button>
     </div>
 
     <!-- No inbox warning -->
     <div
       v-if="!hasAnyConnectedInbox"
-      class="flex items-center gap-2 px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl"
+      class="flex items-center gap-3 px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl"
     >
-      <span class="i-lucide-alert-triangle w-5 h-5 text-slate-500 dark:text-slate-400" />
-      <span class="text-sm text-slate-500 dark:text-slate-400">
+      <span
+        class="i-lucide-alert-triangle w-5 h-5 text-slate-600 dark:text-slate-300 flex-shrink-0"
+      />
+      <span class="text-sm text-slate-600 dark:text-slate-300">
         {{ t('AGENT_MGMT.SALESBOT.REMINDER.NO_INBOX_AVAILABLE') }}
       </span>
     </div>
 
     <!-- Search -->
-    <div v-if="(reminders || []).length > 0" class="relative">
-      <span
-        class="i-lucide-search w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-      />
+    <div
+      v-if="(reminders || []).length > 0"
+      class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-n-strong bg-n-solid-1 focus-within:ring-2 focus-within:ring-woot-500 transition-shadow"
+    >
+      <span class="i-lucide-search size-4 text-n-slate-10 flex-shrink-0" />
       <input
         v-model="searchQuery"
-        type="text"
+        type="search"
         :placeholder="t('AGENT_MGMT.SALESBOT.REMINDER.SEARCH_PLACEHOLDER')"
-        class="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-woot-500"
+        class="flex-1 min-w-0 py-2 text-sm bg-transparent border-none text-slate-900 dark:text-slate-50 placeholder:text-n-slate-10 focus:outline-none"
       />
     </div>
 
     <!-- Loading -->
     <div
       v-if="uiFlags?.isFetching"
-      class="flex items-center justify-center py-8"
+      class="flex items-center justify-center py-12"
     >
       <span class="i-lucide-loader-2 w-5 h-5 animate-spin text-gray-400" />
     </div>
@@ -219,7 +231,7 @@ onMounted(() => {
     <!-- Reminders List -->
     <div
       v-else-if="filteredReminders.length > 0"
-      class="flex flex-col gap-3"
+      class="flex flex-col gap-4"
     >
       <ReminderCard
         v-for="reminder in filteredReminders"
@@ -236,10 +248,14 @@ onMounted(() => {
     <!-- Empty State -->
     <div
       v-else-if="!uiFlags?.isFetching"
-      class="flex flex-col items-center justify-center py-8 text-gray-400 dark:text-gray-500"
+      class="flex flex-col items-center justify-center py-12 bg-white dark:bg-slate-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-700"
     >
-      <span class="i-lucide-bell-off w-8 h-8 mb-2" />
-      <p class="text-sm">
+      <div
+        class="w-16 h-16 bg-gray-50 dark:bg-slate-700 rounded-full flex items-center justify-center mb-4"
+      >
+        <span class="i-lucide-bell-off w-8 h-8 text-gray-400" />
+      </div>
+      <p class="text-base font-medium text-gray-900 dark:text-gray-200">
         {{ t('AGENT_MGMT.SALESBOT.REMINDER.EMPTY_STATE') }}
       </p>
     </div>

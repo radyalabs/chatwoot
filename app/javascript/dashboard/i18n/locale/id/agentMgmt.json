@@ -493,7 +493,8 @@
         "FORM_TITLE_EDIT": "Edit Pengingat",
         "TITLE_LABEL": "Judul",
         "TITLE_PLACEHOLDER": "misal, Update Tim Mingguan",
-        "DESCRIPTION_LABEL": "Deskripsi",
+        "NOTE_LABEL": "Catatan",
+        "NOTE_PLACEHOLDER": "Catatan opsional...",
         "INBOX_TYPE_LABEL": "Tipe Platform",
         "INBOX_LABEL": "Kirim Dari",
         "MESSAGE_LABEL": "Pesan",
@@ -515,7 +516,16 @@
         "NEXT_OCCURRENCE": "Selanjutnya",
         "ENABLED": "Aktif",
         "DISABLED": "Nonaktif",
-        "DELETE_CONFIRM": "Apakah Anda yakin ingin menghapus pengingat ini?"
+        "DELETE_CONFIRM": "Apakah Anda yakin ingin menghapus pengingat ini?",
+        "COMPLETED": "Selesai",
+        "CARD_SEND_TO": "Tujuan",
+        "CLICK_TO_DISABLE": "Klik untuk menonaktifkan pengingat",
+        "CLICK_TO_ENABLE": "Klik untuk mengaktifkan pengingat",
+        "TOGGLE_ARIA": "Aktifkan atau nonaktifkan pengingat",
+        "UNKNOWN_INBOX": "Platform tidak diketahui",
+        "SENT_COUNT_ONE": "Terkirim {count} kali",
+        "SENT_COUNT_OTHER": "Terkirim {count} kali",
+        "LAST_SENT": "Terakhir dikirim"
       }
     },
     "EOBOT": {

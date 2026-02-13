@@ -312,16 +312,16 @@ defineExpose({ open });
         :placeholder="$t('AGENT_MGMT.SALESBOT.REMINDER.TITLE_PLACEHOLDER')"
       />
 
-      <!-- Description -->
+      <!-- Note -->
       <div class="flex flex-col gap-1">
         <label class="mb-0.5 text-sm font-medium text-n-slate-12">
-          {{ $t('AGENT_MGMT.SALESBOT.REMINDER.DESCRIPTION_LABEL') }}
+          {{ $t('AGENT_MGMT.SALESBOT.REMINDER.NOTE_LABEL') }}
         </label>
         <textarea
           v-model="description"
           rows="2"
           class="w-full p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 transition-all resize-none"
-          placeholder="Optional description..."
+          :placeholder="$t('AGENT_MGMT.SALESBOT.REMINDER.NOTE_PLACEHOLDER')"
         />
       </div>
 

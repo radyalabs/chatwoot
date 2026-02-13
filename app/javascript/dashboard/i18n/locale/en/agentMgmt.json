@@ -536,8 +536,8 @@
       "PAYMENT": {
         "HEADER": "Payment Methods",
         "HEADER_DESC": "Configure payment methods",
-        "COD_TITLE": "Cash on Delivery (COD)",
-        "COD_DESC": "Customer pays when order is delivered",
+        "COD_TITLE": "Pay directly on the spot / COD",
+        "COD_DESC": "Customer pays directly in store or when order is delivered",
         "NON_COD_TITLE": "Non COD",
         "NON_COD_DESC": "Customer pays before delivery",
         "BANK_TRANSFER_TITLE": "Bank Transfer",

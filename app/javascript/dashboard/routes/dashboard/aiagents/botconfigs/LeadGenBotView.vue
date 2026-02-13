@@ -398,7 +398,7 @@
                     </label>
                     <select
                       v-model="idleConfig.duration"
-                      class="w-full md:w-48 px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors appearance-none cursor-pointer"
+                      class="text-center w-24 mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-slate-900 dark:border-slate-700 dark:text-white"
                     >
                       <option :value="5">{{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_OPTION_5_MIN') }}</option>
                       <option :value="10">{{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_OPTION_10_MIN') }}</option>

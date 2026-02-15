@@ -355,8 +355,8 @@
       "PAYMENT": {
         "HEADER": "Metode Pembayaran",
         "HEADER_DESC": "Pengaturan metode pembayaran",
-        "COD_TITLE": "Cash on Delivery (COD)",
-        "COD_DESC": "Pelanggan membayar saat pesanan diantar",
+        "COD_TITLE": "Bayar langsung di Tempat / COD",
+        "COD_DESC": "Pelanggan membayar langsung di toko atau saat pesanan diantar",
         "NON_COD_TITLE": "Non COD",
         "NON_COD_DESC": "Pelanggan membayar sebelum pengiriman",
         "BANK_TRANSFER_TITLE": "Bank Transfer",

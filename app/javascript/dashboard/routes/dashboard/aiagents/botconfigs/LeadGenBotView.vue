@@ -396,20 +396,17 @@
                     <label class="block text-sm font-medium mb-2 text-slate-900 dark:text-slate-25">
                       {{ $t('AGENT_MGMT.EOBOT.IDLE_TIME') }}
                     </label>
-                    <div class="flex items-center gap-3">
-                      <div class="w-16">
-                        <input 
-                          type="number" 
-                          min="5"
-                          v-model="idleConfig.duration"
-                          class="text-center px-2 py-2 text-sm font-medium border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                          placeholder="30" 
-                        />
-                      </div>
-                      <span class="text-slate-600 dark:text-slate-400 text-sm leading-10 self-start">
-                        {{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_DESC') }}
-                      </span>
-                    </div>
+                    <select
+                      v-model="idleConfig.duration"
+                      class="text-center w-24 mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-slate-900 dark:border-slate-700 dark:text-white"
+                    >
+                      <option :value="5">{{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_OPTION_5_MIN') }}</option>
+                      <option :value="10">{{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_OPTION_10_MIN') }}</option>
+                      <option :value="30">{{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_OPTION_30_MIN') }}</option>
+                      <option :value="60">{{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_OPTION_1_HOUR') }}</option>
+                      <option :value="120">{{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_OPTION_2_HOURS') }}</option>
+                      <option :value="1440">{{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_OPTION_24_HOURS') }}</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -588,7 +585,7 @@ const creativityOptions = computed(() => [
 
 // idle time
 const idleConfig = reactive({
-  duration: 30,       
+  duration: window.chatwootConfig?.idleConversationDuration || 30,       
 });
 
 // Helper function to get agent ID by type

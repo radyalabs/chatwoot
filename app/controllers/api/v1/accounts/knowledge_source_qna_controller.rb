@@ -222,24 +222,6 @@ class Api::V1::Accounts::KnowledgeSourceQnaController < Api::V1::Accounts::BaseC
     raise StandardError, "Failed to communicate with knowledge management API: #{e.message}"
   end
 
-  def delete_document_loaders(store_id, loader_ids)
-    failed_deletes = []
-
-    Array(loader_ids).each do |loader_id|
-      result = AiAgents::FlowiseService.delete_document_loader(
-        store_id: store_id,
-        loader_id: loader_id
-      )
-    rescue StandardError => e
-      Rails.logger.error("Failed to delete document loader #{loader_id}: #{e.message}")
-      failed_deletes << loader_id
-    end
-
-    return unless failed_deletes.any?
-
-    Rails.logger.warn("Some document loaders failed to delete: #{failed_deletes.join(', ')}")
-  end
-
   def handle_error(message, status: :bad_request, exception: nil)
     Rails.logger.error("#{message}: #{exception&.message}") # Use safe navigation operator
     render_error(message, status)

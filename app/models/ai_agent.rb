@@ -127,6 +127,9 @@ class AiAgent < ApplicationRecord
     system_prompts.length
   end
 
+  def collection_name
+    knowledge_source&.store_config&.dig('vectorStoreConfig', 'databaseName')
+  end
   delegate :length, to: :welcoming_message, prefix: true
 
   private

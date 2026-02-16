@@ -4,9 +4,7 @@ class V2::AiAgents::AiAgentBuilder < V2::AiAgents::AiAgentBaseBuilder
   def create
     raise ActionController::ParameterMissing, 'AI Agent Template not found' unless ai_agent_templates
 
-    Rails.logger.info("---> create | ai_agent_params: #{ai_agent_params.inspect}")
     document_store = generate_document_store(ai_agent_params)
-    Rails.logger.info("---> create | document_store: #{document_store.inspect}")
 
     begin
       chat_flow = build_flow_data(document_store['id'])

@@ -5,6 +5,7 @@ import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import Input from 'dashboard/components-next/input/Input.vue';
 import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
 import RecurrenceSelector from './RecurrenceSelector.vue';
+import TimePickerDropdown from './TimePickerDropdown.vue';
 import WhatsAppUnofficialChannels from 'dashboard/api/WhatsAppUnofficialChannels';
 
 const { t } = useI18n();
@@ -27,6 +28,7 @@ const props = defineProps({
 const emit = defineEmits(['save', 'close']);
 
 const dialogRef = ref(null);
+const dateInputRef = ref(null);
 
 // Form fields
 const title = ref('');
@@ -37,7 +39,8 @@ const messageType = ref('personal');
 const receiverAddress = ref('');
 const receiverName = ref('');
 const messageTemplate = ref('');
-const scheduledAt = ref('');
+const scheduledDate = ref('');
+const scheduledTime = ref('');
 const recurrenceRule = ref(null);
 const endsAt = ref(null);
 const endsAfterCount = ref(null);
@@ -47,6 +50,11 @@ const isLoadingGroups = ref(false);
 const isPopulating = ref(false);
 
 const isEditing = computed(() => !!props.reminder);
+
+const scheduledAtCombined = computed(() => {
+  if (!scheduledDate.value || !scheduledTime.value) return '';
+  return `${scheduledDate.value}T${scheduledTime.value}`;
+});
 
 const INBOX_TYPE_OPTIONS = [
   {
@@ -112,7 +120,8 @@ const resetForm = () => {
   receiverAddress.value = '';
   receiverName.value = '';
   messageTemplate.value = '';
-  scheduledAt.value = '';
+  scheduledDate.value = '';
+  scheduledTime.value = '';
   recurrenceRule.value = null;
   endsAt.value = null;
   endsAfterCount.value = null;
@@ -128,9 +137,17 @@ const populateForm = reminder => {
   receiverAddress.value = reminder.receiver_address || '';
   receiverName.value = reminder.receiver_name || '';
   messageTemplate.value = reminder.message_template || '';
-  scheduledAt.value = reminder.scheduled_at
-    ? formatDateTimeLocal(reminder.scheduled_at, reminder.timezone)
-    : '';
+  if (reminder.scheduled_at) {
+    const formatted = formatDateTimeLocal(
+      reminder.scheduled_at,
+      reminder.timezone
+    );
+    scheduledDate.value = formatted.slice(0, 10);
+    scheduledTime.value = formatted.slice(11, 16);
+  } else {
+    scheduledDate.value = '';
+    scheduledTime.value = '';
+  }
   recurrenceRule.value = reminder.recurrence_rule
     ? { ...reminder.recurrence_rule }
     : null;
@@ -173,7 +190,8 @@ const canSave = computed(() => {
     senderInboxId.value &&
     receiverAddress.value.trim() &&
     messageTemplate.value.trim() &&
-    scheduledAt.value
+    scheduledDate.value &&
+    scheduledTime.value
   );
 });
 
@@ -219,7 +237,7 @@ const handleSave = () => {
     receiver_address: receiverAddress.value,
     receiver_name: nameToSave,
     message_template: messageTemplate.value,
-    scheduled_at: new Date(scheduledAt.value).toISOString(),
+    scheduled_at: new Date(scheduledAtCombined.value).toISOString(),
     recurrence_rule:
       cleanRule && Object.keys(cleanRule).length > 0 ? cleanRule : null,
     ends_at: finalEndsAt || null,
@@ -287,6 +305,22 @@ watch(messageType, newType => {
   }
 });
 
+const openDatePicker = () => {
+  try {
+    dateInputRef.value?.showPicker();
+  } catch {
+    // Picker already open or not supported
+  }
+};
+
+const handleDateKeydown = e => {
+  if (e.key === 'Tab' || e.key === 'Escape') return;
+  e.preventDefault();
+  if (e.key === 'Enter' || e.key === ' ') {
+    openDatePicker();
+  }
+};
+
 defineExpose({ open });
 </script>
 
@@ -312,10 +346,13 @@ defineExpose({ open });
         :placeholder="$t('AGENT_MGMT.SALESBOT.REMINDER.TITLE_PLACEHOLDER')"
       />
 
-      <!-- Note -->
+      <!-- Note (optional) -->
       <div class="flex flex-col gap-1">
         <label class="mb-0.5 text-sm font-medium text-n-slate-12">
           {{ $t('AGENT_MGMT.SALESBOT.REMINDER.NOTE_LABEL') }}
+          <span class="font-normal text-xs text-slate-400 dark:text-slate-500">
+            {{ $t('AGENT_MGMT.SALESBOT.REMINDER.OPTIONAL') }}
+          </span>
         </label>
         <textarea
           v-model="description"
@@ -446,21 +483,38 @@ defineExpose({ open });
       </div>
 
       <!-- Date & Time -->
-      <div class="flex flex-col gap-1">
-        <label class="mb-0.5 text-sm font-medium text-n-slate-12">
-          {{ $t('AGENT_MGMT.SALESBOT.REMINDER.SCHEDULE_LABEL') }}
-        </label>
-        <input
-          v-model="scheduledAt"
-          type="datetime-local"
-          class="w-full p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 transition-all"
-        />
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="flex flex-col gap-1">
+          <label class="mb-0.5 text-sm font-medium text-n-slate-12">
+            {{ $t('AGENT_MGMT.SALESBOT.REMINDER.DATE_LABEL') }}
+          </label>
+          <div class="relative">
+            <input
+              ref="dateInputRef"
+              v-model="scheduledDate"
+              type="date"
+              class="date-input w-full pl-9 pr-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 transition-all cursor-pointer"
+              :placeholder="$t('AGENT_MGMT.SALESBOT.REMINDER.DATE_PLACEHOLDER')"
+              @click="openDatePicker"
+              @keydown="handleDateKeydown"
+            />
+          </div>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="mb-0.5 text-sm font-medium text-n-slate-12">
+            {{ $t('AGENT_MGMT.SALESBOT.REMINDER.TIME_LABEL') }}
+          </label>
+          <TimePickerDropdown
+            v-model="scheduledTime"
+            :placeholder="$t('AGENT_MGMT.SALESBOT.REMINDER.TIME_PLACEHOLDER')"
+          />
+        </div>
       </div>
 
       <!-- Recurrence -->
       <RecurrenceSelector
         v-model="recurrenceRule"
-        :scheduled-at="scheduledAt"
+        :scheduled-at="scheduledAtCombined"
       />
     </div>
 
@@ -494,3 +548,14 @@ defineExpose({ open });
     </template>
   </Dialog>
 </template>
+
+<style scoped>
+.date-input::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
+.date-input::-webkit-inner-spin-button,
+.date-input::-webkit-clear-button {
+  display: none;
+}
+</style>

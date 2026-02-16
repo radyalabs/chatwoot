@@ -163,12 +163,12 @@ const handleCustomClose = () => {
 <template>
   <div class="flex flex-col gap-3">
     <div>
-      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+      <label class="mb-0.5 text-sm font-medium text-n-slate-12">
         {{ t('AGENT_MGMT.SALESBOT.REMINDER.REPEAT_LABEL') }}
       </label>
       <select
         :value="selectedPreset"
-        class="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-woot-500"
+        class="w-full p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 transition-all"
         @change="handlePresetChange"
       >
         <option
@@ -182,7 +182,7 @@ const handleCustomClose = () => {
     </div>
 
     <!-- Day selection for weekly -->
-    <div v-if="showDaySelector" class="flex gap-1.5">
+    <div v-if="showDaySelector" class="flex flex-wrap gap-1.5">
       <button
         v-for="(label, index) in DAYS_SHORT"
         :key="index"
@@ -202,7 +202,7 @@ const handleCustomClose = () => {
     <!-- Custom recurrence summary -->
     <div
       v-if="selectedPreset === 'custom' && modelValue"
-      class="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2"
+      class="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 rounded-lg px-3 py-2"
     >
       {{ modelValue._summary || 'Custom schedule configured' }}
     </div>

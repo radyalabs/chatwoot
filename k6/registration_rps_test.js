@@ -1,10 +1,11 @@
 import http from 'k6/http';
 import { check } from 'k6';
-import { Trend, Rate, Counter } from 'k6/metrics';
+import { Trend, Rate } from 'k6/metrics';
 import {
   randomString,
   randomIntBetween,
 } from 'https://jslib.k6.io/k6-utils/1.2.0/index.js';
+import { getScenario } from './scenarios.js';
 
 const registrationDuration = new Trend('registration_duration');
 const registrationSuccessRate = new Rate('registration_success_rate');
@@ -20,56 +21,14 @@ const ENABLE_DEBUG = __ENV.ENABLE_DEBUG === 'true';
 // VUs ≈ RPS × Response Time
 const REQUIRED_VUS = Math.ceil(TARGET_RPS * EXPECTED_RESPONSE_TIME);
 
-function getScenario() {
-  if (TEST_TYPE === 'load') {
-    return {
-      executor: 'constant-arrival-rate',
-      rate: TARGET_RPS,
-      timeUnit: '1s',
-      duration: TEST_DURATION,
-      preAllocatedVUs: REQUIRED_VUS,
-      maxVUs: REQUIRED_VUS * 2,
-      gracefulStop: '30s',
-    };
-  }
-
-  if (TEST_TYPE === 'stress') {
-    return {
-      executor: 'ramping-arrival-rate',
-      startRate: TARGET_RPS,
-      timeUnit: '1s',
-      stages: [
-        { target: TARGET_RPS * 2, duration: '2m' },
-        { target: TARGET_RPS * 3, duration: '2m' },
-        { target: TARGET_RPS * 4, duration: '2m' },
-      ],
-      preAllocatedVUs: REQUIRED_VUS,
-      maxVUs: REQUIRED_VUS * 5,
-      gracefulStop: '30s',
-    };
-  }
-
-  if (TEST_TYPE === 'spike') {
-    return {
-      executor: 'ramping-arrival-rate',
-      startRate: TARGET_RPS,
-      timeUnit: '1s',
-      stages: [
-        { target: TARGET_RPS * 5, duration: '30s' }, // spike
-        { target: TARGET_RPS, duration: '1m' },      // recover
-      ],
-      preAllocatedVUs: REQUIRED_VUS,
-      maxVUs: REQUIRED_VUS * 6,
-      gracefulStop: '30s',
-    };
-  }
-
-  throw new Error(`Unknown TEST_TYPE: ${TEST_TYPE}`);
-}
-
 export const options = {
   scenarios: {
-    registration_test: getScenario(),
+    registration_test: getScenario({
+      testType: TEST_TYPE,
+      targetRPS: TARGET_RPS,
+      requiredVUs: REQUIRED_VUS,
+      duration: TEST_DURATION,
+    }),
   },
   thresholds: {
     registration_success_rate: ['rate>0.85'],
@@ -104,7 +63,8 @@ export default function () {
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
         'X-Requested-With': 'XMLHttpRequest',
       },
       tags: { name: 'registration' },
@@ -112,10 +72,10 @@ export default function () {
     }
   );
 
- registrationDuration.add(response.timings.duration);
+  registrationDuration.add(response.timings.duration);
 
   const functionalSuccess = check(response, {
-    'status is 201': (r) => r.status === 201
+    'status is 201': r => r.status === 201,
   });
 
   registrationSuccessRate.add(functionalSuccess);

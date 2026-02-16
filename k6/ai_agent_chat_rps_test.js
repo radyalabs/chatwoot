@@ -2,10 +2,10 @@ import http from 'k6/http';
 import { check } from 'k6';
 import { Trend, Rate } from 'k6/metrics';
 import {
-  randomString,
   randomIntBetween,
   uuidv4,
 } from 'https://jslib.k6.io/k6-utils/1.2.0/index.js';
+import { getScenario } from './scenarios.js';
 
 // Custom metrics
 const chatDuration = new Trend('chat_duration');
@@ -28,58 +28,15 @@ const ACCOUNT_ID = __ENV.ACCOUNT_ID || '1';
 const AI_AGENT_ID = __ENV.AI_AGENT_ID || '1';
 const API_ACCESS_TOKEN = __ENV.API_ACCESS_TOKEN || '';
 
-// Generate test scenarios based on TEST_TYPE
-function getScenario() {
-  if (TEST_TYPE === 'load') {
-    return {
-      executor: 'constant-arrival-rate',
-      rate: TARGET_RPS,
-      timeUnit: '1s',
-      duration: TEST_DURATION,
-      preAllocatedVUs: REQUIRED_VUS,
-      maxVUs: REQUIRED_VUS * 2,
-      gracefulStop: '30s',
-    };
-  }
-
-  if (TEST_TYPE === 'stress') {
-    return {
-      executor: 'ramping-arrival-rate',
-      startRate: TARGET_RPS,
-      timeUnit: '1s',
-      stages: [
-        { target: TARGET_RPS * 2, duration: '2m' },
-        { target: TARGET_RPS * 3, duration: '2m' },
-        { target: TARGET_RPS * 4, duration: '2m' },
-      ],
-      preAllocatedVUs: REQUIRED_VUS,
-      maxVUs: REQUIRED_VUS * 5,
-      gracefulStop: '30s',
-    };
-  }
-
-  if (TEST_TYPE === 'spike') {
-    return {
-      executor: 'ramping-arrival-rate',
-      startRate: TARGET_RPS,
-      timeUnit: '1s',
-      stages: [
-        { target: TARGET_RPS * 5, duration: '30s' }, // spike
-        { target: TARGET_RPS, duration: '1m' }, // recover
-      ],
-      preAllocatedVUs: REQUIRED_VUS,
-      maxVUs: REQUIRED_VUS * 6,
-      gracefulStop: '30s',
-    };
-  }
-
-  throw new Error(`Unknown TEST_TYPE: ${TEST_TYPE}`);
-}
-
 // Test options - Pure RPS Testing for AI Agent Chat
 export const options = {
   scenarios: {
-    ai_agent_chat_test: getScenario(),
+    ai_agent_chat_test: getScenario({
+      testType: TEST_TYPE,
+      targetRPS: TARGET_RPS,
+      requiredVUs: REQUIRED_VUS,
+      duration: TEST_DURATION,
+    }),
   },
   thresholds: {
     chat_success_rate: ['rate>0.85'],

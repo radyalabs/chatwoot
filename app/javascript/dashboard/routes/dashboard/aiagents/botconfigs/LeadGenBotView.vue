@@ -1048,7 +1048,11 @@ async function syncProductColumns() {
     
     for (const knowledge of existingKnowledgeTab4) {
       try {
-        await aiAgents.deleteKnowledgeText(props.data.id, knowledge.id);
+        await aiAgents.deleteKnowledgeText(
+          props.data.id,
+          knowledge.id,
+          collectionName.value
+        );
       } catch (error) {
         console.warn('Failed to delete existing knowledge:', error);
       }
@@ -1079,6 +1083,7 @@ async function syncProductColumns() {
           id: null,
           tab: 4,
           text: chunkText,
+          collection_name: collectionName.value
         };
         await aiAgents.addKnowledgeText(props.data.id, createRequest);
         

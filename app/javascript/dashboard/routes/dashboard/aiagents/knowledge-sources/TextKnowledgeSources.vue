@@ -19,6 +19,26 @@ const selectedDocIndex = ref(0);
 const selectedDoc = computed(() =>
   docs.value.find((v, i) => i === selectedDocIndex.value)
 );
+
+// Add this computed property after the existing helper functions, around line 130-140
+const collectionName = computed(() => {
+  if (!props.data?.display_flow_data?.agents_config) return null;
+  
+  const agents = props.data.display_flow_data.agents_config;
+  
+  // For general context, return the first agent's collection_name
+  if (props.context === 'general') {
+    return agents[0]?.collection_name || null;
+  }
+  
+  const targetType = props.context;
+  if (!targetType) return null;
+  
+  // Find agent by type
+  const agent = agents.find(agent => agent.type === targetType);
+  return agent?.collection_name || null;
+});
+
 watch(
   () => props.data,
   v => {
@@ -181,6 +201,7 @@ async function updateKnowledge(data) {
         id: null,
         text: '<br>',
         tab: 1,
+        collection_name: collectionName.value,
       };
       let addResponse = await aiAgents
         .addKnowledgeText(props.data.id, {
@@ -193,6 +214,7 @@ async function updateKnowledge(data) {
       id: knowledgeId,
       tab: 1,
       text: data.text,
+      collection_name: collectionName.value,
     });
     useAlert('Berhasil disimpan');
   } catch (e) {
@@ -215,7 +237,11 @@ function deleteDoc(index) {
 async function deleteData() {
   try {
     showDeleteModal.value = false;
-    await aiAgents.deleteKnowledgeText(props.data.id, deleteModalData.value.id);
+    await aiAgents.deleteKnowledgeText(
+      props.data.id,
+      deleteModalData.value.id,
+      collectionName.value
+    );
     docs.value = docs.value.filter(v => v.id !== deleteModalData.value.id);
     selectedDocIndex.value = 0;
     useAlert('Berhasil hapus data');

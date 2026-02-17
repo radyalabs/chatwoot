@@ -4,7 +4,7 @@ class V2::AiAgents::AiAgentBuilder < V2::AiAgents::AiAgentBaseBuilder
   def create
     raise ActionController::ParameterMissing, 'AI Agent Template not found' unless ai_agent_templates
 
-    document_store = AiAgents::FlowiseService.add_document_store(ai_agent_params)
+    document_store = generate_document_store(ai_agent_params)
 
     begin
       chat_flow = build_flow_data(document_store['id'])
@@ -43,6 +43,18 @@ class V2::AiAgents::AiAgentBuilder < V2::AiAgents::AiAgentBaseBuilder
     raise 'Failed to update AI Agent'
   end
 
+  def generate_document_store(params)    
+    name_with_datetime = "#{params[:name]} - #{Time.current.strftime('%Y%m%d%H%M%S')}"
+    
+    {
+      'id' => SecureRandom.uuid,  # Most important field
+      'name' => name_with_datetime,
+      'description' => params[:description],
+      'createdDate' => Time.current.iso8601,
+      'updatedDate' => Time.current.iso8601
+    }
+  end
+
   def build_flow_data(document_store_id)
     store_config, collection_name = flowise_builder.store_config(document_store_id)
     flow_data = jangkau_builder.perform(collection_name)
@@ -66,17 +78,12 @@ class V2::AiAgents::AiAgentBuilder < V2::AiAgents::AiAgentBaseBuilder
 
   def cleanup_document_store(document_store)
     store_id = extract_id(document_store)
+    collection_name = ai_agent.collection_name
+    # delete by resource from langgraph by collection_name if needed (currently already handled by delete spreadsheet)
     return if store_id.blank?
 
-    AiAgents::FlowiseService.delete_document_store(store_id: store_id)
   end
 
-  def update_flowise_chat_flow
-    flow_data = flowise_builder.save_as(ai_agent)
-
-    chat_flow_name = generate_chat_flow_name
-    AiAgents::FlowiseService.save_as_chat_flow(ai_agent.chat_flow_id, chat_flow_name, flow_data)
-  end
 
   def generate_chat_flow_name
     environment_prefix = production_environment? ? 'PROD' : 'DEV'

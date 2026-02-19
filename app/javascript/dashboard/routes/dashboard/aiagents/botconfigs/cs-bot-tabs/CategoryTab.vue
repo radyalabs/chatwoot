@@ -212,7 +212,7 @@ async function save() {
                 color="ruby"
                 icon="i-lucide-trash"
                 size="sm"
-                :disabled="false"
+                :disabled="isSaving"
                 @click.stop="() => removeCategory(index)"
                 class="opacity-70 hover:opacity-100"
               />
@@ -240,6 +240,7 @@ async function save() {
                 </label>
                 <textarea
                   v-model="category.name"
+                  :disabled="isSaving"
                   @blur="validateCategoryName(index)"
                   @input="validateCategoryName(index)"
                     :placeholder="$t(getLocaleKey('CATEGORY_PLACEHOLDER'))"
@@ -266,6 +267,7 @@ async function save() {
                 </label>
                 <textarea
                   v-model="category.condition"
+                  :disabled="isSaving"
                   :placeholder="$t(getLocaleKey('CONDITION_PLACEHOLDER'))"
                   class="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 hover:border-slate-300 dark:hover:border-slate-600 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all duration-200 resize-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   rows="3"
@@ -276,10 +278,11 @@ async function save() {
         </div>
       </div>
 
-      <Button 
-        id="btnAddCategory" 
-        class="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-green-400 hover:text-green-600 transition-all duration-200 rounded-xl bg-transparent hover:bg-green-50 dark:hover:bg-green-900/10" 
+      <Button
+        id="btnAddCategory"
+        class="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-green-400 hover:text-green-600 transition-all duration-200 rounded-xl bg-transparent hover:bg-green-50 dark:hover:bg-green-900/10"
         variant="ghost"
+        :disabled="isSaving"
         @click="addCategory"
       >
         <span class="flex items-center gap-2">

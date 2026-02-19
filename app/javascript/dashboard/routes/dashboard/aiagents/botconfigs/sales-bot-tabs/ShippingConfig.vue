@@ -14,9 +14,10 @@
         </div>
 
         <div>
-          <button 
+          <button
             @click="openAddModal"
-            class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all font-medium shadow-sm active:scale-95"
+            :disabled="props.isSaving"
+            class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all font-medium shadow-sm active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
           >
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -48,12 +49,12 @@
               </div>
               
               <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button @click="editStore(index)" class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors" title="Edit">
+                <button @click="editStore(index)" :disabled="props.isSaving" class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Edit">
                   <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                   </svg>
                 </button>
-                <button @click="promptDelete(index)" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Hapus">
+                <button @click="promptDelete(index)" :disabled="props.isSaving" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Hapus">
                   <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
@@ -123,7 +124,7 @@
              <p class="mt-1 text-sm text-gray-500 max-w-xs mx-auto">
                {{ $t('AGENT_MGMT.SALESBOT.SHIPPING.EMPTY_STATE_DESC') }}
              </p>
-             <button @click="openAddModal" class="mt-4 text-sm font-medium text-green-600 hover:text-green-700">
+             <button @click="openAddModal" :disabled="props.isSaving" class="mt-4 text-sm font-medium text-green-600 hover:text-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
                 {{ $t('AGENT_MGMT.SALESBOT.SHIPPING.ADD_ADDRESS_EMPTY_BTN') }}
              </button>
           </div>

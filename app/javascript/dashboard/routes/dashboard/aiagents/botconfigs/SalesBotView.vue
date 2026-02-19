@@ -263,8 +263,9 @@
                   <div class="border-t border-gray-200 dark:border-gray-700 p-6">
                     <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">Skala Kreativitas</label>
                     <div class="relative">
-                      <select 
-                        v-model="creativityLevel" 
+                      <select
+                        v-model="creativityLevel"
+                        :disabled="isSaving"
                         class="w-full mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                       >
                         <option class="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" v-for="opt in creativityOptions" :key="opt.value" :value="opt.value">
@@ -301,6 +302,7 @@
                       </label>
                       <select
                         v-model="idleConfig.duration"
+                        :disabled="isSaving"
                         class="text-center w-24 mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-slate-900 dark:border-slate-700 dark:text-white"
                       >
                         <option :value="5">{{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_OPTION_5_MIN') }}</option>
@@ -1184,7 +1186,7 @@
                           </div>
                         </div>
                         <label class="inline-flex items-center cursor-pointer">
-                          <input type="checkbox" v-model="paymentMethods.cod" class="sr-only peer">
+                          <input type="checkbox" v-model="paymentMethods.cod" :disabled="isSaving" class="sr-only peer">
                           <div
                             class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
                           </div>
@@ -1205,7 +1207,7 @@
                           </div>
                         </div>
                         <label class="inline-flex items-center cursor-pointer">
-                          <input type="checkbox" v-model="paymentMethods.bankTransfer" class="sr-only peer">
+                          <input type="checkbox" v-model="paymentMethods.bankTransfer" :disabled="isSaving" class="sr-only peer">
                           <div
                             class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
                           </div>
@@ -1231,6 +1233,7 @@
                                 color="ruby"
                                 icon="i-lucide-trash"
                                 size="sm"
+                                :disabled="isSaving"
                                 @click="() => deleteBankAccount(index)"
                                 class="opacity-70 hover:opacity-100"
                               />
@@ -1244,6 +1247,7 @@
                                 <input
                                   type="text"
                                   v-model="account.bankName"
+                                  :disabled="isSaving"
                                   placeholder="e.g., Bank BCA, Bank Mandiri"
                                   class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm h-10 !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out"
                                 />
@@ -1255,6 +1259,7 @@
                                 <input
                                   type="text"
                                   v-model="account.accountNumber"
+                                  :disabled="isSaving"
                                   placeholder="e.g., 1234567890"
                                   class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm h-10 !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out"
                                 />
@@ -1266,6 +1271,7 @@
                                 <input
                                   type="text"
                                   v-model="account.accountHolder"
+                                  :disabled="isSaving"
                                   placeholder="e.g., John Doe"
                                   class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm h-10 !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out"
                                 />
@@ -1274,9 +1280,10 @@
                           </div>
                         </div>
   
-                        <Button 
-                          class="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-green-400 hover:text-green-600 transition-all duration-200 rounded-xl bg-transparent hover:bg-green-50 dark:hover:bg-green-900/10" 
+                        <Button
+                          class="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-green-400 hover:text-green-600 transition-all duration-200 rounded-xl bg-transparent hover:bg-green-50 dark:hover:bg-green-900/10"
                           variant="ghost"
+                          :disabled="isSaving"
                           @click="addBankAccount"
                         >
                           <span class="flex items-center gap-2">
@@ -1302,7 +1309,7 @@
                           </div>
                         </div>
                         <label class="inline-flex items-center cursor-pointer">
-                          <input type="checkbox" v-model="paymentMethods.qris" class="sr-only peer">
+                          <input type="checkbox" v-model="paymentMethods.qris" :disabled="isSaving" class="sr-only peer">
                           <div
                             class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
                           </div>
@@ -1323,6 +1330,7 @@
                               color="ruby"
                               icon="i-lucide-trash"
                               size="sm"
+                              :disabled="isSaving"
                               @click="deleteQrisImage"
                               class="opacity-70 hover:opacity-100"
                             />
@@ -1338,11 +1346,13 @@
                                 type="file"
                                 ref="qrisImageInput"
                                 accept="image/*"
+                                :disabled="isSaving"
                                 @change="handleQrisImageUpload"
                                 class="hidden"
                               />
                               <button
                                 @click="$refs.qrisImageInput?.click()"
+                                :disabled="isSaving"
                                 class="px-4 py-2 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg text-slate-600 dark:text-slate-400 hover:border-green-400 hover:text-green-600 transition-all bg-white dark:bg-slate-800"
                               >
                                 {{ qrisConfig.imageUrl ? $t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS_CHANGE_IMAGE') : $t('AGENT_MGMT.SALESBOT.PAYMENT.QRIS_UPLOAD_IMAGE') }}
@@ -1373,7 +1383,7 @@
                           </div>
                         </div>
                         <label class="inline-flex items-center cursor-pointer">
-                          <input type="checkbox" v-model="paymentMethods.paymentGateway" class="sr-only peer">
+                          <input type="checkbox" v-model="paymentMethods.paymentGateway" :disabled="isSaving" class="sr-only peer">
                           <div
                             class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
                           </div>
@@ -1500,7 +1510,7 @@
                           </div>
                         </div>
                         <label class="inline-flex items-center cursor-pointer">
-                          <input type="checkbox" v-model="cartEnabled" class="sr-only peer">
+                          <input type="checkbox" v-model="cartEnabled" :disabled="isSaving" class="sr-only peer">
                           <div
                             class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
                           </div>

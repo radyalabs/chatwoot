@@ -85,25 +85,27 @@ watch(
     if (!v) return;
 
     chatflowId.value = v?.chat_flow_id;
-    
-    state.name = v.name || '';
-    
-    const flowData = v.display_flow_data;
-    console.log("flowData:", flowData);
-      if (flowData?.agents_config) {
-        // Initialize enable_handover from the first agent's configurations if present
-        const firstAgent = flowData.agents_config[0];
-        state.enable_handover = firstAgent?.configurations?.enable_handover ?? true;
 
-        flowData.agents_config.forEach(agent_config => {
-          if (agent_config.bot_prompt) {
-            state.welcoming_message = agent_config.bot_prompt.persona || '';
-            state.routing_conditions = agent_config.bot_prompt.handover_conditions || '';
-            state.instructions = agent_config.bot_prompt.instructions || '';
-            state.business_info = agent_config.bot_prompt.business_info || '';
-          }
-        });
-      }
+    state.name = v.name || '';
+
+    const flowData = v.display_flow_data;
+    console.log('flowData:', flowData);
+    if (flowData?.agents_config) {
+      // Initialize enable_handover from the first agent's configurations if present
+      const firstAgent = flowData.agents_config[0];
+      state.enable_handover =
+        firstAgent?.configurations?.enable_handover ?? true;
+
+      flowData.agents_config.forEach(agent_config => {
+        if (agent_config.bot_prompt) {
+          state.welcoming_message = agent_config.bot_prompt.persona || '';
+          state.routing_conditions =
+            agent_config.bot_prompt.handover_conditions || '';
+          state.instructions = agent_config.bot_prompt.instructions || '';
+          state.business_info = agent_config.bot_prompt.business_info || '';
+        }
+      });
+    }
   },
   { immediate: true }
 );
@@ -112,7 +114,7 @@ const loadingSave = ref(false);
 
 async function translateToEnglish(text) {
   if (!text || text.trim() === '') return text;
-  
+
   try {
     const response = await captainTranslator.translate(text, 'en');
     return response.data.translated_text;
@@ -132,21 +134,28 @@ async function submit() {
     loadingSave.value = true;
 
     const agentId = props.data.id;
-    
+
     // Translate bot_prompt fields to English
-    const [translatedInstructions, translatedPersona, translatedRoutingConditions, translatedBusinessInfo] = await Promise.all([
+    const [
+      translatedInstructions,
+      translatedPersona,
+      translatedRoutingConditions,
+      translatedBusinessInfo,
+    ] = await Promise.all([
       translateToEnglish(state.instructions),
       translateToEnglish(state.welcoming_message),
       translateToEnglish(state.routing_conditions),
       translateToEnglish(state.business_info),
     ]);
-    
+
     // flow_data: Build from existing flow_data (already translated), then update with new translations
     const flowData = JSON.parse(JSON.stringify(props.data.flow_data || {}));
     flowData.agents_config?.forEach(agent_config => {
       if (agent_config.bot_prompt) {
-        agent_config.bot_prompt.persona = translatedPersona || agent_config.bot_prompt.persona;
-        agent_config.bot_prompt.handover_conditions = translatedRoutingConditions || '';
+        agent_config.bot_prompt.persona =
+          translatedPersona || agent_config.bot_prompt.persona;
+        agent_config.bot_prompt.handover_conditions =
+          translatedRoutingConditions || '';
         agent_config.bot_prompt.instructions = translatedInstructions || '';
         agent_config.bot_prompt.business_info = translatedBusinessInfo || '';
       }
@@ -155,11 +164,15 @@ async function submit() {
     });
 
     // display_flow_data: original user input (for display)
-    const displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data || {}));
+    const displayFlowData = JSON.parse(
+      JSON.stringify(props.data.display_flow_data || {})
+    );
     displayFlowData.agents_config?.forEach(agent_config => {
       if (agent_config.bot_prompt) {
-        agent_config.bot_prompt.persona = state.welcoming_message || agent_config.bot_prompt.persona;
-        agent_config.bot_prompt.handover_conditions = state.routing_conditions || '';
+        agent_config.bot_prompt.persona =
+          state.welcoming_message || agent_config.bot_prompt.persona;
+        agent_config.bot_prompt.handover_conditions =
+          state.routing_conditions || '';
         agent_config.bot_prompt.instructions = state.instructions || '';
         agent_config.bot_prompt.business_info = state.business_info || '';
       }
@@ -171,15 +184,15 @@ async function submit() {
       flow_data: flowData,
       display_flow_data: displayFlowData,
     };
-    
+
     await aiAgents.updateAgent(props.data.id, payload);
 
     // Refresh agent data to get latest chat_flow_id
     const detailAgent = await aiAgents.detailAgent(agentId).then(v => v?.data);
-    
+
     // ✅ Emit updated data to parent so props.data gets refreshed
     emit('update:data', detailAgent);
-    
+
     chatflowId.value = undefined;
     nextTick(() => {
       chatflowId.value = detailAgent?.chat_flow_id;
@@ -210,7 +223,6 @@ function scrollToBottom() {
   });
 }
 
-
 function renderMarkdown(text) {
   return md.render(text);
 }
@@ -232,7 +244,7 @@ async function chat() {
       question,
       session_id: sessionId.value,
     });
-    
+
     messages.value.push({
       role: 'assistant',
       content: res.data.response,
@@ -261,8 +273,15 @@ function resetChat() {
       <div class="flex flex-col space-y-3">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div>
-            <label for="name">{{ t('AGENT_MGMT.FORM_CREATE.AI_AGENT_NAME') }}</label>
-            <Input id="name" v-model="state.name" :disabled="isDebugMode" :placeholder="t('AGENT_MGMT.FORM_CREATE.AI_AGENT_NAME')" />
+            <label for="name">{{
+              t('AGENT_MGMT.FORM_CREATE.AI_AGENT_NAME')
+            }}</label>
+            <Input
+              id="name"
+              v-model="state.name"
+              :disabled="isDebugMode"
+              :placeholder="t('AGENT_MGMT.FORM_CREATE.AI_AGENT_NAME')"
+            />
           </div>
           <!-- <div>
             <label for="description">{{ t('AGENT_MGMT.FORM_CREATE.AI_AGENT_DESC') }}</label>
@@ -273,10 +292,12 @@ function resetChat() {
             />
           </div> -->
         </div>
-        
+
         <!-- Instruction Field -->
         <div>
-          <label for="instruction">{{ t('AGENT_MGMT.FORM_CREATE.INSTRUCTION') }}</label>
+          <label for="instruction">{{
+            t('AGENT_MGMT.FORM_CREATE.INSTRUCTION')
+          }}</label>
           <TextArea
             id="instruction"
             v-model="state.instructions"
@@ -289,47 +310,67 @@ function resetChat() {
             max-height="300px"
           />
         </div>
-        
+
         <!-- Only show these fields if NOT a custom agent -->
         <template v-if="!isCustomAgent">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label for="welcome_message">{{ t('AGENT_MGMT.FORM_CREATE.AI_AGENT_PERSONA_LANG_STYLE') }}</label>
-            <TextArea
-              :placeholder="t('AGENT_MGMT.FORM_CREATE.AI_AGENT_PERSONA_LANG_STYLE_PLACEHOLDER')"            id="welcome_message"
-              v-model="state.welcoming_message"
-              :disabled="isDebugMode"
-              custom-text-area-wrapper-class=""
-              custom-text-area-class="!outline-none"
-              auto-height
-              min-height="80px"
-              max-height="300px"
-            />
-          </div>
-          <div>
-            <label for="business_info">{{ t('AGENT_MGMT.FORM_CREATE.AI_AGENT_BUSINESS_INFO') }}</label>
-            <TextArea
-              id="business_info"
-              v-model="state.business_info"
-              :disabled="isDebugMode"
-              custom-text-area-wrapper-class=""
-              custom-text-area-class="!outline-none"
-              auto-height
-              :placeholder="t('AGENT_MGMT.FORM_CREATE.AI_AGENT_BUSINESS_INFO_PLACEHOLDER')"
-              min-height="80px"
-              max-height="300px"
-            />
-          </div>
+            <div>
+              <label for="welcome_message">{{
+                t('AGENT_MGMT.FORM_CREATE.AI_AGENT_PERSONA_LANG_STYLE')
+              }}</label>
+              <TextArea
+                :placeholder="
+                  t(
+                    'AGENT_MGMT.FORM_CREATE.AI_AGENT_PERSONA_LANG_STYLE_PLACEHOLDER'
+                  )
+                "
+                id="welcome_message"
+                v-model="state.welcoming_message"
+                :disabled="isDebugMode"
+                custom-text-area-wrapper-class=""
+                custom-text-area-class="!outline-none"
+                auto-height
+                min-height="80px"
+                max-height="300px"
+              />
+            </div>
+            <div>
+              <label for="business_info">{{
+                t('AGENT_MGMT.FORM_CREATE.AI_AGENT_BUSINESS_INFO')
+              }}</label>
+              <TextArea
+                id="business_info"
+                v-model="state.business_info"
+                :disabled="isDebugMode"
+                custom-text-area-wrapper-class=""
+                custom-text-area-class="!outline-none"
+                auto-height
+                :placeholder="
+                  t('AGENT_MGMT.FORM_CREATE.AI_AGENT_BUSINESS_INFO_PLACEHOLDER')
+                "
+                min-height="80px"
+                max-height="300px"
+              />
+            </div>
           </div>
 
           <div class="mb-6">
-            <label class="block font-medium mb-2">{{ t('AGENT_MGMT.FORM_CREATE.ENABLE_HANDOVER') }}</label>
-            <p class="text-sm text-gray-500 mb-3">{{ t('AGENT_MGMT.FORM_CREATE.HANDOVER_INSTRUCTION') }}</p>
+            <label class="block font-medium mb-2">{{
+              t('AGENT_MGMT.FORM_CREATE.ENABLE_HANDOVER')
+            }}</label>
+            <p class="text-sm text-gray-500 mb-3">
+              {{ t('AGENT_MGMT.FORM_CREATE.HANDOVER_INSTRUCTION') }}
+            </p>
             <label class="inline-flex items-center cursor-pointer">
-              <input type="checkbox" v-model="state.enable_handover" :disabled="isDebugMode" class="sr-only peer">
+              <input
+                type="checkbox"
+                v-model="state.enable_handover"
+                :disabled="isDebugMode"
+                class="sr-only peer"
+              />
               <div
-                class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
-              </div>
+                class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"
+              ></div>
               <span class="ml-3 text-sm text-slate-700 dark:text-slate-300">
                 {{ state.enable_handover ? 'Aktif' : 'Tidak Aktif' }}
               </span>
@@ -337,14 +378,18 @@ function resetChat() {
           </div>
 
           <div v-if="state.enable_handover">
-            <label for="routing_conditions">{{ t('AGENT_MGMT.FORM_CREATE.ROUTING_CONDITION') }}</label>
+            <label for="routing_conditions">{{
+              t('AGENT_MGMT.FORM_CREATE.ROUTING_CONDITION')
+            }}</label>
             <TextArea
               id="routing_conditions"
               v-model="state.routing_conditions"
               :disabled="isDebugMode"
               custom-text-area-wrapper-class=""
               custom-text-area-class="!outline-none"
-              :placeholder="t('AGENT_MGMT.FORM_CREATE.ROUTING_CONDITION_PLACEHOLDER')"
+              :placeholder="
+                t('AGENT_MGMT.FORM_CREATE.ROUTING_CONDITION_PLACEHOLDER')
+              "
               auto-height
               min-height="80px"
               max-height="300px"
@@ -354,7 +399,7 @@ function resetChat() {
           <!-- Debug Mode Fields -->
           <template v-if="isDebugMode">
             <hr class="my-4 border-slate-200 dark:border-slate-700" />
-            
+
             <div>
               <label for="full_prompt">Full Prompt</label>
               <TextArea
@@ -378,9 +423,13 @@ function resetChat() {
               />
             </div>
           </template>
-
-          
-        </template>        <button v-if="!isCustomAgent" class="button self-start" type="submit" :disabled="loadingSave">
+        </template>
+        <button
+          v-if="!isCustomAgent"
+          class="button self-start"
+          type="submit"
+          :disabled="loadingSave"
+        >
           <span v-if="loadingSave" class="mt-4 mb-4 spinner" />
           <span v-else>{{ t('AGENT_MGMT.FORM_CREATE.SUBMIT') }}</span>
         </button>
@@ -388,43 +437,95 @@ function resetChat() {
     </form>
     <!-- Chat Preview Section -->
     <div class="h-[600px] w-full lg:h-[500px] lg:w-[350px]">
-      <div class="w-full rounded-xl dark:bg-black-900/80 shadow-lg dark:shadow-slate-700 overflow-hidden flex flex-col h-full">
+      <div
+        class="w-full rounded-xl dark:bg-black-900/80 shadow-lg dark:shadow-slate-700 overflow-hidden flex flex-col h-full"
+      >
         <div class="bg-green-600 px-4 py-2 flex justify-end items-center">
-          <button @click="resetChat" class="text-white hover:text-gray-200 flex items-center space-x-1">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          <button
+            @click="resetChat"
+            class="text-white hover:text-gray-200 flex items-center space-x-1"
+          >
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
             </svg>
           </button>
         </div>
-        <div ref="chatContainer" class="flex-1 flex flex-col space-y-4 p-4 overflow-y-auto">
+        <div
+          ref="chatContainer"
+          class="flex-1 flex flex-col space-y-4 p-4 overflow-y-auto"
+        >
           <div class="flex justify-start">
-            <div class="bg-slate-50 dark:bg-slate-800 px-4 py-3 rounded-lg text-sm max-w-[90%]">
-              <span class="text-[#000000] dark:text-white">Hai! Ada yang bisa saya bantu?</span>
+            <div
+              class="bg-slate-50 dark:bg-slate-800 px-4 py-3 rounded-lg text-sm max-w-[90%]"
+            >
+              <span class="text-[#000000] dark:text-white"
+                >Hai! Ada yang bisa saya bantu?</span
+              >
             </div>
           </div>
           <div
             v-for="(message, index) in messages"
             :key="index"
-            :class="message.role === 'user' ? 'flex justify-end' : 'flex justify-start'"
+            :class="
+              message.role === 'user'
+                ? 'flex justify-end'
+                : 'flex justify-start'
+            "
           >
             <div
               :class="[
                 'px-4 py-2 rounded-lg text-sm max-w-[90%]',
-                message.role === 'user' ? 'bg-green-600 text-white' : 'bg-slate-50 dark:bg-slate-800 text-[#000000] dark:text-white',
+                message.role === 'user'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-slate-50 dark:bg-slate-800 text-[#000000] dark:text-white',
               ]"
-              v-html="message.role === 'user' ? message.content.replace(/\n/g, '<br>') : renderMarkdown(message.content)"
+              v-html="
+                message.role === 'user'
+                  ? message.content.replace(/\n/g, '<br>')
+                  : renderMarkdown(message.content)
+              "
             ></div>
           </div>
         </div>
-        <form class="flex items-center p-4" @submit.prevent="chat">
-          <Input v-model="chatInput" class="w-full" type="text" placeholder="Type your question" />
-          <button 
-            class="ml-3 bg-green-600 text-white p-2 rounded-lg hover:bg-green-700 relative"
+        <form class="flex items-end p-4" @submit.prevent="chat">
+          <TextArea
+            v-model="chatInput"
+            class="w-full"
+            placeholder="Type your question"
+            auto-height
+            min-height="20px"
+            max-height="120px"
+            custom-text-area-class="resize-none"
+            :rows="1"
+          />
+          <button
+            class="ml-3 bg-green-600 text-white p-2 rounded-lg hover:bg-green-700 relative self-end mb-1"
             type="submit"
             :disabled="loadingChat"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12l15-6-6 15-2.25-6-6.75-3z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-5 h-5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M4.5 12l15-6-6 15-2.25-6-6.75-3z"
+              />
             </svg>
           </button>
         </form>
@@ -432,5 +533,4 @@ function resetChat() {
     </div>
     <!-- Chat Preview Section -->
   </div>
-
 </template>

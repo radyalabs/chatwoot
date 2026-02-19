@@ -214,7 +214,7 @@ onMounted(() => {
         <Button
           icon="i-lucide-pencil"
           size="sm"
-          variant="faint"
+          variant="faded"
           color="slate"
           :aria-label="$t('AGENT_MGMT.NOTIFICATION.CARD_EDIT')"
           @click.stop="emit('edit', reminder.id)"

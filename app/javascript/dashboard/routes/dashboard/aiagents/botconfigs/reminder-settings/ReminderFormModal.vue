@@ -493,7 +493,7 @@ defineExpose({ open });
               ref="dateInputRef"
               v-model="scheduledDate"
               type="date"
-              class="date-input w-full pl-9 pr-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 transition-all cursor-pointer"
+              class="date-input w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 transition-all cursor-pointer"
               :placeholder="$t('AGENT_MGMT.SALESBOT.REMINDER.DATE_PLACEHOLDER')"
               @click="openDatePicker"
               @keydown="handleDateKeydown"

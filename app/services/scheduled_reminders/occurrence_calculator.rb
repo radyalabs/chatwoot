@@ -92,14 +92,27 @@ module ScheduledReminders
     def next_daily(after_time, interval)
       local_scheduled = @reminder.scheduled_at.in_time_zone(@timezone)
       local_after = after_time.in_time_zone(@timezone)
+      allowed_days = (@rule['days_of_week'] || []).map(&:to_i)
 
-      candidate_date = local_after.to_date + 1.day
-      days_since_start = (candidate_date - local_scheduled.to_date).to_i
-      remainder = days_since_start % interval
-      candidate_date += (interval - remainder).days if remainder != 0
+      if allowed_days.any?
+        candidate_date = local_after.to_date + 1.day
+        8.times do
+          if allowed_days.include?(candidate_date.wday)
+            return @timezone.local(candidate_date.year, candidate_date.month, candidate_date.day,
+                                   local_scheduled.hour, local_scheduled.min, local_scheduled.sec).utc
+          end
 
-      @timezone.local(candidate_date.year, candidate_date.month, candidate_date.day,
-                      local_scheduled.hour, local_scheduled.min, local_scheduled.sec).utc
+          candidate_date += 1.day
+        end
+        nil
+      else
+        candidate_date = local_after.to_date + 1.day
+        days_since_start = (candidate_date - local_scheduled.to_date).to_i
+        remainder = days_since_start % interval
+        candidate_date += (interval - remainder).days if remainder != 0
+        @timezone.local(candidate_date.year, candidate_date.month, candidate_date.day,
+                        local_scheduled.hour, local_scheduled.min, local_scheduled.sec).utc
+      end
     end
 
     def next_weekly(after_time, interval)
@@ -109,7 +122,7 @@ module ScheduledReminders
 
       return nil if target_days.empty?
 
-      start_of_week = local_scheduled.beginning_of_week(:sunday)
+      start_of_week = local_scheduled.beginning_of_week(:sunday).to_date
       current_date = local_after.to_date + 1.day
 
       # Search up to 8 weeks ahead to find a valid occurrence

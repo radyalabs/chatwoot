@@ -52,6 +52,7 @@ class AiAgents extends ApiClient {
             id: null,
             text: data.text,
             tab: data.tab,
+            collection_name: data.collection_name,
         });
     }
 
@@ -60,12 +61,13 @@ class AiAgents extends ApiClient {
             id: data.id,
             text: data.text,
             tab: data.tab,
+            collection_name: data.collection_name,
         });
     }
 
-    deleteKnowledgeText(idAgent, textId) {
+    deleteKnowledgeText(idAgent, textId, collection_name) {
         return axios.delete(
-            `${this.url}/${idAgent}/knowledge_sources/text/${textId}`
+            `${this.url}/${idAgent}/knowledge_sources/text/${textId}?collection_name=${collection_name}`
         );
     }
 

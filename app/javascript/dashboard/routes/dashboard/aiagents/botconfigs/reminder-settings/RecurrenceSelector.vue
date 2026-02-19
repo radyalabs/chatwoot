@@ -19,6 +19,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue']);
 
 const showCustomModal = ref(false);
+const displayPreset = ref('none');
 
 const DAYS_SHORT = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -74,6 +75,11 @@ const selectedPreset = computed(() => {
   return 'custom';
 });
 
+// Keep displayPreset in sync when modelValue changes externally (e.g. on load/edit).
+watch(selectedPreset, val => {
+  displayPreset.value = val;
+}, { immediate: true });
+
 const selectedDaysOfWeek = computed(() => {
   if (!props.modelValue || props.modelValue.frequency !== 'weekly') return [];
   return props.modelValue.days_of_week || [];
@@ -87,8 +93,8 @@ const showDaySelector = computed(() => {
   );
 });
 
-const handlePresetChange = event => {
-  const value = event.target.value;
+const handlePresetChange = () => {
+  const value = displayPreset.value; // v-model already updated this
 
   if (value === 'none') {
     emit('update:modelValue', null);
@@ -157,6 +163,7 @@ const handleCustomSave = rule => {
 
 const handleCustomClose = () => {
   showCustomModal.value = false;
+  displayPreset.value = selectedPreset.value;
 };
 </script>
 
@@ -167,7 +174,7 @@ const handleCustomClose = () => {
         {{ t('AGENT_MGMT.SALESBOT.REMINDER.REPEAT_LABEL') }}
       </label>
       <select
-        :value="selectedPreset"
+        v-model="displayPreset"
         class="w-full p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 transition-all"
         @change="handlePresetChange"
       >

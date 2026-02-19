@@ -60,10 +60,12 @@ class Api::V2::Accounts::ScheduledRemindersController < Api::V1::Accounts::BaseC
 
   def parse_recurrence_rule
     rule = params[:scheduled_reminder][:recurrence_rule]
+    return nil unless rule.present?
+    return rule.to_unsafe_h if rule.respond_to?(:to_unsafe_h)
     return rule if rule.is_a?(Hash)
 
     JSON.parse(rule)
-  rescue JSON::ParserError
+  rescue JSON::ParserError, TypeError
     nil
   end
 

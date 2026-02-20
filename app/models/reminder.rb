@@ -34,8 +34,8 @@
 #
 #  fk_rails_...  (account_id => accounts.id)
 #  fk_rails_...  (ai_agent_id => ai_agents.id)
-#  fk_rails_...  (conversation_id => conversations.id)
-#  fk_rails_...  (inbox_id => inboxes.id)
+#  fk_rails_...  (conversation_id => conversations.id) ON DELETE => cascade
+#  fk_rails_...  (inbox_id => inboxes.id) ON DELETE => cascade
 #
 
 class Reminder < ApplicationRecord

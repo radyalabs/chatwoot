@@ -610,8 +610,14 @@ onMounted(async () => {
         <div v-show="activeIndex === 0" class="w-full">
           <div class="flex flex-row gap-4">
             <div class="flex-1 min-w-0 flex flex-col justify-stretch">
+              <!-- Loading State -->
+              <div v-if="loading" class="flex flex-col items-center justify-center py-16 gap-4">
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
+                <p class="text-sm text-slate-500 dark:text-slate-400">{{ $t('AGENT_MGMT.COMMON.LOADING') }}</p>
+              </div>
+
               <!-- Step 1: Google Auth -->
-              <div v-if="bookingStep === 'auth'" class="w-full mx-auto">
+              <div v-else-if="bookingStep === 'auth'" class="w-full mx-auto">
                 <div>
                   <label class="block font-medium mb-1">{{ $t('AGENT_MGMT.BOOKING_BOT.AUTH_LABEL') }}</label>
                   <p class="text-gray-600 dark:text-gray-400 mb-4">

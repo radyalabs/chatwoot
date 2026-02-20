@@ -417,8 +417,14 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
           <h4 class="text-md font-medium text-slate-900 dark:text-slate-25 mb-3">{{ $t('AGENT_MGMT.CSBOT.COMMON.GOOGLE_SHEETS_TITLE') }}</h4>
           <p class="text-sm text-gray-500 mb-4">{{ $t('AGENT_MGMT.CSBOT.COMMON.CONNECT_SHEETS_DESC') }}</p>
 
+          <!-- Loading State -->
+          <div v-if="ticketLoading" class="flex flex-col items-center justify-center py-16 gap-4">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
+            <p class="text-sm text-slate-500 dark:text-slate-400">{{ $t('AGENT_MGMT.COMMON.LOADING') }}</p>
+          </div>
+          
           <!-- Google Sheets Auth Flow -->
-          <div v-if="ticketStep === 'auth'" class="mb-6">
+          <div v-else-if="ticketStep === 'auth'" class="mb-6">
             <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800">
               <div class="flex items-center gap-3 mb-3">
                 <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">

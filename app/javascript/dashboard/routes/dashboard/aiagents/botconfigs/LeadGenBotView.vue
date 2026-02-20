@@ -52,8 +52,14 @@
         <!-- Tab 0: Catalog Configuration -->
         <div v-show="activeIndex === 0" class="w-full min-w-0">
           <div class="space-y-6">
+            <!-- Loading State -->
+            <div v-if="catalogLoading" class="flex flex-col items-center justify-center py-16 gap-4">
+              <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
+              <p class="text-sm text-slate-500 dark:text-slate-400">{{ $t('AGENT_MGMT.COMMON.LOADING') }}</p>
+            </div>
+            
             <!-- Google Sheets Auth Flow -->
-            <div v-if="catalogStep === 'auth'" class="gap-6">
+            <div v-else-if="catalogStep === 'auth'" class="gap-6">
               <label class="block font-medium mb-1">{{ $t('AGENT_MGMT.LEADGENBOT.CATALOG.SHEETS_TITLE') }}</label>
               <p class="text-gray-600 dark:text-gray-400">{{ $t('AGENT_MGMT.LEADGENBOT.CATALOG.SHEETS_AUTH_DESC') }}</p>
               <button

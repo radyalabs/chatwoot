@@ -10,6 +10,28 @@ import SubmitButton from '../../../../../components/Button/SubmitButton.vue';
 import { isValidPassword } from 'shared/helpers/Validators';
 import GoogleOAuthButton from '../../../../../components/GoogleOauth/Button.vue';
 import { register } from '../../../../../api/auth';
+
+// Validators untuk nama lengkap
+const validNameFormat = value => {
+  if (!value) return true;
+  // Hanya huruf, spasi, titik, strip, dan apostrof
+  return /^[a-zA-Z\s.'\-]+$/.test(value);
+};
+
+const noUrlPatterns = value => {
+  if (!value) return true;
+  // Cek pola URL dan domain
+  const urlPatterns = [
+    /https?:\/\//i,
+    /www\./i,
+    /\s+[a-z0-9-]+\.[a-z]{2,6}/i,
+    /\.[a-z]{2,6}$/i,
+    /klik\s+disini/i,
+    /click\s+here/i,
+    /@/,
+  ];
+  return !urlPatterns.some(pattern => pattern.test(value));
+};
 // import * as CompanyEmailValidator from 'company-email-validator';
 
 export default {
@@ -49,6 +71,8 @@ export default {
         fullName: {
           required,
           minLength: minLength(2),
+          validNameFormat,
+          noUrlPatterns,
         },
         email: {
           required,
@@ -85,6 +109,40 @@ export default {
       }
       return true;
     },
+    fullNameErrorText() {
+      const { fullName } = this.v$.credentials;
+      if (!fullName.$error) {
+        return '';
+      }
+
+      // Cek langsung dari value input untuk pola URL
+      const value = this.credentials.fullName;
+      const urlPatterns = [
+        /https?:\/\//i,
+        /www\./i,
+        /\s+[a-z0-9-]+\.[a-z]{2,6}/i,
+        /\.[a-z]{2,6}$/i,
+        /klik\s+disini/i,
+        /click\s+here/i,
+        /@/,
+      ];
+
+      if (urlPatterns.some(pattern => pattern.test(value))) {
+        return this.$t('REGISTER.FULL_NAME.URL_NOT_ALLOWED');
+      }
+
+      // Cek format karakter yang diizinkan
+      if (!/^[a-zA-Z\s.'\-]+$/.test(value)) {
+        return this.$t('REGISTER.FULL_NAME.INVALID_FORMAT');
+      }
+
+      // Cek panjang minimum
+      if (value && value.length < 2) {
+        return this.$t('REGISTER.FULL_NAME.ERROR');
+      }
+
+      return '';
+    },
     passwordErrorText() {
       const { password } = this.v$.credentials;
       if (!password.$error) {
@@ -115,7 +173,7 @@ export default {
         // Redirect to OTP verification page instead of dashboard
         this.$router.push({
           name: 'auth_verify_email',
-          query: { email: this.credentials.email }
+          query: { email: this.credentials.email },
         });
       } catch (error) {
         let errorMessage =
@@ -146,7 +204,9 @@ export default {
 </script>
 
 <template>
-  <div class="overflow-auto bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-emerald-200 dark:border-slate-700 p-6">
+  <div
+    class="overflow-auto bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-emerald-200 dark:border-slate-700 p-6"
+  >
     <form class="space-y-3" @submit.prevent="submit">
       <div class="grid grid-cols-1 gap-2">
         <FormInput
@@ -157,7 +217,7 @@ export default {
           :label="$t('REGISTER.FULL_NAME.LABEL')"
           :placeholder="$t('REGISTER.FULL_NAME.PLACEHOLDER')"
           :has-error="v$.credentials.fullName.$error"
-          :error-message="$t('REGISTER.FULL_NAME.ERROR')"
+          :error-message="fullNameErrorText || $t('REGISTER.FULL_NAME.ERROR')"
           @blur="v$.credentials.fullName.$touch"
         />
         <FormInput

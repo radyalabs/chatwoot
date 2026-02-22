@@ -71,6 +71,38 @@ class User < ApplicationRecord
 
   validates :email, presence: true
 
+  # Validasi nama: hanya huruf, spasi, titik, strip, dan apostrof yang diperbolehkan
+  # untuk mencegah XSS dan phishing melalui URL di email
+  validates :name,
+            presence: true,
+            length: { maximum: 100 },
+            format: {
+              with: /\A[a-zA-Z\s.'-]+\z/,
+              message: I18n.t('errors.validations.invalid_name_format')
+            }
+
+  # Custom validation untuk mendeteksi URL dan pola phishing
+  validate :name_does_not_contain_url_patterns
+
+  def name_does_not_contain_url_patterns
+    return if name.blank?
+
+    # Regex untuk mendeteksi pola URL dan domain
+    url_patterns = [
+      %r{https?://}i, # http:// atau https://
+      /www\./i, # www.
+      /\s+[a-z0-9-]+\.[a-z]{2,6}/i, # domain.com (spasi + domain + . + tld)
+      /\.[a-z]{2,6}$/i,          # .com, .net, .org, dll di akhir string
+      /klik\s+disini/i,          # klik disini
+      /click\s+here/i,           # click here
+      /@/                        # karakter @ (email)
+    ]
+
+    return unless url_patterns.any? { |pattern| name.match?(pattern) }
+
+    errors.add(:name, I18n.t('errors.validations.name_contains_url'))
+  end
+
   has_many :transactions, dependent: :nullify
 
   has_many :account_users, dependent: :destroy_async

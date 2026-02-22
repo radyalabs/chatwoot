@@ -39,6 +39,8 @@ en:
   errors:
     validations:
       presence: must not be blank
+      invalid_name_format: can only contain letters, spaces, periods, hyphens, and apostrophes
+      name_contains_url: cannot contain URLs, website addresses, or suspicious patterns
     webhook:
       invalid: Invalid events
     signup:
@@ -366,35 +368,35 @@ en:
 
   devise_token_auth:
     sessions:
-      not_confirmed: "Your account has not been verified. Please check your email and follow the verification instructions."
-      bad_credentials: "Invalid email or password."
-      not_supported: "Use POST /sign_in to login. GET is not supported."
-      user_not_found: "User not found or inactive."
+      not_confirmed: 'Your account has not been verified. Please check your email and follow the verification instructions.'
+      bad_credentials: 'Invalid email or password.'
+      not_supported: 'Use POST /sign_in to login. GET is not supported.'
+      user_not_found: 'User not found or inactive.'
     registrations:
-      missing_confirm_success_url: "Missing `confirm_success_url` param."
-      redirect_url_not_allowed: "Redirect to %{redirect_url} not allowed."
-      email_already_exists: "An account with that email already exists"
-      account_update_success: "Your account has been updated successfully."
-      account_to_destroy_not_found: "Account to destroy not found."
-      account_destroy_success: "Account successfully destroyed."
-      email_required: "Email is required."
-      account_with_uid_destroyed: "Account with uid %{uid} has been destroyed."
-      account_not_destroyable: "Account cannot be destroyed."
+      missing_confirm_success_url: 'Missing `confirm_success_url` param.'
+      redirect_url_not_allowed: 'Redirect to %{redirect_url} not allowed.'
+      email_already_exists: 'An account with that email already exists'
+      account_update_success: 'Your account has been updated successfully.'
+      account_to_destroy_not_found: 'Account to destroy not found.'
+      account_destroy_success: 'Account successfully destroyed.'
+      email_required: 'Email is required.'
+      account_with_uid_destroyed: 'Account with uid %{uid} has been destroyed.'
+      account_not_destroyable: 'Account cannot be destroyed.'
     passwords:
-      missing_email: "You must provide an email address."
-      missing_redirect_url: "Missing redirect url."
+      missing_email: 'You must provide an email address.'
+      missing_redirect_url: 'Missing redirect url.'
       not_allowed_redirect_url: "Redirect to '%{redirect_url}' not allowed."
       sended: "An email has been sent to '%{email}' with instructions for resetting your password (if '%{email}' is in our system)."
       user_not_found: "Unable to find user with email '%{email}'."
       password_not_required: "This user does not require a password. Sign in using '%{provider}'."
-      missing_passwords: "Password and password confirmation must be provided."
-      successfully_updated: "Your password has been successfully updated."
+      missing_passwords: 'Password and password confirmation must be provided.'
+      successfully_updated: 'Your password has been successfully updated.'
     confirmations:
       sended: "A confirmation email has been sent to '%{email}'."
-      success: "Your account has been successfully confirmed."
-      account_with_uid_success: "Account with uid %{uid} has been successfully confirmed."
+      success: 'Your account has been successfully confirmed.'
+      account_with_uid_success: 'Account with uid %{uid} has been successfully confirmed.'
     token_validations:
-      invalid: "Login credentials are invalid or expired."
+      invalid: 'Login credentials are invalid or expired.'
 
   otp_mailer:
     send_otp_email:

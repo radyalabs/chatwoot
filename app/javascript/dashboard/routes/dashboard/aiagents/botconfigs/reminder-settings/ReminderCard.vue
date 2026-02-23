@@ -20,7 +20,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['edit', 'delete', 'toggle']);
+const emit = defineEmits(['edit', 'delete']);
 
 const isExpanded = ref(false);
 const isMessageExpanded = ref(false);
@@ -69,6 +69,12 @@ const isCompleted = computed(() => {
 const receiverDisplayName = computed(() => {
   return props.reminder.receiver_name || props.reminder.receiver_address;
 });
+
+const isCustomRecurrence = computed(() => {
+  return props.reminder.recurrence_rule?.preset === 'custom';
+});
+
+const hasRecurrence = computed(() => !!props.reminder.recurrence_rule);
 
 const recurrenceLabel = computed(() => {
   return (
@@ -146,25 +152,52 @@ onMounted(() => {
   >
     <!-- Header -->
     <div
-      class="flex items-start justify-between px-4 py-3 cursor-pointer"
+      class="flex items-center justify-between px-4 py-3 cursor-pointer"
       :class="headerBgClasses"
       @click="isExpanded = !isExpanded"
     >
       <!-- Left: Icon + Info -->
-      <div class="flex items-start gap-3 min-w-0 flex-1">
-        <span class="mt-0.5 shrink-0" :class="bellIconClasses" />
+      <div class="flex items-center gap-3 min-w-0 flex-1">
+        <span class="shrink-0" :class="bellIconClasses" />
         <div class="min-w-0 flex-1">
           <h4
             class="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate"
           >
             {{ reminder.title }}
           </h4>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-            {{ t('AGENT_MGMT.SALESBOT.REMINDER.CARD_SEND_TO') }}:
-            {{ receiverDisplayName }}
-            <span class="mx-1">&middot;</span>
-            {{ recurrenceLabel }}
-          </p>
+          <div
+            class="flex items-center gap-1.5 mt-0.5 text-xs text-slate-500 dark:text-slate-400 min-w-0"
+          >
+            <span class="truncate shrink-[2]">
+              {{ t('AGENT_MGMT.SALESBOT.REMINDER.CARD_SEND_TO') }}:
+              {{ receiverDisplayName }}
+            </span>
+            <span class="shrink-0">&middot;</span>
+            <span
+              class="i-lucide-repeat size-3 shrink-0"
+              :class="
+                hasRecurrence
+                  ? 'text-slate-400 dark:text-slate-500'
+                  : 'text-slate-300 dark:text-slate-600'
+              "
+            />
+            <span
+              v-if="isCustomRecurrence"
+              class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold leading-none shrink-0 bg-indigo-50 dark:bg-indigo-600/40 text-slate-900 dark:text-slate-100"
+            >
+              {{ t('AGENT_MGMT.SALESBOT.REMINDER.REPEAT_CUSTOM') }}
+            </span>
+            <span
+              class="truncate shrink-[1]"
+              :class="
+                hasRecurrence
+                  ? 'text-slate-400 dark:text-slate-400'
+                  : 'text-slate-400 dark:text-slate-500'
+              "
+            >
+              {{ recurrenceLabel }}
+            </span>
+          </div>
           <p
             v-if="reminder.next_occurrence_at && reminder.enabled"
             class="text-xs text-slate-400 dark:text-slate-500 mt-0.5"
@@ -177,39 +210,14 @@ onMounted(() => {
 
       <!-- Right: Toggle + Actions -->
       <div class="flex items-center gap-2 shrink-0 ml-3">
-        <!-- Completed badge OR Toggle -->
-        <template v-if="isCompleted">
-          <span
-            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-          >
-            <span class="i-lucide-check-circle size-3.5" />
-            {{ t('AGENT_MGMT.SALESBOT.REMINDER.COMPLETED') }}
-          </span>
-        </template>
-        <template v-else>
-          <label
-            class="inline-flex items-center cursor-pointer"
-            :title="
-              reminder.enabled
-                ? t('AGENT_MGMT.SALESBOT.REMINDER.CLICK_TO_DISABLE')
-                : t('AGENT_MGMT.SALESBOT.REMINDER.CLICK_TO_ENABLE')
-            "
-            @click.stop
-          >
-            <input
-              type="checkbox"
-              :checked="reminder.enabled"
-              class="sr-only peer"
-              :aria-label="t('AGENT_MGMT.SALESBOT.REMINDER.TOGGLE_ARIA')"
-              @change="emit('toggle', reminder.id, !reminder.enabled)"
-            />
-            <div
-              class="border solid w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"
-              role="switch"
-              :aria-checked="reminder.enabled.toString()"
-            />
-          </label>
-        </template>
+        <!-- Completed badge -->
+        <span
+          v-if="isCompleted"
+          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+        >
+          <span class="i-lucide-check-circle size-3.5" />
+          {{ t('AGENT_MGMT.SALESBOT.REMINDER.COMPLETED') }}
+        </span>
 
         <Button
           icon="i-lucide-pencil"

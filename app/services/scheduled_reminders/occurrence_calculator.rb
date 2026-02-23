@@ -36,7 +36,14 @@ module ScheduledReminders
 
       case frequency
       when 'daily'
-        interval == 1 ? 'Daily' : "Every #{interval} days"
+        days = Array(@rule['days_of_week']).map(&:to_i)
+        if interval == 1 && days.sort == [1, 2, 3, 4, 5]
+          'Every weekday'
+        elsif interval == 1
+          'Daily'
+        else
+          "Every #{interval} days"
+        end
       when 'weekly'
         days = format_days_of_week
         base = interval == 1 ? 'Weekly' : "Every #{interval} weeks"

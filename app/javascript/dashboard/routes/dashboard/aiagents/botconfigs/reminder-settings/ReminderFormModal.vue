@@ -153,6 +153,20 @@ const populateForm = reminder => {
     : null;
   endsAt.value = reminder.ends_at || null;
   endsAfterCount.value = reminder.ends_after_count || null;
+  // Re-inject ends metadata into the rule so RecurrenceSelector can restore the
+  // Ends UI state. ends_at/ends_after_count live in separate DB columns and are
+  // not part of recurrence_rule JSON, so we attach them as _-prefixed keys
+  // (stripped again by handleSave before the next API call).
+  if (recurrenceRule.value) {
+    if (reminder.ends_at) {
+      const d = new Date(reminder.ends_at);
+      const local = new Date(d.getTime() - d.getTimezoneOffset() * 60 * 1000);
+      recurrenceRule.value._ends_at = local.toISOString().slice(0, 10);
+    }
+    if (reminder.ends_after_count) {
+      recurrenceRule.value._ends_after_count = reminder.ends_after_count;
+    }
+  }
   nextTick(() => {
     isPopulating.value = false;
   });

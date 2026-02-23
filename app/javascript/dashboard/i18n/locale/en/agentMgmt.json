@@ -693,6 +693,7 @@
         "REPEAT_ANNUALLY": "Annually",
         "REPEAT_WEEKDAY": "Every weekday (Mon-Fri)",
         "REPEAT_CUSTOM": "Custom...",
+        "REPEAT_ON": "Repeat on",
         "ENDS_LABEL": "Ends",
         "ENDS_NEVER": "Never",
         "ENDS_ON": "On",

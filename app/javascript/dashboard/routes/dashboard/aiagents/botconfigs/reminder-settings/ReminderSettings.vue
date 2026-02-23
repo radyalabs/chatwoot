@@ -131,18 +131,6 @@ const handleDelete = async id => {
   }
 };
 
-const handleToggle = async (id, enabled) => {
-  try {
-    await store.dispatch('scheduledReminders/update', {
-      aiAgentId: props.aiAgentId,
-      reminderId: id,
-      data: { enabled },
-    });
-  } catch (error) {
-    console.error('Failed to toggle reminder:', error);
-  }
-};
-
 const handleFormClose = () => {
   showFormModal.value = false;
   editingReminder.value = null;
@@ -241,7 +229,6 @@ onMounted(() => {
         :connected-inboxes-by-type="connectedInboxesByType"
         @edit="openEditForm"
         @delete="handleDelete"
-        @toggle="handleToggle"
       />
     </div>
 

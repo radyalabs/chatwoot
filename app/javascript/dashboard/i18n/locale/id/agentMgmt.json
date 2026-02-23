@@ -512,6 +512,7 @@
         "REPEAT_ANNUALLY": "Tahunan",
         "REPEAT_WEEKDAY": "Setiap hari kerja (Sen-Jum)",
         "REPEAT_CUSTOM": "Kustom...",
+        "REPEAT_ON": "Ulangi pada",
         "ENDS_LABEL": "Berakhir",
         "ENDS_NEVER": "Tidak pernah",
         "ENDS_ON": "Pada",

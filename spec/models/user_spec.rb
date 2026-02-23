@@ -9,6 +9,54 @@ RSpec.describe User do
 
   context 'with validations' do
     it { is_expected.to validate_presence_of(:email) }
+
+    describe 'name validation' do
+      it { is_expected.to validate_presence_of(:name) }
+      it { is_expected.to validate_length_of(:name).is_at_most(100) }
+
+      it 'accepts valid names with letters, spaces, periods, hyphens, and apostrophes' do
+        valid_names = ['John Doe', 'Mary Jane', 'O\'Connor', 'Jean-Luc', 'Dr. Smith', 'Mary O\'Connor-Smith']
+        valid_names.each do |name|
+          user.name = name
+          expect(user).to be_valid
+        end
+      end
+
+      it 'rejects names with URLs or suspicious characters' do
+        invalid_names = [
+          'klik disini evil.com',
+          'user@example.com',
+          'John <script>alert(1)</script>',
+          'Visit http://evil.com',
+          'user www.example.com',
+          'Test <b>Bold</b>',
+          'Name with @ symbol',
+          'click here evil.com',
+          'john.doe@gmail.com'
+        ]
+        invalid_names.each do |name|
+          user.name = name
+          expect(user).not_to be_valid
+          expect(user.errors[:name]).to include(I18n.t('errors.messages.invalid_name_format')).or include(I18n.t('errors.messages.name_contains_url'))
+        end
+      end
+
+      it 'rejects names containing URL patterns specifically' do
+        url_patterns = [
+          'klik disini evil.com',
+          'click here example.com',
+          'visit www.example.com',
+          'check http://evil.com',
+          'check https://evil.com',
+          'user@gmail.com'
+        ]
+        url_patterns.each do |name|
+          user.name = name
+          expect(user).not_to be_valid
+          expect(user.errors[:name]).to include(I18n.t('errors.messages.name_contains_url'))
+        end
+      end
+    end
   end
 
   context 'with associations' do

@@ -17,7 +17,7 @@
 #To learn more, please read the Rails Internationalization guide
 #available at https://guides.rubyonrails.org/i18n.html.
 id:
-  hello: "Hello world"
+  hello: 'Hello world'
   messages:
     reset_password_success: Woot! Permintaan pengaturan ulang kata sandi berhasil. Periksa email Anda untuk mendapatkan petunjuk.
     reset_password_failure: Aduh! Kami tidak dapat menemukan pengguna dengan email yang dimasukkan.
@@ -25,13 +25,15 @@ id:
   errors:
     validations:
       presence: tidak boleh kosong
+      invalid_name_format: hanya boleh mengandung huruf, spasi, titik, strip, dan apostrof
+      name_contains_url: tidak boleh mengandung URL, alamat website, atau pola mencurigakan
     webhook:
       invalid: Acara tidak valid
     signup:
       disposable_email: Kami tidak mengizinkan email sekali pakai
       blocked_domain: This domain is not allowed. If you believe this is a mistake, please contact support.
       invalid_email: Anda telah memasukkan email yang tidak valid
-      email_already_exists: "Anda telah mendaftar untuk sebuah akun dengan %{email}"
+      email_already_exists: 'Anda telah mendaftar untuk sebuah akun dengan %{email}'
       invalid_params: 'Invalid, please check the signup paramters and try again'
       failed: Pendaftaran gagal
       user_exists_login_instead: 'Pengguna sudah ada dan terverifikasi. Silakan login.'
@@ -109,9 +111,9 @@ id:
       locale:
         unique: harus unik dalam kategori dan portal
     dyte:
-      invalid_message_type: "Jenis pesan tidak valid. Tindakan tidak diizinkan"
+      invalid_message_type: 'Jenis pesan tidak valid. Tindakan tidak diizinkan'
     slack:
-      invalid_channel_id: "Invalid slack channel. Please try again"
+      invalid_channel_id: 'Invalid slack channel. Please try again'
     inboxes:
       imap:
         socket_error: Periksa sambungan jaringan, alamat IMAP, dan coba lagi.
@@ -179,72 +181,72 @@ id:
         recorded_at: Tanggal rekaman
   notifications:
     notification_title:
-      conversation_creation: "Percakapan (#%{display_id}) telah dibuat di %{inbox_name}"
-      conversation_assignment: "Percakapan (#%{display_id}) telah ditugaskan kepada Anda"
-      assigned_conversation_new_message: "Pesan baru telah dibuat dalam percakapan (#%{display_id})"
-      conversation_mention: "Anda telah disebut dalam percakapan (#%{display_id})"
-      sla_missed_first_response: "SLA target respons pertama terlewat untuk percakapan (#%{display_id})"
-      sla_missed_next_response: "SLA target respons berikutnya terlewat untuk percakapan (#%{display_id})"
-      sla_missed_resolution: "SLA target resolusi terlewat untuk percakapan (#%{display_id})"
-    attachment: "Lampiran"
-    no_content: "Tidak ada konten"
+      conversation_creation: 'Percakapan (#%{display_id}) telah dibuat di %{inbox_name}'
+      conversation_assignment: 'Percakapan (#%{display_id}) telah ditugaskan kepada Anda'
+      assigned_conversation_new_message: 'Pesan baru telah dibuat dalam percakapan (#%{display_id})'
+      conversation_mention: 'Anda telah disebut dalam percakapan (#%{display_id})'
+      sla_missed_first_response: 'SLA target respons pertama terlewat untuk percakapan (#%{display_id})'
+      sla_missed_next_response: 'SLA target respons berikutnya terlewat untuk percakapan (#%{display_id})'
+      sla_missed_resolution: 'SLA target resolusi terlewat untuk percakapan (#%{display_id})'
+    attachment: 'Lampiran'
+    no_content: 'Tidak ada konten'
   conversations:
     messages:
-      instagram_story_content: "%{story_sender} menyebutmu dalam story: "
+      instagram_story_content: '%{story_sender} menyebutmu dalam story: '
       instagram_deleted_story_content: Story ini tidak lagi tersedia.
       deleted: Pesan ini telah terhapus
       delivery_status:
-        error_code: "Error code: %{error_code}"
+        error_code: 'Error code: %{error_code}'
     activity:
       status:
-        resolved: "Percakapan ditandai selesai oleh %{user_name}"
-        contact_resolved: "Percakapan diselesaikan oleh %{contact_name}"
-        open: "Percakapan telah dibuka kembali oleh %{user_name}"
-        pending: "Percakapan telah ditandai sebagai tertunda oleh %{user_name}"
-        snoozed: "Percakapan telah ditunda oleh %{user_name}"
-        auto_resolved: "Percakapan ditandai terselesaikan oleh sistem karena tidak ada aktifitas dalam %{duration} hari"
+        resolved: 'Percakapan ditandai selesai oleh %{user_name}'
+        contact_resolved: 'Percakapan diselesaikan oleh %{contact_name}'
+        open: 'Percakapan telah dibuka kembali oleh %{user_name}'
+        pending: 'Percakapan telah ditandai sebagai tertunda oleh %{user_name}'
+        snoozed: 'Percakapan telah ditunda oleh %{user_name}'
+        auto_resolved: 'Percakapan ditandai terselesaikan oleh sistem karena tidak ada aktifitas dalam %{duration} hari'
         system_auto_open: Sistem membuka kembali percakapan karena pesan masuk baru.
       priority:
         added: '%{user_name} tetapkan prioritas untuk %{new_priority}'
         updated: '%{user_name} mengubah prioritas dari %{old_priority} ke %{new_priority}'
         removed: '%{user_name} menghapus prioritasnya'
       assignee:
-        self_assigned: "%{user_name} menetapkan sendiri percakapan ini"
-        assigned: "Ditugaskan ke %{assignee_name} oleh %{user_name}"
-        removed: "Percakapan batal ditetapkan oleh %{user_name}"
+        self_assigned: '%{user_name} menetapkan sendiri percakapan ini'
+        assigned: 'Ditugaskan ke %{assignee_name} oleh %{user_name}'
+        removed: 'Percakapan batal ditetapkan oleh %{user_name}'
       team:
-        assigned: "Ditugaskan ke %{team_name} oleh %{user_name}"
-        assigned_with_assignee: "Ditugaskan ke %{assignee_name} melalui %{team_name} oleh %{user_name}"
-        removed: "Dibebastugaskan dari %{team_name} oleh %{user_name}"
+        assigned: 'Ditugaskan ke %{team_name} oleh %{user_name}'
+        assigned_with_assignee: 'Ditugaskan ke %{assignee_name} melalui %{team_name} oleh %{user_name}'
+        removed: 'Dibebastugaskan dari %{team_name} oleh %{user_name}'
       labels:
-        added: "%{user_name} menambahkan %{labels}"
-        removed: "%{user_name} menghapus %{labels}"
+        added: '%{user_name} menambahkan %{labels}'
+        removed: '%{user_name} menghapus %{labels}'
       sla:
-        added: "%{user_name} added SLA policy %{sla_name}"
-        removed: "%{user_name} removed SLA policy %{sla_name}"
-      muted: "%{user_name} me-mute percakapan"
-      unmuted: "%{user_name} telah un-mute percakapan"
+        added: '%{user_name} added SLA policy %{sla_name}'
+        removed: '%{user_name} removed SLA policy %{sla_name}'
+      muted: '%{user_name} me-mute percakapan'
+      unmuted: '%{user_name} telah un-mute percakapan'
     templates:
-      greeting_message_body: "%{account_name} biasanya membalas dalam beberapa jam."
-      ways_to_reach_you_message_body: "Beri tim cara untuk menghubungi Anda."
-      email_input_box_message_body: "Dapatkan pemberitahuan melalui email"
-      csat_input_message_body: "Silakan beri peringkat percakapan ini"
-      closing_message_body: "Terima kasih telah menghubungi kami. Jika ada pertanyaan lain di kemudian hari, kami siap membantu Anda."
+      greeting_message_body: '%{account_name} biasanya membalas dalam beberapa jam.'
+      ways_to_reach_you_message_body: 'Beri tim cara untuk menghubungi Anda.'
+      email_input_box_message_body: 'Dapatkan pemberitahuan melalui email'
+      csat_input_message_body: 'Silakan beri peringkat percakapan ini'
+      closing_message_body: 'Terima kasih telah menghubungi kami. Jika ada pertanyaan lain di kemudian hari, kami siap membantu Anda.'
     reply:
       email:
         header:
-          from_with_name: "%{assignee_name} dari %{inbox_name} <%{from_email}>"
-          reply_with_name: "%{assignee_name} dari %{inbox_name} <reply+%{reply_email}>"
-          friendly_name: "%{sender_name} dari %{business_name} <%{from_email}>"
-          professional_name: "%{business_name} <%{from_email}>"
+          from_with_name: '%{assignee_name} dari %{inbox_name} <%{from_email}>'
+          reply_with_name: '%{assignee_name} dari %{inbox_name} <reply+%{reply_email}>'
+          friendly_name: '%{sender_name} dari %{business_name} <%{from_email}>'
+          professional_name: '%{business_name} <%{from_email}>'
       channel_email:
         header:
-          reply_with_name: "%{assignee_name} dari %{inbox_name} <%{from_email}>"
-          reply_with_inbox_name: "%{inbox_name} <%{from_email}>"
-      email_subject: "Pesan baru pada percakapan ini"
-      transcript_subject: "Transkrip Percakapan"
+          reply_with_name: '%{assignee_name} dari %{inbox_name} <%{from_email}>'
+          reply_with_inbox_name: '%{inbox_name} <%{from_email}>'
+      email_subject: 'Pesan baru pada percakapan ini'
+      transcript_subject: 'Transkrip Percakapan'
     survey:
-      response: "Silakan beri peringkat percakapan ini, %{link}"
+      response: 'Silakan beri peringkat percakapan ini, %{link}'
     bot:
       not_available_ai_agent: 'Maaf, sistem kami belum memiliki AI Agent aktif di channel ini. Namun Anda tetap dapat mengirimkan pesan, dan tim kami akan segera merespons.'
       available_ai_agent: 'Halo, saya AI Agent dari %{business_name}. Silakan kirimkan pertanyaan Anda, dan saya akan berusaha memberikan solusi sebaik mungkin.'
@@ -256,35 +258,35 @@ id:
       failure: 'Terdapat kesalahan di sistem kami saat ini, jadi kami tidak dapat melanjutkan percakapan. Untuk bantuan lebih lanjut, silakan hubungi tim dukungan kami melalui [tautan kontak/support]. Mohon maaf atas ketidaknyaan dan terima kasih atas pengertian Anda.'
   contacts:
     online:
-      delete: "%{contact_name} sedang Online, silakan coba lagi nanti"
+      delete: '%{contact_name} sedang Online, silakan coba lagi nanti'
   integration_apps:
     dashboard_apps:
-      name: "Aplikasi Dasbor"
-      description: "Dashboard Apps allow you to create and embed applications that display user information, orders, or payment history, providing more context to your customer support agents."
+      name: 'Aplikasi Dasbor'
+      description: 'Dashboard Apps allow you to create and embed applications that display user information, orders, or payment history, providing more context to your customer support agents.'
     dyte:
-      name: "Dyte"
-      description: "Dyte is a product that integrates audio and video functionalities into your application. With this integration, your agents can start video/voice calls with your customers directly from Chatwoot."
-      meeting_name: "%{agent_name} memulai percakapan"
+      name: 'Dyte'
+      description: 'Dyte is a product that integrates audio and video functionalities into your application. With this integration, your agents can start video/voice calls with your customers directly from Chatwoot.'
+      meeting_name: '%{agent_name} memulai percakapan'
     slack:
-      name: "Slack"
+      name: 'Slack'
       description: "Integrate Chatwoot with Slack to keep your team in sync. This integration allows you to receive notifications for new conversations and respond to them directly within Slack's interface."
     webhooks:
-      name: "Webhooks"
-      description: "Webhook events provide real-time updates about activities in your Chatwoot account. You can subscribe to your preferred events, and Chatwoot will send you HTTP callbacks with the updates."
+      name: 'Webhooks'
+      description: 'Webhook events provide real-time updates about activities in your Chatwoot account. You can subscribe to your preferred events, and Chatwoot will send you HTTP callbacks with the updates.'
     dialogflow:
-      name: "Dialogflow"
-      description: "Build chatbots with Dialogflow and easily integrate them into your inbox. These bots can handle initial queries before transferring them to a customer service agent."
+      name: 'Dialogflow'
+      description: 'Build chatbots with Dialogflow and easily integrate them into your inbox. These bots can handle initial queries before transferring them to a customer service agent.'
     google_translate:
-      name: "Google Terjemahan"
+      name: 'Google Terjemahan'
       description: "Integrate Google Translate to help agents easily translate customer messages. This integration automatically detects the language and converts it to the agent's or admin's preferred language."
     openai:
-      name: "OpenAI"
-      description: "Leverage the power of large language models from OpenAI with the features such as reply suggestions, summarization, message rephrasing, spell-checking, and label classification."
+      name: 'OpenAI'
+      description: 'Leverage the power of large language models from OpenAI with the features such as reply suggestions, summarization, message rephrasing, spell-checking, and label classification.'
     linear:
-      name: "Linear"
-      description: "Create issues in Linear directly from your conversation window. Alternatively, link existing Linear issues for a more streamlined and efficient issue tracking process."
+      name: 'Linear'
+      description: 'Create issues in Linear directly from your conversation window. Alternatively, link existing Linear issues for a more streamlined and efficient issue tracking process.'
     captain:
-      name: "Captain"
+      name: 'Captain'
       description: "Captain is a native AI assistant built for your product and trained on your company's knowledge base. It responds like a human and resolves customer queries effectively. Configure it to your inboxes easily."
   subscriptions:
     limit_reached: 'Mohon maaf, saat ini sistem AI kami sedang mengalami batas penggunaan sehingga tidak dapat melanjutkan respons. Pesan Anda telah dicatat dan akan segera kami teruskan ke tim kami untuk ditindaklanjuti. Terima kasih atas pengertiannya.'
@@ -337,46 +339,46 @@ id:
     button: Buka percakapan
   time_units:
     days:
-      one: "%{count} day"
-      other: "%{count} days"
+      one: '%{count} day'
+      other: '%{count} days'
     hours:
-      one: "%{count} hour"
-      other: "%{count} hours"
+      one: '%{count} hour'
+      other: '%{count} hours'
     minutes:
-      one: "%{count} minute"
-      other: "%{count} minutes"
+      one: '%{count} minute'
+      other: '%{count} minutes'
     seconds:
-      one: "%{count} second"
-      other: "%{count} seconds"
-  
+      one: '%{count} second'
+      other: '%{count} seconds'
+
   devise_token_auth:
     sessions:
-      not_confirmed: "Akun Anda belum diverifikasi. Silakan periksa email Anda dan ikuti instruksi verifikasi."
-      bad_credentials: "Email atau password tidak valid."
-      not_supported: "Gunakan POST /sign_in untuk masuk. GET tidak didukung."
-      user_not_found: "Pengguna tidak ditemukan atau tidak aktif."
+      not_confirmed: 'Akun Anda belum diverifikasi. Silakan periksa email Anda dan ikuti instruksi verifikasi.'
+      bad_credentials: 'Email atau password tidak valid.'
+      not_supported: 'Gunakan POST /sign_in untuk masuk. GET tidak didukung.'
+      user_not_found: 'Pengguna tidak ditemukan atau tidak aktif.'
     registrations:
-      missing_confirm_success_url: "Missing `confirm_success_url` param."
-      redirect_url_not_allowed: "Redirect to %{redirect_url} tidak diizinkan."
-      email_already_exists: "Akun dengan email tersebut sudah ada"
-      account_update_success: "Akun Anda berhasil diperbarui."
-      account_to_destroy_not_found: "Akun yang akan dihapus tidak ditemukan."
-      account_destroy_success: "Akun berhasil dihapus."
-      email_required: "Email diperlukan."
-      account_with_uid_destroyed: "Akun dengan uid %{uid} berhasil dihapus."
-      account_not_destroyable: "Akun tidak dapat dihapus."
+      missing_confirm_success_url: 'Missing `confirm_success_url` param.'
+      redirect_url_not_allowed: 'Redirect to %{redirect_url} tidak diizinkan.'
+      email_already_exists: 'Akun dengan email tersebut sudah ada'
+      account_update_success: 'Akun Anda berhasil diperbarui.'
+      account_to_destroy_not_found: 'Akun yang akan dihapus tidak ditemukan.'
+      account_destroy_success: 'Akun berhasil dihapus.'
+      email_required: 'Email diperlukan.'
+      account_with_uid_destroyed: 'Akun dengan uid %{uid} berhasil dihapus.'
+      account_not_destroyable: 'Akun tidak dapat dihapus.'
     passwords:
-      missing_email: "Anda harus menyediakan email."
-      missing_redirect_url: "Missing redirect url."
+      missing_email: 'Anda harus menyediakan email.'
+      missing_redirect_url: 'Missing redirect url.'
       not_allowed_redirect_url: "Redirect ke '%{redirect_url}' tidak diizinkan."
       sended: "Email dengan instruksi reset password telah dikirim ke '%{email}' jika ada di database kami."
       user_not_found: "Tidak dapat menemukan pengguna dengan email '%{email}'."
       password_not_required: "Pengguna ini tidak memerlukan password. Login menggunakan '%{provider}'."
-      missing_passwords: "Password dan konfirmasi password harus diisi."
-      successfully_updated: "Password berhasil diperbarui."
+      missing_passwords: 'Password dan konfirmasi password harus diisi.'
+      successfully_updated: 'Password berhasil diperbarui.'
     confirmations:
       sended: "Email konfirmasi telah dikirim ke '%{email}'."
-      success: "Akun Anda berhasil dikonfirmasi."
-      account_with_uid_success: "Akun dengan uid %{uid} berhasil dikonfirmasi."
+      success: 'Akun Anda berhasil dikonfirmasi.'
+      account_with_uid_success: 'Akun dengan uid %{uid} berhasil dikonfirmasi.'
     token_validations:
-      invalid: "Kredensial login tidak valid atau kedaluwarsa."
+      invalid: 'Kredensial login tidak valid atau kedaluwarsa.'

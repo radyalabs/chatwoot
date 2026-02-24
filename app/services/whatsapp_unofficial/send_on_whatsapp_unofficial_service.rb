@@ -41,10 +41,8 @@ class WhatsappUnofficial::SendOnWhatsappUnofficialService < Base::SendOnChannelS
   end
 
   def link(message)
-    # First check content_attributes for link (from attach_message_image_job)
-    return message.content_attributes['link'] if message.content_attributes&.dig('link').present?
+    # return message.content_attributes['link'] if message.content_attributes&.dig('link').present?
 
-    # Fallback to extract link from content
     return nil if message.content.blank?
 
     message.content[%r{https?://[^\s]+}]

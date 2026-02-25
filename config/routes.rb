@@ -562,6 +562,8 @@ Rails.application.routes.draw do
           end
         end
 
+        resources :scheduled_reminders, only: [:create]
+
         resources :sheet_numbering_configs, only: [] do
           collection do
             get :config, action: :show_config

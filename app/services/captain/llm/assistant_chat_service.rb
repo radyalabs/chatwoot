@@ -5,11 +5,12 @@ class Captain::Llm::AssistantChatService
 
   base_uri ENV.fetch('JANGKAU_AGENT_API_URL', 'https://agent.jangkau.ai/')
 
-  def initialize(message, conversation, ai_agent, account_id)
+  def initialize(message, conversation, ai_agent, account_id, attachments: [])
     @message = message
     @conversation = conversation
     @ai_agent = ai_agent
     @account_id = account_id
+    @attachments = attachments
   end
 
   def perform
@@ -31,7 +32,8 @@ class Captain::Llm::AssistantChatService
         @account_id,
         @ai_agent,
         @conversation,
-        @message
+        @message,
+        preview_attachments: @attachments
       ).perform
     end
   end

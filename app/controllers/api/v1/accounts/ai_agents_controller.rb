@@ -49,7 +49,8 @@ class Api::V1::Accounts::AiAgentsController < Api::V1::Accounts::BaseController
       params[:question],
       conversation,
       ai_agent,
-      account.id
+      account.id,
+      attachments: upload_preview_attachments
     ).perform.then do |response|
       if response.success?
         response = response.parsed_response
@@ -86,6 +87,21 @@ class Api::V1::Accounts::AiAgentsController < Api::V1::Accounts::BaseController
 
   def agent_custom?
     params[:agent_type] == 'custom_agent'
+  end
+
+  def upload_preview_attachments
+    return [] unless params[:attachments].is_a?(Array)
+
+    params[:attachments].filter_map do |file|
+      next unless file.respond_to?(:tempfile)
+
+      blob = ActiveStorage::Blob.create_and_upload!(
+        io: file.tempfile,
+        filename: file.original_filename,
+        content_type: file.content_type
+      )
+      { key: blob.key, file_type: blob.content_type, filename: blob.filename.to_s }
+    end
   end
 
   def check_max_ai_agents

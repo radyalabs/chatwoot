@@ -148,6 +148,7 @@ function addFile(file) {
 }
 
 const isSaving = ref(false);
+const isDeletingAny = computed(() => Object.values(deleteLoadingIds.value).some(Boolean));
 
 async function save() {
   if (!newFiles.value.length) return;
@@ -242,8 +243,9 @@ async function previewFile(item) {
       
       <div
         class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg px-5 py-10 flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all"
+        :class="{ 'opacity-50 pointer-events-none cursor-not-allowed': isSaving || isDeletingAny }"
         @click="openPicker"
-        @dragover.prevent="handleDragOver" 
+        @dragover.prevent="handleDragOver"
         @dragleave="handleDragLeave"
         @drop.prevent="handleDrop"
       >
@@ -252,6 +254,7 @@ async function previewFile(item) {
           type="file"
           class="hidden"
           accept=".pdf, .docx"
+          :disabled="isSaving || isDeletingAny"
           @change="onInputChanged"
         />
         <div class="text-center">
@@ -307,6 +310,7 @@ async function previewFile(item) {
               size="sm"
               icon="i-lucide-trash"
               :is-loading="deleteLoadingIds[item.id]"
+              :disabled="deleteLoadingIds[item.id] || isSaving || isDeletingAny"
               @click="() => deleteFile(item)"
             />
           </div>
@@ -349,6 +353,7 @@ async function previewFile(item) {
               color="ruby"
               size="sm"
               icon="i-lucide-trash"
+              :disabled="isSaving || isDeletingAny"
               @click="() => newFiles.splice(index, 1)"
             />
           </div>

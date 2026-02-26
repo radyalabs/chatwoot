@@ -69,7 +69,10 @@ module ScheduledReminders
     private
 
     def compute_next_recurring
-      if @reminder.occurrence_count.zero? && @reminder.scheduled_at > Time.current
+      if @reminder.occurrence_count.zero?
+        # Always return scheduled_at for first occurrence — if it's in the past,
+        # the job picks it up immediately and advance_occurrence! computes the next one.
+        # This prevents skipping the first occurrence due to creation latency or timezone drift.
         @reminder.scheduled_at
       else
         compute_next_from([@reminder.last_sent_at || @reminder.scheduled_at, Time.current].max)

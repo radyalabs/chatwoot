@@ -120,7 +120,14 @@ class Api::V2::Internal::ScheduledRemindersController < ActionController::API
   def parse_datetime(datetime_str)
     return nil if datetime_str.blank?
 
-    Time.zone.parse(datetime_str)
+    # If the datetime string includes explicit timezone info (Z, +07:00, etc.), parse as-is.
+    # Otherwise, interpret it in the caller-provided timezone (defaults to Asia/Jakarta).
+    if datetime_str.match?(/[Zz]|[+-]\d{2}:?\d{2}\s*$/)
+      Time.zone.parse(datetime_str)
+    else
+      tz = ActiveSupport::TimeZone[params[:timezone]] || Time.zone
+      tz.parse(datetime_str)
+    end
   rescue ArgumentError => e
     Rails.logger.error("[Internal::ScheduledRemindersController] Failed to parse datetime: #{e.message}")
     nil

@@ -25,12 +25,7 @@ class Captain::Copilot::AttachMessageImageJob < ApplicationJob
     # If not an image, send message with format "Title: link"
     if content_type.blank? || !content_type.start_with?('image/')
       Rails.logger.warn "[AttachMessageImageJob] Non-image attachment (#{content_type || 'unknown'}): #{url}"
-      message = Message.new(message_attrs.merge(
-        content: title,
-        content_attributes: { link: url }
-      ))
-      message.save!
-      Rails.logger.info "[AttachMessageImageJob] Message #{message.id} created with link: #{url}"
+      send_fallback_message(title, url, message_attrs)
       return
     end
 
@@ -60,9 +55,25 @@ class Captain::Copilot::AttachMessageImageJob < ApplicationJob
     Rails.logger.info "[AttachMessageImageJob] Message #{message.id} created with attachment named #{filename}"
   rescue JSON::ParserError => e
     Rails.logger.error "[AttachMessageImageJob] Failed to parse attachment JSON: #{e.message}"
+    send_fallback_message(title, url, message_attrs)
   rescue Timeout::Error => e
     Rails.logger.error "[AttachMessageImageJob] Download timeout for image #{url}: #{e.message}"
+    send_fallback_message(title, url, message_attrs)
   rescue StandardError => e
     Rails.logger.error "[AttachMessageImageJob] Failed to attach image #{url}: #{e.message}"
+    send_fallback_message(title, url, message_attrs)
+  end
+
+  private
+
+  def send_fallback_message(title, url, message_attrs)
+    return if url.blank?
+
+    message_content = title.present? ? "#{title}\n#{url}" : url
+    message = Message.new(message_attrs.merge(
+      content: message_content
+    ))
+    message.save!
+    Rails.logger.info "[AttachMessageImageJob] Fallback message #{message.id} created for URL: #{url}"
   end
 end

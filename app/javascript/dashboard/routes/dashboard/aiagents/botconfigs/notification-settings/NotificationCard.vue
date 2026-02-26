@@ -48,8 +48,12 @@ const senderPhoneNumber = computed(() => {
   return senderInbox.value.phone_number || '';
 });
 
-// Receiver display name: prefer stored receiver_name, fallback to receiver_address
+// Receiver display name: for personal messages use receiver_address (source of truth),
+// for group messages prefer receiver_name (group name) over receiver_address (JID)
 const receiverDisplayName = computed(() => {
+  if (props.rule.message_type !== 'group') {
+    return props.rule.receiver_address || props.rule.receiver_name;
+  }
   return props.rule.receiver_name || props.rule.receiver_address;
 });
 
@@ -137,9 +141,9 @@ const interestBadgeColor =
             </span>
             <span
               class="text-base font-semibold text-slate-900 dark:text-slate-100 truncate"
-              :title="rule.receiver_name || rule.receiver_address"
+              :title="receiverDisplayName"
             >
-              {{ rule.receiver_name || rule.receiver_address }}
+              {{ receiverDisplayName }}
             </span>
           </template>
         </div>

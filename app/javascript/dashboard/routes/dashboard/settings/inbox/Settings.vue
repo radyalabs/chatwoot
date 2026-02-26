@@ -125,7 +125,6 @@ export default {
         (this.isAnEmailChannel && !this.inbox.provider) ||
         this.isAMicrosoftInbox ||
         this.isAGoogleInbox ||
-        this.isAWhatsAppChannel ||
         this.isAWebWidgetInbox
       ) {
         visibleToAllChannelTabs = [

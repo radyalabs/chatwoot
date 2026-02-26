@@ -126,7 +126,7 @@ const handleSave = () => {
       g => g.value === receiverAddress.value
     );
     nameToSave = selectedGroup?.label || '';
-  } else if (messageType.value === 'personal' && !nameToSave) {
+  } else if (messageType.value === 'personal') {
     nameToSave = receiverAddress.value;
   }
 

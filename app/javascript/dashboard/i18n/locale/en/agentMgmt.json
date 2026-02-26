@@ -290,7 +290,8 @@
       "SHOW_LESS": "Show less"
     },
     "COMMON": {
-      "REMOVE": "Remove"
+      "REMOVE": "Remove",
+      "LOADING": "Loading..."
     },
     "EDIT": {
       "TITLE": "Edit agent",

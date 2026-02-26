@@ -23,7 +23,7 @@
 
     <!-- Body -->
     <div style="margin-bottom: 1.5rem;">
-      <p>Halo <strong><%= @user.name %></strong>,</p>
+      <p>Halo <strong><%= h(@user.name) %></strong>,</p>
       
       <p>Selamat! Email Anda (<strong><%= @user.email %></strong>) telah berhasil diverifikasi dan akun Anda sekarang sudah aktif.</p>
 

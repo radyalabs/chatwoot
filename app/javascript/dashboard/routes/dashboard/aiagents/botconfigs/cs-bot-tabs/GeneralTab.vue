@@ -389,7 +389,7 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
           <label class="block font-medium mb-2">{{ $t('AGENT_MGMT.CSBOT.TICKET.SYSTEM_TITLE') }}</label>
           <p class="text-sm text-gray-500 mb-3">{{ $t('AGENT_MGMT.CSBOT.TICKET.SYSTEM_DESC') }}</p>
           <label class="inline-flex items-center cursor-pointer">
-            <input type="checkbox" v-model="config.ticketSystemActive" class="sr-only peer">
+            <input type="checkbox" v-model="config.ticketSystemActive" :disabled="isSaving" class="sr-only peer">
             <div
               class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
             </div>
@@ -403,8 +403,9 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
         <div v-if="config.ticketSystemActive" class="mb-6">
           <label class="block font-medium mb-2">{{ $t('AGENT_MGMT.CSBOT.TICKET.CREATE_WHEN') }}</label>
           <p class="text-sm text-gray-500 mb-3">{{ $t('AGENT_MGMT.CSBOT.TICKET.CREATE_WHEN_DESC') }}</p>
-          <select 
-            v-model="config.ticketCreateWhen" 
+          <select
+            v-model="config.ticketCreateWhen"
+            :disabled="isSaving"
             class="w-full mb-0 p-2 text-sm  border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
           >
             <option value="always">{{ $t('AGENT_MGMT.CSBOT.TICKET.CREATE_ALWAYS') }}</option>
@@ -417,8 +418,14 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
           <h4 class="text-md font-medium text-slate-900 dark:text-slate-25 mb-3">{{ $t('AGENT_MGMT.CSBOT.COMMON.GOOGLE_SHEETS_TITLE') }}</h4>
           <p class="text-sm text-gray-500 mb-4">{{ $t('AGENT_MGMT.CSBOT.COMMON.CONNECT_SHEETS_DESC') }}</p>
 
+          <!-- Loading State -->
+          <div v-if="ticketLoading" class="flex flex-col items-center justify-center py-16 gap-4">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
+            <p class="text-sm text-slate-500 dark:text-slate-400">{{ $t('AGENT_MGMT.COMMON.LOADING') }}</p>
+          </div>
+          
           <!-- Google Sheets Auth Flow -->
-          <div v-if="ticketStep === 'auth'" class="mb-6">
+          <div v-else-if="ticketStep === 'auth'" class="mb-6">
             <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800">
               <div class="flex items-center gap-3 mb-3">
                 <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
@@ -653,8 +660,9 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
           <div class="border-t border-gray-200 dark:border-gray-700 p-6">
             <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">Skala Kreativitas</label>
             <div class="relative">
-              <select 
-                v-model="creativityLevel" 
+              <select
+                v-model="creativityLevel"
+                :disabled="isSaving"
                 class="w-full mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 <option class="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" v-for="opt in creativityOptions" :key="opt.value" :value="opt.value">
@@ -690,6 +698,7 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
               </label>
               <select
                 v-model="idleConfig.duration"
+                :disabled="isSaving"
                 class="text-center w-24 mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-slate-900 dark:border-slate-700 dark:text-white"
               >
                 <option :value="5">{{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_OPTION_5_MIN') }}</option>

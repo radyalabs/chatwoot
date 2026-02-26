@@ -16,7 +16,9 @@
     "FULL_NAME": {
       "LABEL": "Nama Lengkap",
       "PLACEHOLDER": "Masukkan nama lengkap Anda. Contoh: Budi Santoso",
-      "ERROR": "Nama lengkap terlalu pendek"
+      "ERROR": "Nama lengkap terlalu pendek",
+      "INVALID_FORMAT": "Nama hanya boleh mengandung huruf, spasi, titik, strip, dan apostrof.",
+      "URL_NOT_ALLOWED": "Nama tidak boleh mengandung URL, alamat website, atau pola mencurigakan."
     },
     "EMAIL": {
       "LABEL": "Alamat Email",
@@ -35,9 +37,9 @@
       "ERROR": "Kata Sandi tidak cocok"
     },
     "PHONE_NUMBER": {
-    "LABEL": "Nomor Telepon",
-    "PLACEHOLDER": "Masukkan Nomor telepon. Contoh: 0812 3456 7890",
-    "ERROR": "Silakan masukkan nomor telepon yang valid."
+      "LABEL": "Nomor Telepon",
+      "PLACEHOLDER": "Masukkan Nomor telepon. Contoh: 0812 3456 7890",
+      "ERROR": "Silakan masukkan nomor telepon yang valid."
     },
     "API": {
       "SUCCESS_MESSAGE": "Pendaftaran Berhasil",

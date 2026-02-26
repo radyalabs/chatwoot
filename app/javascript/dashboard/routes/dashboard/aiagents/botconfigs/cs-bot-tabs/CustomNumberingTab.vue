@@ -28,12 +28,14 @@
                 <input
                   v-model="form.format"
                   type="text"
+                  :disabled="loading"
                   class="flex-1 focus:border-transparent placeholder:text-gray-400"
                   :class="inputClass"
                   placeholder="[NUMBER]/[MONTH]/[YEAR]"
                 />
-                <select 
-                  v-model="codeOption" 
+                <select
+                  v-model="codeOption"
+                  :disabled="loading"
                   @change="addCode"
                   class="sm:w-64 cursor-pointer"
                   :class="inputClass"
@@ -61,10 +63,11 @@
                 <label :class="labelClass">
                   {{ $t('AGENT_MGMT.NUMBERING.NUMBER') }} <span class="text-red-500">*</span>
                 </label>
-                <input 
-                  v-model.number="form.currentNumber" 
-                  type="number" 
-                  min="1" 
+                <input
+                  v-model.number="form.currentNumber"
+                  type="number"
+                  min="1"
+                  :disabled="loading"
                   class="w-full"
                   :class="inputClass"
                 />
@@ -78,6 +81,7 @@
                   v-model.number="form.number_digits"
                   type="number"
                   min="3"
+                  :disabled="loading"
                   class="w-full"
                   :class="inputClass"
                 />
@@ -91,6 +95,7 @@
                 <input
                   v-model="form.prefix"
                   type="text"
+                  :disabled="loading"
                   :placeholder="$t('AGENT_MGMT.NUMBERING.PREFIX_EXP')"
                   class="w-full"
                   :class="inputClass"
@@ -105,7 +110,7 @@
               <div class="flex flex-col gap-3">
                 <label v-for="opt in resetOptions" :key="opt.value" class="flex items-center cursor-pointer group">
                   <div class="relative flex items-center">
-                    <input type="radio" v-model="form.resetEvery" :value="opt.value" class="peer sr-only" />
+                    <input type="radio" v-model="form.resetEvery" :value="opt.value" :disabled="loading" class="peer sr-only" />
                     <div class="w-5 h-5 border-2 border-gray-300 dark:border-gray-500 rounded-full peer-checked:border-green-500 peer-checked:bg-green-500 transition-all"></div>
                     <div class="absolute w-2 h-2 bg-white rounded-full left-1.5 top-1.5 opacity-0 peer-checked:opacity-100 transition-all"></div>
                   </div>

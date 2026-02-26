@@ -1,12 +1,12 @@
 <script setup>
-import { computed, onMounted, nextTick } from 'vue';
+import { computed, onMounted, nextTick, ref } from 'vue';
 import { useStore } from 'dashboard/composables/store';
 import { useMapGetter } from 'dashboard/composables/store';
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
 import Button from 'dashboard/components-next/button/Button.vue';
 import NotificationCard from './NotificationCard.vue';
 import NotificationFormModal from './NotificationFormModal.vue';
-import { ref } from 'vue';
+import WhatsAppUnofficialChannels from 'dashboard/api/WhatsAppUnofficialChannels';
 
 const props = defineProps({
   aiAgentId: {
@@ -75,21 +75,57 @@ const allWhatsappUnofficialInboxes = computed(() => {
   );
 });
 
+// Live status results fetched in background: { [inboxId]: boolean }
+const inboxLiveStatuses = ref({});
+
+// Merges live status into inbox objects so children use fresh data automatically
+const allWhatsappUnofficialInboxesWithLiveStatus = computed(() => {
+  return allWhatsappUnofficialInboxes.value.map(inbox => {
+    if (!(inbox.id in inboxLiveStatuses.value)) return inbox;
+    return {
+      ...inbox,
+      whatsapp_status: inboxLiveStatuses.value[inbox.id] ? 'connected' : 'disconnected',
+    };
+  });
+});
+
 const whatsappUnofficialInboxes = computed(() => {
-  return allWhatsappUnofficialInboxes.value.filter(
+  return allWhatsappUnofficialInboxesWithLiveStatus.value.filter(
     inbox => inbox.whatsapp_status === 'connected'
   );
 });
+
+// Fetches real-time connection status for each unique inbox ID used in notification rules.
+// Only WhatsApp Unofficial has a status endpoint; other types fall back to cached data.
+const fetchLiveStatuses = async inboxIds => {
+  const uniqueIds = [...new Set(inboxIds.filter(Boolean))];
+  await Promise.all(
+    uniqueIds.map(async inboxId => {
+      const inbox = allWhatsappUnofficialInboxes.value.find(i => i.id === inboxId);
+      if (!inbox) return;
+      try {
+        const response = await WhatsAppUnofficialChannels.getConnectionStatus(inboxId, true);
+        inboxLiveStatuses.value[inboxId] = response.data?.connected ?? false;
+      } catch {
+        // Keep cached status on error
+      }
+    })
+  );
+};
 
 const hasInboxes = computed(() => whatsappUnofficialInboxes.value.length > 0);
 
 const editingRule = ref(null);
 const formModalRef = ref(null);
 
-onMounted(() => {
-  store.dispatch('inboxes/get');
+onMounted(async () => {
+  await store.dispatch('inboxes/get');
   if (props.aiAgentId) {
-    store.dispatch('agentNotificationSettings/get', props.aiAgentId);
+    await store.dispatch('agentNotificationSettings/get', props.aiAgentId);
+    const inboxIds = notifications.value.map(n => n.inbox_id);
+    if (inboxIds.length) {
+      fetchLiveStatuses(inboxIds);
+    }
   }
 });
 
@@ -210,7 +246,7 @@ const handleFormClose = () => {
           :key="rule.id"
           :rule="rule"
           :whatsapp-unofficial-inboxes="whatsappUnofficialInboxes"
-          :all-whatsapp-unofficial-inboxes="allWhatsappUnofficialInboxes"
+          :all-whatsapp-unofficial-inboxes="allWhatsappUnofficialInboxesWithLiveStatus"
           :whatsapp-groups="[]"
           @edit="openEditForm"
           @delete="handleDelete"
@@ -229,7 +265,7 @@ const handleFormClose = () => {
       ref="formModalRef"
       :rule="editingRule"
       :whatsapp-unofficial-inboxes="whatsappUnofficialInboxes"
-      :all-whatsapp-unofficial-inboxes="allWhatsappUnofficialInboxes"
+      :all-whatsapp-unofficial-inboxes="allWhatsappUnofficialInboxesWithLiveStatus"
       :categories="categories"
       :priorities="priorities"
       :variable-config="variableConfig"

@@ -1,11 +1,11 @@
-<p>Hi <%= @contact.name %>,</p>
+<p>Hi <%= h(@contact.name) %>,</p>
 
 <p>You have new messages on your conversation.</p>
 
 <% @messages.each do |message| %>
   <tr>
     <td>
-      <b><%= message.incoming? ? 'You' : message.sender&.available_name || message.sender&.name || 'Bot' %></b>
+      <b><%= message.incoming? ? 'You' : h(message.sender&.available_name || message.sender&.name || 'Bot') %></b>
     </td>
   </tr>
   <tr>

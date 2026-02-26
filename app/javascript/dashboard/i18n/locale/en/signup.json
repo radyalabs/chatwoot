@@ -16,7 +16,9 @@
     "FULL_NAME": {
       "LABEL": "Full name",
       "PLACEHOLDER": "Enter your full name. E.g., Bruce Wayne",
-      "ERROR": "Full name is too short."
+      "ERROR": "Full name is too short.",
+      "INVALID_FORMAT": "Name can only contain letters, spaces, periods, hyphens, and apostrophes.",
+      "URL_NOT_ALLOWED": "Name cannot contain URLs, website addresses, or suspicious patterns."
     },
     "EMAIL": {
       "LABEL": "Work email",

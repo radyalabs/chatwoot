@@ -6,9 +6,7 @@ class Api::V1::OtpController < Api::BaseController
   skip_before_action :validate_bot_access_token!, only: [:generate, :verify, :resend, :status]
 
   def status
-    Rails.logger.info "OTP Status check for email: #{params[:email]}"
-    
-    user = User.find_by(email: params[:email])
+    user = User.from_email(params[:email])
 
     if user.blank?
       Rails.logger.warn "User not found for email: #{params[:email]}"
@@ -54,8 +52,7 @@ class Api::V1::OtpController < Api::BaseController
 
   def generate
     Rails.logger.info "OTP Generate request for email: #{params[:email]}"
-
-    user = User.find_by(email: params[:email])
+    user = User.from_email(params[:email])
 
     if user.blank?
       Rails.logger.warn "User not found for email: #{params[:email]}"
@@ -120,7 +117,7 @@ class Api::V1::OtpController < Api::BaseController
   end
 
   def verify
-    user = User.find_by(email: params[:email])
+    user = User.from_email(params[:email])
 
     if user.blank?
       return render json: { 
@@ -235,7 +232,7 @@ class Api::V1::OtpController < Api::BaseController
   end
 
   def resend
-    user = User.find_by(email: params[:email])
+    user = User.from_email(params[:email])
 
     if user.blank?
       return render json: { 

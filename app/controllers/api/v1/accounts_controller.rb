@@ -25,7 +25,7 @@ class Api::V1::AccountsController < Api::BaseController
     Rails.logger.info "Creating new user registration for email: #{account_params[:email]}"
     
     # Check if user already exists
-    existing_user = User.find_by(email: account_params[:email])
+    existing_user = User.from_email(account_params[:email])
     
     if existing_user
       if existing_user.confirmed?

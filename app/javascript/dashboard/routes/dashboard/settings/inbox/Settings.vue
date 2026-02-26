@@ -12,7 +12,6 @@ import GoogleReauthorize from './channels/google/Reauthorize.vue';
 import PreChatFormSettings from './PreChatForm/Settings.vue';
 import WeeklyAvailability from './components/WeeklyAvailability.vue';
 import GreetingsEditor from 'shared/components/GreetingsEditor.vue';
-import ConfigurationPage from './settingsPage/ConfigurationPage.vue';
 import CollaboratorsPage from './settingsPage/CollaboratorsPage.vue';
 import WidgetBuilder from './WidgetBuilder.vue';
 import BotConfiguration from './components/BotConfiguration.vue';
@@ -24,7 +23,6 @@ export default {
   components: {
     BotConfiguration,
     CollaboratorsPage,
-    ConfigurationPage,
     FacebookReauthorize,
     GreetingsEditor,
     PreChatFormSettings,
@@ -114,24 +112,6 @@ export default {
           {
             key: 'widgetBuilder',
             name: this.$t('INBOX_MGMT.TABS.WIDGET_BUILDER'),
-          },
-        ];
-      }
-
-      if (
-        this.isATwilioChannel ||
-        this.isALineChannel ||
-        this.isAPIInbox ||
-        (this.isAnEmailChannel && !this.inbox.provider) ||
-        this.isAMicrosoftInbox ||
-        this.isAGoogleInbox ||
-        this.isAWebWidgetInbox
-      ) {
-        visibleToAllChannelTabs = [
-          ...visibleToAllChannelTabs,
-          {
-            key: 'configuration',
-            name: this.$t('INBOX_MGMT.TABS.CONFIGURATION'),
           },
         ];
       }
@@ -796,9 +776,6 @@ export default {
 
     <div v-if="selectedTabKey === 'collaborators'" class="mx-8">
       <CollaboratorsPage :inbox="inbox" />
-    </div>
-    <div v-if="selectedTabKey === 'configuration'">
-      <ConfigurationPage :inbox="inbox" />
     </div>
     <div v-if="selectedTabKey === 'preChatForm'">
       <PreChatFormSettings :inbox="inbox" />

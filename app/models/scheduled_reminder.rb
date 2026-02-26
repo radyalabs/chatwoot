@@ -54,6 +54,8 @@ class ScheduledReminder < ApplicationRecord
   validates :timezone, presence: true
   validate :validate_reminder_limit, on: :create
 
+  before_validation :normalize_recurrence_rule
+
   scope :enabled, -> { where(enabled: true) }
   scope :due, -> { enabled.where.not(next_occurrence_at: nil).where('next_occurrence_at <= ?', Time.current) }
 
@@ -89,6 +91,21 @@ class ScheduledReminder < ApplicationRecord
       self.next_occurrence_at = ScheduledReminders::OccurrenceCalculator.new(self).next_occurrence
     else
       self.next_occurrence_at = nil
+    end
+  end
+
+  def normalize_recurrence_rule
+    return if recurrence_rule.blank? || scheduled_at.blank?
+
+    rule = recurrence_rule.with_indifferent_access
+    local_scheduled = scheduled_at.in_time_zone(timezone || 'UTC')
+
+    if rule['frequency'] == 'monthly' && rule['day_of_month'].blank? && rule['week_of_month'].blank?
+      rule['day_of_month'] = local_scheduled.day
+      self.recurrence_rule = rule
+    elsif rule['frequency'] == 'weekly' && rule['days_of_week'].blank?
+      rule['days_of_week'] = [local_scheduled.wday]
+      self.recurrence_rule = rule
     end
   end
 

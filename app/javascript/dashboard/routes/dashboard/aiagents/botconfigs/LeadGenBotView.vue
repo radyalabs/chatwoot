@@ -52,8 +52,14 @@
         <!-- Tab 0: Catalog Configuration -->
         <div v-show="activeIndex === 0" class="w-full min-w-0">
           <div class="space-y-6">
+            <!-- Loading State -->
+            <div v-if="catalogLoading" class="flex flex-col items-center justify-center py-16 gap-4">
+              <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
+              <p class="text-sm text-slate-500 dark:text-slate-400">{{ $t('AGENT_MGMT.COMMON.LOADING') }}</p>
+            </div>
+            
             <!-- Google Sheets Auth Flow -->
-            <div v-if="catalogStep === 'auth'" class="gap-6">
+            <div v-else-if="catalogStep === 'auth'" class="gap-6">
               <label class="block font-medium mb-1">{{ $t('AGENT_MGMT.LEADGENBOT.CATALOG.SHEETS_TITLE') }}</label>
               <p class="text-gray-600 dark:text-gray-400">{{ $t('AGENT_MGMT.LEADGENBOT.CATALOG.SHEETS_AUTH_DESC') }}</p>
               <button
@@ -251,7 +257,7 @@
                   </div>
                   
                   <label class="inline-flex items-center cursor-pointer">
-                    <input type="checkbox" v-model="followUpConfig.enabled" class="sr-only peer">
+                    <input type="checkbox" v-model="followUpConfig.enabled" class="sr-only peer" :disabled="isSaving">
                     <div class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
                     </div>
                   </label>
@@ -266,10 +272,11 @@
                       {{ $t('AGENT_MGMT.REMINDER.TIME') }}
                     </label>
                     <div class="flex items-center gap-3">
-                      <select 
+                      <select
                         v-model="followUpConfig.delay"
                         class="text-center w-24 mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-slate-900 dark:border-slate-700 dark:text-white"
-                      > 
+                        :disabled="isSaving"
+                      >
                         <option 
                           class="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" 
                           v-for="opt in followUpTimeOptions" 
@@ -293,9 +300,10 @@
                       </label>
 
                       <div class="relative">
-                        <button 
+                        <button
                           @click="showVariableDropdown = !showVariableDropdown"
                           type="button"
+                          :disabled="isSaving"
                           class="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-1 px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
@@ -319,9 +327,10 @@
                       </div>
                     </div>
 
-                    <textarea 
+                    <textarea
                       ref="followUpTextarea"
                       v-model="followUpConfig.message"
+                      :disabled="isSaving"
                       @click="updateCursorPosition"
                       @keyup="updateCursorPosition"
                       @blur="updateCursorPosition"
@@ -360,8 +369,9 @@
                 <div class="border-t border-gray-200 dark:border-gray-700 p-6">
                   <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">Skala Kreativitas</label>
                   <div class="relative">
-                    <select 
-                      v-model="creativityLevel" 
+                    <select
+                      v-model="creativityLevel"
+                      :disabled="isSaving"
                       class="w-full mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-slate-900 dark:border-slate-700 dark:text-white"
                     >
                       <option class="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" v-for="opt in creativityOptions" :key="opt.value" :value="opt.value">
@@ -398,6 +408,7 @@
                     </label>
                     <select
                       v-model="idleConfig.duration"
+                      :disabled="isSaving"
                       class="text-center w-24 mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-slate-900 dark:border-slate-700 dark:text-white"
                     >
                       <option :value="5">{{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_OPTION_5_MIN') }}</option>

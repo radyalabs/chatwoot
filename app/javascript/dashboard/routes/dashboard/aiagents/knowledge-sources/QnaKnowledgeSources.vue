@@ -363,7 +363,7 @@ const getAgentId = () => {
                 icon="i-lucide-trash"
                 size="sm"
                 :is-loading="deleteLoadingIds[item.id]"
-                :disabled="deleteLoadingIds[item.id]"
+                :disabled="deleteLoadingIds[item.id] || isSaving"
                 @click.stop="() => deleteQna(item, index)"
                 class="opacity-70 hover:opacity-100"
               />
@@ -389,10 +389,11 @@ const getAgentId = () => {
                   {{ $t('AGENT_MGMT.QUESTION_LABEL') }} <span class="text-red-500">*</span>
                 </label>
                 <div class="relative">
-                  <TextArea 
+                  <TextArea
                     :model-value="getDisplayQuestion(item)"
-                    showCharacterCount="true" 
-                    :maxLength="maxCharQuestion" 
+                    showCharacterCount="true"
+                    :maxLength="maxCharQuestion"
+                    :disabled="isSaving"
                     :placeholder="$t('AGENT_MGMT.QNA_PLACEHOLDER.QUESTION')"
                     class="w-full"
                     @update:model-value="(value) => updateQuestion(item, value)"
@@ -405,10 +406,11 @@ const getAgentId = () => {
                   {{ $t('AGENT_MGMT.ANSWER_LABEL') }} <span class="text-red-500">*</span>
                 </label>
                 <div class="relative">
-                  <TextArea 
+                  <TextArea
                     :model-value="getDisplayAnswer(item)"
-                    showCharacterCount="true" 
-                    :maxLength="maxCharAnswer" 
+                    showCharacterCount="true"
+                    :maxLength="maxCharAnswer"
+                    :disabled="isSaving"
                     :placeholder="$t('AGENT_MGMT.QNA_PLACEHOLDER.ANSWER')"
                     class="w-full"
                     @update:model-value="(value) => updateAnswer(item, value)"
@@ -427,10 +429,10 @@ const getAgentId = () => {
         </div>
       </div>
 
-      <Button 
-        id="btnAddQna" 
-        :disabled="reachedMaxQnas" 
-        class="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-green-400 hover:text-green-600 transition-all duration-200 rounded-xl bg-transparent hover:bg-green-50 dark:hover:bg-green-900/10 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-slate-300 disabled:hover:text-slate-500 disabled:hover:bg-transparent" 
+      <Button
+        id="btnAddQna"
+        :disabled="reachedMaxQnas || isSaving"
+        class="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-green-400 hover:text-green-600 transition-all duration-200 rounded-xl bg-transparent hover:bg-green-50 dark:hover:bg-green-900/10 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-slate-300 disabled:hover:text-slate-500 disabled:hover:bg-transparent"
         variant="ghost"
         @click="addQna"
       >

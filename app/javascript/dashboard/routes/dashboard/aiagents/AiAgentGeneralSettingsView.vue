@@ -229,6 +229,23 @@ function renderMarkdown(text) {
   return md.render(text);
 }
 
+function isImageUrl(url) {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    const path = parsed.pathname.toLowerCase();
+    if (/\.(jpe?g|png|gif|webp|bmp|svg)$/.test(path)) return true;
+    if (
+      parsed.hostname.includes('drive.google.com') &&
+      parsed.searchParams.get('export') === 'view'
+    )
+      return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 function onFileSelected(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -470,7 +487,7 @@ function resetChat() {
       </div>
     </form>
     <!-- Chat Preview Section -->
-    <div class="h-[600px] w-full lg:h-[500px] lg:w-[350px]">
+    <div class="h-[800px] w-full lg:h-[650px] lg:w-[350px]">
       <div
         class="w-full rounded-xl dark:bg-black-900/80 shadow-lg dark:shadow-slate-700 overflow-hidden flex flex-col h-full"
       >
@@ -541,10 +558,11 @@ function resetChat() {
                   <img
                     v-if="
                       att.file_type?.startsWith('image') ||
-                      att.data_url?.startsWith('data:image')
+                      att.data_url?.startsWith('data:image') ||
+                      isImageUrl(att.url)
                     "
                     :src="att.data_url || att.url"
-                    :alt="att.filename || 'attachment'"
+                    :alt="att.filename || att.title || 'attachment'"
                     class="max-w-full rounded-lg"
                   />
                   <a
@@ -554,7 +572,7 @@ function resetChat() {
                     rel="noopener noreferrer"
                     class="text-xs underline"
                   >
-                    {{ att.filename || 'Download file' }}
+                    {{ att.filename || att.title || 'Download file' }}
                   </a>
                 </div>
               </template>

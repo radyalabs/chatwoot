@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_02_18_100000) do
+ActiveRecord::Schema[7.0].define(version: 2026_02_27_100000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -828,7 +828,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_18_100000) do
     t.bigint "portal_id"
     t.integer "sender_name_type", default: 0, null: false
     t.string "business_name"
+    t.string "availability_type", default: "turn_off_bot"
     t.index ["account_id"], name: "index_inboxes_on_account_id"
+    t.index ["availability_type"], name: "index_inboxes_on_availability_type"
     t.index ["channel_id", "channel_type"], name: "index_inboxes_on_channel_id_and_channel_type"
     t.index ["portal_id"], name: "index_inboxes_on_portal_id"
   end

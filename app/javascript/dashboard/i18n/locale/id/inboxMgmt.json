@@ -577,7 +577,7 @@
     },
     "SETTINGS_POPUP": {
       "MESSENGER_HEADING": "Skrip Messenger",
-      "DISABLE_AUTO_ASSIGNMENT_FIRST" : "Tolong Matikan Penugasan Automatis Terlebih dahulu",
+      "DISABLE_AUTO_ASSIGNMENT_FIRST": "Tolong Matikan Penugasan Automatis Terlebih dahulu",
       "MESSENGER_SUB_HEAD": "Tempatkan tombol ini di dalam tag <body> Anda",
       "INBOX_AGENTS": "Agen",
       "INBOX_AGENTS_SUB_TEXT": "Tambahkan atau hapus agen dari kotak masuk ini",
@@ -681,7 +681,12 @@
         "VALIDATION_ERROR": "Waktu mulai harus sebelum waktu tutup.",
         "CHOOSE": "Pilih"
       },
-      "ALL_DAY": "Sepanjang hari"
+      "ALL_DAY": "Sepanjang hari",
+      "AVAILABILITY_TYPE_LABEL": "Jenis Ketersediaan",
+      "AVAILABILITY_TYPE": {
+        "TURN_OFF_BOT": "Matikan Bot",
+        "TURN_OFF_CHANNEL": "Matikan Channel"
+      }
     },
     "IMAP": {
       "TITLE": "IMAP",

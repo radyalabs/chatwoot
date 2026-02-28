@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_02_27_100000) do
+ActiveRecord::Schema[7.0].define(version: 2026_02_27_190536) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -748,6 +748,22 @@ ActiveRecord::Schema[7.0].define(version: 2026_02_27_100000) do
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
     t.index ["account_id"], name: "index_data_imports_on_account_id"
+  end
+
+  create_table "email_senders", force: :cascade do |t|
+    t.text "body"
+    t.string "subject"
+    t.integer "status", default: 0
+    t.integer "source", default: 0
+    t.string "to_email"
+    t.string "from_email"
+    t.text "error_message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_email_senders_on_created_at"
+    t.index ["source"], name: "index_email_senders_on_source"
+    t.index ["status"], name: "index_email_senders_on_status"
+    t.index ["to_email"], name: "index_email_senders_on_to_email"
   end
 
   create_table "email_templates", force: :cascade do |t|

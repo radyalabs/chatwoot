@@ -138,6 +138,9 @@ class User < ApplicationRecord
   # we are handling this in `remove_macros` callback
   has_many :macros, foreign_key: 'created_by_id', inverse_of: :created_by
   # rubocop:enable Rails/HasManyOrHasOneDependent
+  # OTP associations and methods
+  has_many :otps, dependent: :destroy_async
+  belongs_to :active_subscription, class_name: 'Subscription', optional: true
 
   before_validation :set_password_and_uid, on: :create
   after_destroy :remove_macros
@@ -155,7 +158,14 @@ class User < ApplicationRecord
       return unless invited
     end
 
-    devise_mailer.with(account: Current.account).send(notification, self, *args).deliver_later
+    DeviseEmailDeliveryJob.perform_later(
+      devise_mailer.name,
+      notification.to_s,
+      Current.account&.id,
+      id,
+      *args,
+      'system'
+    )
   end
 
   def set_password_and_uid
@@ -200,9 +210,6 @@ class User < ApplicationRecord
   def self.from_email(email)
     find_by(email: email&.downcase)
   end
-
-  # OTP associations and methods
-  has_many :otps, dependent: :destroy
 
   # OTP Methods
   def generate_otp(purpose = 'email_verification', expires_in_minutes = OtpConfig.expiry_minutes, request = nil)
@@ -288,8 +295,6 @@ class User < ApplicationRecord
   def remove_macros
     macros.personal.destroy_all
   end
-
-  belongs_to :active_subscription, class_name: 'Subscription', optional: true
 
   def assign_subscription(subscription)
     update(active_subscription: subscription, subscription_status: subscription.status)

@@ -1,6 +1,6 @@
 class Api::V1::OtpController < Api::BaseController
   include AuthHelper
-  
+
   skip_before_action :authenticate_access_token!, only: [:generate, :verify, :resend, :status]
   skip_before_action :authenticate_user!, only: [:generate, :verify, :resend, :status]
   skip_before_action :validate_bot_access_token!, only: [:generate, :verify, :resend, :status]
@@ -10,7 +10,7 @@ class Api::V1::OtpController < Api::BaseController
 
     if user.blank?
       Rails.logger.warn "User not found for email: #{params[:email]}"
-      return render json: { 
+      return render json: {
         error: 'User not found',
         status: 'user_not_found',
         message: 'User tidak ditemukan'
@@ -18,7 +18,7 @@ class Api::V1::OtpController < Api::BaseController
     end
 
     if user.confirmed?
-      return render json: { 
+      return render json: {
         error: 'Email already verified',
         status: 'verified',
         message: 'Anda sudah verified, tidak bisa kirim OTP registrasi lagi',
@@ -28,19 +28,19 @@ class Api::V1::OtpController < Api::BaseController
 
     # Check if there's an active OTP
     otp = user.otps.where(purpose: 'email_verification')
-                  .where('expires_at > ?', Time.current)
-                  .order(created_at: :desc)
-                  .first
+              .where('expires_at > ?', Time.current)
+              .order(created_at: :desc)
+              .first
 
     if otp.present?
-      render json: { 
+      render json: {
         status: 'otp_active',
         message: 'OTP is active and ready for verification',
         expires_at: otp.expires_at,
         expires_in: ((otp.expires_at - Time.current) / 60).round(0)
       }, status: :ok
     else
-      render json: { 
+      render json: {
         status: 'otp_needed',
         message: 'No active OTP found. Please generate a new OTP.'
       }, status: :ok
@@ -56,7 +56,7 @@ class Api::V1::OtpController < Api::BaseController
 
     if user.blank?
       Rails.logger.warn "User not found for email: #{params[:email]}"
-      return render json: { 
+      return render json: {
         error: 'User not found',
         status: 'user_not_found',
         message: 'User tidak ditemukan'
@@ -66,7 +66,7 @@ class Api::V1::OtpController < Api::BaseController
     Rails.logger.info "User found: #{user.id}, confirmed: #{user.confirmed?}"
 
     if user.confirmed?
-      return render json: { 
+      return render json: {
         error: 'Email already verified',
         status: 'verified',
         message: 'Anda sudah verified, tidak bisa kirim OTP registrasi lagi',
@@ -76,13 +76,13 @@ class Api::V1::OtpController < Api::BaseController
 
     # Check if there's already an active OTP
     existing_otp = user.otps.where(purpose: 'email_verification')
-                           .where('expires_at > ?', Time.current)
-                           .order(created_at: :desc)
-                           .first
+                       .where('expires_at > ?', Time.current)
+                       .order(created_at: :desc)
+                       .first
 
     if existing_otp.present?
       Rails.logger.info "Active OTP already exists for user: #{user.id}, expires at: #{existing_otp.expires_at}"
-      return render json: { 
+      return render json: {
         message: 'You already have an active verification code. Please check your email or wait for it to expire before requesting a new one.',
         expires_at: existing_otp.expires_at,
         expires_in: ((existing_otp.expires_at - Time.current) / 60).round(0),
@@ -99,10 +99,10 @@ class Api::V1::OtpController < Api::BaseController
     if otp
       # Send OTP email
       Rails.logger.info "Sending OTP email to: #{user.email}"
-      OtpMailer.send_otp_email(user, otp).deliver_now
-      Rails.logger.info "OTP email sent successfully"
-      
-      render json: { 
+      EmailDeliveryJob.perform_later('OtpMailer', 'send_otp_email', user, otp, 'system')
+      Rails.logger.info 'OTP email queued successfully'
+
+      render json: {
         message: 'OTP sent successfully',
         expires_at: otp.expires_at
       }, status: :ok
@@ -120,7 +120,7 @@ class Api::V1::OtpController < Api::BaseController
     user = User.from_email(params[:email])
 
     if user.blank?
-      return render json: { 
+      return render json: {
         error: 'User not found',
         status: 'user_not_found',
         message: 'User tidak ditemukan'
@@ -128,7 +128,7 @@ class Api::V1::OtpController < Api::BaseController
     end
 
     if user.confirmed?
-      return render json: { 
+      return render json: {
         error: 'Email already verified',
         status: 'verified',
         message: 'Anda sudah verified, tidak bisa kirim OTP registrasi lagi',
@@ -141,63 +141,63 @@ class Api::V1::OtpController < Api::BaseController
 
     if result[:success]
       Rails.logger.info "OTP verification successful for user: #{user.email}"
-      
+
       # Check if user needs account creation (new registration flow)
       if user.custom_attributes&.dig('registration_completed') == false
         Rails.logger.info "Completing account creation for user: #{user.email}"
-        
+
         begin
           # Get pending account details
           account_name = user.custom_attributes['pending_account_name'] || 'My Account'
           locale = user.custom_attributes['pending_locale'] || I18n.locale
-          
+
           # Create account
           account = Account.create!(
             name: account_name,
             locale: locale
           )
-          
+
           # Link user to account as administrator
           AccountUser.create!(
             account_id: account.id,
             user_id: user.id,
             role: AccountUser.roles['administrator']
           )
-          
+
           # Assign Free Trial subscription
           assign_free_trial_subscription(account)
-          
+
           # Mark registration as completed and clear pending data
           user.update!(
             custom_attributes: user.custom_attributes.merge(
               'registration_completed' => true
             ).except('pending_account_name', 'pending_locale')
           )
-          
+
           Rails.logger.info "Account #{account.id} created and user #{user.id} linked successfully"
-          
+
           # Send verification success email
           begin
-            OtpMailer.send_verification_success_email(user, account).deliver_now
-            Rails.logger.info "Verification success email sent to #{user.email}"
-          rescue => email_error
-            Rails.logger.error "Failed to send verification success email: #{email_error.message}"
+            EmailDeliveryJob.perform_later('OtpMailer', 'send_verification_success_email', user, account, 'system')
+            Rails.logger.info "Verification success email queued for #{user.email}"
+          rescue StandardError => e
+            Rails.logger.error "Failed to queue verification success email: #{e.message}"
           end
-          
+
           # Set auth headers
           send_auth_headers(user)
-          
-          render json: { 
+
+          render json: {
             message: 'Email verified and account created successfully. You can now log in.',
             verified: true,
             account_created: true,
             next_step: 'login',
             redirect_url: ENV.fetch('FRONTEND_URL', 'http://localhost:3000') + '/app/login'
           }, status: :ok
-        rescue => e
+        rescue StandardError => e
           Rails.logger.error "Failed to create account for user #{user.id}: #{e.message}"
           Rails.logger.error e.backtrace.join("\n")
-          render json: { 
+          render json: {
             message: 'Email verified but failed to create account. Please contact support.',
             verified: true,
             account_created: false,
@@ -210,20 +210,20 @@ class Api::V1::OtpController < Api::BaseController
         begin
           # Get user's first account for the email
           account = user.accounts.first
-          OtpMailer.send_verification_success_email(user, account).deliver_now
-          Rails.logger.info "Verification success email sent to #{user.email}"
-        rescue => email_error
-          Rails.logger.error "Failed to send verification success email: #{email_error.message}"
+          EmailDeliveryJob.perform_later('OtpMailer', 'send_verification_success_email', user, account, 'system')
+          Rails.logger.info "Verification success email queued for #{user.email}"
+        rescue StandardError => e
+          Rails.logger.error "Failed to queue verification success email: #{e.message}"
         end
-        
-        render json: { 
+
+        render json: {
           message: 'Email verified successfully',
           verified: true
         }, status: :ok
       end
     else
       Rails.logger.warn "OTP verification failed for user: #{user.email}, error: #{result[:error]}"
-      render json: { 
+      render json: {
         error: result[:error] || 'Invalid or expired OTP'
       }, status: :unprocessable_entity
     end
@@ -235,7 +235,7 @@ class Api::V1::OtpController < Api::BaseController
     user = User.from_email(params[:email])
 
     if user.blank?
-      return render json: { 
+      return render json: {
         error: 'User not found',
         status: 'user_not_found',
         message: 'User tidak ditemukan'
@@ -243,7 +243,7 @@ class Api::V1::OtpController < Api::BaseController
     end
 
     if user.confirmed?
-      return render json: { 
+      return render json: {
         error: 'Email already verified',
         status: 'verified',
         message: 'Anda sudah verified, tidak bisa kirim OTP registrasi lagi',
@@ -253,13 +253,13 @@ class Api::V1::OtpController < Api::BaseController
 
     # Check for recent OTP generation (cooldown: 1 minute)
     recent_otp = user.otps.where(purpose: 'email_verification')
-                          .where('created_at > ?', 1.minute.ago)
-                          .order(created_at: :desc)
-                          .first
+                     .where('created_at > ?', 1.minute.ago)
+                     .order(created_at: :desc)
+                     .first
 
     if recent_otp.present?
       time_remaining = 60 - (Time.current - recent_otp.created_at).to_i
-      return render json: { 
+      return render json: {
         error: 'Please wait before requesting a new OTP',
         retry_after_seconds: time_remaining,
         message: "You can request a new OTP in #{time_remaining} seconds"
@@ -271,9 +271,9 @@ class Api::V1::OtpController < Api::BaseController
 
     if otp
       # Send OTP email
-      OtpMailer.send_otp_email(user, otp).deliver_now
+      EmailDeliveryJob.perform_later('OtpMailer', 'send_otp_email', user, otp, 'system')
       Rails.logger.info "OTP resent successfully to #{user.email}"
-      render json: { 
+      render json: {
         message: 'OTP resent successfully',
         expires_at: otp.expires_at
       }, status: :ok
@@ -295,7 +295,7 @@ class Api::V1::OtpController < Api::BaseController
     free_trial_plan = SubscriptionPlan.find_by(name: 'Free Trial')
 
     Rails.logger.info "Free Trial Plan: #{free_trial_plan.inspect}"
-    
+
     if free_trial_plan.present?
       # Create a new subscription for the account
       subscription = Subscription.create!(
@@ -314,14 +314,14 @@ class Api::V1::OtpController < Api::BaseController
         ends_at: Time.current + free_trial_plan.duration_days.days,
         amount_paid: free_trial_plan.monthly_price,
         price: free_trial_plan.monthly_price,
-        payment_status: "paid"
+        payment_status: 'paid'
       )
 
       # Update account.active_subscription_id
       account.update!(active_subscription_id: subscription.id)
       Rails.logger.info "Free Trial Subscription created: #{subscription.id}"
     else
-      Rails.logger.warn "Free Trial plan not found"
+      Rails.logger.warn 'Free Trial plan not found'
     end
   rescue StandardError => e
     Rails.logger.error "Error creating subscription: #{e.message}"

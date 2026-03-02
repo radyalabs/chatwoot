@@ -519,13 +519,13 @@
     },
     "SETTINGS_POPUP": {
       "MESSENGER_HEADING": "Messenger Script",
-      "DISABLE_AUTO_ASSIGNMENT_FIRST" : "Please Turn Off Auto Assignment First",
+      "DISABLE_AUTO_ASSIGNMENT_FIRST": "Please Turn Off Auto Assignment First",
       "MESSENGER_SUB_HEAD": "Place this button inside your body tag",
       "INBOX_AGENTS": "Agents",
       "INBOX_AGENTS_SUB_TEXT": "Add or remove agents from this inbox",
       "INBOX_AI_AGENTS": "AI Agents",
-"INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
-"AGENT_ASSIGNMENT": "Conversation Assignment",
+      "INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
+      "AGENT_ASSIGNMENT": "Conversation Assignment",
       "AGENT_ASSIGNMENT_SUB_TEXT": "Update conversation assignment settings",
       "UPDATE": "Update",
       "ENABLE_EMAIL_COLLECT_BOX": "Enable email collect box",
@@ -623,7 +623,12 @@
         "VALIDATION_ERROR": "Starting time should be before closing time.",
         "CHOOSE": "Choose"
       },
-      "ALL_DAY": "All-Day"
+      "ALL_DAY": "All-Day",
+      "AVAILABILITY_TYPE_LABEL": "Availability Type",
+      "AVAILABILITY_TYPE": {
+        "TURN_OFF_BOT": "Turn Off Bot",
+        "TURN_OFF_CHANNEL": "Turn Off Channel"
+      }
     },
     "IMAP": {
       "TITLE": "IMAP",

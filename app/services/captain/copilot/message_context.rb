@@ -37,4 +37,12 @@ class Captain::Copilot::MessageContext
   def active_conversation
     @active_conversation ||= Conversation.find_by(assignee_id: nil, inbox_id: @inbox_id, id: @conversation.id)
   end
+
+  def bot_available?
+    return true unless inbox.working_hours_enabled?
+
+    return inbox.working_now? if inbox.availability_type == 'turn_off_bot'
+
+    true
+  end
 end

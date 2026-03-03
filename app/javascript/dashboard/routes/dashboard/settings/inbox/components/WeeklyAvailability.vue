@@ -164,7 +164,7 @@ export default {
           {{ $t('INBOX_MGMT.BUSINESS_HOURS.TOGGLE_HELP') }}
         </p>
         <div v-if="isBusinessHoursEnabled" class="mb-6">
-          <div class="max-w-[37.5rem]">
+          <div v-if="false" class="max-w-[37.5rem]">
             <label class="unavailable-input-wrap">
               {{ $t('INBOX_MGMT.BUSINESS_HOURS.UNAVAILABLE_MESSAGE_LABEL') }}
             </label>

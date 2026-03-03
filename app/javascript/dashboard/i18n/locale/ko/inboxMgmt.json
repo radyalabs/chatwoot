@@ -487,8 +487,8 @@
       "INBOX_AGENTS": "에이전트",
       "INBOX_AGENTS_SUB_TEXT": "받은 메시지함에서 에이전트 추가 또는 제거",
       "INBOX_AI_AGENTS": "AI Agents",
-"INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
-"AGENT_ASSIGNMENT": "Conversation Assignment",
+      "INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
+      "AGENT_ASSIGNMENT": "Conversation Assignment",
       "AGENT_ASSIGNMENT_SUB_TEXT": "Update conversation assignment settings",
       "UPDATE": "업데이트",
       "ENABLE_EMAIL_COLLECT_BOX": "Enable email collect box",
@@ -756,6 +756,15 @@
       "TELEGRAM": "Telegram",
       "LINE": "Line",
       "API": "API 채널"
+    },
+    "DAYS_OF_WEEK": {
+      "SUNDAY": "Sunday",
+      "MONDAY": "Monday",
+      "TUESDAY": "Tuesday",
+      "WEDNESDAY": "Wednesday",
+      "THURSDAY": "Thursday",
+      "FRIDAY": "Friday",
+      "SATURDAY": "Saturday"
     }
   }
 }

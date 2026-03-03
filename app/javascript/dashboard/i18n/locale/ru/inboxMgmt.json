@@ -487,8 +487,8 @@
       "INBOX_AGENTS": "Операторы",
       "INBOX_AGENTS_SUB_TEXT": "Добавить или удалить агентов из этого источника",
       "INBOX_AI_AGENTS": "AI Agents",
-"INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
-"AGENT_ASSIGNMENT": "Назначения для беседы",
+      "INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
+      "AGENT_ASSIGNMENT": "Назначения для беседы",
       "AGENT_ASSIGNMENT_SUB_TEXT": "Обновить настройки назначения для бесед",
       "UPDATE": "Обновить",
       "ENABLE_EMAIL_COLLECT_BOX": "Включить ящик сбора почты",
@@ -756,6 +756,15 @@
       "TELEGRAM": "Telegram",
       "LINE": "Line",
       "API": "Источник API"
+    },
+    "DAYS_OF_WEEK": {
+      "SUNDAY": "Воскресенье",
+      "MONDAY": "Понедельник",
+      "TUESDAY": "Вторник",
+      "WEDNESDAY": "Среда",
+      "THURSDAY": "Четверг",
+      "FRIDAY": "Пятница",
+      "SATURDAY": "Суббота"
     }
   }
 }

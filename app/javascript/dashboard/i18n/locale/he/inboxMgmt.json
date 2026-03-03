@@ -487,8 +487,8 @@
       "INBOX_AGENTS": "סוכנים",
       "INBOX_AGENTS_SUB_TEXT": "הוסף או הסר נציגים מתיבת הדואר הנכנס הזו",
       "INBOX_AI_AGENTS": "AI Agents",
-"INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
-"AGENT_ASSIGNMENT": "שיוך שיחה",
+      "INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
+      "AGENT_ASSIGNMENT": "שיוך שיחה",
       "AGENT_ASSIGNMENT_SUB_TEXT": "עדכן הגדרות שיוך שיחה",
       "UPDATE": "עדכן",
       "ENABLE_EMAIL_COLLECT_BOX": "אפשר תיבת איסוף דוא\"ל",
@@ -756,6 +756,15 @@
       "TELEGRAM": "Telegram",
       "LINE": "Line",
       "API": "ערוץ API"
+    },
+    "DAYS_OF_WEEK": {
+      "SUNDAY": "יום ראשון",
+      "MONDAY": "יום שני",
+      "TUESDAY": "יום שלישי",
+      "WEDNESDAY": "יום רביעי",
+      "THURSDAY": "יום חמישי",
+      "FRIDAY": "שישי",
+      "SATURDAY": "יום שבת"
     }
   }
 }

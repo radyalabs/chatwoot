@@ -233,6 +233,15 @@
       "INBOX_UPDATE_TITLE": "收件箱设置",
       "INBOX_UPDATE_SUB_TEXT": "更新收件箱设置",
       "AUTO_ASSIGNMENT_SUB_TEXT": "启用或禁用添加到此收件箱的代理人自动分配新的会话。"
+    },
+    "DAYS_OF_WEEK": {
+      "SUNDAY": "星期日",
+      "MONDAY": "星期一",
+      "TUESDAY": "星期二",
+      "WEDNESDAY": "星期三",
+      "THURSDAY": "星期四",
+      "FRIDAY": "星期五",
+      "SATURDAY": "星期六"
     }
   }
 }

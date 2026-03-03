@@ -487,8 +487,8 @@
       "INBOX_AGENTS": "Kullanıcılar",
       "INBOX_AGENTS_SUB_TEXT": "Bu gelen kutusuna aracı ekleyin veya aracıları kaldırın",
       "INBOX_AI_AGENTS": "AI Agents",
-"INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
-"AGENT_ASSIGNMENT": "Görüşme Atama",
+      "INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
+      "AGENT_ASSIGNMENT": "Görüşme Atama",
       "AGENT_ASSIGNMENT_SUB_TEXT": "Görüşme atama ayarlarını güncelle",
       "UPDATE": "Güncelleme",
       "ENABLE_EMAIL_COLLECT_BOX": "E-posta toplama kutusunu etkinleştir",
@@ -756,6 +756,15 @@
       "TELEGRAM": "Telegram",
       "LINE": "Line",
       "API": "API Kanalı"
+    },
+    "DAYS_OF_WEEK": {
+      "SUNDAY": "Pazar",
+      "MONDAY": "Pazartesi",
+      "TUESDAY": "Salı",
+      "WEDNESDAY": "Çarşamba",
+      "THURSDAY": "Perşembe",
+      "FRIDAY": "Cuma",
+      "SATURDAY": "Cumartesi"
     }
   }
 }

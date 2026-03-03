@@ -15,7 +15,7 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
       failure_reason = pre_check_failure_reason
       return send_reply_failure(failure_reason) if failure_reason
 
-      return unless @context.inbox
+      return unless @context.agent_bot_inbox
       return unless @context.ai_agent
       return unless @context.bot_available?
 

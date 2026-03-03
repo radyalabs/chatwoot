@@ -682,7 +682,7 @@
         "CHOOSE": "Pilih"
       },
       "ALL_DAY": "Sepanjang hari",
-      "AVAILABILITY_TYPE_LABEL": "Jenis Ketersediaan",
+      "AVAILABILITY_TYPE_LABEL": "Pengaturan Non Aktif",
       "AVAILABILITY_TYPE": {
         "TURN_OFF_BOT": "Matikan Bot",
         "TURN_OFF_CHANNEL": "Matikan Channel"

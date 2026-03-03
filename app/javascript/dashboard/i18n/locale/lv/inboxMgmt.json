@@ -487,8 +487,8 @@
       "INBOX_AGENTS": "Aģenti",
       "INBOX_AGENTS_SUB_TEXT": "Pievienot vai noņemt aģentus no šīs iesūtnes",
       "INBOX_AI_AGENTS": "AI Agents",
-"INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
-"AGENT_ASSIGNMENT": "Sarunas Piešķiršana",
+      "INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
+      "AGENT_ASSIGNMENT": "Sarunas Piešķiršana",
       "AGENT_ASSIGNMENT_SUB_TEXT": "Atjaunināt sarunas piešķiršanas iestatījumus",
       "UPDATE": "Atjaunināt",
       "ENABLE_EMAIL_COLLECT_BOX": "Iespējot e-pasta iegūšanas lodziņu",
@@ -756,6 +756,15 @@
       "TELEGRAM": "Telegram",
       "LINE": "Line",
       "API": "API Kanāls"
+    },
+    "DAYS_OF_WEEK": {
+      "SUNDAY": "Svētdiena",
+      "MONDAY": "Pirmdiena",
+      "TUESDAY": "Otrdiena",
+      "WEDNESDAY": "Trešdiena",
+      "THURSDAY": "Ceturtdiena",
+      "FRIDAY": "Piektdiena",
+      "SATURDAY": "Sestdiena"
     }
   }
 }

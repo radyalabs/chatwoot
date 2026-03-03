@@ -2090,7 +2090,7 @@ const tabs = computed(() => [
   {
     key: '8',
     index: 8,
-    name: t('AGENT_MGMT.SALESBOT.REMINDER.HEADER'),
+    name: t('AGENT_MGMT.REMINDER.HEADER'),
     icon: 'i-lucide-bell',
   },
 ])

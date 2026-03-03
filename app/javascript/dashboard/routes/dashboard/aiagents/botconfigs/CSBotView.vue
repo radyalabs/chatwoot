@@ -63,6 +63,12 @@
         <div v-show="activeIndex === 6" class="w-full">
           <CustomNumberingTab :data="data" numbering-key="customer_service" />
         </div>
+        <div v-show="activeIndex === 7" class="w-full">
+          <ReminderSettings
+            v-if="data?.id"
+            :ai-agent-id="data.id"
+          />
+        </div>
       </div>
 
       <!-- Submit Button -->
@@ -88,6 +94,7 @@ import PrioritiesTab from './cs-bot-tabs/PrioritiesTab.vue'
 import ProductCatalogTab from './cs-bot-tabs/ProductCatalogTab.vue'
 import GeneralTab from './cs-bot-tabs/GeneralTab.vue'
 import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue'
+import ReminderSettings from './reminder-settings/ReminderSettings.vue'
 const { t } = useI18n()
 
 const props = defineProps({
@@ -108,7 +115,8 @@ provide('emitUpdate', () => emit('update:data'))
 
 const config = reactive({
   ticketSystemActive: false,
-  ticketCreateWhen: 'always'
+  ticketCreateWhen: 'always',
+  reminderSystemActive: false,
 })
 
 const tabs = computed(() => [
@@ -153,6 +161,12 @@ const tabs = computed(() => [
     index: 6,
     name: 'Penomoran Otomatis',
     icon: 'i-lucide-notebook-tabs',
+  },
+  {
+    key: '7',
+    index: 7,
+    name: t('AGENT_MGMT.REMINDER.HEADER'),
+    icon: 'i-lucide-bell',
   },
 ])
 

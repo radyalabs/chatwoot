@@ -118,7 +118,7 @@ const handleSave = async payload => {
 };
 
 const handleDelete = async id => {
-  if (!window.confirm(t('AGENT_MGMT.SALESBOT.REMINDER.DELETE_CONFIRM'))) {
+  if (!window.confirm(t('AGENT_MGMT.REMINDER.DELETE_CONFIRM'))) {
     return;
   }
   try {
@@ -153,10 +153,10 @@ onMounted(() => {
           class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2"
         >
           <span class="i-lucide-bell w-5 h-5 text-green-600 dark:text-green-400" />
-          {{ t('AGENT_MGMT.SALESBOT.REMINDER.HEADER') }}
+          {{ t('AGENT_MGMT.REMINDER.HEADER') }}
         </h3>
         <p class="text-sm text-gray-500">
-          {{ t('AGENT_MGMT.SALESBOT.REMINDER.DESC') }}
+          {{ t('AGENT_MGMT.REMINDER.DESC') }}
         </p>
       </div>
       <button
@@ -177,7 +177,7 @@ onMounted(() => {
             d="M12 4v16m8-8H4"
           />
         </svg>
-        {{ t('AGENT_MGMT.SALESBOT.REMINDER.ADD_BUTTON') }}
+        {{ t('AGENT_MGMT.REMINDER.ADD_BUTTON') }}
       </button>
     </div>
 
@@ -190,7 +190,7 @@ onMounted(() => {
         class="i-lucide-alert-triangle w-5 h-5 text-slate-600 dark:text-slate-300 flex-shrink-0"
       />
       <span class="text-sm text-slate-600 dark:text-slate-300">
-        {{ t('AGENT_MGMT.SALESBOT.REMINDER.NO_INBOX_AVAILABLE') }}
+        {{ t('AGENT_MGMT.REMINDER.NO_INBOX_AVAILABLE') }}
       </span>
     </div>
 
@@ -203,7 +203,7 @@ onMounted(() => {
       <input
         v-model="searchQuery"
         type="search"
-        :placeholder="t('AGENT_MGMT.SALESBOT.REMINDER.SEARCH_PLACEHOLDER')"
+        :placeholder="t('AGENT_MGMT.REMINDER.SEARCH_PLACEHOLDER')"
         class="flex-1 min-w-0 py-2 text-sm bg-transparent border-none text-slate-900 dark:text-slate-50 placeholder:text-n-slate-10 focus:outline-none"
       />
     </div>
@@ -243,7 +243,7 @@ onMounted(() => {
         <span class="i-lucide-bell-off w-8 h-8 text-gray-400" />
       </div>
       <p class="text-base font-medium text-gray-900 dark:text-gray-200">
-        {{ t('AGENT_MGMT.SALESBOT.REMINDER.EMPTY_STATE') }}
+        {{ t('AGENT_MGMT.REMINDER.EMPTY_STATE') }}
       </p>
     </div>
 

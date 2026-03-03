@@ -40,6 +40,7 @@ class Webhooks::InstagramEventsJob < MutexApplicationJob
       channel = find_channel(instagram_id)
 
       next if channel.blank?
+      next unless channel_available?(channel)
 
       if (event_name = event_name(messaging))
         send(event_name, messaging, channel)
@@ -111,6 +112,13 @@ class Webhooks::InstagramEventsJob < MutexApplicationJob
 
   def messages(entry)
     (entry[:messaging].presence || entry[:standby] || [])
+  end
+
+  def channel_available?(channel)
+    inbox = channel.inbox
+    return true unless inbox.working_hours_enabled?
+
+    inbox.availability_type != 'turn_off_channel'
   end
 end
 

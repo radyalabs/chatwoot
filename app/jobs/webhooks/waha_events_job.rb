@@ -7,6 +7,7 @@ class Webhooks::WahaEventsJob < ApplicationJob
 
     channel = Channel::WhatsappUnofficial.find_by(phone_number: params[:phone_number])
     return unless channel
+    return unless channel_available?(channel)
 
     process_event_params(channel, params)
   end
@@ -24,5 +25,12 @@ class Webhooks::WahaEventsJob < ApplicationJob
       Rails.logger.info "Unhandled WAHA event structure: #{params.inspect}"
       # Optionally, log or notify about the unhandled event for further investigation
     end
+  end
+
+  def channel_available?(channel)
+    inbox = channel.inbox
+    return true unless inbox.working_hours_enabled?
+
+    inbox.availability_type != 'turn_off_channel'
   end
 end

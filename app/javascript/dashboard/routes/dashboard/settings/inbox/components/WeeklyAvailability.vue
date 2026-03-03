@@ -13,8 +13,8 @@ import {
 } from '../helpers/businessHour';
 
 const DEFAULT_TIMEZONE = {
-  label: 'Pacific Time (US & Canada) (GMT-07:00)',
-  value: 'America/Los_Angeles',
+  label: 'Jakarta (GMT+07:00)',
+  value: 'Asia/Jakarta',
 };
 
 export default {

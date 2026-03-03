@@ -624,7 +624,7 @@
         "CHOOSE": "Choose"
       },
       "ALL_DAY": "All-Day",
-      "AVAILABILITY_TYPE_LABEL": "Availability Type",
+      "AVAILABILITY_TYPE_LABEL": "Inactive Settings",
       "AVAILABILITY_TYPE": {
         "TURN_OFF_BOT": "Turn Off Bot",
         "TURN_OFF_CHANNEL": "Turn Off Channel"

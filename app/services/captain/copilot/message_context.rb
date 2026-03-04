@@ -45,8 +45,6 @@ class Captain::Copilot::MessageContext
   def bot_available?
     return true unless inbox.working_hours_enabled?
 
-    return inbox.working_now? if inbox.availability_type == 'turn_off_bot'
-
-    true
+    inbox.working_now?
   end
 end

@@ -32,9 +32,6 @@ class Webhooks::FacebookEventsJob < MutexApplicationJob
   end
 
   def channel_available?(channel)
-    inbox = channel.inbox
-    return true unless inbox.working_hours_enabled?
-
-    inbox.availability_type != 'turn_off_channel'
+    channel.inbox.channel_status
   end
 end

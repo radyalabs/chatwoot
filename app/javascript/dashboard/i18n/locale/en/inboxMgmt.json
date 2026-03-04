@@ -499,6 +499,22 @@
         "AVATAR_ERROR_MESSAGE": "Could not delete the inbox avatar. Please try again later."
       }
     },
+    "ACTIVATE": {
+      "API": {
+        "SUCCESS_MESSAGE": "Inbox activated successfully",
+        "ERROR_MESSAGE": "Could not activate inbox. Please try again later."
+      }
+    },
+    "DEACTIVATE": {
+      "API": {
+        "SUCCESS_MESSAGE": "Inbox deactivated successfully",
+        "ERROR_MESSAGE": "Could not deactivate inbox. Please try again later."
+      }
+    },
+    "STATUS": {
+      "ACTIVE": "Active",
+      "INACTIVE": "Inactive"
+    },
     "TABS": {
       "SETTINGS": "Settings",
       "COLLABORATORS": "Collaborators",
@@ -624,11 +640,7 @@
         "CHOOSE": "Choose"
       },
       "ALL_DAY": "All-Day",
-      "AVAILABILITY_TYPE_LABEL": "Inactive Settings",
-      "AVAILABILITY_TYPE": {
-        "TURN_OFF_BOT": "Turn Off Bot",
-        "TURN_OFF_CHANNEL": "Turn Off Channel"
-      }
+      "AVAILABILITY_TYPE_LABEL": "Inactive Settings"
     },
     "IMAP": {
       "TITLE": "IMAP",

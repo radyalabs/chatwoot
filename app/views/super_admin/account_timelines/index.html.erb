@@ -46,7 +46,9 @@
             <td class="py-3 px-4 text-sm text-slate-600">
               <%= user.accounts.map(&:name).join(', ') %>
             </td>
-            <td class="py-3 px-4 text-sm text-slate-600" data-browser-datetime="<%= user.created_at.to_i %>"></td>
+            <td class="py-3 px-4 text-sm text-slate-600">
+              <%= user.created_at.in_time_zone.strftime('%d %b %Y, %H.%M %Z') %>
+            </td>
             <td class="py-3 px-4 text-sm text-slate-600">
               <% if user.last_sign_in_at %>
                 <div class="text-sm">

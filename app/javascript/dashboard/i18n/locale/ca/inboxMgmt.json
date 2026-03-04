@@ -487,8 +487,8 @@
       "INBOX_AGENTS": "Agents",
       "INBOX_AGENTS_SUB_TEXT": "Afegir o eliminar agents d'aquesta safata d'entrada",
       "INBOX_AI_AGENTS": "AI Agents",
-"INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
-"AGENT_ASSIGNMENT": "Conversació Assignada",
+      "INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
+      "AGENT_ASSIGNMENT": "Conversació Assignada",
       "AGENT_ASSIGNMENT_SUB_TEXT": "Actualitza la configuració de l'assignació de conversa",
       "UPDATE": "Actualitza",
       "ENABLE_EMAIL_COLLECT_BOX": "Activa la bústia de recollida de correu electrònic",
@@ -756,6 +756,15 @@
       "TELEGRAM": "Telegram",
       "LINE": "Line",
       "API": "Canal de l'API"
+    },
+    "DAYS_OF_WEEK": {
+      "SUNDAY": "Diumenge",
+      "MONDAY": "Dilluns",
+      "TUESDAY": "Dimarts",
+      "WEDNESDAY": "Dimecres",
+      "THURSDAY": "Dijous",
+      "FRIDAY": "Divendres",
+      "SATURDAY": "Dissabte"
     }
   }
 }

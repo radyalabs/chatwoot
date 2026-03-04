@@ -8,6 +8,15 @@
     "LIST": {
       "404": "Tidak ada Platform Terhubung yang dilampirkan ke akun ini."
     },
+    "DAYS_OF_WEEK": {
+      "SUNDAY": "Minggu",
+      "MONDAY": "Senin",
+      "TUESDAY": "Selasa",
+      "WEDNESDAY": "Rabu",
+      "THURSDAY": "Kamis",
+      "FRIDAY": "Jumat",
+      "SATURDAY": "Sabtu"
+    },
     "CREATE_FLOW": {
       "CHANNEL": {
         "TITLE": "Pilih Channel",
@@ -32,8 +41,8 @@
     },
     "ADD": {
       "QRCODE": {
-        "TITLE": "Pindai Kode QR",
-        "DESC": "Pindai kode QR di bawah ini dengan aplikasi WhatsApp Anda untuk terhubung"
+        "TITLE": "Hubungkan WhatsApp Anda",
+        "DESC": "Untuk mulai menggunakan Bot AI, silakan sambungkan akun WhatsApp Bisnis Anda dengan memindai kode QR di bawah ini"
       },
       "WHATSAPP_UNOFFICIAL_CHANNEL": {
         "TITLE": "Tambah Channel WhatsApp Non-Bisnis",
@@ -84,10 +93,6 @@
         "TWEETS": {
           "ENABLE": "Buat percakapan dari Tweet yang disebutkan"
         }
-      },
-      "QRCODE": {
-        "TITLE": "Hubungkan WhatsApp Anda",
-        "DESC": "Untuk mulai menggunakan Bot AI, silakan sambungkan akun WhatsApp Bisnis Anda dengan memindai kode QR di bawah ini"
       },
       "WEBSITE_CHANNEL": {
         "TITLE": "Channel Website",
@@ -666,14 +671,14 @@
       }
     },
     "BUSINESS_HOURS": {
-      "TITLE": "Atur ketersediaan Anda",
-      "SUBTITLE": "Atur ketersediaan Anda di widget livechat",
+      "TITLE": "Jadwal Operasional Bot",
+      "SUBTITLE": "Tentukan kapan bot atau channel dinonaktifkan secara otomatis",
       "WEEKLY_TITLE": "Tetapkan jam mingguan Anda",
       "TIMEZONE_LABEL": "Pilih zona waktu",
       "UPDATE": "Perbarui pengaturan jam kerja",
-      "TOGGLE_AVAILABILITY": "Aktifkan ketersediaan bisnis untuk kotak masuk ini",
+      "TOGGLE_AVAILABILITY": "Aktifkan jadwal nonaktif untuk kotak masuk ini",
       "UNAVAILABLE_MESSAGE_LABEL": "Pesan tidak tersedia untuk pengunjung",
-      "TOGGLE_HELP": "Dengan mengaktifkan ketersediaan bisnis, jam operasional akan ditampilkan pada widget live chat meskipun agen offline. Di luar jam operasional, pengunjung akan mendapat peringatan melalui pesan dan formulir pra-chat.",
+      "TOGGLE_HELP": "Menu ini digunakan untuk mengatur jadwal pembatasan operasional bot. Saat fitur diaktifkan, bot akan otomatis nonaktif pada hari dan jam yang telah ditentukan, dan kembali aktif di luar jadwal tersebut.",
       "DAY": {
         "ENABLE": "Aktifkan ketersediaan untuk hari ini",
         "UNAVAILABLE": "Tidak tersedia",
@@ -682,7 +687,7 @@
         "CHOOSE": "Pilih"
       },
       "ALL_DAY": "Sepanjang hari",
-      "AVAILABILITY_TYPE_LABEL": "Jenis Ketersediaan",
+      "AVAILABILITY_TYPE_LABEL": "Pengaturan Non Aktif",
       "AVAILABILITY_TYPE": {
         "TURN_OFF_BOT": "Matikan Bot",
         "TURN_OFF_CHANNEL": "Matikan Channel"

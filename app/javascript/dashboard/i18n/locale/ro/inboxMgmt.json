@@ -487,8 +487,8 @@
       "INBOX_AGENTS": "Agenți",
       "INBOX_AGENTS_SUB_TEXT": "Adaugă sau elimină agenți din acest inbox",
       "INBOX_AI_AGENTS": "AI Agents",
-"INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
-"AGENT_ASSIGNMENT": "Atribuirea conversației",
+      "INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
+      "AGENT_ASSIGNMENT": "Atribuirea conversației",
       "AGENT_ASSIGNMENT_SUB_TEXT": "Actualizarea setărilor de atribuire a conversațiilor",
       "UPDATE": "Actualizare",
       "ENABLE_EMAIL_COLLECT_BOX": "Caseta Activare colectare e-mail",
@@ -756,6 +756,15 @@
       "TELEGRAM": "Telegram",
       "LINE": "Line",
       "API": "Canal API"
+    },
+    "DAYS_OF_WEEK": {
+      "SUNDAY": "Duminică",
+      "MONDAY": "Luni",
+      "TUESDAY": "Marți",
+      "WEDNESDAY": "Miercuri",
+      "THURSDAY": "Joi",
+      "FRIDAY": "Vineri",
+      "SATURDAY": "Sâmbătă"
     }
   }
 }

@@ -487,8 +487,8 @@
       "INBOX_AGENTS": "Agenci",
       "INBOX_AGENTS_SUB_TEXT": "Dodaj lub usuń agentów z tej skrzynki odbiorczej",
       "INBOX_AI_AGENTS": "AI Agents",
-"INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
-"AGENT_ASSIGNMENT": "Zadanie konwersacji",
+      "INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
+      "AGENT_ASSIGNMENT": "Zadanie konwersacji",
       "AGENT_ASSIGNMENT_SUB_TEXT": "Aktualizacja ustawień przypisywania konwersacji",
       "UPDATE": "Aktualizuj",
       "ENABLE_EMAIL_COLLECT_BOX": "Włącz skrzynkę odbiorczą e-mail",
@@ -756,6 +756,15 @@
       "TELEGRAM": "Telegram",
       "LINE": "Line",
       "API": "Kanał API"
+    },
+    "DAYS_OF_WEEK": {
+      "SUNDAY": "Niedziela",
+      "MONDAY": "Poniedziałek",
+      "TUESDAY": "Wtorek",
+      "WEDNESDAY": "Środa",
+      "THURSDAY": "Czwartek",
+      "FRIDAY": "Piątek",
+      "SATURDAY": "Sobota"
     }
   }
 }

@@ -608,14 +608,14 @@
       }
     },
     "BUSINESS_HOURS": {
-      "TITLE": "Set your availability",
-      "SUBTITLE": "Set your availability on your livechat widget",
+      "TITLE": "Bot Operating Schedule",
+      "SUBTITLE": "Determine when bots or channels are automatically deactivated",
       "WEEKLY_TITLE": "Set your weekly hours",
       "TIMEZONE_LABEL": "Select timezone",
       "UPDATE": "Update business hours settings",
-      "TOGGLE_AVAILABILITY": "Enable business availability for this inbox",
+      "TOGGLE_AVAILABILITY": "Enable the inactive schedule for this inbox",
       "UNAVAILABLE_MESSAGE_LABEL": "Unavailable message for visitors",
-      "TOGGLE_HELP": "Enabling business availability will show the available hours on live chat widget even if all the agents are offline. Outside available hours visitors can be warned with a message and a pre-chat form.",
+      "TOGGLE_HELP": "This menu is used to set the bot's operational restrictions schedule. When this feature is enabled, the bot will automatically be deactivated on the specified days and times, and will be reactivated outside of that schedule.",
       "DAY": {
         "ENABLE": "Enable availability for this day",
         "UNAVAILABLE": "Unavailable",
@@ -624,7 +624,7 @@
         "CHOOSE": "Choose"
       },
       "ALL_DAY": "All-Day",
-      "AVAILABILITY_TYPE_LABEL": "Availability Type",
+      "AVAILABILITY_TYPE_LABEL": "Inactive Settings",
       "AVAILABILITY_TYPE": {
         "TURN_OFF_BOT": "Turn Off Bot",
         "TURN_OFF_CHANNEL": "Turn Off Channel"
@@ -832,6 +832,15 @@
         "CONNECTED": "WhatsApp connected successfully!",
         "DISCONNECTED_NOTICE": "WhatsApp disconnected from device. Please reconnect to continue."
       }
+    },
+    "DAYS_OF_WEEK": {
+      "SUNDAY": "Sunday",
+      "MONDAY": "Monday",
+      "TUESDAY": "Tuesday",
+      "WEDNESDAY": "Wednesday",
+      "THURSDAY": "Thursday",
+      "FRIDAY": "Friday",
+      "SATURDAY": "Saturday"
     }
   }
 }

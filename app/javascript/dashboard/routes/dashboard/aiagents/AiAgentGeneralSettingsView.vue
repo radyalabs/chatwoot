@@ -312,6 +312,13 @@ async function chat() {
   }
 }
 
+function handleChatKeydown(event) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    chat();
+  }
+}
+
 function resetChat() {
   messages.value = [];
   sessionId.value = crypto.randomUUID();
@@ -631,16 +638,18 @@ function resetChat() {
               />
             </svg>
           </button>
-          <TextArea
-            v-model="chatInput"
-            class="w-full"
-            placeholder="Type your question"
-            auto-height
-            min-height="20px"
-            max-height="120px"
-            custom-text-area-class="resize-none"
-            :rows="1"
-          />
+          <div @keydown="handleChatKeydown">
+            <TextArea
+              v-model="chatInput"
+              class="w-full"
+              placeholder="Enter to send, Shift+Enter for new line"
+              auto-height
+              min-height="20px"
+              max-height="120px"
+              custom-text-area-class="resize-none"
+              :rows="1"
+            />
+          </div>
           <button
             class="ml-3 bg-green-600 text-white p-2 rounded-lg hover:bg-green-700 relative self-end mb-1"
             type="submit"

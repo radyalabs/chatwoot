@@ -2,6 +2,7 @@
 import { useAlert } from 'dashboard/composables';
 import Thumbnail from 'dashboard/components/widgets/Thumbnail.vue';
 import WhatsAppStatusIndicator from 'dashboard/components/widgets/WhatsAppStatusIndicator.vue';
+import Switch from 'dashboard/components/ui/Switch.vue';
 import { useAdmin } from 'dashboard/composables/useAdmin';
 import SettingsLayout from '../SettingsLayout.vue';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
@@ -18,6 +19,7 @@ const { isAdmin } = useAdmin();
 
 const showDeletePopup = ref(false);
 const selectedInbox = ref({});
+const togglingInboxIds = ref([]);
 
 const inboxesList = computed(() => getters['inboxes/getInboxes'].value);
 const uiFlags = computed(() => getters['inboxes/getUIFlags'].value);
@@ -62,7 +64,39 @@ const openDelete = inbox => {
   selectedInbox.value = inbox;
 };
 
-const isWhatsAppUnofficial = (inbox) => {
+const isToggling = inboxId => {
+  return togglingInboxIds.value.includes(inboxId);
+};
+
+const toggleAvailability = async (inbox, newStatus) => {
+  try {
+    togglingInboxIds.value.push(inbox.id);
+
+    await store.dispatch('inboxes/updateInbox', {
+      id: inbox.id,
+      formData: false,
+      channel_status: newStatus,
+    });
+
+    useAlert(
+      newStatus === true
+        ? t('INBOX_MGMT.ACTIVATE.API.SUCCESS_MESSAGE')
+        : t('INBOX_MGMT.DEACTIVATE.API.SUCCESS_MESSAGE')
+    );
+  } catch (error) {
+    useAlert(
+      newStatus === true
+        ? t('INBOX_MGMT.ACTIVATE.API.ERROR_MESSAGE')
+        : t('INBOX_MGMT.DEACTIVATE.API.ERROR_MESSAGE')
+    );
+  } finally {
+    togglingInboxIds.value = togglingInboxIds.value.filter(
+      id => id !== inbox.id
+    );
+  }
+};
+
+const isWhatsAppUnofficial = inbox => {
   return inbox.channel_type === 'Channel::WhatsappUnofficial';
 };
 
@@ -76,12 +110,16 @@ const handleStatusChanged = (inboxId, statusData) => {
 // Note: Status checking is handled by WhatsAppStatusIndicator component
 // which checks once on mount and receives updates via WebSocket
 
-const getChannelIcon = (inbox) => {
-  const icon = getInboxIconByType(inbox.channel_type, inbox.phone_number, 'fill');
+const getChannelIcon = inbox => {
+  const icon = getInboxIconByType(
+    inbox.channel_type,
+    inbox.phone_number,
+    'fill'
+  );
   return icon;
 };
 
-const getChannelIconColor = (inbox) => {
+const getChannelIconColor = inbox => {
   const channelType = inbox.channel_type;
 
   switch (channelType) {
@@ -109,23 +147,25 @@ const getChannelIconColor = (inbox) => {
   }
 };
 
-const getStatusTooltip = (inbox) => {
+const getStatusTooltip = inbox => {
   const status = whatsappStatus.value[inbox.id];
   if (!status) {
     return 'Status belum diketahui';
   }
-  
+
   const statusText = status.connected ? 'Terhubung' : 'Terputus';
   const lastChecked = status.lastChecked || status.lastUpdated;
-  const timeAgo = lastChecked ? new Date(lastChecked).toLocaleString('id-ID') : 'Tidak diketahui';
-  
+  const timeAgo = lastChecked
+    ? new Date(lastChecked).toLocaleString('id-ID')
+    : 'Tidak diketahui';
+
   return `Status: ${statusText}\nTerakhir update: ${timeAgo}`;
 };
 
 // Temporary function to test inline colors (for debugging)
-const getInlineColorStyle = (inbox) => {
+const getInlineColorStyle = inbox => {
   const channelType = inbox.channel_type;
-  
+
   switch (channelType) {
     case 'Channel::Whatsapp':
     case 'Channel::WhatsappUnofficial':
@@ -184,7 +224,11 @@ const getInlineColorStyle = (inbox) => {
         <tbody
           class="divide-y divide-slate-25 dark:divide-slate-800 flex-1 text-slate-700 dark:text-slate-100"
         >
-          <tr v-for="inbox in inboxesList" :key="inbox.id">
+          <tr
+            v-for="inbox in inboxesList"
+            :key="inbox.id"
+            :class="{ 'opacity-50': inbox.channel_status === false }"
+          >
             <td class="py-4 ltr:pr-4 rtl:pl-4">
               <div class="flex items-center flex-row gap-4">
                 <div class="relative">
@@ -199,15 +243,16 @@ const getInlineColorStyle = (inbox) => {
                     v-else
                     class="w-12 h-12 bg-black-50 dark:bg-black-800 rounded-full p-2 ring ring-opacity-20 dark:ring-opacity-80 ring-black-100 dark:ring-black-900 border border-slate-100 dark:border-slate-700/50 shadow-sm flex items-center justify-center"
                   >
-                    <i 
+                    <i
                       :class="`${getChannelIcon(inbox)} ${getChannelIconColor(inbox)} text-xl`"
                       :style="getInlineColorStyle(inbox)"
                     />
-                    <!-- Debug: Show class info -->
-                    <span class="sr-only">{{ getChannelIcon(inbox) }} {{ getChannelIconColor(inbox) }}</span>
+                    <span class="sr-only"
+                      >{{ getChannelIcon(inbox) }}
+                      {{ getChannelIconColor(inbox) }}</span
+                    >
                   </div>
-                  
-                  <!-- WhatsApp Status Indicator Circle - positioned at bottom-right corner of avatar -->
+
                   <div
                     v-if="isWhatsAppUnofficial(inbox)"
                     class="absolute -bottom-0 -right-1 z-10"
@@ -216,11 +261,13 @@ const getInlineColorStyle = (inbox) => {
                     <WhatsAppStatusIndicator
                       :inbox-id="inbox.id"
                       :account-id="$route.params.accountId"
-                      @status-changed="(data) => handleStatusChanged(inbox.id, data)"
+                      @status-changed="
+                        data => handleStatusChanged(inbox.id, data)
+                      "
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <span class="block font-medium capitalize">
                     {{ inbox.name }}
@@ -231,6 +278,23 @@ const getInlineColorStyle = (inbox) => {
                     :phone-number="inbox.phone_number"
                   />
                 </div>
+              </div>
+            </td>
+
+            <td class="py-4">
+              <div class="flex items-center justify-end gap-3">
+                <span class="text-sm text-slate-700 dark:text-slate-300">
+                  {{
+                    inbox.channel_status === true
+                      ? $t('INBOX_MGMT.STATUS.ACTIVE')
+                      : $t('INBOX_MGMT.STATUS.INACTIVE')
+                  }}
+                </span>
+                <Switch
+                  :model-value="inbox.channel_status === true"
+                  :disabled="isToggling(inbox.id) || !isAdmin"
+                  @input="newStatus => toggleAvailability(inbox, newStatus)"
+                />
               </div>
             </td>
 

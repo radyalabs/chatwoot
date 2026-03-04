@@ -293,6 +293,7 @@ const getInlineColorStyle = inbox => {
                 <Switch
                   :model-value="inbox.channel_status === true"
                   :disabled="isToggling(inbox.id) || !isAdmin"
+                  color="#389947"
                   @input="newStatus => toggleAvailability(inbox, newStatus)"
                 />
               </div>

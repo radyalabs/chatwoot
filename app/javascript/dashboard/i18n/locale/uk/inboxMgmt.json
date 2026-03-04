@@ -487,8 +487,8 @@
       "INBOX_AGENTS": "Агенти",
       "INBOX_AGENTS_SUB_TEXT": "Додати або вилучити агентів з скриньки Вхідні",
       "INBOX_AI_AGENTS": "AI Agents",
-"INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
-"AGENT_ASSIGNMENT": "Призначення до розмови",
+      "INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
+      "AGENT_ASSIGNMENT": "Призначення до розмови",
       "AGENT_ASSIGNMENT_SUB_TEXT": "Оновити налаштування призначення для бесіди",
       "UPDATE": "Оновити",
       "ENABLE_EMAIL_COLLECT_BOX": "Включити збір електронної пошти",
@@ -756,6 +756,15 @@
       "TELEGRAM": "Telegram",
       "LINE": "Line",
       "API": "API канал"
+    },
+    "DAYS_OF_WEEK": {
+      "SUNDAY": "Неділя",
+      "MONDAY": "Понеділок",
+      "TUESDAY": "Вівторок",
+      "WEDNESDAY": "Середа",
+      "THURSDAY": "Четвер",
+      "FRIDAY": "П'ятниця",
+      "SATURDAY": "Субота"
     }
   }
 }

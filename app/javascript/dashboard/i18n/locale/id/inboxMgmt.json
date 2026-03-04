@@ -687,14 +687,14 @@
       }
     },
     "BUSINESS_HOURS": {
-      "TITLE": "Jadwal Operasional Bot",
-      "SUBTITLE": "Tentukan kapan bot atau channel dinonaktifkan secara otomatis",
+      "TITLE": "Atur Ketersediaan Bot",
+      "SUBTITLE": "Tentukan kapan bot aktif untuk merespons pesan dari pelanggan.",
       "WEEKLY_TITLE": "Tetapkan jam mingguan Anda",
       "TIMEZONE_LABEL": "Pilih zona waktu",
       "UPDATE": "Perbarui pengaturan jam kerja",
-      "TOGGLE_AVAILABILITY": "Aktifkan jadwal nonaktif untuk kotak masuk ini",
+      "TOGGLE_AVAILABILITY": "Aktifkan Jadwal Ketersediaan Bot untuk Kotak Masuk Ini",
       "UNAVAILABLE_MESSAGE_LABEL": "Pesan tidak tersedia untuk pengunjung",
-      "TOGGLE_HELP": "Menu ini digunakan untuk mengatur jadwal pembatasan operasional bot. Saat fitur diaktifkan, bot akan otomatis nonaktif pada hari dan jam yang telah ditentukan, dan kembali aktif di luar jadwal tersebut.",
+      "TOGGLE_HELP": "Jika diaktifkan, bot hanya akan merespons pesan selama jam operasional yang ditentukan. Di luar jam tersebut, bot tidak akan aktif.",
       "DAY": {
         "ENABLE": "Aktifkan ketersediaan untuk hari ini",
         "UNAVAILABLE": "Tidak tersedia",

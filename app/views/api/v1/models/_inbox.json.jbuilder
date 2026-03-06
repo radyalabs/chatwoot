@@ -18,7 +18,7 @@ json.allow_messages_after_resolved resource.allow_messages_after_resolved
 json.lock_to_single_conversation resource.lock_to_single_conversation
 json.sender_name_type resource.sender_name_type
 json.business_name resource.business_name
-json.availability_type resource.availability_type
+json.channel_status resource.channel_status
 
 if resource.portal.present?
   json.help_center do

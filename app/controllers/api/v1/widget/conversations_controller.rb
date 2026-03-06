@@ -96,8 +96,6 @@ class Api::V1::Widget::ConversationsController < Api::V1::Widget::BaseController
   end
 
   def channel_available?
-    return true unless inbox.working_hours_enabled?
-
-    inbox.availability_type != 'turn_off_channel'
+    inbox.channel_status
   end
 end

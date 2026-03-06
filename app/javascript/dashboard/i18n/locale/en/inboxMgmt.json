@@ -499,6 +499,22 @@
         "AVATAR_ERROR_MESSAGE": "Could not delete the inbox avatar. Please try again later."
       }
     },
+    "ACTIVATE": {
+      "API": {
+        "SUCCESS_MESSAGE": "Inbox activated successfully",
+        "ERROR_MESSAGE": "Could not activate inbox. Please try again later."
+      }
+    },
+    "DEACTIVATE": {
+      "API": {
+        "SUCCESS_MESSAGE": "Inbox deactivated successfully",
+        "ERROR_MESSAGE": "Could not deactivate inbox. Please try again later."
+      }
+    },
+    "STATUS": {
+      "ACTIVE": "Active",
+      "INACTIVE": "Inactive"
+    },
     "TABS": {
       "SETTINGS": "Settings",
       "COLLABORATORS": "Collaborators",
@@ -608,14 +624,14 @@
       }
     },
     "BUSINESS_HOURS": {
-      "TITLE": "Bot Operating Schedule",
-      "SUBTITLE": "Determine when bots or channels are automatically deactivated",
+      "TITLE": "Bot Availability",
+      "SUBTITLE": "Set when the bot is active to respond to customer messages.",
       "WEEKLY_TITLE": "Set your weekly hours",
       "TIMEZONE_LABEL": "Select timezone",
       "UPDATE": "Update business hours settings",
-      "TOGGLE_AVAILABILITY": "Enable the inactive schedule for this inbox",
+      "TOGGLE_AVAILABILITY": "Enable Bot Availability Schedule for This Inbox",
       "UNAVAILABLE_MESSAGE_LABEL": "Unavailable message for visitors",
-      "TOGGLE_HELP": "This menu is used to set the bot's operational restrictions schedule. When this feature is enabled, the bot will automatically be deactivated on the specified days and times, and will be reactivated outside of that schedule.",
+      "TOGGLE_HELP": "When enabled, the bot will only respond to messages during the configured business hours. Outside of these hours, the bot will remain inactive.",
       "DAY": {
         "ENABLE": "Enable availability for this day",
         "UNAVAILABLE": "Unavailable",
@@ -624,11 +640,7 @@
         "CHOOSE": "Choose"
       },
       "ALL_DAY": "All-Day",
-      "AVAILABILITY_TYPE_LABEL": "Inactive Settings",
-      "AVAILABILITY_TYPE": {
-        "TURN_OFF_BOT": "Turn Off Bot",
-        "TURN_OFF_CHANNEL": "Turn Off Channel"
-      }
+      "AVAILABILITY_TYPE_LABEL": "Inactive Settings"
     },
     "IMAP": {
       "TITLE": "IMAP",

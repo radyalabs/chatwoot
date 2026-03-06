@@ -27,7 +27,7 @@ export default {
     },
     toTimeSlots() {
       return timeSlots.filter(slot => {
-        return slot !== '12:00 AM';
+        return slot !== '00:00';
       });
     },
     isDayEnabled: {
@@ -58,7 +58,7 @@ export default {
         return this.timeSlot.from;
       },
       set(value) {
-        const fromDate = parse(value, 'hh:mm a', new Date());
+        const fromDate = parse(value, 'HH:mm', new Date());
         const valid = differenceInMinutes(this.toDate, fromDate) / 60 > 0;
         this.$emit('update', {
           ...this.timeSlot,
@@ -72,8 +72,8 @@ export default {
         return this.timeSlot.to;
       },
       set(value) {
-        const toDate = parse(value, 'hh:mm a', new Date());
-        if (value === '12:00 AM') {
+        const toDate = parse(value, 'HH:mm', new Date());
+        if (value === '00:00') {
           this.$emit('update', {
             ...this.timeSlot,
             to: value,
@@ -90,10 +90,10 @@ export default {
       },
     },
     fromDate() {
-      return parse(this.fromTime, 'hh:mm a', new Date());
+      return parse(this.fromTime, 'HH:mm', new Date());
     },
     toDate() {
-      return parse(this.toTime, 'hh:mm a', new Date());
+      return parse(this.toTime, 'HH:mm', new Date());
     },
     totalHours() {
       if (this.timeSlot.openAllDay) {
@@ -113,16 +113,16 @@ export default {
         if (value) {
           this.$emit('update', {
             ...this.timeSlot,
-            from: '12:00 AM',
-            to: '11:59 PM',
+            from: '00:00',
+            to: '23:59',
             valid: true,
             openAllDay: value,
           });
         } else {
           this.$emit('update', {
             ...this.timeSlot,
-            from: '09:00 AM',
-            to: '05:00 PM',
+            from: '09:00',
+            to: '17:00',
             valid: true,
             openAllDay: value,
           });

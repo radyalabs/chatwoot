@@ -35,21 +35,6 @@ export default {
       isBusinessHoursEnabled: false,
       unavailableMessage: '',
       timeZone: DEFAULT_TIMEZONE,
-      availabilityType: null,
-      availabilityOptions: [
-        {
-          label: this.$t(
-            'INBOX_MGMT.BUSINESS_HOURS.AVAILABILITY_TYPE.TURN_OFF_BOT'
-          ),
-          value: 'turn_off_bot',
-        },
-        {
-          label: this.$t(
-            'INBOX_MGMT.BUSINESS_HOURS.AVAILABILITY_TYPE.TURN_OFF_CHANNEL'
-          ),
-          value: 'turn_off_channel',
-        },
-      ],
       timeSlots: [...defaultTimeSlot],
     };
   },
@@ -101,7 +86,6 @@ export default {
         out_of_office_message: unavailableMessage,
         working_hours: timeSlots = [],
         timezone: timeZone,
-        availability_type: availabilityTypeValue = 'turn_off_bot',
       } = this.inbox;
       const slots = timeSlotParse(timeSlots).length
         ? timeSlotParse(timeSlots)
@@ -112,10 +96,6 @@ export default {
       this.timeZone =
         this.timeZones.find(item => timeZone === item.value) ||
         DEFAULT_TIMEZONE;
-      this.availabilityType =
-        this.availabilityOptions.find(
-          item => item.value === availabilityTypeValue
-        ) || this.availabilityOptions[0];
     },
     onSlotUpdate(slotIndex, slotData) {
       this.timeSlots = this.timeSlots.map(item =>
@@ -131,9 +111,6 @@ export default {
           out_of_office_message: this.unavailableMessage,
           working_hours: timeSlotTransform(this.timeSlots),
           timezone: this.timeZone.value,
-          availability_type: this.availabilityType
-            ? this.availabilityType.value
-            : 'turn_off_bot',
           channel: {},
         };
         await this.$store.dispatch('inboxes/updateInbox', payload);
@@ -202,28 +179,7 @@ export default {
             />
           </div>
 
-          <div class="availability-type-input-wrap">
-            <label>
-              {{ $t('INBOX_MGMT.BUSINESS_HOURS.AVAILABILITY_TYPE_LABEL') }}
-            </label>
-            <multiselect
-              v-model="availabilityType"
-              :options="availabilityOptions"
-              track-by="value"
-              label="label"
-              :searchable="false"
-              :allow-empty="false"
-              deselect-label=""
-              select-label=""
-              selected-label=""
-            />
-          </div>
-
-          <div
-            v-if="
-              availabilityType && availabilityType.value !== 'turn_off_channel'
-            "
-          >
+          <div>
             <label>
               {{ $t('INBOX_MGMT.BUSINESS_HOURS.WEEKLY_TITLE') }}
             </label>
@@ -249,14 +205,6 @@ export default {
 <style lang="scss" scoped>
 .timezone-input-wrap {
   @apply max-w-[37.5rem];
-
-  &::v-deep .multiselect {
-    @apply mt-2;
-  }
-}
-
-.availability-type-input-wrap {
-  @apply max-w-[37.5rem] mb-6;
 
   &::v-deep .multiselect {
     @apply mt-2;

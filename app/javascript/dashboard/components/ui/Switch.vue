@@ -3,8 +3,14 @@ export default {
   props: {
     modelValue: { type: Boolean, default: false },
     size: { type: String, default: '' },
+    color: { type: String, default: '' },
   },
   emits: ['update:modelValue', 'input'],
+  computed: {
+    activeColor() {
+      return this.color || 'var(--w-500)';
+    },
+  },
   methods: {
     onClick() {
       this.$emit('update:modelValue', !this.modelValue);
@@ -21,6 +27,7 @@ export default {
     :class="{ active: modelValue, small: size === 'small' }"
     role="switch"
     :aria-checked="modelValue.toString()"
+    :style="modelValue ? { '--active-color': activeColor } : {}"
     @click="onClick"
   >
     <span aria-hidden="true" :class="{ active: modelValue }" />
@@ -46,7 +53,7 @@ export default {
   width: 34px;
 
   &.active {
-    background-color: var(--w-500);
+    background-color: var(--active-color, var(--w-500));
   }
 
   &.small {

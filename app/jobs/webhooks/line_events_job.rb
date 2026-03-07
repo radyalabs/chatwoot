@@ -13,6 +13,10 @@ class Webhooks::LineEventsJob < ApplicationJob
 
   def valid_event_payload?
     @channel = Channel::Line.find_by(line_channel_id: @params[:line_channel_id]) if @params[:line_channel_id]
+    return false unless @channel
+    return false unless channel_available?(@channel)
+
+    true
   end
 
   # https://developers.line.biz/en/reference/messaging-api/#signature-validation
@@ -20,5 +24,9 @@ class Webhooks::LineEventsJob < ApplicationJob
   def valid_post_body?(post_body, signature)
     hash = OpenSSL::HMAC.digest(OpenSSL::Digest.new('SHA256'), @channel.line_channel_secret, post_body)
     Base64.strict_encode64(hash) == signature
+  end
+
+  def channel_available?(channel)
+    channel.inbox.channel_status
   end
 end

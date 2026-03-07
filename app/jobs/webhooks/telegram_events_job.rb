@@ -8,6 +8,7 @@ class Webhooks::TelegramEventsJob < ApplicationJob
 
     channel = Channel::Telegram.find_by(bot_token: params[:bot_token])
     return unless channel
+    return unless channel_available?(channel)
 
     process_event_params(channel, params)
   end
@@ -22,5 +23,9 @@ class Webhooks::TelegramEventsJob < ApplicationJob
     else
       Telegram::IncomingMessageService.new(inbox: channel.inbox, params: params['telegram'].with_indifferent_access).perform
     end
+  end
+
+  def channel_available?(channel)
+    channel.inbox.channel_status
   end
 end

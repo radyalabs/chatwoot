@@ -13,8 +13,8 @@ import {
 } from '../helpers/businessHour';
 
 const DEFAULT_TIMEZONE = {
-  label: 'Pacific Time (US & Canada) (GMT-07:00)',
-  value: 'America/Los_Angeles',
+  label: 'Jakarta (GMT+07:00)',
+  value: 'Asia/Jakarta',
 };
 
 export default {
@@ -35,20 +35,22 @@ export default {
       isBusinessHoursEnabled: false,
       unavailableMessage: '',
       timeZone: DEFAULT_TIMEZONE,
-      dayNames: {
-        0: 'Sunday',
-        1: 'Monday',
-        2: 'Tuesday',
-        3: 'Wednesday',
-        4: 'Thursday',
-        5: 'Friday',
-        6: 'Saturday',
-      },
       timeSlots: [...defaultTimeSlot],
     };
   },
   computed: {
     ...mapGetters({ uiFlags: 'inboxes/getUIFlags' }),
+    dayNames() {
+      return {
+        0: this.$t('INBOX_MGMT.DAYS_OF_WEEK.SUNDAY'),
+        1: this.$t('INBOX_MGMT.DAYS_OF_WEEK.MONDAY'),
+        2: this.$t('INBOX_MGMT.DAYS_OF_WEEK.TUESDAY'),
+        3: this.$t('INBOX_MGMT.DAYS_OF_WEEK.WEDNESDAY'),
+        4: this.$t('INBOX_MGMT.DAYS_OF_WEEK.THURSDAY'),
+        5: this.$t('INBOX_MGMT.DAYS_OF_WEEK.FRIDAY'),
+        6: this.$t('INBOX_MGMT.DAYS_OF_WEEK.SATURDAY'),
+      };
+    },
     hasError() {
       if (!this.isBusinessHoursEnabled) return false;
       return this.timeSlots.filter(slot => slot.from && !slot.valid).length > 0;
@@ -67,8 +69,11 @@ export default {
     },
   },
   watch: {
-    inbox() {
-      this.setDefaults();
+    inbox(newInbox, oldInbox) {
+      // Only reset when switching to a different inbox, not when data is updated
+      if (!oldInbox || newInbox.id !== oldInbox.id) {
+        this.setDefaults();
+      }
     },
   },
   mounted() {
@@ -138,7 +143,7 @@ export default {
           {{ $t('INBOX_MGMT.BUSINESS_HOURS.TOGGLE_HELP') }}
         </p>
         <div v-if="isBusinessHoursEnabled" class="mb-6">
-          <div class="max-w-[37.5rem]">
+          <div v-if="false" class="max-w-[37.5rem]">
             <label class="unavailable-input-wrap">
               {{ $t('INBOX_MGMT.BUSINESS_HOURS.UNAVAILABLE_MESSAGE_LABEL') }}
             </label>
@@ -174,16 +179,18 @@ export default {
             />
           </div>
 
-          <label>
-            {{ $t('INBOX_MGMT.BUSINESS_HOURS.WEEKLY_TITLE') }}
-          </label>
-          <BusinessDay
-            v-for="timeSlot in timeSlots"
-            :key="timeSlot.day"
-            :day-name="dayNames[timeSlot.day]"
-            :time-slot="timeSlot"
-            @update="data => onSlotUpdate(timeSlot.day, data)"
-          />
+          <div>
+            <label>
+              {{ $t('INBOX_MGMT.BUSINESS_HOURS.WEEKLY_TITLE') }}
+            </label>
+            <BusinessDay
+              v-for="timeSlot in timeSlots"
+              :key="timeSlot.day"
+              :day-name="dayNames[timeSlot.day]"
+              :time-slot="timeSlot"
+              @update="data => onSlotUpdate(timeSlot.day, data)"
+            />
+          </div>
         </div>
         <woot-submit-button
           :button-text="$t('INBOX_MGMT.BUSINESS_HOURS.UPDATE')"

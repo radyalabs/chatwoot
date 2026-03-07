@@ -19,8 +19,13 @@ class Webhooks::WhatsappEventsJob < ApplicationJob
     return true if channel.blank?
     return true if channel.reauthorization_required?
     return true unless channel.account.active?
+    return true unless channel_available?(channel)
 
     false
+  end
+
+  def channel_available?(channel)
+    channel.inbox.channel_status
   end
 
   def find_channel_by_url_param(params)

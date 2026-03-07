@@ -487,8 +487,8 @@
       "INBOX_AGENTS": "พนักงาน",
       "INBOX_AGENTS_SUB_TEXT": "เพิ่มหรือลบพนักงานจากกล่องสนทนานี้",
       "INBOX_AI_AGENTS": "AI Agents",
-"INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
-"AGENT_ASSIGNMENT": "Conversation Assignment",
+      "INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
+      "AGENT_ASSIGNMENT": "Conversation Assignment",
       "AGENT_ASSIGNMENT_SUB_TEXT": "Update conversation assignment settings",
       "UPDATE": "อัพเดท",
       "ENABLE_EMAIL_COLLECT_BOX": "เปิดใช้งานกล่องรวมอีเมล",
@@ -756,6 +756,15 @@
       "TELEGRAM": "Telegram",
       "LINE": "Line",
       "API": "ช่อง API"
+    },
+    "DAYS_OF_WEEK": {
+      "SUNDAY": "Sunday",
+      "MONDAY": "Monday",
+      "TUESDAY": "Tuesday",
+      "WEDNESDAY": "Wednesday",
+      "THURSDAY": "Thursday",
+      "FRIDAY": "Friday",
+      "SATURDAY": "Saturday"
     }
   }
 }

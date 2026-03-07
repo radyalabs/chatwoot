@@ -8,6 +8,7 @@
 #  allow_messages_after_resolved :boolean          default(TRUE)
 #  auto_assignment_config        :jsonb
 #  business_name                 :string
+#  channel_status                :boolean          default(TRUE)
 #  channel_type                  :string
 #  csat_survey_enabled           :boolean          default(FALSE)
 #  email_address                 :string
@@ -31,6 +32,7 @@
 #
 #  index_inboxes_on_account_id                   (account_id)
 #  index_inboxes_on_channel_id_and_channel_type  (channel_id,channel_type)
+#  index_inboxes_on_channel_status               (channel_status)
 #  index_inboxes_on_portal_id                    (portal_id)
 #
 # Foreign Keys

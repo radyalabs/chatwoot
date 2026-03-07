@@ -11,6 +11,7 @@ class SuperAdmin::ApplicationController < Administrate::ApplicationController
   helper_method :render_vue_component
   # authenticiation done via devise : SuperAdmin Model
   before_action :authenticate_super_admin!
+  around_action :set_time_zone
 
   # Override this value to specify the number of elements to display at a time
   # on index pages. Defaults to 20.
@@ -43,5 +44,11 @@ class SuperAdmin::ApplicationController < Administrate::ApplicationController
     flash[:error] = 'Invalid action performed'
     # rubocop:enable Rails/I18nLocaleTexts
     redirect_back(fallback_location: root_path)
+  end
+
+  def set_time_zone(&)
+    tz = cookies[:browser_tz] || 'UTC'
+    tz = 'UTC' unless ActiveSupport::TimeZone[tz]
+    Time.use_zone(tz, &)
   end
 end

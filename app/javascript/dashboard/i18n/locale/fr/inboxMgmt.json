@@ -487,8 +487,8 @@
       "INBOX_AGENTS": "Agents",
       "INBOX_AGENTS_SUB_TEXT": "Ajouter ou supprimer des agents de cette boîte de réception",
       "INBOX_AI_AGENTS": "AI Agents",
-"INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
-"AGENT_ASSIGNMENT": "Konversationsauftrag",
+      "INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
+      "AGENT_ASSIGNMENT": "Konversationsauftrag",
       "AGENT_ASSIGNMENT_SUB_TEXT": "Aktualisieren Sie die Konversationszuweisungseinstellungen",
       "UPDATE": "Mettre à jour",
       "ENABLE_EMAIL_COLLECT_BOX": "Activer la boîte de collecte des courriels",
@@ -756,6 +756,15 @@
       "TELEGRAM": "Telegram",
       "LINE": "Line",
       "API": "Canal API"
+    },
+    "DAYS_OF_WEEK": {
+      "SUNDAY": "Dimanche",
+      "MONDAY": "Lundi",
+      "TUESDAY": "Mardi",
+      "WEDNESDAY": "Mercredi",
+      "THURSDAY": "Jeudi",
+      "FRIDAY": "Vendredi",
+      "SATURDAY": "Samedi"
     }
   }
 }

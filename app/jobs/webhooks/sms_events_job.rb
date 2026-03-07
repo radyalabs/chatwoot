@@ -18,11 +18,17 @@ class Webhooks::SmsEventsJob < ApplicationJob
     if delivery_event?(params)
       Sms::DeliveryStatusService.new(channel: channel, params: params[:message].with_indifferent_access).perform
     else
+      return unless channel_available?(channel)
+
       Sms::IncomingMessageService.new(inbox: channel.inbox, params: params[:message].with_indifferent_access).perform
     end
   end
 
   def delivery_event?(params)
     params[:type] == 'message-delivered' || params[:type] == 'message-failed'
+  end
+
+  def channel_available?(channel)
+    channel.inbox.channel_status
   end
 end

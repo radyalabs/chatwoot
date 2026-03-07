@@ -12,16 +12,20 @@ class Captain::Copilot::MessageContext
     @account ||= Account.find_by(id: @account_id)
   end
 
+  def agent_bot_inbox
+    @agent_bot_inbox ||= AgentBotInbox
+                         .where.not(ai_agent_id: nil)
+                         .find_by(status: 1, inbox_id: @inbox_id)
+  end
+
   def inbox
-    @inbox ||= AgentBotInbox
-               .where.not(ai_agent_id: nil)
-               .find_by(status: 1, inbox_id: @inbox_id)
+    @inbox ||= @conversation.inbox
   end
 
   def ai_agent
-    return nil unless inbox
+    return nil unless agent_bot_inbox
 
-    @ai_agent ||= AiAgent.find_by(id: inbox.ai_agent_id)
+    @ai_agent ||= AiAgent.find_by(id: agent_bot_inbox.ai_agent_id)
   end
 
   def subscription
@@ -36,5 +40,11 @@ class Captain::Copilot::MessageContext
 
   def active_conversation
     @active_conversation ||= Conversation.find_by(assignee_id: nil, inbox_id: @inbox_id, id: @conversation.id)
+  end
+
+  def bot_available?
+    return true unless inbox.working_hours_enabled?
+
+    inbox.working_now?
   end
 end

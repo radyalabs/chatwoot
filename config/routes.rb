@@ -731,6 +731,8 @@ Rails.application.routes.draw do
         delete :avatar, on: :member, action: :destroy_avatar
       end
       resources :platform_apps, only: [:index, :new, :create, :show, :edit, :update]
+      resources :email_senders, only: [:index, :show]
+      resources :account_timelines, only: [:index, :show]
       resource :instance_status, only: [:show]
 
       resource :settings, only: [:show] do

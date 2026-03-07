@@ -487,8 +487,8 @@
       "INBOX_AGENTS": "Agenti",
       "INBOX_AGENTS_SUB_TEXT": "Aggiungi o rimuovi agenti da questa casella",
       "INBOX_AI_AGENTS": "AI Agents",
-"INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
-"AGENT_ASSIGNMENT": "Assegnazione conversazione",
+      "INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
+      "AGENT_ASSIGNMENT": "Assegnazione conversazione",
       "AGENT_ASSIGNMENT_SUB_TEXT": "Aggiorna le impostazioni di assegnazione della conversazione",
       "UPDATE": "Aggiorna",
       "ENABLE_EMAIL_COLLECT_BOX": "Abilita casella di raccolta email",
@@ -756,6 +756,15 @@
       "TELEGRAM": "Telegram",
       "LINE": "Line",
       "API": "Canale API"
+    },
+    "DAYS_OF_WEEK": {
+      "SUNDAY": "Sunday",
+      "MONDAY": "Monday",
+      "TUESDAY": "Tuesday",
+      "WEDNESDAY": "Wednesday",
+      "THURSDAY": "Thursday",
+      "FRIDAY": "Friday",
+      "SATURDAY": "Saturday"
     }
   }
 }

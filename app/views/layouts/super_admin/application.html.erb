@@ -25,6 +25,21 @@ By default, it renders:
   <%= vite_client_tag %>
   <%= vite_javascript_tag 'superadmin' %>
   <%= csrf_meta_tags %>
+
+  <script>
+    (function() {
+      try {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        // console.log("Detected browser timezone:", tz);
+
+        if (!document.cookie.includes("browser_tz")) {
+          document.cookie = `browser_tz=${tz}; path=/`;
+        }
+      } catch(e) {
+        // console.warn("Failed to detect browser timezone", e);
+      }
+    })();
+  </script>
 </head>
 <body class="antialiased w-full h-full">
   <%= render "icons" %>

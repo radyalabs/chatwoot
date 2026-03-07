@@ -16,6 +16,8 @@ as defined by the routes in the `admin/` namespace
     users: 'icon-user-follow-line',
     platform_apps: 'icon-apps-2-line',
     agent_bots: 'icon-robot-line',
+    email_senders: 'icon-mail-send-line',
+    account_timelines: 'icon-time-line',
   }
 %>
 
@@ -32,7 +34,7 @@ as defined by the routes in the `admin/` namespace
     <ul class="my-4">
       <%= render partial: "nav_item", locals: { icon: 'icon-grid-line', url: super_admin_root_url, label: 'Dashboard' } %>
       <% Administrate::Namespace.new(namespace).resources.each do |resource| %>
-        <% next if ["account_users", "access_tokens", "installation_configs", "dashboard", "devise/sessions", "app_configs", "instance_statuses", "settings", "contact_conversations"].include?  resource.resource %>
+        <% next if ["account_users", "access_tokens", "installation_configs", "dashboard", "devise/sessions", "app_configs", "instance_statuses", "settings", "contact_conversations", "account_timelines"].include?  resource.resource %>
         <%= render partial: "nav_item", locals: {
             icon: sidebar_icons[resource.resource.to_sym],
             url: resource_index_route(resource),
@@ -40,6 +42,13 @@ as defined by the routes in the `admin/` namespace
           }
         %>
       <% end %>
+      
+      <%= render partial: "nav_item", locals: {
+          icon: sidebar_icons[:account_timelines],
+          url: super_admin_account_timelines_path,
+          label: 'Account Timelines',
+        }
+      %>
     </ul>
   </div>
   <div>

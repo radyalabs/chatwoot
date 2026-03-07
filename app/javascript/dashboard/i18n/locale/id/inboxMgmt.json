@@ -8,6 +8,15 @@
     "LIST": {
       "404": "Tidak ada Platform Terhubung yang dilampirkan ke akun ini."
     },
+    "DAYS_OF_WEEK": {
+      "SUNDAY": "Minggu",
+      "MONDAY": "Senin",
+      "TUESDAY": "Selasa",
+      "WEDNESDAY": "Rabu",
+      "THURSDAY": "Kamis",
+      "FRIDAY": "Jumat",
+      "SATURDAY": "Sabtu"
+    },
     "CREATE_FLOW": {
       "CHANNEL": {
         "TITLE": "Pilih Channel",
@@ -32,8 +41,8 @@
     },
     "ADD": {
       "QRCODE": {
-        "TITLE": "Pindai Kode QR",
-        "DESC": "Pindai kode QR di bawah ini dengan aplikasi WhatsApp Anda untuk terhubung"
+        "TITLE": "Hubungkan WhatsApp Anda",
+        "DESC": "Untuk mulai menggunakan Bot AI, silakan sambungkan akun WhatsApp Bisnis Anda dengan memindai kode QR di bawah ini"
       },
       "WHATSAPP_UNOFFICIAL_CHANNEL": {
         "TITLE": "Tambah Channel WhatsApp Non-Bisnis",
@@ -84,10 +93,6 @@
         "TWEETS": {
           "ENABLE": "Buat percakapan dari Tweet yang disebutkan"
         }
-      },
-      "QRCODE": {
-        "TITLE": "Hubungkan WhatsApp Anda",
-        "DESC": "Untuk mulai menggunakan Bot AI, silakan sambungkan akun WhatsApp Bisnis Anda dengan memindai kode QR di bawah ini"
       },
       "WEBSITE_CHANNEL": {
         "TITLE": "Channel Website",
@@ -557,6 +562,22 @@
         "AVATAR_ERROR_MESSAGE": "Tidak dapat menghapus avatar kotak masuk. Silakan coba lagi nanti."
       }
     },
+    "ACTIVATE": {
+      "API": {
+        "SUCCESS_MESSAGE": "Kotak masuk berhasil diaktifkan",
+        "ERROR_MESSAGE": "Tidak dapat mengaktifkan kotak masuk. Silakan coba lagi nanti."
+      }
+    },
+    "DEACTIVATE": {
+      "API": {
+        "SUCCESS_MESSAGE": "Kotak masuk berhasil dinonaktifkan",
+        "ERROR_MESSAGE": "Tidak dapat menonaktifkan kotak masuk. Silakan coba lagi nanti."
+      }
+    },
+    "STATUS": {
+      "ACTIVE": "Aktif",
+      "INACTIVE": "Nonaktif"
+    },
     "TABS": {
       "SETTINGS": "Pengaturan",
       "COLLABORATORS": "Kolaborator",
@@ -577,7 +598,7 @@
     },
     "SETTINGS_POPUP": {
       "MESSENGER_HEADING": "Skrip Messenger",
-      "DISABLE_AUTO_ASSIGNMENT_FIRST" : "Tolong Matikan Penugasan Automatis Terlebih dahulu",
+      "DISABLE_AUTO_ASSIGNMENT_FIRST": "Tolong Matikan Penugasan Automatis Terlebih dahulu",
       "MESSENGER_SUB_HEAD": "Tempatkan tombol ini di dalam tag <body> Anda",
       "INBOX_AGENTS": "Agen",
       "INBOX_AGENTS_SUB_TEXT": "Tambahkan atau hapus agen dari kotak masuk ini",
@@ -666,14 +687,14 @@
       }
     },
     "BUSINESS_HOURS": {
-      "TITLE": "Atur ketersediaan Anda",
-      "SUBTITLE": "Atur ketersediaan Anda di widget livechat",
+      "TITLE": "Atur Ketersediaan Bot",
+      "SUBTITLE": "Tentukan kapan bot aktif untuk merespons pesan dari pelanggan.",
       "WEEKLY_TITLE": "Tetapkan jam mingguan Anda",
       "TIMEZONE_LABEL": "Pilih zona waktu",
       "UPDATE": "Perbarui pengaturan jam kerja",
-      "TOGGLE_AVAILABILITY": "Aktifkan ketersediaan bisnis untuk kotak masuk ini",
+      "TOGGLE_AVAILABILITY": "Aktifkan Jadwal Ketersediaan Bot untuk Kotak Masuk Ini",
       "UNAVAILABLE_MESSAGE_LABEL": "Pesan tidak tersedia untuk pengunjung",
-      "TOGGLE_HELP": "Dengan mengaktifkan ketersediaan bisnis, jam operasional akan ditampilkan pada widget live chat meskipun agen offline. Di luar jam operasional, pengunjung akan mendapat peringatan melalui pesan dan formulir pra-chat.",
+      "TOGGLE_HELP": "Jika diaktifkan, bot hanya akan merespons pesan selama jam operasional yang ditentukan. Di luar jam tersebut, bot tidak akan aktif.",
       "DAY": {
         "ENABLE": "Aktifkan ketersediaan untuk hari ini",
         "UNAVAILABLE": "Tidak tersedia",
@@ -681,7 +702,8 @@
         "VALIDATION_ERROR": "Waktu mulai harus sebelum waktu tutup.",
         "CHOOSE": "Pilih"
       },
-      "ALL_DAY": "Sepanjang hari"
+      "ALL_DAY": "Sepanjang hari",
+      "AVAILABILITY_TYPE_LABEL": "Pengaturan Non Aktif"
     },
     "IMAP": {
       "TITLE": "IMAP",

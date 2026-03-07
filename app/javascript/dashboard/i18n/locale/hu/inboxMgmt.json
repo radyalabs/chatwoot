@@ -487,8 +487,8 @@
       "INBOX_AGENTS": "Ügynökök",
       "INBOX_AGENTS_SUB_TEXT": "Ügynökök hosszáadása vagy eltávolítása az inboxból",
       "INBOX_AI_AGENTS": "AI Agents",
-"INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
-"AGENT_ASSIGNMENT": "Beszélgetés hozzárendelés",
+      "INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
+      "AGENT_ASSIGNMENT": "Beszélgetés hozzárendelés",
       "AGENT_ASSIGNMENT_SUB_TEXT": "Beszélgetés hozzárendelés beállítások frissítése",
       "UPDATE": "Frissítés",
       "ENABLE_EMAIL_COLLECT_BOX": "E-mail gyűjtődoboz engedélyezése",
@@ -756,6 +756,15 @@
       "TELEGRAM": "Telegram",
       "LINE": "Line",
       "API": "API csatorna"
+    },
+    "DAYS_OF_WEEK": {
+      "SUNDAY": "vasárnap",
+      "MONDAY": "hétfő",
+      "TUESDAY": "kedd",
+      "WEDNESDAY": "szerda",
+      "THURSDAY": "csütörtök",
+      "FRIDAY": "péntek",
+      "SATURDAY": "szombat"
     }
   }
 }

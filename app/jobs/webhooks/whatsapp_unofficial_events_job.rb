@@ -12,6 +12,7 @@ class Webhooks::WhatsappUnofficialEventsJob < ApplicationJob
 
     channel = find_channel_by_phone_number(params)
     return if channel.blank?
+    return unless channel_available?(channel)
 
     case channel.provider
     when 'gowa'
@@ -44,5 +45,9 @@ class Webhooks::WhatsappUnofficialEventsJob < ApplicationJob
 
   def allowed_events(params)
     ALLOWED_EVENTS.select { |event| params.key?(event) }
+  end
+
+  def channel_available?(channel)
+    channel.inbox.channel_status
   end
 end

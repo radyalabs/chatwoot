@@ -499,6 +499,22 @@
         "AVATAR_ERROR_MESSAGE": "Could not delete the inbox avatar. Please try again later."
       }
     },
+    "ACTIVATE": {
+      "API": {
+        "SUCCESS_MESSAGE": "Inbox activated successfully",
+        "ERROR_MESSAGE": "Could not activate inbox. Please try again later."
+      }
+    },
+    "DEACTIVATE": {
+      "API": {
+        "SUCCESS_MESSAGE": "Inbox deactivated successfully",
+        "ERROR_MESSAGE": "Could not deactivate inbox. Please try again later."
+      }
+    },
+    "STATUS": {
+      "ACTIVE": "Active",
+      "INACTIVE": "Inactive"
+    },
     "TABS": {
       "SETTINGS": "Settings",
       "COLLABORATORS": "Collaborators",
@@ -519,13 +535,13 @@
     },
     "SETTINGS_POPUP": {
       "MESSENGER_HEADING": "Messenger Script",
-      "DISABLE_AUTO_ASSIGNMENT_FIRST" : "Please Turn Off Auto Assignment First",
+      "DISABLE_AUTO_ASSIGNMENT_FIRST": "Please Turn Off Auto Assignment First",
       "MESSENGER_SUB_HEAD": "Place this button inside your body tag",
       "INBOX_AGENTS": "Agents",
       "INBOX_AGENTS_SUB_TEXT": "Add or remove agents from this inbox",
       "INBOX_AI_AGENTS": "AI Agents",
-"INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
-"AGENT_ASSIGNMENT": "Conversation Assignment",
+      "INBOX_AI_AGENTS_SUB_TEXT": "Manage AI agents from this inbox",
+      "AGENT_ASSIGNMENT": "Conversation Assignment",
       "AGENT_ASSIGNMENT_SUB_TEXT": "Update conversation assignment settings",
       "UPDATE": "Update",
       "ENABLE_EMAIL_COLLECT_BOX": "Enable email collect box",
@@ -608,14 +624,14 @@
       }
     },
     "BUSINESS_HOURS": {
-      "TITLE": "Set your availability",
-      "SUBTITLE": "Set your availability on your livechat widget",
+      "TITLE": "Bot Availability",
+      "SUBTITLE": "Set when the bot is active to respond to customer messages.",
       "WEEKLY_TITLE": "Set your weekly hours",
       "TIMEZONE_LABEL": "Select timezone",
       "UPDATE": "Update business hours settings",
-      "TOGGLE_AVAILABILITY": "Enable business availability for this inbox",
+      "TOGGLE_AVAILABILITY": "Enable Bot Availability Schedule for This Inbox",
       "UNAVAILABLE_MESSAGE_LABEL": "Unavailable message for visitors",
-      "TOGGLE_HELP": "Enabling business availability will show the available hours on live chat widget even if all the agents are offline. Outside available hours visitors can be warned with a message and a pre-chat form.",
+      "TOGGLE_HELP": "When enabled, the bot will only respond to messages during the configured business hours. Outside of these hours, the bot will remain inactive.",
       "DAY": {
         "ENABLE": "Enable availability for this day",
         "UNAVAILABLE": "Unavailable",
@@ -623,7 +639,8 @@
         "VALIDATION_ERROR": "Starting time should be before closing time.",
         "CHOOSE": "Choose"
       },
-      "ALL_DAY": "All-Day"
+      "ALL_DAY": "All-Day",
+      "AVAILABILITY_TYPE_LABEL": "Inactive Settings"
     },
     "IMAP": {
       "TITLE": "IMAP",
@@ -827,6 +844,15 @@
         "CONNECTED": "WhatsApp connected successfully!",
         "DISCONNECTED_NOTICE": "WhatsApp disconnected from device. Please reconnect to continue."
       }
+    },
+    "DAYS_OF_WEEK": {
+      "SUNDAY": "Sunday",
+      "MONDAY": "Monday",
+      "TUESDAY": "Tuesday",
+      "WEDNESDAY": "Wednesday",
+      "THURSDAY": "Thursday",
+      "FRIDAY": "Friday",
+      "SATURDAY": "Saturday"
     }
   }
 }

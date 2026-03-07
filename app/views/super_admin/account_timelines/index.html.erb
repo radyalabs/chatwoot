@@ -1,0 +1,93 @@
+<% content_for(:title) do %>
+  Account Timelines
+<% end %>
+
+<header class="main-content__header" role="banner">
+  <h1 class="main-content__page-title" id="page-title">
+    <%= content_for(:title) %>
+  </h1>
+
+  <div class="flex items-center gap-4">
+    <%= form_with url: super_admin_account_timelines_path, method: :get, local: true, class: "flex items-center gap-2" do %>
+      <%= text_field_tag :search, params[:search], 
+          placeholder: "Search by name or email...",
+          class: "border border-slate-300 rounded px-3 py-2 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-500" %>
+      <%= submit_tag "Search", 
+          class: "bg-blue-500 text-white px-4 py-2 rounded text-sm hover:bg-blue-600 cursor-pointer" %>
+      <% if params[:search].present? %>
+        <%= link_to "Clear", super_admin_account_timelines_path, 
+            class: "text-slate-600 hover:text-slate-800 text-sm" %>
+      <% end %>
+    <% end %>
+  </div>
+</header>
+
+<section class="main-content__body">
+  <% if @users.any? %>
+    <table class="w-full">
+      <thead>
+        <tr class="border-b border-slate-200">
+          <th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Name</th>
+          <th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Email</th>
+          <th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Accounts</th>
+          <th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Registered</th>
+          <th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Last Login</th>
+          <th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Sign In Count</th>
+          <th class="text-left py-3 px-4 text-sm font-semibold text-slate-700"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @users.each do |user| %>
+          <tr class="border-b border-slate-100 hover:bg-slate-50">
+            <td class="py-3 px-4 text-sm">
+              <div class="font-medium text-slate-900"><%= user.name %></div>
+            </td>
+            <td class="py-3 px-4 text-sm text-slate-600"><%= user.email %></td>
+            <td class="py-3 px-4 text-sm text-slate-600">
+              <%= user.accounts.map(&:name).join(', ') %>
+            </td>
+            <td class="py-3 px-4 text-sm text-slate-600">
+              <%= user.created_at.in_time_zone.strftime('%d %b %Y, %H.%M %Z') %>
+            </td>
+            <td class="py-3 px-4 text-sm text-slate-600">
+              <% if user.last_sign_in_at %>
+                <div class="text-sm">
+                  <%= user.last_sign_in_at.in_time_zone.strftime('%d %b %Y, %H.%M %Z') %>
+                </div>
+                <div class="text-xs text-slate-400 mt-1"><%= user.last_sign_in_ip %></div>
+              <% else %>
+                <span class="text-slate-400">Never</span>
+              <% end %>
+            </td>
+            <td class="py-3 px-4 text-sm text-slate-600"><%= user.sign_in_count %></td>
+            <td class="py-3 px-4 text-sm text-right">
+              <%= link_to "View Timeline", 
+                  super_admin_account_timeline_path(user),
+                  class: "text-blue-600 hover:text-blue-800 font-medium" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <% if @users.total_pages > 1 %>
+      <div class="mt-6">
+        <%= paginate @users %>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="text-center py-12">
+      <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <h3 class="mt-2 text-sm font-medium text-slate-900">No users found</h3>
+      <p class="mt-1 text-sm text-slate-500">
+        <% if params[:search].present? %>
+          No users found matching "<%= params[:search] %>". Try a different search term.
+        <% else %>
+          No users found in the system.
+        <% end %>
+      </p>
+    </div>
+  <% end %>
+</section>

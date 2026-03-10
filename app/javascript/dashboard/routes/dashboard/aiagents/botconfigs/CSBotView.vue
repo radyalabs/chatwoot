@@ -116,7 +116,6 @@ provide('emitUpdate', () => emit('update:data'))
 const config = reactive({
   ticketSystemActive: false,
   ticketCreateWhen: 'always',
-  reminderSystemActive: false,
 })
 
 const tabs = computed(() => [

@@ -88,11 +88,6 @@ watch(
       props.config.ticketCreateWhen = 'always';
     }
 
-    // Map reminder_system config to UI
-    const reminderSystem = config?.reminder_system;
-    // eslint-disable-next-line vue/no-mutating-props
-    props.config.reminderSystemActive = reminderSystem === 'on';
-
     if (agentData && agentData.temperature !== undefined) {
       creativityLevel.value = agentData.temperature;
     }
@@ -332,16 +327,11 @@ async function save() {
     let displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data)); 
     // console.log(flowData)
     const agent_index = flowData.enabled_agents.indexOf('customer_service');
-    const reminderSystem = props.config.reminderSystemActive ? 'on' : 'off';
-
     flowData.agents_config[agent_index].configurations.ticket_system =
       ticketSystem;
-    flowData.agents_config[agent_index].configurations.reminder_system =
-      reminderSystem;
     flowData.agents_config[agent_index].temperature = creativityLevel.value;
 
     displayFlowData.agents_config[agent_index].configurations.ticket_system = ticketSystem;
-    displayFlowData.agents_config[agent_index].configurations.reminder_system = reminderSystem;
     displayFlowData.agents_config[agent_index].temperature = creativityLevel.value;
 
     const payload = {
@@ -405,21 +395,6 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
             </div>
             <span class="ml-3 text-sm text-slate-700 dark:text-slate-300">
               {{ config.ticketSystemActive ? $t('AGENT_MGMT.CSBOT.TICKET.ACTIVE') : $t('AGENT_MGMT.CSBOT.TICKET.INACTIVE') }}
-            </span>
-          </label>
-        </div>
-
-        <!-- Scheduled Reminders Toggle -->
-        <div class="mb-6">
-          <label class="block font-medium mb-2">{{ $t('AGENT_MGMT.REMINDER.HEADER') }}</label>
-          <p class="text-sm text-gray-500 mb-3">{{ $t('AGENT_MGMT.REMINDER.DESC') }}</p>
-          <label class="inline-flex items-center cursor-pointer">
-            <input type="checkbox" v-model="config.reminderSystemActive" :disabled="isSaving" class="sr-only peer">
-            <div
-              class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
-            </div>
-            <span class="ml-3 text-sm text-slate-700 dark:text-slate-300">
-              {{ config.reminderSystemActive ? $t('AGENT_MGMT.REMINDER.ENABLED') : $t('AGENT_MGMT.REMINDER.DISABLED') }}
             </span>
           </label>
         </div>

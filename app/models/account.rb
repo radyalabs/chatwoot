@@ -88,6 +88,7 @@ class Account < ApplicationRecord
   has_many :ai_agents, dependent: :destroy_async
   has_many :subscriptions
   has_many :quick_replies
+  has_many :scheduled_reminders, dependent: :destroy_async
   has_many :reminders, dependent: :destroy_async
   has_many :reminder_configs, dependent: :destroy_async
 

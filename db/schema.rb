@@ -1599,7 +1599,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_04_000002) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "agent_notification_settings", "accounts"
   add_foreign_key "agent_notification_settings", "ai_agents"
-  add_foreign_key "agent_notification_settings", "inboxes"
+  add_foreign_key "agent_notification_settings", "inboxes", on_delete: :cascade
   add_foreign_key "ai_agent_followups", "ai_agents"
   add_foreign_key "ai_agent_selected_labels", "ai_agents"
   add_foreign_key "ai_agent_selected_labels", "labels"
@@ -1618,8 +1618,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_03_04_000002) do
   add_foreign_key "reminder_configs", "ai_agents"
   add_foreign_key "reminders", "accounts"
   add_foreign_key "reminders", "ai_agents"
-  add_foreign_key "reminders", "conversations"
-  add_foreign_key "reminders", "inboxes"
+  add_foreign_key "reminders", "conversations", on_delete: :cascade
+  add_foreign_key "reminders", "inboxes", on_delete: :cascade
   add_foreign_key "sheet_numbering_configs", "accounts"
   add_foreign_key "sheet_numbering_configs", "ai_agents"
   add_foreign_key "shipping_stores", "accounts"

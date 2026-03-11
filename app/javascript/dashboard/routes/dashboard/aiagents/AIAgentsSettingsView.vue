@@ -10,7 +10,7 @@ import BookingBotView from './botconfigs/BookingBotView.vue';
 import SalesBotView from './botconfigs/SalesBotView.vue';
 import LeadGenBotView from './botconfigs/LeadGenBotView.vue';
 import EOBotView from './botconfigs/EOBotView.vue';
-import { onMounted, ref, computed, reactive } from 'vue';
+import { onMounted, ref, computed, reactive, watch } from 'vue';
 import aiAgents from '../../../api/aiAgents';
 import googleSheetsExportAPI from '../../../api/googleSheetsExport';
 import { error } from '@formkit/core/index.cjs';
@@ -375,9 +375,24 @@ const showData = async () => {
   }
 };
 
-onMounted(() => {
-  showData();
+onMounted(async () => {
+  await showData();
   checkGoogleSheetsAuth();
+});
+
+watch(data, async (newData) => {
+  if (
+    newData?.display_flow_data &&
+    googleSheetsAuth.authorized &&
+    !googleSheetsAuth.loading
+  ) {
+    const hasUrls = Object.values(googleSheetsAuth.spreadsheetUrls).some(
+      urls => (urls.input && urls.input !== '') || (urls.output && urls.output !== '')
+    );
+    if (!hasUrls) {
+      await loadSpreadsheetUrls();
+    }
+  }
 });
 </script>
 

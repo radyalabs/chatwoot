@@ -93,7 +93,7 @@ const ticketStep = computed(() => props.googleSheetsAuth.step);
 const ticketLoading = computed(() => props.googleSheetsAuth.loading);
 const ticketAccount = computed(() => props.googleSheetsAuth.account);
 const ticketSheets = computed(() => ({
-  output: props.googleSheetsAuth.spreadsheetUrls.lead_gen.output || ''
+  output: props.googleSheetsAuth.spreadsheetUrls.lead_generation.output || ''
 }));
 const ticketAuthError = computed(() => props.googleSheetsAuth.error);
 

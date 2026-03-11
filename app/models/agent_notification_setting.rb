@@ -27,7 +27,7 @@
 #
 #  fk_rails_...  (account_id => accounts.id)
 #  fk_rails_...  (ai_agent_id => ai_agents.id)
-#  fk_rails_...  (inbox_id => inboxes.id)
+#  fk_rails_...  (inbox_id => inboxes.id) ON DELETE => cascade
 #
 class AgentNotificationSetting < ApplicationRecord
   belongs_to :account

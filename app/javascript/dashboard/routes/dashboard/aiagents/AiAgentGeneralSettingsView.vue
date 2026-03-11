@@ -279,7 +279,7 @@ function resetChat() {
             <Input
               id="name"
               v-model="state.name"
-              :disabled="isDebugMode"
+              :disabled="isDebugMode || loadingSave"
               :placeholder="t('AGENT_MGMT.FORM_CREATE.AI_AGENT_NAME')"
             />
           </div>
@@ -301,7 +301,7 @@ function resetChat() {
           <TextArea
             id="instruction"
             v-model="state.instructions"
-            :disabled="isDebugMode"
+            :disabled="isDebugMode || loadingSave"
             custom-text-area-wrapper-class=""
             custom-text-area-class="!outline-none"
             :placeholder="t('AGENT_MGMT.FORM_CREATE.INSTRUCTION_PLACEHOLDER')"
@@ -326,7 +326,7 @@ function resetChat() {
                 "
                 id="welcome_message"
                 v-model="state.welcoming_message"
-                :disabled="isDebugMode"
+                :disabled="isDebugMode || loadingSave"
                 custom-text-area-wrapper-class=""
                 custom-text-area-class="!outline-none"
                 auto-height
@@ -341,7 +341,7 @@ function resetChat() {
               <TextArea
                 id="business_info"
                 v-model="state.business_info"
-                :disabled="isDebugMode"
+                :disabled="isDebugMode || loadingSave"
                 custom-text-area-wrapper-class=""
                 custom-text-area-class="!outline-none"
                 auto-height
@@ -365,7 +365,7 @@ function resetChat() {
               <input
                 type="checkbox"
                 v-model="state.enable_handover"
-                :disabled="isDebugMode"
+                :disabled="isDebugMode || loadingSave"
                 class="sr-only peer"
               />
               <div
@@ -384,7 +384,7 @@ function resetChat() {
             <TextArea
               id="routing_conditions"
               v-model="state.routing_conditions"
-              :disabled="isDebugMode"
+              :disabled="isDebugMode || loadingSave"
               custom-text-area-wrapper-class=""
               custom-text-area-class="!outline-none"
               :placeholder="

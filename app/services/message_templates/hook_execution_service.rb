@@ -15,7 +15,10 @@ class MessageTemplates::HookExecutionService
 
   def trigger_templates
     ::MessageTemplates::Template::OutOfOffice.new(conversation: conversation).perform if should_send_out_of_office_message?
-    ::MessageTemplates::Template::Greeting.new(conversation: conversation).perform if should_send_greeting?
+    if should_send_greeting?
+      send_greeting_image if should_send_greeting_image?
+      ::MessageTemplates::Template::Greeting.new(conversation: conversation).perform 
+    end
     ::MessageTemplates::Template::EmailCollect.new(conversation: conversation).perform if inbox.enable_email_collect && should_send_email_collect?
     ::MessageTemplates::Template::CsatSurvey.new(conversation: conversation).perform if should_send_csat_survey?
   end
@@ -38,6 +41,31 @@ class MessageTemplates::HookExecutionService
     return false if conversation.tweet?
 
     first_message_from_contact? && inbox.greeting_enabled? && inbox.greeting_message.present?
+  end
+
+  def should_send_greeting_image?
+    return false unless inbox.channel.respond_to?(:greeting_image)
+    
+    inbox.channel.greeting_image.attached?
+  end
+
+  def send_greeting_image
+    image_message = conversation.messages.new(
+      message_type: :outgoing,
+      account_id: conversation.account_id,
+      inbox_id: conversation.inbox_id,
+      content: nil
+    )
+
+    image_message.attachments.new(
+      file: inbox.channel.greeting_image.blob,
+      account_id: conversation.account_id,
+      file_type: :image
+    )
+
+    image_message.save!
+  rescue StandardError => e
+    Rails.logger.error "Failed to send greeting image: #{e.message}"
   end
 
   def email_collect_was_sent?

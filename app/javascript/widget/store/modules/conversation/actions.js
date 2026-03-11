@@ -18,31 +18,99 @@ import { emitter } from 'shared/helpers/mitt';
 export const actions = {
   createConversation: async ({ commit, dispatch }, params) => {
     commit('setConversationUIFlag', { isCreating: true });
-
     try {
       const { data } = await createConversationAPI(params);
-      const { messages } = data;
       const conversationId = data.id;
       commit('setActiveConversation', conversationId);
-
-      if (!messages || messages.length === 0) {
-        await sendMessageAPI(conversationId, 'Halo');
-      } else {
-        const firstMessage = messages[0];
-        commit('pushMessageToConversation', {
-          conversation_id: conversationId,
-          ...firstMessage,
-        });
-      }
+      
       dispatch('conversationAttributes/getAttributes', {}, { root: true });
       emitter.emit(ON_CONVERSATION_CREATED);
-      dispatch('loadConversation', conversationId);
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      await dispatch('loadConversation', conversationId);
+
       return conversationId;
     } catch (error) {
       throw error;
     } finally {
       commit('setConversationUIFlag', { isCreating: false });
     }
+  },
+
+  injectGreetingImage: ({ commit, state }, conversationId) => {
+    const channelConfig = window.chatwootWebChannel;
+    
+    if (!channelConfig || !channelConfig.greetingEnabled) {
+      console.log('⚠️ [INJECT] Greeting not enabled');
+      return;
+    }
+
+    const gImage = channelConfig.greetingImageUrl;
+    const gText = channelConfig.greetingMessage;
+    
+    if (!gImage || !gText) {
+      console.log('⚠️ [INJECT] Greeting image or message not configured');
+      return;
+    }
+
+    const conversation = state.conversations[conversationId];
+    if (!conversation || !conversation.messages || conversation.messages.length === 0) {
+      console.log('⚠️ [INJECT] No messages found');
+      return;
+    }
+
+    const messages = conversation.messages;
+    const greetingIndex = messages.findIndex(m => m.content === gText);
+    
+    if (greetingIndex === -1) {
+      console.log('⚠️ [INJECT] Greeting text message not found');
+      return;
+    }
+
+    const greetingTextMessage = messages[greetingIndex];
+    
+    if (greetingTextMessage.attachments && greetingTextMessage.attachments.length > 0) {
+      console.log('✅ [INJECT] Image already attached');
+      return;
+    }
+
+    let finalImageUrl = gImage;
+    let baseUrl = channelConfig.baseUrl || '';
+    
+    if (!baseUrl && channelConfig.avatarUrl && channelConfig.avatarUrl.startsWith('http')) {
+      try { 
+        const urlObj = new URL(channelConfig.avatarUrl); 
+        baseUrl = urlObj.origin; 
+      } catch (e) {
+        console.error('Error parsing avatar URL:', e);
+      }
+    }
+    
+    if (!finalImageUrl.startsWith('http')) {
+      finalImageUrl = (baseUrl || '').replace(/\/$/, '') + finalImageUrl;
+    }
+    
+    finalImageUrl = finalImageUrl.replace('0.0.0.0', '127.0.0.1'); 
+
+    const attachment = {
+      id: greetingTextMessage.id * 1000,
+      message_id: greetingTextMessage.id,
+      account_id: greetingTextMessage.account_id || 65,
+      file_type: 'image',
+      data_url: finalImageUrl,
+      thumb_url: finalImageUrl,
+      extension: null,
+      file_size: null,
+      height: null,
+      width: null
+    };
+
+    commit('updateMessageWithAttachment', {
+      conversationId,
+      messageIndex: greetingIndex,
+      attachment
+    });
   },
 
   sendMessage: async ({ dispatch }, params) => {
@@ -88,18 +156,29 @@ export const actions = {
 
   sendAttachment: async ({ commit, getters }, params) => {
     const {
-      attachment: { thumbUrl, fileType },
+      attachment: { thumbUrl, fileType, file },
       meta = {},
     } = params;
 
     const conversationId = getters.getSelectedConversationId;
 
+    const fileObj = file || {};
+    const fileName = fileObj.name || 'Dokumen';
+    const fileSize = fileObj.size || '';
+    const extension = fileName.includes('.') ? fileName.split('.').pop() : '';
+
     const attachment = {
+      id: new Date().getTime(),
       thumb_url: thumbUrl,
       data_url: thumbUrl,
       file_type: fileType,
+      file_name: fileName,
+      file_size: fileSize,
+      extension: extension,
       status: 'in_progress',
     };
+
+    console.log('[ACTION] Creating temp attachment:', attachment);
 
     const tempMessage = createTemporaryMessage({
       attachments: [attachment],
@@ -109,6 +188,7 @@ export const actions = {
     commit('pushMessageToConversation', {
       conversation_id: conversationId,
       ...tempMessage,
+      is_temp: true, 
     });
 
     try {
@@ -129,6 +209,7 @@ export const actions = {
         conversation_id: conversationId,
         ...tempMessage,
         status: 'failed',
+        is_temp: true,
       });
 
       commit('updateMessageMeta', {
@@ -138,15 +219,44 @@ export const actions = {
     }
   },
 
-  loadConversation: async ({ commit, dispatch }, conversationId) => {
-    commit('setActiveConversation', conversationId);
-    dispatch('conversationAttributes/update', {
-      id: conversationId,
-      status: 'open',
-    }, { root: true });
-    commit('clearMessages');
-    await dispatch('fetchOldConversations');
-    return conversationId;
+  loadConversation: async ({ commit, dispatch, state }, conversationId) => {
+    // Prevent multiple simultaneous loads
+    if (state.uiFlags.isLoadingConversation) {
+      console.log('[loadConversation] Already loading, skipping...');
+      return conversationId;
+    }
+    
+    commit('setConversationUIFlag', { isLoadingConversation: true });
+    
+    try {
+      commit('setActiveConversation', conversationId);
+      dispatch('conversationAttributes/update', {
+        id: conversationId,
+        status: 'open',
+      }, { root: true });
+      commit('clearMessages');
+      
+      await dispatch('fetchOldConversations');
+      
+      // Only try to inject greeting if messages exist
+      setTimeout(() => {
+        const conversation = state.conversations?.[conversationId];
+        const hasMessages = conversation?.messages?.length > 0;
+        
+        if (hasMessages) {
+          dispatch('injectGreetingImage', conversationId);
+        } else {
+          console.log('⚠️ [LOAD] No messages yet, skipping greeting injection');
+        }
+      }, 200);
+      
+      return conversationId;
+    } catch (error) {
+      console.error('[loadConversation] Error:', error);
+      throw error;
+    } finally {
+      commit('setConversationUIFlag', { isLoadingConversation: false });
+    }
   },
 
   fetchOldConversations: async ({ commit, getters, state }, { before } = {}) => {

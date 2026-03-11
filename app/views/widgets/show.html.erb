@@ -13,6 +13,9 @@
         websiteToken: '<%= @web_widget.website_token %>',
         welcomeTagline: '<%= @web_widget.welcome_tagline %>',
         welcomeTitle: '<%= @web_widget.welcome_title %>',
+        greetingEnabled: <%= @web_widget.inbox.greeting_enabled? %>,
+        greetingMessage: '<%= j @web_widget.inbox.greeting_message %>',
+        greetingImageUrl: '<%= @web_widget.greeting_image.attached? ? url_for(@web_widget.greeting_image) : "" %>',
         widgetColor: '<%= @web_widget.widget_color %>',
         portal: <%= @web_widget.inbox.portal.to_json.html_safe %>,
         enabledFeatures: <%= @web_widget.selected_feature_flags.to_json.html_safe %>,
@@ -36,6 +39,21 @@
     </script>
     <%= vite_client_tag %>
     <%= vite_javascript_tag 'widget' %>
+    <style>
+      /* Menyembunyikan footer (nama file & link download) pada pesan gambar */
+      .file-name, 
+      .download,
+      .attachment-name, 
+      .icon-wrap {
+        display: none !important;
+      }
+      
+      /* Opsional: Memastikan gambar memiliki sudut melengkung yang rapi */
+      .message-content img {
+        border-radius: 8px !important;
+        margin-bottom: 0 !important;
+      }
+    </style>
   </head>
   <body>
     <div id="app" class="h-full"></div>

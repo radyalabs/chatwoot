@@ -23,7 +23,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
     return render json: { error: 'JANGKAU_AGENT_API_URL not configured' }, status: :service_unavailable unless base_url
 
-    status_url = "#{base_url}v2/oauth/google/credentials/#{Current.account.id}/status"
+    status_url = "#{base_url}/v2/oauth/google/credentials/#{Current.account.id}/status"
 
     begin
       response = HTTParty.get(
@@ -52,7 +52,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     rescue StandardError => e
       render json: {
         error: 'Failed to connect to external service',
-        message: e.message, api_endpoint: api_endpoint, status_url: status_url
+        message: e.message, status_url: status_url
       }, status: :service_unavailable
     end
   end
@@ -78,7 +78,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
 
     # Replace the base path and append `/create`
     # Example: http://0.0.0.0:8080/v2/oauth/google/credentials → http://0.0.0.0:8080/v2/oauth/google/spreadsheet/create
-    endpoint = "#{base_url}v2/oauth/google/spreadsheet/create"
+    endpoint = "#{base_url}/v2/oauth/google/spreadsheet/create"
 
     begin
       response = HTTParty.post(
@@ -171,7 +171,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
     return render json: { error: 'JANGKAU_AGENT_API_URL not configured' }, status: :service_unavailable unless base_url
 
-    target_url = "#{base_url}v2/oauth/google/credentials/#{account_id}/disconnect"
+    target_url = "#{base_url}/v2/oauth/google/credentials/#{account_id}/disconnect"
 
     begin
       response = HTTParty.delete(
@@ -237,7 +237,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
 
     # Endpoint ke Python Backend
     # Example: http://0.0.0.0:8080/v2/oauth/google/spreadsheet/regenerate
-    endpoint = "#{base_url}v2/oauth/google/spreadsheet/regenerate"
+    endpoint = "#{base_url}/v2/oauth/google/spreadsheet/regenerate"
 
     begin
       response = HTTParty.post(
@@ -309,7 +309,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
     api_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
     return render json: { error: 'JANGKAU_AGENT_API_URL not configured' }, status: :service_unavailable unless base_url
 
-    target_url = "#{base_url}v2/oauth/google/spreadsheet"
+    target_url = "#{base_url}/v2/oauth/google/spreadsheet"
 
     begin
       response = HTTParty.post(
@@ -449,7 +449,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
 
     return render json: { error: 'JANGKAU_AGENT_API_URL not configured' }, status: :service_unavailable unless base_url
 
-    endpoint = "#{base_url}v2/knowledge-management/sync-from-google-sheets"
+    endpoint = "#{base_url}/v2/knowledge-management/sync-from-google-sheets"
     response = HTTParty.post(
       endpoint,
       body: {
@@ -492,7 +492,7 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
 
     # Endpoint ke Python Backend
     # Example: http://0.0.0.0:8080/v2/oauth/google/spreadsheet/delete
-    endpoint = "#{base_url}v2/oauth/google/spreadsheet/delete"
+    endpoint = "#{base_url}/v2/oauth/google/spreadsheet/delete"
 
     begin
       response = HTTParty.post(

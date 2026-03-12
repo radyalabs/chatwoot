@@ -229,20 +229,21 @@ function renderMarkdown(text) {
   return md.render(text);
 }
 
-function isImageUrl(url) {
-  if (!url) return false;
+function toDirectImageUrl(url) {
+  if (!url) return url;
   try {
     const parsed = new URL(url);
-    const path = parsed.pathname.toLowerCase();
-    if (/\.(jpe?g|png|gif|webp|bmp|svg)$/.test(path)) return true;
     if (
-      parsed.hostname.includes('drive.google.com') &&
-      parsed.searchParams.get('export') === 'view'
-    )
-      return true;
-    return false;
+      parsed.hostname === 'drive.google.com' &&
+      parsed.pathname === '/uc' &&
+      parsed.searchParams.get('id')
+    ) {
+      const fileId = parsed.searchParams.get('id');
+      return `https://lh3.googleusercontent.com/d/${encodeURIComponent(fileId)}=s1000`;
+    }
+    return url;
   } catch {
-    return false;
+    return url;
   }
 }
 
@@ -295,10 +296,28 @@ async function chat() {
 
     const res = await aiAgents.chat(props.data.id, formData);
 
+    // Message 2-N: One message per attachment (title + image)
+    const resAttachments = res.data.attachments || [];
+
+    // Strip image markdown from main text since attachments render separately
+    let responseText = res.data.response;
+    if (resAttachments.length > 0) {
+      responseText = responseText
+        .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+    }
+
     messages.value.push({
       role: 'assistant',
-      content: res.data.response,
-      attachments: res.data.attachments || [],
+      content: responseText,
+    });
+    resAttachments.forEach(att => {
+      messages.value.push({
+        role: 'assistant',
+        content: att.title || '',
+        imageUrl: toDirectImageUrl(att.url) || att.data_url || null,
+      });
     });
     scrollToBottom();
   } catch (error) {
@@ -548,6 +567,12 @@ function resetChat() {
                   : 'bg-slate-50 dark:bg-slate-800 text-[#000000] dark:text-white',
               ]"
             >
+              <img
+                v-if="message.imageUrl"
+                :src="message.imageUrl"
+                :alt="message.content || 'attachment'"
+                class="max-w-full rounded-lg my-2"
+              />
               <div
                 class="chat-message-content"
                 v-html="
@@ -556,33 +581,6 @@ function resetChat() {
                     : renderMarkdown(message.content)
                 "
               />
-              <template v-if="message.attachments?.length">
-                <div
-                  v-for="(att, i) in message.attachments"
-                  :key="i"
-                  class="mt-2"
-                >
-                  <img
-                    v-if="
-                      att.file_type?.startsWith('image') ||
-                      att.data_url?.startsWith('data:image') ||
-                      isImageUrl(att.url)
-                    "
-                    :src="att.data_url || att.url"
-                    :alt="att.filename || att.title || 'attachment'"
-                    class="max-w-full rounded-lg"
-                  />
-                  <a
-                    v-else
-                    :href="att.data_url || att.url"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="text-xs underline"
-                  >
-                    {{ att.filename || att.title || 'Download file' }}
-                  </a>
-                </div>
-              </template>
             </div>
           </div>
         </div>

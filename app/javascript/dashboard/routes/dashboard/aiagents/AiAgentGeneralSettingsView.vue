@@ -636,7 +636,7 @@ function resetChat() {
               />
             </svg>
           </button>
-          <div @keydown="handleChatKeydown">
+          <div class="flex-1" @keydown="handleChatKeydown">
             <TextArea
               v-model="chatInput"
               class="w-full"

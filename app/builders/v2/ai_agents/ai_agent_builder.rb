@@ -13,7 +13,7 @@ class V2::AiAgents::AiAgentBuilder < V2::AiAgents::AiAgentBaseBuilder
         account.ai_agents.add_ai_agent(ai_agent_params, chat_flow, document_store)
       end
     rescue StandardError => e
-      Rails.logger.error("❌ Failed to create AI Agent: #{e.message}")
+      Rails.logger.error("Failed to create AI Agent: #{e.message}")
       cleanup_resources(document_store)
       raise e
     end
@@ -27,7 +27,7 @@ class V2::AiAgents::AiAgentBuilder < V2::AiAgents::AiAgentBaseBuilder
     begin
       cleanup_resources(store_id)
     rescue StandardError => e
-      Rails.logger.error("❌ Failed to delete chat flow: #{e.message}")
+      Rails.logger.error("Failed to delete chat flow: #{e.message}")
       raise 'Failed to delete chat flow'
     end
   end
@@ -39,15 +39,15 @@ class V2::AiAgents::AiAgentBuilder < V2::AiAgents::AiAgentBaseBuilder
 
     ai_agent.as_create_json
   rescue StandardError => e
-    Rails.logger.error("❌ Failed to update AI Agent: #{e.message}")
+    Rails.logger.error("Failed to update AI Agent: #{e.message}")
     raise 'Failed to update AI Agent'
   end
 
-  def generate_document_store(params)    
+  def generate_document_store(params)
     name_with_datetime = "#{params[:name]} - #{Time.current.strftime('%Y%m%d%H%M%S')}"
-    
+
     {
-      'id' => SecureRandom.uuid,  # Most important field
+      'id' => SecureRandom.uuid, # Most important field
       'name' => name_with_datetime,
       'description' => params[:description],
       'createdDate' => Time.current.iso8601,
@@ -61,14 +61,14 @@ class V2::AiAgents::AiAgentBuilder < V2::AiAgents::AiAgentBaseBuilder
 
     build_response(flow_data, store_config)
   rescue StandardError => e
-    Rails.logger.error("❌ Failed to load chat flow: #{e.message}")
+    Rails.logger.error("Failed to load chat flow: #{e.message}")
     raise e
   end
 
   def update_chat_flow
     update_flowise_chat_flow if flowise_template?
   rescue StandardError => e
-    Rails.logger.error("❌ Failed to save chat flow: #{e.message}")
+    Rails.logger.error("Failed to save chat flow: #{e.message}")
     raise e
   end
 
@@ -78,12 +78,10 @@ class V2::AiAgents::AiAgentBuilder < V2::AiAgents::AiAgentBaseBuilder
 
   def cleanup_document_store(document_store)
     store_id = extract_id(document_store)
-    collection_name = ai_agent.collection_name
+    # collection_name = ai_agent.collection_name
     # delete by resource from langgraph by collection_name if needed (currently already handled by delete spreadsheet)
     return if store_id.blank?
-
   end
-
 
   def generate_chat_flow_name
     environment_prefix = production_environment? ? 'PROD' : 'DEV'

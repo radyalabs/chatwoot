@@ -19,6 +19,8 @@ const props = defineProps({
 
 const { t } = useI18n()
 const emitUpdate = inject('emitUpdate', () => {})
+const captainTranslatorEnabled =
+  window.chatwootConfig?.captainTranslatorEnabled || 'false';
 
 // Map agent types to their localization prefixes
 const agentTypeLocaleMap = {
@@ -148,10 +150,16 @@ async function save() {
 
       // Translate to English for flow_data
       let translatedConditions = item.condition;
-      try {
-        const condResp = await captainTranslator.translate(item.condition || '', 'en');
-        translatedConditions = condResp?.data?.translated_text || translatedConditions;
-      } catch (e) {}
+      if (captainTranslatorEnabled === 'true') {
+        try {
+          const condResp = await captainTranslator.translate(
+            item.condition || '',
+            'en'
+          );
+          translatedConditions =
+            condResp?.data?.translated_text || translatedConditions;
+        } catch (e) {}
+      }
 
       translatedCategories.push({ key: item.name, conditions: translatedConditions });
 

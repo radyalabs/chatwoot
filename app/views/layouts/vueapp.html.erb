@@ -53,7 +53,8 @@
         enabledLanguages: <%= available_locales_with_name.to_json.html_safe %>,
         helpUrls: <%= feature_help_urls.to_json.html_safe %>,
         selectedLocale: '<%= I18n.locale %>',
-        idleConversationDuration: <%= ENV.fetch('IDLE_CONVERSATION_DURATION', 30) %>
+        idleConversationDuration: <%= ENV.fetch('IDLE_CONVERSATION_DURATION', 30) %>,
+        captainTranslatorEnabled: '<%= ENV.fetch('CAPTAIN_TRANSLATOR_ENABLED', 'false') %>'
       }
       window.globalConfig = <%= raw @global_config.to_json %>
       window.browserConfig = {

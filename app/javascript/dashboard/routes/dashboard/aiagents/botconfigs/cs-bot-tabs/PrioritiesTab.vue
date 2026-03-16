@@ -24,6 +24,8 @@ const props = defineProps({
 
 const { t } = useI18n();
 const emitUpdate = inject('emitUpdate', () => {});
+const captainTranslatorEnabled =
+  window.chatwootConfig?.captainTranslatorEnabled || 'false';
 
 const priorities = reactive([]);
 const expandedPriorities = ref({});
@@ -142,7 +144,7 @@ function removePriority(index) {
 async function save() {
   try {
     isSaving.value = true
-    
+
     // Validate all priorities
     let isValid = true
     priorities.forEach((_, index) => {
@@ -150,7 +152,7 @@ async function save() {
         isValid = false
       }
     });
-    
+
     if (!isValid) {
       useAlert(t(config.value.validationError))
       return;
@@ -163,32 +165,41 @@ async function save() {
     const translatedPriorities = [];
     for (const item of priorities) {
       let translatedConditions = item.condition;
-      try {
-        const condResp = await captainTranslator.translate(item.condition || '', 'en');
-        translatedConditions = condResp?.data?.translated_text || translatedConditions;
-      } catch (e) {}
-      translatedPriorities.push({ key: item.name, conditions: translatedConditions });
+      if (captainTranslatorEnabled === 'true') {
+        try {
+          const condResp = await captainTranslator.translate(
+            item.condition || '',
+            'en'
+          );
+          translatedConditions =
+            condResp?.data?.translated_text || translatedConditions;
+        } catch (e) {}
+      }
+      translatedPriorities.push({
+        key: item.name,
+        conditions: translatedConditions,
+      });
     }
-    
+
     const agentIndex = flowData.enabled_agents.indexOf(props.agentType);
     console.log('Agent Index:', agentIndex);
-    
+
     if (agentIndex === -1) {
       useAlert('Agent not found in flow');
       return;
     }
-    
+
     // Initialize configurations if not exists
     if (!flowData.agents_config[agentIndex].configurations) {
       flowData.agents_config[agentIndex].configurations = {};
     }
-    
+
     flowData.agents_config[agentIndex].configurations.priority = translatedPriorities;
     // For display, store original Indonesian values
     displayFlowData.agents_config[agentIndex].configurations.priority = priorities.map(p => ({
-      key: p.name,
-      conditions: p.condition,
-    }));
+        key: p.name,
+        conditions: p.condition,
+      }));
 
     const payload = {
       flow_data: flowData,

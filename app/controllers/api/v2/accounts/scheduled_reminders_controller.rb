@@ -8,6 +8,7 @@ class Api::V2::Accounts::ScheduledRemindersController < Api::V1::Accounts::BaseC
   end
 
   def create
+    Current.account.inboxes.find(create_params[:inbox_id])
     @reminder = @ai_agent.scheduled_reminders.create!(
       create_params.merge(account: Current.account)
     )
@@ -15,6 +16,9 @@ class Api::V2::Accounts::ScheduledRemindersController < Api::V1::Accounts::BaseC
   end
 
   def update
+    if update_params[:inbox_id].present?
+      Current.account.inboxes.find(update_params[:inbox_id])
+    end
     @reminder.update!(update_params)
     render json: reminder_response(@reminder), status: :ok
   end
@@ -66,6 +70,7 @@ class Api::V2::Accounts::ScheduledRemindersController < Api::V1::Accounts::BaseC
 
     JSON.parse(rule)
   rescue JSON::ParserError, TypeError
+    render json: { error: 'Invalid recurrence_rule JSON' }, status: :unprocessable_entity
     nil
   end
 

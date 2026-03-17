@@ -49,6 +49,8 @@ class ScheduledReminder < ApplicationRecord
   MAX_PER_AGENT = 50
 
   validates :title, :receiver_address, :message_template, :scheduled_at, presence: true
+  validates :title, uniqueness: { scope: %i[account_id ai_agent_id inbox_id receiver_address],
+                                  message: 'already exists for this receiver' }
   validates :message_type, presence: true, inclusion: { in: SUPPORTED_MESSAGE_TYPES }
   validates :receiver_channel_type, presence: true, inclusion: { in: SUPPORTED_CHANNEL_TYPES }
   validates :timezone, presence: true

@@ -222,6 +222,7 @@ class Api::V2::Internal::ScheduledRemindersController < ActionController::API
 
     JSON.parse(rule)
   rescue JSON::ParserError, TypeError
+    render json: { error: 'Invalid recurrence_rule JSON' }, status: :unprocessable_entity
     nil
   end
 

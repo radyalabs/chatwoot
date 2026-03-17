@@ -1,4 +1,6 @@
 class Api::V2::Internal::ScheduledRemindersController < ActionController::API
+  rescue_from ActionController::ParameterMissing, with: :render_parameter_error
+
   before_action :authenticate_api_key!
 
   # POST /api/v2/internal/scheduled_reminders
@@ -157,6 +159,10 @@ class Api::V2::Internal::ScheduledRemindersController < ActionController::API
 
   private
 
+  def render_parameter_error(exception)
+    render json: { error: exception.message }, status: :unprocessable_entity
+  end
+
   def authenticate_api_key!
     api_key = request.headers['X-Internal-Api-Key'] || params[:api_key]
     expected_key = ENV.fetch('JANGKAU_AGENT_API_KEY', nil)
@@ -222,8 +228,7 @@ class Api::V2::Internal::ScheduledRemindersController < ActionController::API
 
     JSON.parse(rule)
   rescue JSON::ParserError, TypeError
-    render json: { error: 'Invalid recurrence_rule JSON' }, status: :unprocessable_entity
-    nil
+    raise ActionController::ParameterMissing, 'Invalid recurrence_rule JSON'
   end
 
   def parse_datetime(datetime_str)

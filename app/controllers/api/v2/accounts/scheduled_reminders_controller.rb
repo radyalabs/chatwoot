@@ -70,8 +70,7 @@ class Api::V2::Accounts::ScheduledRemindersController < Api::V1::Accounts::BaseC
 
     JSON.parse(rule)
   rescue JSON::ParserError, TypeError
-    render json: { error: 'Invalid recurrence_rule JSON' }, status: :unprocessable_entity
-    nil
+    raise ActionController::ParameterMissing, 'Invalid recurrence_rule JSON'
   end
 
   def reminder_response(reminder)

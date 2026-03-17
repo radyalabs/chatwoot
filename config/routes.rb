@@ -562,7 +562,13 @@ Rails.application.routes.draw do
           end
         end
 
-        resources :scheduled_reminders, only: [:create]
+        resources :scheduled_reminders, only: [:create] do
+          collection do
+            get :index_by_receiver
+            put :update_by_key
+            delete :destroy_by_key
+          end
+        end
 
         resources :sheet_numbering_configs, only: [] do
           collection do

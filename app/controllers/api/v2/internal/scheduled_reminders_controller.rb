@@ -23,6 +23,79 @@ class Api::V2::Internal::ScheduledRemindersController < ActionController::API
   #   - ends_at: Stop sending after this datetime
   #   - ends_after_count: Stop after N occurrences
   #
+  # GET /api/v2/internal/scheduled_reminders/index_by_receiver
+  # Lists all scheduled reminders for a specific receiver within an account/agent/inbox scope.
+  #
+  # Required params:
+  #   - account_id, ai_agent_id, inbox_id, receiver_address
+  #
+  def index_by_receiver
+    reminders = ScheduledReminder.where(
+      account_id: params[:account_id],
+      ai_agent_id: params[:ai_agent_id],
+      inbox_id: params[:inbox_id],
+      receiver_address: params[:receiver_address]
+    ).order(created_at: :desc)
+
+    render json: reminders.map { |r| index_response(r) }, status: :ok
+  end
+
+  # PUT /api/v2/internal/scheduled_reminders/update_by_key
+  # Updates a scheduled reminder identified by composite business key.
+  #
+  # Required params (lookup):
+  #   - account_id, ai_agent_id, inbox_id, receiver_address, title
+  #
+  # Optional params (update):
+  #   - new_title, description, message_template, scheduled_at, timezone,
+  #     recurrence_rule, ends_at, ends_after_count, enabled
+  #
+  def update_by_key
+    reminder = find_reminder_by_business_key
+    return render json: { error: 'Scheduled reminder not found' }, status: :not_found unless reminder
+
+    updatable = update_permitted_params
+    updatable[:recurrence_rule] = parse_recurrence_rule if params.key?(:recurrence_rule)
+    updatable[:scheduled_at] = parse_datetime(updatable[:scheduled_at]) if updatable.key?(:scheduled_at)
+    updatable[:ends_at] = parse_datetime(updatable[:ends_at]) if updatable.key?(:ends_at)
+
+    if reminder.update(updatable)
+      Rails.logger.info("[Internal::ScheduledRemindersController] Scheduled reminder updated: id=#{reminder.id}")
+      render json: {
+        id: reminder.id,
+        status: 'updated',
+        title: reminder.title,
+        next_occurrence_at: reminder.next_occurrence_at,
+        recurrence_summary: reminder.recurrence_summary
+      }, status: :ok
+    else
+      Rails.logger.error("[Internal::ScheduledRemindersController] Update failed: #{reminder.errors.full_messages}")
+      render json: { errors: reminder.errors.full_messages }, status: :unprocessable_entity
+    end
+  rescue ActiveRecord::RecordNotUnique
+    Rails.logger.error("[Internal::ScheduledRemindersController] Duplicate title on rename")
+    render json: { error: 'A reminder with that title already exists for this receiver' }, status: :conflict
+  end
+
+  # DELETE /api/v2/internal/scheduled_reminders/destroy_by_key
+  # Deletes a scheduled reminder identified by composite business key.
+  #
+  # Required params (lookup):
+  #   - account_id, ai_agent_id, inbox_id, receiver_address, title
+  #
+  def destroy_by_key
+    reminder = find_reminder_by_business_key
+    return render json: { error: 'Scheduled reminder not found' }, status: :not_found unless reminder
+
+    if reminder.destroy
+      Rails.logger.info("[Internal::ScheduledRemindersController] Scheduled reminder deleted: id=#{reminder.id}")
+      render json: { status: 'deleted', title: reminder.title }, status: :ok
+    else
+      Rails.logger.error("[Internal::ScheduledRemindersController] Delete failed: #{reminder.errors.full_messages}")
+      render json: { errors: reminder.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
   def create
     Rails.logger.info("[Internal::ScheduledRemindersController] Creating scheduled reminder with params: #{reminder_params.inspect}")
 
@@ -92,6 +165,41 @@ class Api::V2::Internal::ScheduledRemindersController < ActionController::API
       Rails.logger.warn('[Internal::ScheduledRemindersController] Invalid API key')
       render json: { error: 'Unauthorized' }, status: :unauthorized
     end
+  end
+
+  def find_reminder_by_business_key
+    ScheduledReminder.find_by(
+      account_id: params[:account_id],
+      ai_agent_id: params[:ai_agent_id],
+      inbox_id: params[:inbox_id],
+      receiver_address: params[:receiver_address],
+      title: params[:title]
+    )
+  end
+
+  def update_permitted_params
+    permitted = params.permit(
+      :new_title, :description,
+      :message_template, :scheduled_at, :timezone,
+      :ends_at, :ends_after_count, :enabled
+    )
+    # Map new_title -> title for rename support
+    permitted[:title] = permitted.delete(:new_title) if permitted.key?(:new_title)
+    permitted
+  end
+
+  def index_response(reminder)
+    {
+      id: reminder.id,
+      title: reminder.title,
+      description: reminder.description,
+      scheduled_at: reminder.scheduled_at,
+      next_occurrence_at: reminder.next_occurrence_at,
+      recurrence_summary: reminder.recurrence_summary,
+      enabled: reminder.enabled,
+      occurrence_count: reminder.occurrence_count,
+      last_sent_at: reminder.last_sent_at
+    }
   end
 
   def reminder_params

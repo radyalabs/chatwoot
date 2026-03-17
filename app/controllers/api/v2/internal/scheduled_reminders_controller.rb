@@ -97,7 +97,7 @@ class Api::V2::Internal::ScheduledRemindersController < ActionController::API
   end
 
   def create
-    Rails.logger.info("[Internal::ScheduledRemindersController] Creating scheduled reminder with params: #{reminder_params.inspect}")
+    Rails.logger.info("[Internal::ScheduledRemindersController] Creating scheduled reminder: account_id=#{reminder_params[:account_id]} ai_agent_id=#{reminder_params[:ai_agent_id]} inbox_id=#{reminder_params[:inbox_id]} title=#{reminder_params[:title]}")
 
     account = Account.find_by(id: reminder_params[:account_id])
     unless account

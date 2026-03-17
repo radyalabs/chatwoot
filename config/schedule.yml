@@ -67,7 +67,7 @@ send_reminders_job:
 
 # executed every minute to send scheduled reminders (Google Calendar-like)
 send_scheduled_reminders_job:
-  cron: '* * * * *'
+  cron: '0 * * * *'
   class: 'SendScheduledRemindersJob'
   queue: scheduled_jobs
 

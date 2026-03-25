@@ -139,10 +139,7 @@ class AiAgents extends ApiClient {
     }
 
     chat(idAgent, data) {
-        const headers = data instanceof FormData
-            ? { 'Content-Type': 'multipart/form-data' }
-            : {};
-        return axios.post(`${this.url}/${idAgent}/chat`, data, { headers });
+        return axios.post(`${this.url}/${idAgent}/chat`, data);
     }
 }
 

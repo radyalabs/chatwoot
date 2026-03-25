@@ -325,6 +325,11 @@ async function chat() {
     });
     scrollToBottom();
   } catch (error) {
+    console.error('Chat error:', error);
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data);
+    }
     messages.value.push({
       role: 'assistant',
       content: 'Maaf, terjadi kesalahan saat memproses pertanyaan Anda.',
@@ -577,7 +582,17 @@ function resetChat() {
                 :alt="message.content || 'attachment'"
                 class="max-w-full rounded-lg my-2"
               />
+              <template v-if="message.attachments?.length">
+                <img
+                  v-for="(att, ai) in message.attachments"
+                  :key="ai"
+                  :src="att.data_url"
+                  :alt="att.filename || 'attachment'"
+                  class="max-w-full rounded-lg my-2"
+                />
+              </template>
               <div
+                v-if="message.content"
                 class="chat-message-content"
                 v-html="
                   message.role === 'user'

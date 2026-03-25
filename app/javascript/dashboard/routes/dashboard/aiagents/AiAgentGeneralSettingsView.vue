@@ -593,12 +593,12 @@ function resetChat() {
               </template>
               <div
                 v-if="message.content"
-                class="chat-message-content"
-                v-html="
+                v-dompurify-html="
                   message.role === 'user'
                     ? message.content.replace(/\n/g, '<br>')
                     : renderMarkdown(message.content)
                 "
+                class="chat-message-content"
               />
             </div>
           </div>

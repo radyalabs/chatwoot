@@ -46,6 +46,10 @@ export default {
       type: String,
       default: '',
     },
+    disabled: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   data() {
@@ -128,15 +132,19 @@ export default {
   <router-link v-else v-slot="{ href, isActive, navigate }" :to="to" custom>
     <a
       v-tooltip.right="$t(`SIDEBAR.${name}`)"
-      :href="href"
-      class="relative flex flex-row items-center m-3 px-2 gap-2 h-10 my-1 rounded-lg text-slate-700 dark:text-slate-100 hover:bg-slate-25 dark:hover:bg-slate-700 dark:hover:text-slate-100 hover:text-slate-600"
+      :href="disabled ? undefined : href"
+      class="relative flex flex-row items-center m-3 px-2 gap-2 h-10 my-1 rounded-lg"
       :class="{
         'bg-woot-50 dark:bg-slate-800 text-woot-500 hover:bg-woot-50':
-          isActive || isChildMenuActive,
+          !disabled && (isActive || isChildMenuActive),
+        'text-slate-700 dark:text-slate-100 hover:bg-slate-25 dark:hover:bg-slate-700 dark:hover:text-slate-100 hover:text-slate-600':
+          !disabled,
+        'text-slate-400 dark:text-slate-600 cursor-not-allowed pointer-events-none opacity-50':
+          disabled,
       }"
       :rel="openInNewPage ? 'noopener noreferrer nofollow' : undefined"
       :target="openInNewPage ? '_blank' : undefined"
-      @click="navigate"
+      @click="disabled ? undefined : navigate"
     >
       <div
         :style="{
@@ -148,14 +156,14 @@ export default {
           :fill-rule="iconFillRule"
           :clip-rule="iconClipRule"
           :class="{
-            'text-woot-500': isActive || isChildMenuActive,
+            'text-woot-500': !disabled && (isActive || isChildMenuActive),
           }"
         />
       </div>
       <span
         class="line-clamp-1"
         :class="{
-          'text-woot-500': isActive || isChildMenuActive,
+          'text-woot-500': !disabled && (isActive || isChildMenuActive),
         }"
         >{{ $t(`SIDEBAR.${name}`) }}
       </span>

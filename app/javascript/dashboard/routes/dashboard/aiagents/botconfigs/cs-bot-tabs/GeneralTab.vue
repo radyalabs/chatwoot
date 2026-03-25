@@ -330,7 +330,7 @@ async function save() {
     flowData.agents_config[agent_index].configurations.ticket_system =
       ticketSystem;
     flowData.agents_config[agent_index].temperature = creativityLevel.value;
-    
+
     displayFlowData.agents_config[agent_index].configurations.ticket_system = ticketSystem;
     displayFlowData.agents_config[agent_index].temperature = creativityLevel.value;
 

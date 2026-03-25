@@ -1,4 +1,6 @@
 class Api::V2::Internal::NotificationsController < ActionController::API
+  include ChannelMessageSender
+
   before_action :authenticate_api_key!
 
   # POST /api/v2/internal/notifications
@@ -48,7 +50,7 @@ class Api::V2::Internal::NotificationsController < ActionController::API
   private
 
   def find_matching_settings(account, ai_agent)
-    variables = notification_params[:variables] || {}    
+    variables = notification_params[:variables] || {}
     settings = account.agent_notification_settings.where(ai_agent_id: ai_agent.id)
 
 
@@ -90,8 +92,12 @@ class Api::V2::Internal::NotificationsController < ActionController::API
     return error_result(setting, 'Receiver address is blank') if setting.receiver_address.blank?
 
     channel_type = setting.receiver_channel_type.to_s
-    validation_error = validate_inbox_channel(inbox, channel_type, setting)
-    return validation_error if validation_error
+
+    begin
+      validate_inbox_channel(inbox, channel_type)
+    rescue StandardError => e
+      return error_result(setting, e.message)
+    end
 
     receiver_source_id = normalize_receiver_source_id(channel_type, setting.receiver_address)
     return error_result(setting, 'Receiver source_id missing') if receiver_source_id.blank?
@@ -109,97 +115,15 @@ class Api::V2::Internal::NotificationsController < ActionController::API
     error_result(setting, e.message)
   end
 
-  def send_to_channel(inbox, channel_type, receiver_source_id, message_content)
-    case channel_type
-    when 'whatsapp_unofficial'
-      send_whatsapp_unofficial(inbox, receiver_source_id, message_content)
-    when 'whatsapp'
-      send_whatsapp(inbox, receiver_source_id, message_content)
-    when 'telegram'
-      send_telegram(inbox, receiver_source_id, message_content)
-    when 'instagram'
-      send_instagram(inbox, receiver_source_id, message_content)
-    else
-      raise "Unsupported channel type: #{channel_type}"
-    end
-  end
-
-  def send_whatsapp_unofficial(inbox, receiver_source_id, message_content)
-    channel = inbox.channel
-    message_params = {
-      phone_number: receiver_source_id,
-      content: message_content,
-      attachments: []
-    }
-    response = channel.send_message(**message_params)
-  end
-
-  def send_whatsapp(inbox, receiver_source_id, message_content)
-    channel = inbox.channel
-    message_params = {
-      phone_number: receiver_source_id,
-      message: message_content
-    }
-    response = channel.send_message(**message_params)
-  end
-
-  def send_telegram(inbox, receiver_source_id, message_content)
-    channel = inbox.channel
-    response = channel.send_message(chat_id: receiver_source_id, text: message_content)
-  end
-
-  def send_instagram(inbox, receiver_source_id, message_content)
-    channel = inbox.channel
-    response = channel.send_message(recipient_id: receiver_source_id, message: message_content)
-  end
-
   def error_result(setting, error_message)
     { id: setting.id, status: 'failed', error: error_message }
   end
 
-  def validate_inbox_channel(inbox, channel_type, setting)
-    case channel_type
-    when 'whatsapp_unofficial'
-      return error_result(setting, 'Sender inbox channel is not WhatsApp Unofficial') unless inbox.channel.is_a?(Channel::WhatsappUnofficial)
-    when 'whatsapp'
-      return error_result(setting, 'Sender inbox channel is not WhatsApp') unless inbox.channel.is_a?(Channel::Whatsapp)
-    when 'telegram'
-      return error_result(setting, 'Sender inbox channel is not Telegram') unless inbox.channel.is_a?(Channel::Telegram)
-    when 'instagram'
-      return error_result(setting, 'Sender inbox channel is not Instagram') unless inbox.channel.is_a?(Channel::Instagram)
-    else
-      return error_result(setting, 'Unsupported receiver_channel_type')
-    end
-
-    nil
-  end
-
-  def normalize_receiver_source_id(channel_type, receiver_address)
-    return nil if receiver_address.blank?
-
-    case channel_type
-    when 'whatsapp_unofficial'
-      return receiver_address if group_jid?(receiver_address)
-
-      raw = receiver_address.to_s
-      raw = raw.split('@').first if raw.include?('@')
-      raw.gsub(/\D/, '')
-    when 'whatsapp'
-      receiver_address.to_s.gsub(/\D/, '')
-    else
-      receiver_address.to_s
-    end
-  end
-
-  def normalize_phone_number_for_contact(channel_type, receiver_address, receiver_source_id)
+  def normalize_phone_number_for_contact(channel_type, _receiver_address, receiver_source_id)
     return nil if receiver_source_id.blank?
     return nil unless %w[whatsapp whatsapp_unofficial].include?(channel_type)
 
     "+#{receiver_source_id}"
-  end
-
-  def group_jid?(whatsapp_address)
-    whatsapp_address.to_s.include?('@g.us')
   end
 
   def render_template(template, variables)

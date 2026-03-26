@@ -144,7 +144,7 @@ export default {
       }"
       :rel="openInNewPage ? 'noopener noreferrer nofollow' : undefined"
       :target="openInNewPage ? '_blank' : undefined"
-      @click="disabled ? undefined : navigate"
+      @click="navigate"
     >
       <div
         :style="{

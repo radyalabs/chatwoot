@@ -13,7 +13,6 @@ import Payment from './components/Payment.vue';
 import Topup from './components/Topup.vue';
 import StatusBadge from './components/StatusBadge.vue';
 
-
 // helpers
 import { formatUnixDate, toUnixTimestamp } from 'shared/helpers/DateHelper';
 

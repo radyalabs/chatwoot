@@ -1,4 +1,6 @@
 class Webhooks::WhatsappUnofficialEventsJob < ApplicationJob
+  include WebhookExpiryHandler
+
   queue_as :default
 
   ALLOWED_EVENTS = %w[
@@ -22,6 +24,10 @@ class Webhooks::WhatsappUnofficialEventsJob < ApplicationJob
       # TODO: Implement WhatsappUnofficial::IncomingMessageService
       Rails.logger.info 'WhatsappUnofficial::IncomingMessageService not implemented for waha'
     end
+  rescue StandardError => e
+    Rails.logger.error("[WhatsappUnofficialEventsJob] Unhandled error processing event: #{e.class} - #{e.message}")
+    Rails.logger.error(e.backtrace&.first(5)&.join("\n"))
+    raise
   end
 
   private
@@ -46,32 +52,5 @@ class Webhooks::WhatsappUnofficialEventsJob < ApplicationJob
 
   def channel_available?(channel)
     channel.inbox.channel_status
-  end
-
-  def account_subscription_active?(channel)
-    channel.inbox.account.active_subscription&.active?
-  end
-
-  def send_expired_auto_reply(channel, params)
-    account = channel.inbox.account
-    sender_phone = params.dig('payload', 'from')&.split('@')&.first
-    contact_inbox = ContactInbox.find_by(source_id: sender_phone, inbox: channel.inbox)
-    return unless contact_inbox
-
-    conversation = contact_inbox.contact.conversations.where(inbox: channel.inbox).order(updated_at: :desc).first
-    return unless conversation
-
-    expiry_message = I18n.t('subscription.expired_auto_reply', locale: account.locale || :id)
-    return if conversation.messages.outgoing.where(content: expiry_message).exists?
-
-    conversation.messages.create!(
-      account_id: account.id,
-      inbox_id: channel.inbox.id,
-      message_type: :outgoing,
-      content: expiry_message,
-      content_type: :text
-    )
-  rescue StandardError => e
-    Rails.logger.error "Failed to send expired subscription auto-reply: #{e.message}"
   end
 end

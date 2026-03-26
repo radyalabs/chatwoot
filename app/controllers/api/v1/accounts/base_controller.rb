@@ -10,6 +10,11 @@ class Api::V1::Accounts::BaseController < Api::BaseController
   def ensure_active_subscription
     subscription = current_account&.active_subscription
     render_subscription_expired unless subscription&.active?
+  rescue StandardError => e
+    Rails.logger.error(
+      "[BaseController] Error checking subscription for account ##{current_account&.id}: #{e.class} - #{e.message}"
+    )
+    render_subscription_expired
   end
 
   def render_subscription_expired

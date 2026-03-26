@@ -64,6 +64,9 @@ class AgentBotListener < BaseListener
 
   def account_subscription_active?(account)
     account.active_subscription&.active?
+  rescue StandardError => e
+    Rails.logger.error("[AgentBotListener] Error checking subscription status for account ##{account&.id}: #{e.class} - #{e.message}")
+    true
   end
 
   def process_message_event(method_name, agent_bot, message, event)

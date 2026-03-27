@@ -100,6 +100,13 @@
       "MSG_DESC": "This message will be sent automatically to customers via the appropriate platform at the specified time.",
       "MSG_EXAMPLE": "Example"
     },
+    "REMINDER_PROACTIVE": {
+      "TITLE": "Reminder Otomatis",
+      "DESC_CS": "Bot secara proaktif menawarkan reminder setelah memberikan panduan perawatan, jadwal, atau saran tindakan kepada pelanggan.",
+      "DESC_SALES": "Bot secara proaktif menawarkan reminder setelah pembayaran dikonfirmasi dan diverifikasi.",
+      "ACTIVE": "Aktif",
+      "INACTIVE": "Nonaktif"
+    },
     "LEAD_GENERATION": {
       "GENERAL_TAB": "Settings",
       "TICKET": {

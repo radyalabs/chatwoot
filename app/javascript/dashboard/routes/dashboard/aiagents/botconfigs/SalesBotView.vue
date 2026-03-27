@@ -321,6 +321,33 @@
                     </div>
                   </div>
                 </div>
+
+                <!-- Reminder Otomatis Toggle -->
+                <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
+                  <div class="flex items-center p-6">
+                    <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
+                        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
+                        <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="font-medium text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.REMINDER_PROACTIVE.TITLE') }}</h3>
+                      <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.REMINDER_PROACTIVE.DESC_SALES') }}</p>
+                    </div>
+                  </div>
+                  <div class="border-t border-gray-200 dark:border-gray-700 p-6">
+                    <label class="inline-flex items-center cursor-pointer">
+                      <input type="checkbox" v-model="reminderProactiveEnabled" :disabled="isSaving" class="sr-only peer">
+                      <div
+                        class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
+                      </div>
+                      <span class="ml-3 text-sm text-slate-700 dark:text-slate-300">
+                        {{ reminderProactiveEnabled ? $t('AGENT_MGMT.REMINDER_PROACTIVE.ACTIVE') : $t('AGENT_MGMT.REMINDER_PROACTIVE.INACTIVE') }}
+                      </span>
+                    </label>
+                  </div>
+                </div>
               </div>
 
               <div class="w-[240px] flex flex-col gap-3">
@@ -1731,8 +1758,11 @@ const creativityOptions = computed(() => [
 
 // idle time
 const idleConfig = reactive({
-  duration: window.chatwootConfig?.idleConversationDuration || 30,       
+  duration: window.chatwootConfig?.idleConversationDuration || 30,
 });
+
+// reminder proactive toggle
+const reminderProactiveEnabled = ref(false);
 
 // Helper function to get agent ID by type
 function getAgentIdByType(type) {
@@ -3335,9 +3365,12 @@ async function saveSettings() {
     flowData.agents_config[agentIndex].temperature = creativityLevel.value;
     displayFlowData.agents_config[agentIndex].temperature = creativityLevel.value;
 
+    flowData.agents_config[agentIndex].configurations.reminder_proactive_enabled = reminderProactiveEnabled.value;
+    displayFlowData.agents_config[agentIndex].configurations.reminder_proactive_enabled = reminderProactiveEnabled.value;
+
     const payload = {
       flow_data: flowData,
-      display_flow_data: displayFlowData, 
+      display_flow_data: displayFlowData,
     };
 
     await Promise.all([
@@ -3383,6 +3416,8 @@ function loadSavedConfiguration() {
       creativityLevel.value = agentData.temperature;
     }
 
+    const salesConfig = agentData?.configurations;
+    reminderProactiveEnabled.value = salesConfig?.reminder_proactive_enabled === true;
 
     // Reset all shipping methods first
     shippingMethods.kurirToko = false;

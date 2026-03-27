@@ -42,8 +42,10 @@ const creativityOptions = computed(() => [
 
 // idle time
 const idleConfig = reactive({
-  duration: window.chatwootConfig?.idleConversationDuration || 30,        
+  duration: window.chatwootConfig?.idleConversationDuration || 30,
 });
+
+const reminderProactiveEnabled = ref(false);
 
 console.log('=== googleSheetsAuth in GeneralTab.vue', props.googleSheetsAuth);
 const { t } = useI18n();
@@ -91,6 +93,10 @@ watch(
     if (agentData && agentData.temperature !== undefined) {
       creativityLevel.value = agentData.temperature;
     }
+
+    // Reminder proactive toggle
+    const reminderProactive = config?.reminder_proactive_enabled;
+    reminderProactiveEnabled.value = reminderProactive === true;
 
     // Load idle config from API
     loadIdleConfig();
@@ -334,6 +340,9 @@ async function save() {
     displayFlowData.agents_config[agent_index].configurations.ticket_system = ticketSystem;
     displayFlowData.agents_config[agent_index].temperature = creativityLevel.value;
 
+    flowData.agents_config[agent_index].configurations.reminder_proactive_enabled = reminderProactiveEnabled.value;
+    displayFlowData.agents_config[agent_index].configurations.reminder_proactive_enabled = reminderProactiveEnabled.value;
+
     const payload = {
       flow_data: flowData,
       display_flow_data: displayFlowData,
@@ -411,6 +420,21 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
             <option value="always">{{ $t('AGENT_MGMT.CSBOT.TICKET.CREATE_ALWAYS') }}</option>
             <option value="bot_fail">{{ $t('AGENT_MGMT.CSBOT.TICKET.CREATE_ON_FAIL') }}</option>
           </select>
+        </div>
+
+        <!-- Reminder Otomatis Toggle -->
+        <div class="mb-6">
+          <label class="block font-medium mb-2">{{ $t('AGENT_MGMT.REMINDER_PROACTIVE.TITLE') }}</label>
+          <p class="text-sm text-gray-500 mb-3">{{ $t('AGENT_MGMT.REMINDER_PROACTIVE.DESC_CS') }}</p>
+          <label class="inline-flex items-center cursor-pointer">
+            <input type="checkbox" v-model="reminderProactiveEnabled" :disabled="isSaving" class="sr-only peer">
+            <div
+              class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
+            </div>
+            <span class="ml-3 text-sm text-slate-700 dark:text-slate-300">
+              {{ reminderProactiveEnabled ? $t('AGENT_MGMT.REMINDER_PROACTIVE.ACTIVE') : $t('AGENT_MGMT.REMINDER_PROACTIVE.INACTIVE') }}
+            </span>
+          </label>
         </div>
 
         <!-- Google Sheets Integration -->

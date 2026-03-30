@@ -251,8 +251,8 @@
                       </svg>
                     </div>
                     <div>
-                      <h3 class="font-medium text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.REMINDER.TITLE') }}</h3>
-                      <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.REMINDER.DESC') }}</p>
+                      <h3 class="font-medium text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.REMINDER.APPOINTMENT.TITLE') }}</h3>
+                      <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.REMINDER.APPOINTMENT.DESC') }}</p>
                     </div>
                   </div>
                   
@@ -269,7 +269,7 @@
                 >
                   <div>
                     <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">
-                      {{ $t('AGENT_MGMT.REMINDER.TIME') }}
+                      {{ $t('AGENT_MGMT.REMINDER.APPOINTMENT.TIME') }}
                     </label>
                     <div class="flex items-center gap-3">
                       <select
@@ -288,15 +288,15 @@
                       </select>                   
                       
                       <span class="text-gray-500 text-sm">
-                        {{ $t('AGENT_MGMT.REMINDER.TIME_DETAIL') }}
+                        {{ $t('AGENT_MGMT.REMINDER.APPOINTMENT.TIME_DETAIL') }}
                       </span>
                     </div>
-                    <p class="text-xs text-gray-500 mt-1 italic">{{ $t('AGENT_MGMT.REMINDER.TIME_DESC') }}</p>
+                    <p class="text-xs text-gray-500 mt-1 italic">{{ $t('AGENT_MGMT.REMINDER.APPOINTMENT.TIME_DESC') }}</p>
                   </div>
                   <div>
                     <div class="flex justify-between items-end mb-1">
                       <label class="block text-sm font-medium text-slate-900 dark:text-slate-25">
-                        {{ $t('AGENT_MGMT.REMINDER.MSG') }}
+                        {{ $t('AGENT_MGMT.REMINDER.APPOINTMENT.MSG') }}
                       </label>
 
                       <div class="relative">
@@ -307,7 +307,7 @@
                           class="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-1 px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                          {{ $t('AGENT_MGMT.REMINDER.MSG_VARIABLE') }}
+                          {{ $t('AGENT_MGMT.REMINDER.APPOINTMENT.MSG_VARIABLE') }}
                         </button>
 
                         <div 
@@ -339,10 +339,10 @@
                       class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out"
                     ></textarea>
                     
-                    <p class="text-xs text-gray-500 mt-1 italic">{{ $t('AGENT_MGMT.REMINDER.MSG_DESC') }}</p>
+                    <p class="text-xs text-gray-500 mt-1 italic">{{ $t('AGENT_MGMT.REMINDER.APPOINTMENT.MSG_DESC') }}</p>
 
                     <div class="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded border border-gray-300 dark:border-slate-800 p-3">
-                      <p class="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">{{ $t('AGENT_MGMT.REMINDER.MSG_EXAMPLE') }}</p>
+                      <p class="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">{{ $t('AGENT_MGMT.REMINDER.APPOINTMENT.MSG_EXAMPLE') }}</p>
                       <div class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
                         <span v-if="!followUpConfig.message" class="text-slate-400 italic opacity-70">Belum ada pesan yang ditulis...</span>
                         <span v-else v-html="messagePreview"></span>
@@ -577,11 +577,11 @@ const followUpConfig = reactive({
 
 // follow-up options
 const followUpTimeOptions = computed(() => [
-  { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.30_MINUTES'), value: 30 },
-  { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.1_HOUR'), value: 60 },
-  { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.2_HOURS'), value: 120 },
-  { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.4_HOURS'), value: 240 },
-  { label: t('AGENT_MGMT.REMINDER.TIME_OPTIONS.24_HOURS'), value: 1440 },
+  { label: t('AGENT_MGMT.REMINDER.APPOINTMENT.TIME_OPTIONS.30_MINUTES'), value: 30 },
+  { label: t('AGENT_MGMT.REMINDER.APPOINTMENT.TIME_OPTIONS.1_HOUR'), value: 60 },
+  { label: t('AGENT_MGMT.REMINDER.APPOINTMENT.TIME_OPTIONS.2_HOURS'), value: 120 },
+  { label: t('AGENT_MGMT.REMINDER.APPOINTMENT.TIME_OPTIONS.4_HOURS'), value: 240 },
+  { label: t('AGENT_MGMT.REMINDER.APPOINTMENT.TIME_OPTIONS.24_HOURS'), value: 1440 },
 ]);
 
 // temperature bot
@@ -954,10 +954,10 @@ const cursorPosition = ref(0);
 const showVariableDropdown = ref(false);
 
 const AVAILABLE_VARIABLES = computed(() => [
-  { label: t('AGENT_MGMT.REMINDER.VARIABLES.CUSTOMER_NAME'), value: '{{nama_pelanggan}}', mock: 'Budi Santoso' },
-  { label: t('AGENT_MGMT.REMINDER.VARIABLES.LEADGEN.DATE'), value: '{{tanggal_konsultasi}}', mock: '25 Des 2025' },
-  { label: t('AGENT_MGMT.REMINDER.VARIABLES.LEADGEN.TIME'), value: '{{waktu_konsultasi}}', mock: '14:00 WIB' },
-  { label: t('AGENT_MGMT.REMINDER.VARIABLES.SERVICE_NAME'), value: '{{nama_layanan}}', mock: 'Konsultasi Premium' },
+  { label: t('AGENT_MGMT.REMINDER.APPOINTMENT.VARIABLES.CUSTOMER_NAME'), value: '{{nama_pelanggan}}', mock: 'Budi Santoso' },
+  { label: t('AGENT_MGMT.REMINDER.APPOINTMENT.VARIABLES.LEADGEN.DATE'), value: '{{tanggal_konsultasi}}', mock: '25 Des 2025' },
+  { label: t('AGENT_MGMT.REMINDER.APPOINTMENT.VARIABLES.LEADGEN.TIME'), value: '{{waktu_konsultasi}}', mock: '14:00 WIB' },
+  { label: t('AGENT_MGMT.REMINDER.APPOINTMENT.VARIABLES.SERVICE_NAME'), value: '{{nama_layanan}}', mock: 'Konsultasi Premium' },
 ]);
 
 const messagePreview = computed(() => {

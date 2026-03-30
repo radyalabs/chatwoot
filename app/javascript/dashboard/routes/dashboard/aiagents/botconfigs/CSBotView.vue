@@ -164,7 +164,7 @@ const tabs = computed(() => [
   {
     key: '7',
     index: 7,
-    name: t('AGENT_MGMT.REMINDER.HEADER'),
+    name: t('AGENT_MGMT.REMINDER.MANAGEMENT.HEADER'),
     icon: 'i-lucide-bell',
   },
 ])

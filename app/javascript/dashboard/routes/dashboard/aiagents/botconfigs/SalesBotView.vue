@@ -332,8 +332,8 @@
                       </svg>
                     </div>
                     <div>
-                      <h3 class="font-medium text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.REMINDER_PROACTIVE.TITLE') }}</h3>
-                      <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.REMINDER_PROACTIVE.DESC_SALES') }}</p>
+                      <h3 class="font-medium text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.REMINDER.APPOINTMENT.OFFER.TITLE') }}</h3>
+                      <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.REMINDER.APPOINTMENT.OFFER.DESC.SALES') }}</p>
                     </div>
                   </div>
                   <div class="border-t border-gray-200 dark:border-gray-700 p-6">
@@ -343,7 +343,7 @@
                         class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
                       </div>
                       <span class="ml-3 text-sm text-slate-700 dark:text-slate-300">
-                        {{ reminderProactiveEnabled ? $t('AGENT_MGMT.REMINDER_PROACTIVE.ACTIVE') : $t('AGENT_MGMT.REMINDER_PROACTIVE.INACTIVE') }}
+                        {{ reminderProactiveEnabled ? $t('AGENT_MGMT.REMINDER.ENABLED') : $t('AGENT_MGMT.REMINDER.DISABLED') }}
                       </span>
                     </label>
                   </div>
@@ -2120,7 +2120,7 @@ const tabs = computed(() => [
   {
     key: '8',
     index: 8,
-    name: t('AGENT_MGMT.REMINDER.HEADER'),
+    name: t('AGENT_MGMT.REMINDER.MANAGEMENT.HEADER'),
     icon: 'i-lucide-bell',
   },
 ])

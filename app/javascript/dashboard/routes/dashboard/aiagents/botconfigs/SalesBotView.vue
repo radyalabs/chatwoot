@@ -338,12 +338,12 @@
                   </div>
                   <div class="border-t border-gray-200 dark:border-gray-700 p-6">
                     <label class="inline-flex items-center cursor-pointer">
-                      <input type="checkbox" v-model="reminderProactiveEnabled" :disabled="isSaving" class="sr-only peer">
+                      <input type="checkbox" v-model="reminderOfferEnabled" :disabled="isSaving" class="sr-only peer">
                       <div
                         class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
                       </div>
                       <span class="ml-3 text-sm text-slate-700 dark:text-slate-300">
-                        {{ reminderProactiveEnabled ? $t('AGENT_MGMT.REMINDER.ENABLED') : $t('AGENT_MGMT.REMINDER.DISABLED') }}
+                        {{ reminderOfferEnabled ? $t('AGENT_MGMT.REMINDER.ENABLED') : $t('AGENT_MGMT.REMINDER.DISABLED') }}
                       </span>
                     </label>
                   </div>
@@ -1762,7 +1762,7 @@ const idleConfig = reactive({
 });
 
 // reminder proactive toggle
-const reminderProactiveEnabled = ref(false);
+const reminderOfferEnabled = ref(false);
 
 // Helper function to get agent ID by type
 function getAgentIdByType(type) {
@@ -3365,8 +3365,8 @@ async function saveSettings() {
     flowData.agents_config[agentIndex].temperature = creativityLevel.value;
     displayFlowData.agents_config[agentIndex].temperature = creativityLevel.value;
 
-    flowData.agents_config[agentIndex].configurations.reminder_proactive_enabled = reminderProactiveEnabled.value;
-    displayFlowData.agents_config[agentIndex].configurations.reminder_proactive_enabled = reminderProactiveEnabled.value;
+    flowData.agents_config[agentIndex].configurations.reminder_offer_enabled = reminderOfferEnabled.value;
+    displayFlowData.agents_config[agentIndex].configurations.reminder_offer_enabled = reminderOfferEnabled.value;
 
     const payload = {
       flow_data: flowData,
@@ -3417,7 +3417,7 @@ function loadSavedConfiguration() {
     }
 
     const salesConfig = agentData?.configurations;
-    reminderProactiveEnabled.value = salesConfig?.reminder_proactive_enabled === true;
+    reminderOfferEnabled.value = salesConfig?.reminder_offer_enabled === true;
 
     // Reset all shipping methods first
     shippingMethods.kurirToko = false;

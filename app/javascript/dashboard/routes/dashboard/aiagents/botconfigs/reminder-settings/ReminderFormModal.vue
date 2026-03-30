@@ -496,32 +496,42 @@ defineExpose({ open });
         />
       </div>
 
-      <!-- Date & Time -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div class="flex flex-col gap-1">
-          <label class="mb-0.5 text-sm font-medium text-n-slate-12">
-            {{ $t('AGENT_MGMT.REMINDER.MANAGEMENT.DATE_LABEL') }}
-          </label>
-          <div class="relative">
-            <input
-              ref="dateInputRef"
-              v-model="scheduledDate"
-              type="date"
-              class="date-input w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 transition-all cursor-pointer"
-              :placeholder="$t('AGENT_MGMT.REMINDER.MANAGEMENT.DATE_PLACEHOLDER')"
-              @click="openDatePicker"
-              @keydown="handleDateKeydown"
+      <!-- Schedule Section -->
+      <div class="flex flex-col gap-2">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {{ $t('AGENT_MGMT.REMINDER.MANAGEMENT.SCHEDULE_SECTION_LABEL') }}
+          </p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            {{ $t('AGENT_MGMT.REMINDER.MANAGEMENT.SCHEDULE_SECTION_DESC') }}
+          </p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="flex flex-col gap-1">
+            <label class="mb-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+              {{ $t('AGENT_MGMT.REMINDER.MANAGEMENT.DATE_PLACEHOLDER') }}
+            </label>
+            <div class="relative">
+              <input
+                ref="dateInputRef"
+                v-model="scheduledDate"
+                type="date"
+                class="date-input w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 transition-all cursor-pointer"
+                :placeholder="$t('AGENT_MGMT.REMINDER.MANAGEMENT.DATE_PLACEHOLDER')"
+                @click="openDatePicker"
+                @keydown="handleDateKeydown"
+              />
+            </div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="mb-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+              {{ $t('AGENT_MGMT.REMINDER.MANAGEMENT.TIME_PLACEHOLDER') }}
+            </label>
+            <TimePickerDropdown
+              v-model="scheduledTime"
+              :placeholder="$t('AGENT_MGMT.REMINDER.MANAGEMENT.TIME_PLACEHOLDER')"
             />
           </div>
-        </div>
-        <div class="flex flex-col gap-1">
-          <label class="mb-0.5 text-sm font-medium text-n-slate-12">
-            {{ $t('AGENT_MGMT.REMINDER.MANAGEMENT.TIME_LABEL') }}
-          </label>
-          <TimePickerDropdown
-            v-model="scheduledTime"
-            :placeholder="$t('AGENT_MGMT.REMINDER.MANAGEMENT.TIME_PLACEHOLDER')"
-          />
         </div>
       </div>
 

@@ -812,8 +812,6 @@
         "OPTIONAL": "(optional)",
         "SCHEDULE_SECTION_LABEL": "Reminder Start Schedule",
         "SCHEDULE_SECTION_DESC": "Subsequent reminders follow the repeat pattern below.",
-        "DATE_LABEL": "Date",
-        "TIME_LABEL": "Time",
         "DATE_PLACEHOLDER": "Select date",
         "TIME_PLACEHOLDER": "Select time",
         "REPEAT_LABEL": "Repeat",

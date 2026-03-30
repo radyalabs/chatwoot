@@ -817,8 +817,6 @@
         "OPTIONAL": "(opsional)",
         "SCHEDULE_SECTION_LABEL": "Jadwal Mulai Pengiriman Pengingat",
         "SCHEDULE_SECTION_DESC": "Pengingat berikutnya mengikuti pola pengulangan yang dipilih di bawah.",
-        "DATE_LABEL": "Tanggal",
-        "TIME_LABEL": "Jam",
         "DATE_PLACEHOLDER": "Pilih tanggal",
         "TIME_PLACEHOLDER": "Pilih jam",
         "REPEAT_LABEL": "Ulangi",

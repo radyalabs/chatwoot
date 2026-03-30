@@ -19,14 +19,22 @@ const emit = defineEmits(['update:modelValue']);
 
 const displayPreset = ref('none');
 
-const DAYS_SHORT = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+const dayOptions = computed(() => [
+  { index: 0, label: t('AGENT_MGMT.REMINDER.MANAGEMENT.DAYS.SUNDAY') },
+  { index: 1, label: t('AGENT_MGMT.REMINDER.MANAGEMENT.DAYS.MONDAY') },
+  { index: 2, label: t('AGENT_MGMT.REMINDER.MANAGEMENT.DAYS.TUESDAY') },
+  { index: 3, label: t('AGENT_MGMT.REMINDER.MANAGEMENT.DAYS.WEDNESDAY') },
+  { index: 4, label: t('AGENT_MGMT.REMINDER.MANAGEMENT.DAYS.THURSDAY') },
+  { index: 5, label: t('AGENT_MGMT.REMINDER.MANAGEMENT.DAYS.FRIDAY') },
+  { index: 6, label: t('AGENT_MGMT.REMINDER.MANAGEMENT.DAYS.SATURDAY') },
+]);
 
-const FREQUENCY_OPTIONS = [
-  { value: 'daily', label: 'day' },
-  { value: 'weekly', label: 'week' },
-  { value: 'monthly', label: 'month' },
-  { value: 'yearly', label: 'year' },
-];
+const frequencyOptions = computed(() => [
+  { value: 'daily', label: t('AGENT_MGMT.REMINDER.MANAGEMENT.FREQUENCY.DAY') },
+  { value: 'weekly', label: t('AGENT_MGMT.REMINDER.MANAGEMENT.FREQUENCY.WEEK') },
+  { value: 'monthly', label: t('AGENT_MGMT.REMINDER.MANAGEMENT.FREQUENCY.MONTH') },
+  { value: 'yearly', label: t('AGENT_MGMT.REMINDER.MANAGEMENT.FREQUENCY.YEAR') },
+]);
 
 // Custom inline state
 const customFrequency = ref('weekly');
@@ -181,17 +189,21 @@ watchEffect(() => {
     rule._ends_after_count = endsAfterCount;
   }
 
-  const freqLabel = {
-    daily: 'day',
-    weekly: 'week',
-    monthly: 'month',
-    yearly: 'year',
-  }[freq];
-  const pluralLabel = intv > 1 ? `${freqLabel}s` : freqLabel;
-  let summary = `Every ${intv > 1 ? `${intv} ` : ''}${pluralLabel}`;
+  const freqSingular = t(`AGENT_MGMT.REMINDER.MANAGEMENT.FREQUENCY.${freq.replace('daily','DAY').replace('weekly','WEEK').replace('monthly','MONTH').replace('yearly','YEAR')}`);
+  const freqPlural = t(`AGENT_MGMT.REMINDER.MANAGEMENT.FREQUENCY.${freq.replace('daily','DAYS').replace('weekly','WEEKS').replace('monthly','MONTHS').replace('yearly','YEARS')}`);
+  const freqLabel = intv > 1 ? freqPlural : freqSingular;
+  let summary = `${t('AGENT_MGMT.REMINDER.MANAGEMENT.SUMMARY_EVERY')} ${intv > 1 ? `${intv} ` : ''}${freqLabel}`;
   if (freq === 'weekly' && days.length) {
-    const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    summary += ' on ' + [...days].sort().map(d => DAY_NAMES[d]).join(', ');
+    const allDays = [
+      t('AGENT_MGMT.REMINDER.MANAGEMENT.DAYS.SUNDAY'),
+      t('AGENT_MGMT.REMINDER.MANAGEMENT.DAYS.MONDAY'),
+      t('AGENT_MGMT.REMINDER.MANAGEMENT.DAYS.TUESDAY'),
+      t('AGENT_MGMT.REMINDER.MANAGEMENT.DAYS.WEDNESDAY'),
+      t('AGENT_MGMT.REMINDER.MANAGEMENT.DAYS.THURSDAY'),
+      t('AGENT_MGMT.REMINDER.MANAGEMENT.DAYS.FRIDAY'),
+      t('AGENT_MGMT.REMINDER.MANAGEMENT.DAYS.SATURDAY'),
+    ];
+    summary += ` ${t('AGENT_MGMT.REMINDER.MANAGEMENT.SUMMARY_ON')} ` + [...days].sort().map(d => allDays[d]).join(', ');
   }
   rule._summary = summary;
 
@@ -318,18 +330,18 @@ const toggleCustomDay = day => {
       </span>
       <div class="flex flex-wrap gap-1.5">
         <button
-          v-for="(label, index) in DAYS_SHORT"
-          :key="index"
+          v-for="day in dayOptions"
+          :key="day.index"
           type="button"
-          class="w-9 h-9 rounded-full text-xs font-medium transition-all duration-150"
+          class="px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150"
           :class="
-            selectedDaysOfWeek.includes(index)
+            selectedDaysOfWeek.includes(day.index)
               ? 'bg-woot-500 text-white shadow-sm'
               : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
           "
-          @click="toggleDay(index)"
+          @click="toggleDay(day.index)"
         >
-          {{ label }}
+          {{ day.label }}
         </button>
       </div>
     </div>
@@ -339,10 +351,10 @@ const toggleCustomDay = day => {
       v-if="showCustomInline"
       class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col gap-4"
     >
-      <!-- Repeat every N [unit] -->
+      <!-- Interval selector -->
       <div class="flex items-center gap-3">
         <span class="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
-          Repeat every
+          {{ t('AGENT_MGMT.REMINDER.MANAGEMENT.REPEAT_EVERY') }}
         </span>
         <input
           v-model.number="customInterval"
@@ -356,42 +368,42 @@ const toggleCustomDay = day => {
           class="px-3 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm"
         >
           <option
-            v-for="opt in FREQUENCY_OPTIONS"
+            v-for="opt in frequencyOptions"
             :key="opt.value"
             :value="opt.value"
           >
-            {{ opt.label }}{{ customInterval > 1 ? 's' : '' }}
+            {{ customInterval > 1 ? t(`AGENT_MGMT.REMINDER.MANAGEMENT.FREQUENCY.${opt.value.replace('daily','DAYS').replace('weekly','WEEKS').replace('monthly','MONTHS').replace('yearly','YEARS')}`) : opt.label }}
           </option>
         </select>
       </div>
 
-      <!-- Repeat on days (weekly) -->
+      <!-- Day-of-week selector (weekly) -->
       <div v-if="showCustomDaySelector">
         <span class="block text-sm text-gray-700 dark:text-gray-300 mb-2">
-          Repeat on
+          {{ t('AGENT_MGMT.REMINDER.MANAGEMENT.REPEAT_ON') }}
         </span>
-        <div class="flex gap-1.5">
+        <div class="flex flex-wrap gap-1.5">
           <button
-            v-for="(label, index) in DAYS_SHORT"
-            :key="index"
+            v-for="day in dayOptions"
+            :key="day.index"
             type="button"
-            class="w-9 h-9 rounded-full text-xs font-medium transition-all duration-150"
+            class="px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150"
             :class="
-              customDaysOfWeek.includes(index)
+              customDaysOfWeek.includes(day.index)
                 ? 'bg-woot-500 text-white shadow-sm'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
             "
-            @click="toggleCustomDay(index)"
+            @click="toggleCustomDay(day.index)"
           >
-            {{ label }}
+            {{ day.label }}
           </button>
         </div>
       </div>
 
-      <!-- On day (monthly) -->
+      <!-- Day-of-month selector (monthly) -->
       <div v-if="showCustomDayOfMonth">
         <span class="block text-sm text-gray-700 dark:text-gray-300 mb-2">
-          On day
+          {{ t('AGENT_MGMT.REMINDER.MANAGEMENT.ON_DAY') }}
         </span>
         <input
           v-model.number="customDayOfMonth"

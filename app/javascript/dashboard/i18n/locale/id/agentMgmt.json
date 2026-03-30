@@ -69,37 +69,6 @@
         "NO": "Tidak, Simpan "
       }
     },
-    "REMINDER": {
-      "TITLE": "Pesan Pengingat",
-      "DESC": "Kirim pesan pengingat otomatis kepada pelanggan setelah penjadwalan",
-      "TIME": "Kapan pesan dikirim?",
-      "TIME_OPTIONS": {
-        "30_MINUTES": "30 Menit",
-        "1_HOUR": "1 Jam",
-        "2_HOURS": "2 Jam",
-        "4_HOURS": "4 Jam",
-        "24_HOURS": "24 Jam"
-      },
-      "TIME_DETAIL": "sebelum sesi dimulai",
-      "TIME_DESC": "Pilih waktu untuk mengirimkan pesan follow up.",
-      "MSG": "Isi Pesan",
-      "MSG_VARIABLE": "Tambahkan Variabel",
-      "VARIABLES": {
-        "CUSTOMER_NAME": "Nama Pelanggan",
-        "SERVICE_NAME": "Nama Layanan",
-        "BOOKING": {
-          "DATE": "Tanggal Booking",
-          "TIME": "Waktu Booking",
-          "LOCATION": "Lokasi"
-        },
-        "LEADGEN": {
-          "DATE": "Tanggal Konsultasi",
-          "TIME": "Waktu Konsultasi"
-        }
-      },
-      "MSG_DESC": "Pesan ini akan dikirimkan otomatis ke pelanggan melalui platform yang sesuai pada waktu yang ditentukan.",
-      "MSG_EXAMPLE": "Contoh"
-    },
     "LEAD_GENERATION": {
       "GENERAL_TAB": "Pengaturan",
       "TICKET": {
@@ -788,55 +757,117 @@
       "SAVE_ERROR": "Gagal menyimpan konfigurasi penomoran."
     },
     "REMINDER": {
-      "HEADER": "Pengaturan Pengingat",
-      "DESC": "Atur pengingat terjadwal untuk mengirim pesan otomatis pada waktu tertentu.",
-      "ADD_BUTTON": "Tambah Pengingat",
-      "SEARCH_PLACEHOLDER": "Cari pengingat...",
-      "EMPTY_STATE": "Belum ada pengingat yang dikonfigurasi.",
-      "NO_INBOX_AVAILABLE": "Tidak ada platform pesan yang terhubung. Silakan buat atau hubungkan platform terlebih dahulu.",
-      "FORM_TITLE_ADD": "Tambah Pengingat",
-      "FORM_TITLE_EDIT": "Edit Pengingat",
-      "TITLE_LABEL": "Judul",
-      "TITLE_PLACEHOLDER": "misal, Update Tim Mingguan",
-      "NOTE_LABEL": "Catatan",
-      "NOTE_PLACEHOLDER": "Catatan opsional...",
-      "INBOX_TYPE_LABEL": "Tipe Platform",
-      "INBOX_LABEL": "Kirim Dari",
-      "MESSAGE_LABEL": "Pesan",
-      "MESSAGE_PLACEHOLDER": "Isi pesan yang akan dikirim...",
-      "SCHEDULE_LABEL": "Tanggal & Waktu",
-      "DATE_LABEL": "Tanggal",
-      "DATE_PLACEHOLDER": "Pilih tanggal",
-      "TIME_LABEL": "Jam",
-      "TIME_PLACEHOLDER": "Pilih jam",
-      "OPTIONAL": "(opsional)",
-      "REPEAT_LABEL": "Ulangi",
-      "REPEAT_NONE": "Tidak berulang",
-      "REPEAT_DAILY": "Harian",
-      "REPEAT_WEEKLY": "Mingguan",
-      "REPEAT_MONTHLY": "Bulanan",
-      "REPEAT_ANNUALLY": "Tahunan",
-      "REPEAT_WEEKDAY": "Setiap hari kerja (Sen-Jum)",
-      "REPEAT_CUSTOM": "Kustom...",
-      "REPEAT_ON": "Ulangi pada",
-      "ENDS_LABEL": "Berakhir",
-      "ENDS_NEVER": "Tidak pernah",
-      "ENDS_ON": "Pada",
-      "ENDS_AFTER": "Setelah",
-      "OCCURRENCES": "kali",
-      "NEXT_OCCURRENCE": "Selanjutnya",
       "ENABLED": "Aktif",
       "DISABLED": "Nonaktif",
-      "DELETE_CONFIRM": "Apakah Anda yakin ingin menghapus pengingat ini?",
-      "COMPLETED": "Terkirim",
-      "CARD_SEND_TO": "Tujuan",
-      "CLICK_TO_DISABLE": "Klik untuk menonaktifkan pengingat",
-      "CLICK_TO_ENABLE": "Klik untuk mengaktifkan pengingat",
-      "TOGGLE_ARIA": "Aktifkan atau nonaktifkan pengingat",
-      "UNKNOWN_INBOX": "Platform tidak diketahui",
-      "SENT_COUNT_ONE": "Terkirim {count} kali",
-      "SENT_COUNT_OTHER": "Terkirim {count} kali",
-      "LAST_SENT": "Terakhir dikirim"
+      "APPOINTMENT": {
+        "TITLE": "Pesan Pengingat",
+        "DESC": "Kirim pesan pengingat otomatis kepada pelanggan setelah penjadwalan",
+        "TIME": "Kapan pesan dikirim?",
+        "TIME_DETAIL": "sebelum sesi dimulai",
+        "TIME_DESC": "Pilih waktu untuk mengirimkan pesan follow up.",
+        "TIME_OPTIONS": {
+          "30_MINUTES": "30 Menit",
+          "1_HOUR": "1 Jam",
+          "2_HOURS": "2 Jam",
+          "4_HOURS": "4 Jam",
+          "24_HOURS": "24 Jam"
+        },
+        "MSG": "Isi Pesan",
+        "MSG_VARIABLE": "Tambahkan Variabel",
+        "MSG_DESC": "Pesan ini akan dikirimkan otomatis ke pelanggan melalui platform yang sesuai pada waktu yang ditentukan.",
+        "MSG_EXAMPLE": "Contoh",
+        "VARIABLES": {
+          "CUSTOMER_NAME": "Nama Pelanggan",
+          "SERVICE_NAME": "Nama Layanan",
+          "BOOKING": {
+            "DATE": "Tanggal Booking",
+            "TIME": "Waktu Booking",
+            "LOCATION": "Lokasi"
+          },
+          "LEADGEN": {
+            "DATE": "Tanggal Konsultasi",
+            "TIME": "Waktu Konsultasi"
+          }
+        },
+        "OFFER": {
+          "TITLE": "Reminder Otomatis",
+          "DESC": {
+            "CS": "Bot secara proaktif menawarkan reminder setelah memberikan panduan perawatan, jadwal, atau saran tindakan kepada pelanggan.",
+            "SALES": "Bot secara proaktif menawarkan reminder setelah pembayaran dikonfirmasi dan diverifikasi."
+          }
+        }
+      },
+      "MANAGEMENT": {
+        "HEADER": "Pengaturan Pengingat",
+        "DESC": "Atur pengingat terjadwal untuk mengirim pesan otomatis pada waktu tertentu.",
+        "ADD_BUTTON": "Tambah Pengingat",
+        "SEARCH_PLACEHOLDER": "Cari pengingat...",
+        "EMPTY_STATE": "Belum ada pengingat yang dikonfigurasi.",
+        "NO_INBOX_AVAILABLE": "Tidak ada platform pesan yang terhubung. Silakan buat atau hubungkan platform terlebih dahulu.",
+        "FORM_TITLE_ADD": "Tambah Pengingat",
+        "FORM_TITLE_EDIT": "Edit Pengingat",
+        "TITLE_LABEL": "Judul",
+        "TITLE_PLACEHOLDER": "misal, Update Tim Mingguan",
+        "NOTE_LABEL": "Catatan",
+        "NOTE_PLACEHOLDER": "Catatan opsional...",
+        "INBOX_TYPE_LABEL": "Tipe Platform",
+        "INBOX_LABEL": "Kirim Dari",
+        "MESSAGE_LABEL": "Pesan",
+        "MESSAGE_PLACEHOLDER": "Isi pesan yang akan dikirim...",
+        "OPTIONAL": "(opsional)",
+        "SCHEDULE_SECTION_LABEL": "Jadwal Mulai Pengiriman Pengingat",
+        "SCHEDULE_SECTION_DESC": "Pengingat berikutnya mengikuti pola pengulangan yang dipilih di bawah.",
+        "DATE_PLACEHOLDER": "Pilih tanggal",
+        "TIME_PLACEHOLDER": "Pilih jam",
+        "REPEAT_LABEL": "Ulangi",
+        "REPEAT_NONE": "Tidak berulang",
+        "REPEAT_DAILY": "Harian",
+        "REPEAT_WEEKLY": "Mingguan",
+        "REPEAT_MONTHLY": "Bulanan",
+        "REPEAT_ANNUALLY": "Tahunan",
+        "REPEAT_WEEKDAY": "Setiap hari kerja (Sen-Jum)",
+        "REPEAT_CUSTOM": "Kustom...",
+        "REPEAT_ON": "Ulangi pada",
+        "REPEAT_EVERY": "Setiap",
+        "ON_DAY": "Pada hari ke",
+        "DAYS": {
+          "SUNDAY": "Minggu",
+          "MONDAY": "Senin",
+          "TUESDAY": "Selasa",
+          "WEDNESDAY": "Rabu",
+          "THURSDAY": "Kamis",
+          "FRIDAY": "Jumat",
+          "SATURDAY": "Sabtu"
+        },
+        "FREQUENCY": {
+          "DAY": "hari",
+          "DAYS": "hari",
+          "WEEK": "minggu",
+          "WEEKS": "minggu",
+          "MONTH": "bulan",
+          "MONTHS": "bulan",
+          "YEAR": "tahun",
+          "YEARS": "tahun"
+        },
+        "SUMMARY_EVERY": "Setiap",
+        "SUMMARY_ON": "pada",
+        "ENDS_LABEL": "Berakhir",
+        "ENDS_NEVER": "Tidak pernah",
+        "ENDS_ON": "Pada",
+        "ENDS_AFTER": "Setelah",
+        "OCCURRENCES": "kali",
+        "NEXT_OCCURRENCE": "Selanjutnya",
+        "DELETE_CONFIRM": "Apakah Anda yakin ingin menghapus pengingat ini?",
+        "COMPLETED": "Terkirim",
+        "CARD_SEND_TO": "Tujuan",
+        "CLICK_TO_DISABLE": "Klik untuk menonaktifkan pengingat",
+        "CLICK_TO_ENABLE": "Klik untuk mengaktifkan pengingat",
+        "TOGGLE_ARIA": "Aktifkan atau nonaktifkan pengingat",
+        "UNKNOWN_INBOX": "Platform tidak diketahui",
+        "SENT_COUNT_ONE": "Terkirim {count} kali",
+        "SENT_COUNT_OTHER": "Terkirim {count} kali",
+        "LAST_SENT": "Terakhir dikirim"
+      }
     }
   }
 }

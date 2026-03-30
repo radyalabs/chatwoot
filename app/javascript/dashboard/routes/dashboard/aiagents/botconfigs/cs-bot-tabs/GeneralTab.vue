@@ -42,8 +42,10 @@ const creativityOptions = computed(() => [
 
 // idle time
 const idleConfig = reactive({
-  duration: window.chatwootConfig?.idleConversationDuration || 30,        
+  duration: window.chatwootConfig?.idleConversationDuration || 30,
 });
+
+const reminderOfferEnabled = ref(false);
 
 console.log('=== googleSheetsAuth in GeneralTab.vue', props.googleSheetsAuth);
 const { t } = useI18n();
@@ -91,6 +93,10 @@ watch(
     if (agentData && agentData.temperature !== undefined) {
       creativityLevel.value = agentData.temperature;
     }
+
+    // Reminder proactive toggle
+    const reminderOffer = config?.reminder_offer_enabled;
+    reminderOfferEnabled.value = reminderOffer === true;
 
     // Load idle config from API
     loadIdleConfig();
@@ -334,6 +340,10 @@ async function save() {
     displayFlowData.agents_config[agent_index].configurations.ticket_system = ticketSystem;
     displayFlowData.agents_config[agent_index].temperature = creativityLevel.value;
 
+    if (!props.config.ticketSystemActive) reminderOfferEnabled.value = false;
+    flowData.agents_config[agent_index].configurations.reminder_offer_enabled = reminderOfferEnabled.value;
+    displayFlowData.agents_config[agent_index].configurations.reminder_offer_enabled = reminderOfferEnabled.value;
+
     const payload = {
       flow_data: flowData,
       display_flow_data: displayFlowData,
@@ -411,6 +421,33 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
             <option value="always">{{ $t('AGENT_MGMT.CSBOT.TICKET.CREATE_ALWAYS') }}</option>
             <option value="bot_fail">{{ $t('AGENT_MGMT.CSBOT.TICKET.CREATE_ON_FAIL') }}</option>
           </select>
+        </div>
+
+        <!-- Reminder Otomatis Toggle -->
+        <div v-if="config.ticketSystemActive" class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
+          <div class="flex items-center p-6">
+            <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
+                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
+                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="font-medium text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.REMINDER.APPOINTMENT.OFFER.TITLE') }}</h3>
+              <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.REMINDER.APPOINTMENT.OFFER.DESC.CS') }}</p>
+            </div>
+          </div>
+          <div class="border-t border-gray-200 dark:border-gray-700 p-6">
+            <label class="inline-flex items-center cursor-pointer">
+              <input type="checkbox" v-model="reminderOfferEnabled" :disabled="isSaving" class="sr-only peer">
+              <div
+                class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
+              </div>
+              <span class="ml-3 text-sm text-slate-700 dark:text-slate-300">
+                {{ reminderOfferEnabled ? $t('AGENT_MGMT.REMINDER.ENABLED') : $t('AGENT_MGMT.REMINDER.DISABLED') }}
+              </span>
+            </label>
+          </div>
         </div>
 
         <!-- Google Sheets Integration -->

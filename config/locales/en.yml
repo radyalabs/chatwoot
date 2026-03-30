@@ -36,6 +36,8 @@ en:
     reset_password_failure: Uh ho! We could not find any user with the specified email.
     inbox_deletetion_response: Your inbox deletion request will be processed in some time.
 
+  subscription:
+    expired_auto_reply: "We're sorry, the automated chat service for this account is currently inactive. Please contact the store administrator for further assistance."
   errors:
     validations:
       presence: must not be blank

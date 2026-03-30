@@ -343,8 +343,8 @@ defineExpose({ open });
     ref="dialogRef"
     :title="
       isEditing
-        ? $t('AGENT_MGMT.REMINDER.FORM_TITLE_EDIT')
-        : $t('AGENT_MGMT.REMINDER.FORM_TITLE_ADD')
+        ? $t('AGENT_MGMT.REMINDER.MANAGEMENT.FORM_TITLE_EDIT')
+        : $t('AGENT_MGMT.REMINDER.MANAGEMENT.FORM_TITLE_ADD')
     "
     width="2xl"
     :show-confirm-button="false"
@@ -356,30 +356,30 @@ defineExpose({ open });
       <!-- Title -->
       <Input
         v-model="title"
-        :label="$t('AGENT_MGMT.REMINDER.TITLE_LABEL')"
-        :placeholder="$t('AGENT_MGMT.REMINDER.TITLE_PLACEHOLDER')"
+        :label="$t('AGENT_MGMT.REMINDER.MANAGEMENT.TITLE_LABEL')"
+        :placeholder="$t('AGENT_MGMT.REMINDER.MANAGEMENT.TITLE_PLACEHOLDER')"
       />
 
       <!-- Note (optional) -->
       <div class="flex flex-col gap-1">
         <label class="mb-0.5 text-sm font-medium text-n-slate-12">
-          {{ $t('AGENT_MGMT.REMINDER.NOTE_LABEL') }}
+          {{ $t('AGENT_MGMT.REMINDER.MANAGEMENT.NOTE_LABEL') }}
           <span class="font-normal text-xs text-slate-400 dark:text-slate-500">
-            {{ $t('AGENT_MGMT.REMINDER.OPTIONAL') }}
+            {{ $t('AGENT_MGMT.REMINDER.MANAGEMENT.OPTIONAL') }}
           </span>
         </label>
         <textarea
           v-model="description"
           rows="2"
           class="w-full p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 transition-all resize-none"
-          :placeholder="$t('AGENT_MGMT.REMINDER.NOTE_PLACEHOLDER')"
+          :placeholder="$t('AGENT_MGMT.REMINDER.MANAGEMENT.NOTE_PLACEHOLDER')"
         />
       </div>
 
       <!-- Inbox Type -->
       <div class="flex flex-col gap-1">
         <label class="mb-0.5 text-sm font-medium text-n-slate-12">
-          {{ $t('AGENT_MGMT.REMINDER.INBOX_TYPE_LABEL') }}
+          {{ $t('AGENT_MGMT.REMINDER.MANAGEMENT.INBOX_TYPE_LABEL') }}
         </label>
         <select
           v-model="inboxType"
@@ -399,7 +399,7 @@ defineExpose({ open });
       <!-- Inbox Selection -->
       <div v-if="inboxType" class="flex flex-col gap-1">
         <label class="mb-0.5 text-sm font-medium text-n-slate-12">
-          {{ $t('AGENT_MGMT.REMINDER.INBOX_LABEL') }}
+          {{ $t('AGENT_MGMT.REMINDER.MANAGEMENT.INBOX_LABEL') }}
         </label>
         <select
           v-model="senderInboxId"
@@ -484,14 +484,14 @@ defineExpose({ open });
       <!-- Message -->
       <div class="flex flex-col gap-1">
         <label class="mb-0.5 text-sm font-medium text-n-slate-12">
-          {{ $t('AGENT_MGMT.REMINDER.MESSAGE_LABEL') }}
+          {{ $t('AGENT_MGMT.REMINDER.MANAGEMENT.MESSAGE_LABEL') }}
         </label>
         <textarea
           v-model="messageTemplate"
           rows="4"
           class="w-full p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 transition-all resize-none"
           :placeholder="
-            $t('AGENT_MGMT.REMINDER.MESSAGE_PLACEHOLDER')
+            $t('AGENT_MGMT.REMINDER.MANAGEMENT.MESSAGE_PLACEHOLDER')
           "
         />
       </div>
@@ -500,7 +500,7 @@ defineExpose({ open });
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div class="flex flex-col gap-1">
           <label class="mb-0.5 text-sm font-medium text-n-slate-12">
-            {{ $t('AGENT_MGMT.REMINDER.DATE_LABEL') }}
+            {{ $t('AGENT_MGMT.REMINDER.MANAGEMENT.DATE_LABEL') }}
           </label>
           <div class="relative">
             <input
@@ -508,7 +508,7 @@ defineExpose({ open });
               v-model="scheduledDate"
               type="date"
               class="date-input w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 transition-all cursor-pointer"
-              :placeholder="$t('AGENT_MGMT.REMINDER.DATE_PLACEHOLDER')"
+              :placeholder="$t('AGENT_MGMT.REMINDER.MANAGEMENT.DATE_PLACEHOLDER')"
               @click="openDatePicker"
               @keydown="handleDateKeydown"
             />
@@ -516,11 +516,11 @@ defineExpose({ open });
         </div>
         <div class="flex flex-col gap-1">
           <label class="mb-0.5 text-sm font-medium text-n-slate-12">
-            {{ $t('AGENT_MGMT.REMINDER.TIME_LABEL') }}
+            {{ $t('AGENT_MGMT.REMINDER.MANAGEMENT.TIME_LABEL') }}
           </label>
           <TimePickerDropdown
             v-model="scheduledTime"
-            :placeholder="$t('AGENT_MGMT.REMINDER.TIME_PLACEHOLDER')"
+            :placeholder="$t('AGENT_MGMT.REMINDER.MANAGEMENT.TIME_PLACEHOLDER')"
           />
         </div>
       </div>

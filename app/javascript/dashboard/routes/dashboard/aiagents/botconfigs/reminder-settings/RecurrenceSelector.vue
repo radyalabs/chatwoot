@@ -38,24 +38,24 @@ const customEndsDate = ref('');
 const customEndsAfterCount = ref(1);
 
 const presetOptions = computed(() => [
-  { value: 'none', label: t('AGENT_MGMT.REMINDER.REPEAT_NONE') },
-  { value: 'daily', label: t('AGENT_MGMT.REMINDER.REPEAT_DAILY') },
-  { value: 'weekly', label: t('AGENT_MGMT.REMINDER.REPEAT_WEEKLY') },
+  { value: 'none', label: t('AGENT_MGMT.REMINDER.MANAGEMENT.REPEAT_NONE') },
+  { value: 'daily', label: t('AGENT_MGMT.REMINDER.MANAGEMENT.REPEAT_DAILY') },
+  { value: 'weekly', label: t('AGENT_MGMT.REMINDER.MANAGEMENT.REPEAT_WEEKLY') },
   {
     value: 'monthly',
-    label: t('AGENT_MGMT.REMINDER.REPEAT_MONTHLY'),
+    label: t('AGENT_MGMT.REMINDER.MANAGEMENT.REPEAT_MONTHLY'),
   },
   {
     value: 'annually',
-    label: t('AGENT_MGMT.REMINDER.REPEAT_ANNUALLY'),
+    label: t('AGENT_MGMT.REMINDER.MANAGEMENT.REPEAT_ANNUALLY'),
   },
   {
     value: 'weekday',
-    label: t('AGENT_MGMT.REMINDER.REPEAT_WEEKDAY'),
+    label: t('AGENT_MGMT.REMINDER.MANAGEMENT.REPEAT_WEEKDAY'),
   },
   {
     value: 'custom',
-    label: t('AGENT_MGMT.REMINDER.REPEAT_CUSTOM'),
+    label: t('AGENT_MGMT.REMINDER.MANAGEMENT.REPEAT_CUSTOM'),
   },
 ]);
 
@@ -294,7 +294,7 @@ const toggleCustomDay = day => {
   <div class="flex flex-col gap-3">
     <div>
       <label class="mb-0.5 text-sm font-medium text-n-slate-12">
-        {{ t('AGENT_MGMT.REMINDER.REPEAT_LABEL') }}
+        {{ t('AGENT_MGMT.REMINDER.MANAGEMENT.REPEAT_LABEL') }}
       </label>
       <select
         v-model="displayPreset"
@@ -314,7 +314,7 @@ const toggleCustomDay = day => {
     <!-- Day selection for weekly preset -->
     <div v-if="showDaySelector" class="flex flex-col gap-2">
       <span class="text-sm text-gray-700 dark:text-gray-300">
-        {{ t('AGENT_MGMT.REMINDER.REPEAT_ON') }}
+        {{ t('AGENT_MGMT.REMINDER.MANAGEMENT.REPEAT_ON') }}
       </span>
       <div class="flex flex-wrap gap-1.5">
         <button
@@ -405,7 +405,7 @@ const toggleCustomDay = day => {
       <!-- Ends -->
       <div>
         <span class="block text-sm text-gray-700 dark:text-gray-300 mb-2">
-          {{ t('AGENT_MGMT.REMINDER.ENDS_LABEL') }}
+          {{ t('AGENT_MGMT.REMINDER.MANAGEMENT.ENDS_LABEL') }}
         </span>
         <div class="flex flex-col gap-2.5">
           <label class="flex items-center gap-2 cursor-pointer">
@@ -416,7 +416,7 @@ const toggleCustomDay = day => {
               class="text-woot-500"
             />
             <span class="text-sm text-gray-700 dark:text-gray-300">
-              {{ t('AGENT_MGMT.REMINDER.ENDS_NEVER') }}
+              {{ t('AGENT_MGMT.REMINDER.MANAGEMENT.ENDS_NEVER') }}
             </span>
           </label>
           <label class="flex items-center gap-2 cursor-pointer">
@@ -427,7 +427,7 @@ const toggleCustomDay = day => {
               class="text-woot-500"
             />
             <span class="text-sm text-gray-700 dark:text-gray-300">
-              {{ t('AGENT_MGMT.REMINDER.ENDS_ON') }}
+              {{ t('AGENT_MGMT.REMINDER.MANAGEMENT.ENDS_ON') }}
             </span>
             <input
               v-if="customEndsType === 'on_date'"
@@ -444,7 +444,7 @@ const toggleCustomDay = day => {
               class="text-woot-500"
             />
             <span class="text-sm text-gray-700 dark:text-gray-300">
-              {{ t('AGENT_MGMT.REMINDER.ENDS_AFTER') }}
+              {{ t('AGENT_MGMT.REMINDER.MANAGEMENT.ENDS_AFTER') }}
             </span>
             <input
               v-if="customEndsType === 'after_count'"
@@ -458,7 +458,7 @@ const toggleCustomDay = day => {
               v-if="customEndsType === 'after_count'"
               class="text-sm text-gray-500"
             >
-              {{ t('AGENT_MGMT.REMINDER.OCCURRENCES') }}
+              {{ t('AGENT_MGMT.REMINDER.MANAGEMENT.OCCURRENCES') }}
             </span>
           </label>
         </div>

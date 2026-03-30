@@ -79,7 +79,7 @@ const hasRecurrence = computed(() => !!props.reminder.recurrence_rule);
 const recurrenceLabel = computed(() => {
   return (
     props.reminder.recurrence_summary ||
-    t('AGENT_MGMT.REMINDER.REPEAT_NONE')
+    t('AGENT_MGMT.REMINDER.MANAGEMENT.REPEAT_NONE')
   );
 });
 
@@ -122,9 +122,9 @@ const sentCountText = computed(() => {
   const count = props.reminder.occurrence_count;
   if (!count || count <= 0) return '';
   if (count === 1) {
-    return t('AGENT_MGMT.REMINDER.SENT_COUNT_ONE', { count });
+    return t('AGENT_MGMT.REMINDER.MANAGEMENT.SENT_COUNT_ONE', { count });
   }
-  return t('AGENT_MGMT.REMINDER.SENT_COUNT_OTHER', { count });
+  return t('AGENT_MGMT.REMINDER.MANAGEMENT.SENT_COUNT_OTHER', { count });
 });
 
 const checkMessageOverflow = () => {
@@ -169,7 +169,7 @@ onMounted(() => {
             class="flex items-center gap-1.5 mt-0.5 text-xs text-slate-500 dark:text-slate-400 min-w-0"
           >
             <span class="truncate shrink-[2]">
-              {{ t('AGENT_MGMT.REMINDER.CARD_SEND_TO') }}:
+              {{ t('AGENT_MGMT.REMINDER.MANAGEMENT.CARD_SEND_TO') }}:
               {{ receiverDisplayName }}
             </span>
             <span class="shrink-0">&middot;</span>
@@ -185,7 +185,7 @@ onMounted(() => {
               v-if="isCustomRecurrence"
               class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold leading-none shrink-0 bg-indigo-50 dark:bg-indigo-600/40 text-slate-900 dark:text-slate-100"
             >
-              {{ t('AGENT_MGMT.REMINDER.REPEAT_CUSTOM') }}
+              {{ t('AGENT_MGMT.REMINDER.MANAGEMENT.REPEAT_CUSTOM') }}
             </span>
             <span
               class="truncate shrink-[1]"
@@ -202,7 +202,7 @@ onMounted(() => {
             v-if="reminder.next_occurrence_at && reminder.enabled"
             class="text-xs text-slate-400 dark:text-slate-500 mt-0.5"
           >
-            {{ t('AGENT_MGMT.REMINDER.NEXT_OCCURRENCE') }}:
+            {{ t('AGENT_MGMT.REMINDER.MANAGEMENT.NEXT_OCCURRENCE') }}:
             {{ nextOccurrenceFormatted }}
           </p>
         </div>
@@ -216,7 +216,7 @@ onMounted(() => {
           class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
         >
           <span class="i-lucide-check-circle size-3.5" />
-          {{ t('AGENT_MGMT.REMINDER.COMPLETED') }}
+          {{ t('AGENT_MGMT.REMINDER.MANAGEMENT.COMPLETED') }}
         </span>
 
         <Button
@@ -280,7 +280,7 @@ onMounted(() => {
             <span
               class="i-lucide-sticky-note text-slate-400 dark:text-slate-500 size-3.5"
             />
-            {{ $t('AGENT_MGMT.REMINDER.NOTE_LABEL') }}
+            {{ $t('AGENT_MGMT.REMINDER.MANAGEMENT.NOTE_LABEL') }}
           </div>
           <div
             class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"
@@ -316,7 +316,7 @@ onMounted(() => {
               >
                 {{
                   senderInbox?.name ||
-                  t('AGENT_MGMT.REMINDER.UNKNOWN_INBOX')
+                  t('AGENT_MGMT.REMINDER.MANAGEMENT.UNKNOWN_INBOX')
                 }}
               </span>
             </div>
@@ -375,7 +375,7 @@ onMounted(() => {
         >
           <span v-if="sentCountText">{{ sentCountText }}</span>
           <span v-if="lastSentFormatted">
-            {{ t('AGENT_MGMT.REMINDER.LAST_SENT') }}:
+            {{ t('AGENT_MGMT.REMINDER.MANAGEMENT.LAST_SENT') }}:
             {{ lastSentFormatted }}
           </span>
         </div>

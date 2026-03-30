@@ -108,10 +108,8 @@ export const mutations = {
 export const getters = {
   isSubscriptionActive(state) {
     const subscription = state?.billing?.myActiveSubscription;
-    if (!subscription || !subscription.status) return false;
-    if (subscription.status !== 'active') return false;
-    if (subscription.ends_at && new Date(subscription.ends_at) <= new Date()) return false;
-    return true;
+    if (!subscription || !subscription.ends_at) return true;
+    return new Date(subscription.ends_at) > new Date();
   },
 };
 

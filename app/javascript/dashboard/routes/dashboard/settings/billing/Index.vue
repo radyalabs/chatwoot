@@ -55,7 +55,11 @@ const plans = ref([]);
 const custom_plans = ref([]);
 const subscriptionLoading = ref(true);
 const activeSubscription = computed(() => store.state.billing.billing.latestSubscription)
-const isSubscriptionActive = computed(() => activeSubscription.value?.id ? activeSubscription.value.status === 'active' : undefined)
+const isSubscriptionActive = computed(() =>
+  activeSubscription.value?.id
+    ? new Date(activeSubscription.value.ends_at) > new Date()
+    : undefined
+);
 const subscriptionHistories = ref([]);
 const planIcon = computed(() => {
   const planName = activeSubscription.value?.plan_name?.toString()

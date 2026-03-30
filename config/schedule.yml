@@ -59,10 +59,6 @@ notify_upcoming_expiry_user:
   class: 'NotifyUpcomingExpiryUser'
   queue: scheduled_jobs
 
-subscription_expiration_job:
-  cron: '30 0 * * *'  # daily at 00:30 UTC
-  class: 'SubscriptionExpirationJob'
-  queue: scheduled_jobs
 
 # executed every 5 minutes to send reminders
 send_reminders_job:

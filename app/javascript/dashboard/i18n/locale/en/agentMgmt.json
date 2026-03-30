@@ -69,44 +69,6 @@
         "NO": "No, Keep "
       }
     },
-    "REMINDER": {
-      "TITLE": "Reminder Message",
-      "DESC": "Send automatic reminder messages to customers after scheduling",
-      "TIME": "When will the message be sent?",
-      "TIME_OPTIONS": {
-        "30_MINUTES": "30 Minutes",
-        "1_HOUR": "1 Hour",
-        "2_HOURS": "2 Hours",
-        "4_HOURS": "4 Hours",
-        "24_HOURS": "24 Hours"
-      },
-      "TIME_DETAIL": "before the session starts",
-      "TIME_DESC": "Select a time to send a follow-up message.",
-      "MSG": "Message Content",
-      "MSG_VARIABLE": "Add Variable(s)",
-      "VARIABLES": {
-        "CUSTOMER_NAME": "Customer Name",
-        "SERVICE_NAME": "Service Name",
-        "BOOKING": {
-          "DATE": "Booking Date",
-          "TIME": "Booking Time",
-          "LOCATION": "Location"
-        },
-        "LEADGEN": {
-          "DATE": "Consultation Date",
-          "TIME": "Consultation Time"
-        }
-      },
-      "MSG_DESC": "This message will be sent automatically to customers via the appropriate platform at the specified time.",
-      "MSG_EXAMPLE": "Example"
-    },
-    "REMINDER_PROACTIVE": {
-      "TITLE": "Reminder Otomatis",
-      "DESC_CS": "Bot secara proaktif menawarkan reminder setelah memberikan panduan perawatan, jadwal, atau saran tindakan kepada pelanggan.",
-      "DESC_SALES": "Bot secara proaktif menawarkan reminder setelah pembayaran dikonfirmasi dan diverifikasi.",
-      "ACTIVE": "Aktif",
-      "INACTIVE": "Nonaktif"
-    },
     "LEAD_GENERATION": {
       "GENERAL_TAB": "Settings",
       "TICKET": {
@@ -790,55 +752,119 @@
       "SAVE_ERROR": "Failed to save numbering configuration."
     },
     "REMINDER": {
-      "HEADER": "Reminder Settings",
-      "DESC": "Configure scheduled reminders to send automated messages at specific times.",
-      "ADD_BUTTON": "Add Reminder",
-      "SEARCH_PLACEHOLDER": "Search reminders...",
-      "EMPTY_STATE": "No reminders configured yet.",
-      "NO_INBOX_AVAILABLE": "No connected messaging platform available. Please create or connect an platform first.",
-      "FORM_TITLE_ADD": "Add Reminder",
-      "FORM_TITLE_EDIT": "Edit Reminder",
-      "TITLE_LABEL": "Title",
-      "TITLE_PLACEHOLDER": "e.g., Weekly Team Update",
-      "NOTE_LABEL": "Note",
-      "NOTE_PLACEHOLDER": "Optional note...",
-      "INBOX_TYPE_LABEL": "Platform Type",
-      "INBOX_LABEL": "Send From",
-      "MESSAGE_LABEL": "Message",
-      "MESSAGE_PLACEHOLDER": "Message content to send...",
-      "SCHEDULE_LABEL": "Date & Time",
-      "DATE_LABEL": "Date",
-      "DATE_PLACEHOLDER": "Select date",
-      "TIME_LABEL": "Time",
-      "TIME_PLACEHOLDER": "Select time",
-      "OPTIONAL": "(optional)",
-      "REPEAT_LABEL": "Repeat",
-      "REPEAT_NONE": "Does not repeat",
-      "REPEAT_DAILY": "Daily",
-      "REPEAT_WEEKLY": "Weekly",
-      "REPEAT_MONTHLY": "Monthly",
-      "REPEAT_ANNUALLY": "Annually",
-      "REPEAT_WEEKDAY": "Every weekday (Mon-Fri)",
-      "REPEAT_CUSTOM": "Custom...",
-      "REPEAT_ON": "Repeat on",
-      "ENDS_LABEL": "Ends",
-      "ENDS_NEVER": "Never",
-      "ENDS_ON": "On",
-      "ENDS_AFTER": "After",
-      "OCCURRENCES": "occurrences",
-      "NEXT_OCCURRENCE": "Next",
-      "ENABLED": "Enabled",
-      "DISABLED": "Disabled",
-      "DELETE_CONFIRM": "Are you sure you want to delete this reminder?",
-      "COMPLETED": "Sent",
-      "CARD_SEND_TO": "To",
-      "CLICK_TO_DISABLE": "Click to pause this reminder",
-      "CLICK_TO_ENABLE": "Click to activate this reminder",
-      "TOGGLE_ARIA": "Toggle reminder on or off",
-      "UNKNOWN_INBOX": "Unknown platform",
-      "SENT_COUNT_ONE": "Sent {count} time",
-      "SENT_COUNT_OTHER": "Sent {count} times",
-      "LAST_SENT": "Last sent"
+      "ENABLED": "Active",
+      "DISABLED": "Inactive",
+      "APPOINTMENT": {
+        "TITLE": "Reminder Message",
+        "DESC": "Send automatic reminder messages to customers after scheduling",
+        "TIME": "When will the message be sent?",
+        "TIME_DETAIL": "before the session starts",
+        "TIME_DESC": "Select a time to send a follow-up message.",
+        "TIME_OPTIONS": {
+          "30_MINUTES": "30 Minutes",
+          "1_HOUR": "1 Hour",
+          "2_HOURS": "2 Hours",
+          "4_HOURS": "4 Hours",
+          "24_HOURS": "24 Hours"
+        },
+        "MSG": "Message Content",
+        "MSG_VARIABLE": "Add Variable(s)",
+        "MSG_DESC": "This message will be sent automatically to customers via the appropriate platform at the specified time.",
+        "MSG_EXAMPLE": "Example",
+        "VARIABLES": {
+          "CUSTOMER_NAME": "Customer Name",
+          "SERVICE_NAME": "Service Name",
+          "BOOKING": {
+            "DATE": "Booking Date",
+            "TIME": "Booking Time",
+            "LOCATION": "Location"
+          },
+          "LEADGEN": {
+            "DATE": "Consultation Date",
+            "TIME": "Consultation Time"
+          }
+        },
+        "OFFER": {
+          "TITLE": "Automated Reminder",
+          "DESC": {
+            "CS": "Bot proactively offers reminders after providing care guidance, schedules, or action suggestions.",
+            "SALES": "Bot proactively offers reminders after payment is confirmed and verified."
+          }
+        }
+      },
+      "MANAGEMENT": {
+        "HEADER": "Reminder Settings",
+        "DESC": "Configure scheduled reminders to send automated messages at specific times.",
+        "ADD_BUTTON": "Add Reminder",
+        "SEARCH_PLACEHOLDER": "Search reminders...",
+        "EMPTY_STATE": "No reminders configured yet.",
+        "NO_INBOX_AVAILABLE": "No connected messaging platform available. Please create or connect a platform first.",
+        "FORM_TITLE_ADD": "Add Reminder",
+        "FORM_TITLE_EDIT": "Edit Reminder",
+        "TITLE_LABEL": "Title",
+        "TITLE_PLACEHOLDER": "e.g., Weekly Team Update",
+        "NOTE_LABEL": "Note",
+        "NOTE_PLACEHOLDER": "Optional note...",
+        "INBOX_TYPE_LABEL": "Platform Type",
+        "INBOX_LABEL": "Send From",
+        "MESSAGE_LABEL": "Message",
+        "MESSAGE_PLACEHOLDER": "Message content to send...",
+        "OPTIONAL": "(optional)",
+        "SCHEDULE_SECTION_LABEL": "Reminder Start Schedule",
+        "SCHEDULE_SECTION_DESC": "Subsequent reminders follow the repeat pattern below.",
+        "DATE_LABEL": "Date",
+        "TIME_LABEL": "Time",
+        "DATE_PLACEHOLDER": "Select date",
+        "TIME_PLACEHOLDER": "Select time",
+        "REPEAT_LABEL": "Repeat",
+        "REPEAT_NONE": "Does not repeat",
+        "REPEAT_DAILY": "Daily",
+        "REPEAT_WEEKLY": "Weekly",
+        "REPEAT_MONTHLY": "Monthly",
+        "REPEAT_ANNUALLY": "Annually",
+        "REPEAT_WEEKDAY": "Every weekday (Mon-Fri)",
+        "REPEAT_CUSTOM": "Custom...",
+        "REPEAT_ON": "Repeat on",
+        "REPEAT_EVERY": "Repeat every",
+        "ON_DAY": "On day",
+        "DAYS": {
+          "SUNDAY": "Sunday",
+          "MONDAY": "Monday",
+          "TUESDAY": "Tuesday",
+          "WEDNESDAY": "Wednesday",
+          "THURSDAY": "Thursday",
+          "FRIDAY": "Friday",
+          "SATURDAY": "Saturday"
+        },
+        "FREQUENCY": {
+          "DAY": "day",
+          "DAYS": "days",
+          "WEEK": "week",
+          "WEEKS": "weeks",
+          "MONTH": "month",
+          "MONTHS": "months",
+          "YEAR": "year",
+          "YEARS": "years"
+        },
+        "SUMMARY_EVERY": "Every",
+        "SUMMARY_ON": "on",
+        "ENDS_LABEL": "Ends",
+        "ENDS_NEVER": "Never",
+        "ENDS_ON": "On",
+        "ENDS_AFTER": "After",
+        "OCCURRENCES": "occurrences",
+        "NEXT_OCCURRENCE": "Next",
+        "DELETE_CONFIRM": "Are you sure you want to delete this reminder?",
+        "COMPLETED": "Sent",
+        "CARD_SEND_TO": "To",
+        "CLICK_TO_DISABLE": "Click to pause this reminder",
+        "CLICK_TO_ENABLE": "Click to activate this reminder",
+        "TOGGLE_ARIA": "Toggle reminder on or off",
+        "UNKNOWN_INBOX": "Unknown platform",
+        "SENT_COUNT_ONE": "Sent {count} time",
+        "SENT_COUNT_OTHER": "Sent {count} times",
+        "LAST_SENT": "Last sent"
+      }
     }
   }
 }

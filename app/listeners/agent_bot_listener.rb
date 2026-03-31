@@ -59,6 +59,13 @@ class AgentBotListener < BaseListener
     true
   end
 
+  def account_subscription_active?(account)
+    account.subscriptions.find_by(status: 'active')&.active?
+  rescue StandardError => e
+    Rails.logger.error("[AgentBotListener] Error checking subscription status for account ##{account&.id}: #{e.class} - #{e.message}")
+    true
+  end
+
   def process_message_event(method_name, agent_bot, message, event)
     case agent_bot.bot_type
     when 'webhook'

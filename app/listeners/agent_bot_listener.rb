@@ -63,7 +63,7 @@ class AgentBotListener < BaseListener
   end
 
   def account_subscription_active?(account)
-    account.active_subscription&.active?
+    account.subscriptions.find_by(status: 'active')&.active?
   rescue StandardError => e
     Rails.logger.error("[AgentBotListener] Error checking subscription status for account ##{account&.id}: #{e.class} - #{e.message}")
     true

@@ -9,6 +9,10 @@ class Api::V1::Accounts::BaseController < Api::BaseController
 
   def ensure_active_subscription
     subscription = current_account&.active_subscription
+    unless subscription&.active?
+      subscription = current_account&.subscriptions&.find_by(status: 'active')
+      current_account.update_column(:active_subscription_id, subscription&.id)
+    end
     render_subscription_expired unless subscription&.active?
   rescue StandardError => e
     Rails.logger.error(

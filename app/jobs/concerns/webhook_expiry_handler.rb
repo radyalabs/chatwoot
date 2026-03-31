@@ -4,7 +4,7 @@ module WebhookExpiryHandler
   EXPIRY_MESSAGE_MARKER = 'subscription_expired_auto_reply'.freeze
 
   def account_subscription_active?(channel)
-    channel.inbox.account.active_subscription&.active?
+    channel.inbox.account.subscriptions.find_by(status: 'active')&.active?
   rescue StandardError => e
     Rails.logger.error("[WebhookExpiryHandler] Error checking subscription status: #{e.message}")
     true

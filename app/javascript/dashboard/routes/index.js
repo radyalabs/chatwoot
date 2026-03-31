@@ -58,7 +58,8 @@ export const initalizeRouter = () => {
     userAuthentication.then(async () => {
       // Load subscription data once on first navigation
       if (!subscriptionLoaded) {
-        await store.dispatch('myActiveSubscription');
+        const { getCurrentUser: user } = store.getters;
+        await store.dispatch('myActiveSubscription', user?.account_id);
         subscriptionLoaded = true;
       }
       return validateAuthenticateRoutePermission(to, next, store);

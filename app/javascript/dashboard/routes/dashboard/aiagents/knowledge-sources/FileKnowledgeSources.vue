@@ -48,9 +48,18 @@ const collectionName = computed(() => {
   
   const targetType = props.context;
   if (!targetType) return null;
-  
+
+  // Map context ke type yang sesuai di agents_config
+  const typeMapping = {
+    cs: 'customer_service',
+    booking: 'booking',
+    sales: 'sales',
+    lead_generation: 'lead_generation',
+  };
+  const mappedType = typeMapping[targetType] || targetType;
+
   // Find agent by type
-  const agent = agents.find(agent => agent.type === targetType);
+  const agent = agents.find(agent => agent.type === mappedType);
   return agent?.collection_name || null;
 });
 

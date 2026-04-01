@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 <script setup>
 import {
   computed,
@@ -9,6 +8,7 @@ import {
   watch,
   watchEffect,
 } from 'vue';
+import Editor from 'dashboard/components/widgets/WootWriter/Editor.vue';
 import Input from 'dashboard/components-next/input/Input.vue';
 import TextArea from 'dashboard/components-next/textarea/TextArea.vue';
 import { required } from '@vuelidate/validators';
@@ -60,7 +60,9 @@ const state = reactive({
   welcoming_message: '',
   routing_conditions: '',
   enable_handover: true,
-  has_website: '', // 'yes' or 'no'
+  greeting_enabled: false,
+  greeting_message: '',
+  has_website: '',
   website_url: '',
   full_prompt: '',
   temperature: '',
@@ -86,11 +88,17 @@ watch(
     if (!v) return;
 
     chatflowId.value = v?.chat_flow_id;
-
     state.name = v.name || '';
 
-    const flowData = v.display_flow_data;
+    const flowData = v.display_flow_data || {};
+
+    if (flowData.greeting_config) {
+      state.greeting_enabled = flowData.greeting_config.enabled || false;
+      state.greeting_message = flowData.greeting_config.message || '';
+    }
+
     console.log('flowData:', flowData);
+
     if (flowData?.agents_config) {
       // Initialize enable_handover from the first agent's configurations if present
       const firstAgent = flowData.agents_config[0];
@@ -185,6 +193,14 @@ async function submit() {
       agent_config.configurations.enable_handover = !!state.enable_handover;
     });
 
+    // Save greeting_config to BOTH flow_data (sent to Jangkau) and display_flow_data (frontend display)
+    const greetingConfig = {
+      enabled: state.greeting_enabled,
+      message: state.greeting_message,
+    };
+    flowData.greeting_config = greetingConfig;
+    displayFlowData.greeting_config = greetingConfig;
+
     const payload = {
       flow_data: flowData,
       display_flow_data: displayFlowData,
@@ -195,7 +211,7 @@ async function submit() {
     // Refresh agent data to get latest chat_flow_id
     const detailAgent = await aiAgents.detailAgent(agentId).then(v => v?.data);
 
-    // ✅ Emit updated data to parent so props.data gets refreshed
+    // Emit updated data to parent so props.data gets refreshed
     emit('update:data', detailAgent);
 
     chatflowId.value = undefined;
@@ -288,14 +304,6 @@ function resetChat() {
               :placeholder="t('AGENT_MGMT.FORM_CREATE.AI_AGENT_NAME')"
             />
           </div>
-          <!-- <div>
-            <label for="description">{{ t('AGENT_MGMT.FORM_CREATE.AI_AGENT_DESC') }}</label>
-            <Input
-              id="description"
-              v-model="state.description"
-              :placeholder="t('AGENT_MGMT.FORM_CREATE.AI_AGENT_DESC')"
-            />
-          </div> -->
         </div>
 
         <!-- Instruction Field -->
@@ -359,46 +367,107 @@ function resetChat() {
             </div>
           </div>
 
-          <div class="mb-6">
-            <label class="block font-medium mb-2">{{
-              t('AGENT_MGMT.FORM_CREATE.ENABLE_HANDOVER')
-            }}</label>
-            <p class="text-sm text-gray-500 mb-3">
-              {{ t('AGENT_MGMT.FORM_CREATE.HANDOVER_INSTRUCTION') }}
-            </p>
-            <label class="inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                v-model="state.enable_handover"
-                :disabled="isDebugMode || loadingSave"
-                class="sr-only peer"
-              />
-              <div
-                class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"
-              ></div>
-              <span class="ml-3 text-sm text-slate-700 dark:text-slate-300">
-                {{ state.enable_handover ? 'Aktif' : 'Tidak Aktif' }}
-              </span>
-            </label>
-          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-4">
+            <div v-if="!isCustomAgent">
+              <div class="mb-4">
+                <label class="block font-medium mb-2">{{
+                  t('AGENT_MGMT.FORM_CREATE.ENABLE_HANDOVER')
+                }}</label>
+                <label class="inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    v-model="state.enable_handover"
+                    :disabled="isDebugMode || loadingSave"
+                    class="sr-only peer"
+                  />
+                  <div
+                    class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"
+                  ></div>
+                  <span class="ml-3 text-sm text-slate-700 dark:text-slate-300">
+                    {{ state.enable_handover ? 'Aktif' : 'Tidak Aktif' }}
+                  </span>
+                </label>
+                <p class="text-xs text-gray-500 mt-1">
+                  {{ t('AGENT_MGMT.FORM_CREATE.HANDOVER_INSTRUCTION') }}
+                </p>
+              </div>
 
-          <div v-if="state.enable_handover">
-            <label for="routing_conditions">{{
-              t('AGENT_MGMT.FORM_CREATE.ROUTING_CONDITION')
-            }}</label>
-            <TextArea
-              id="routing_conditions"
-              v-model="state.routing_conditions"
-              :disabled="isDebugMode || loadingSave"
-              custom-text-area-wrapper-class=""
-              custom-text-area-class="!outline-none"
-              :placeholder="
-                t('AGENT_MGMT.FORM_CREATE.ROUTING_CONDITION_PLACEHOLDER')
-              "
-              auto-height
-              min-height="80px"
-              max-height="300px"
-            />
+              <div v-if="state.enable_handover">
+                <label for="routing_conditions">{{
+                  t('AGENT_MGMT.FORM_CREATE.ROUTING_CONDITION')
+                }}</label>
+                <TextArea
+                  id="routing_conditions"
+                  v-model="state.routing_conditions"
+                  :disabled="isDebugMode || loadingSave"
+                  custom-text-area-wrapper-class=""
+                  custom-text-area-class="!outline-none"
+                  :placeholder="
+                    t('AGENT_MGMT.FORM_CREATE.ROUTING_CONDITION_PLACEHOLDER')
+                  "
+                  auto-height
+                  min-height="80px"
+                  max-height="300px"
+                />
+              </div>
+            </div>
+
+            <div>
+              <div class="mb-4">
+                <label class="block font-medium mb-2">Aktifkan Pesan Sambutan</label>
+                <label class="inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    v-model="state.greeting_enabled"
+                    :disabled="isDebugMode || loadingSave"
+                    class="sr-only peer"
+                  />
+                  <div
+                    class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"
+                  ></div>
+                  <span class="ml-3 text-sm text-slate-700 dark:text-slate-300">
+                    {{ state.greeting_enabled ? 'Aktif' : 'Tidak Aktif' }}
+                  </span>
+                </label>
+                <p class="text-xs text-gray-500 mt-1">
+                  Saat diaktifkan, Bot AI akan menampilkan pesan saat pertama
+                  memulai percakapan baru
+                </p>
+              </div>
+
+              <div v-if="state.greeting_enabled" class="space-y-4">
+                <div>
+                  <label class="block font-medium mb-2">Pesan Sambutan</label>
+                  <div
+                    class="message-editor border border-solid border-slate-200 dark:border-slate-700 rounded-md p-2 bg-white dark:bg-slate-900"
+                  >
+                    <Editor
+                      v-model="state.greeting_message"
+                      placeholder="Tulis pesan promo di sini... (Support gambar, bold, dll)"
+                      :enable-suggestions="false"
+                      :enable-canned-responses="false"
+                      :enable-variables="true"
+                      :enabled-menu-options="[
+                        'strong',
+                        'em',
+                        'link',
+                        'bulletList',
+                        'orderedList',
+                        'imageUpload',
+                        'code',
+                      ]"
+                      :focus-on-mount="false"
+                    />
+                  </div>
+                  <p class="text-xs text-gray-500 mt-1">
+                    Gunakan ikon gambar di toolbar editor untuk mengunggah, atau
+                    cukup
+                    <b>Copy &amp; Paste / Drag-and-Drop</b> gambar ke dalam
+                    kotak teks.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Debug Mode Fields -->
@@ -429,6 +498,7 @@ function resetChat() {
             </div>
           </template>
         </template>
+
         <button
           v-if="!isCustomAgent"
           class="button self-start"
@@ -539,532 +609,6 @@ function resetChat() {
     <!-- Chat Preview Section -->
   </div>
 </template>
-=======
-<script setup>
-import {
-  computed,
-  nextTick,
-  reactive,
-  ref,
-  useTemplateRef,
-  watch,
-  watchEffect,
-} from 'vue';
-import Editor from 'dashboard/components/widgets/WootWriter/Editor.vue';
-import Input from 'dashboard/components-next/input/Input.vue';
-import TextArea from 'dashboard/components-next/textarea/TextArea.vue';
-import { required } from '@vuelidate/validators';
-import useVuelidate from '@vuelidate/core';
-import { useAlert } from 'dashboard/composables';
-import { useI18n } from 'vue-i18n';
-import aiAgents from '../../../api/aiAgents';
-import captainTranslator from '../../../api/captainTranslator';
-import MarkdownIt from 'markdown-it';
-import { useRoute } from 'vue-router';
-
-const md = new MarkdownIt();
-const route = useRoute();
-
-const props = defineProps({
-  data: {
-    type: Object,
-    required: true,
-  },
-  botType: {
-    type: String,
-    default: '',
-  },
-});
-
-const emit = defineEmits(['update:data']);
-
-const { t } = useI18n();
-
-// Check if debug mode is enabled via URL parameter
-// ?debugmode=true
-const isDebugMode = computed(() => route.query.debugmode === 'true');
-
-// custom agent type
-const isCustomAgent = computed(() => props.botType === 'custom_agent');
-
-const chatflowId = ref();
-const chatInput = ref('');
-const messages = ref([]);
-const sessionId = ref(crypto.randomUUID());
-const loadingChat = ref(false);
-const chatContainer = ref(null);
-const greetingImageFile = ref(null);
-const greetingImageInput = ref(null);
-
-const state = reactive({
-  name: '',
-  description: '',
-  instructions: '',
-  business_info: '',
-  welcoming_message: '',
-  routing_conditions: '',
-  enable_handover: true,
-  greeting_enabled: false,
-  greeting_message: '',
-  greeting_image_url: '',
-  has_website: '', // 'yes' or 'no'
-  website_url: '',
-  full_prompt: '',
-  temperature: '',
-});
-const rules = {
-  name: { required },
-  description: {},
-  instructions: {},
-  business_info: {},
-  welcoming_message: {},
-  routing_conditions: {},
-  has_website: {},
-  website_url: {},
-  full_prompt: {},
-  temperature: {},
-};
-
-const v$ = useVuelidate(rules, state);
-
-function handleGreetingImageUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
-  if (!validTypes.includes(file.type)) {
-    useAlert('Format file harus JPG, PNG, atau GIF', 'alert-danger');
-    return;
-  }
-  
-  if (file.size > 4 * 1024 * 1024) {
-    useAlert('Ukuran file terlalu besar (Maks 4MB)', 'alert-danger');
-    return;
-  }
-
-  greetingImageFile.value = file;
-  state.greeting_image_url = URL.createObjectURL(file);
-}
-
-function deleteGreetingImage() {
-  greetingImageFile.value = null;
-  state.greeting_image_url = '';
-  if (greetingImageInput.value) {
-    greetingImageInput.value.value = null;
-  }
-}
-
-watch(
-  () => props.data,
-  v => {
-    if (!v) return;
-
-    chatflowId.value = v?.chat_flow_id;
-    state.name = v.name || '';
-
-    // [PERBAIKAN] Pindahkan definisi ini ke ATAS sebelum digunakan
-    const flowData = v.display_flow_data || {}; 
-
-    // Sekarang flowData sudah aman untuk diakses
-    if (flowData.greeting_config) {
-      state.greeting_enabled = flowData.greeting_config.enabled || false;
-      state.greeting_message = flowData.greeting_config.message || '';
-      state.greeting_image_url = flowData.greeting_config.image_url || '';
-    }
-    
-    console.log("flowData:", flowData);
-
-    if (flowData?.agents_config) {
-      // Initialize enable_handover from the first agent's configurations if present
-      const firstAgent = flowData.agents_config[0];
-      state.enable_handover = firstAgent?.configurations?.enable_handover ?? true;
-
-      flowData.agents_config.forEach(agent_config => {
-        if (agent_config.bot_prompt) {
-          state.welcoming_message = agent_config.bot_prompt.persona || '';
-          state.routing_conditions = agent_config.bot_prompt.handover_conditions || '';
-          state.instructions = agent_config.bot_prompt.instructions || '';
-          state.business_info = agent_config.bot_prompt.business_info || '';
-        }
-      });
-    }
-  },
-  { immediate: true }
-);
-
-const loadingSave = ref(false);
-
-async function translateToEnglish(text) {
-  if (!text || text.trim() === '') return text;
-  
-  try {
-    const response = await captainTranslator.translate(text, 'en');
-    return response.data.translated_text;
-  } catch (error) {
-    console.error('Translation error:', error);
-    return text; // Return original text if translation fails
-  }
-}
-
-async function submit() {
-  if (loadingSave.value) return;
-
-  const isValid = await v$.value.$validate();
-  if (!isValid) return;
-
-  try {
-    loadingSave.value = true;
-
-    const agentId = props.data.id;
-    
-    // Translate bot_prompt fields to English
-    const [translatedInstructions, translatedPersona, translatedRoutingConditions, translatedBusinessInfo] = await Promise.all([
-      translateToEnglish(state.instructions),
-      translateToEnglish(state.welcoming_message),
-      translateToEnglish(state.routing_conditions),
-      translateToEnglish(state.business_info),
-    ]);
-    
-    // flow_data: Build from existing flow_data (already translated), then update with new translations
-    const flowData = JSON.parse(JSON.stringify(props.data.flow_data || {}));
-    flowData.agents_config?.forEach(agent_config => {
-      if (agent_config.bot_prompt) {
-        agent_config.bot_prompt.persona = translatedPersona || agent_config.bot_prompt.persona;
-        agent_config.bot_prompt.handover_conditions = translatedRoutingConditions || '';
-        agent_config.bot_prompt.instructions = translatedInstructions || '';
-        agent_config.bot_prompt.business_info = translatedBusinessInfo || '';
-      }
-      agent_config.configurations = agent_config.configurations || {};
-      agent_config.configurations.enable_handover = !!state.enable_handover;
-    });
-
-    // display_flow_data: original user input (for display)
-    const displayFlowData = JSON.parse(JSON.stringify(props.data.display_flow_data || {}));
-    displayFlowData.agents_config?.forEach(agent_config => {
-      if (agent_config.bot_prompt) {
-        agent_config.bot_prompt.persona = state.welcoming_message || agent_config.bot_prompt.persona;
-        agent_config.bot_prompt.handover_conditions = state.routing_conditions || '';
-        agent_config.bot_prompt.instructions = state.instructions || '';
-        agent_config.bot_prompt.business_info = state.business_info || '';
-      }
-      agent_config.configurations = agent_config.configurations || {};
-      agent_config.configurations.enable_handover = !!state.enable_handover;
-    });
-
-    displayFlowData.greeting_config = {
-      enabled: state.greeting_enabled,
-      message: state.greeting_message,
-      image_url: state.greeting_image_url 
-    };
-
-    const payload = {
-      flow_data: flowData,
-      display_flow_data: displayFlowData,
-    };
-    
-    await aiAgents.updateAgent(props.data.id, payload);
-
-    // Refresh agent data to get latest chat_flow_id
-    const detailAgent = await aiAgents.detailAgent(agentId).then(v => v?.data);
-    
-    // ✅ Emit updated data to parent so props.data gets refreshed
-    emit('update:data', detailAgent);
-    
-    chatflowId.value = undefined;
-    nextTick(() => {
-      chatflowId.value = detailAgent?.chat_flow_id;
-    });
-
-    useAlert('Berhasil disimpan');
-  } catch (error) {
-    console.error('Error updating agent:', error);
-    if (error.response) {
-      console.error('Response data:', error.response.data);
-      console.error('Status code:', error.response.status);
-    } else if (error.request) {
-      console.error('No response received:', error.request);
-    } else {
-      console.error('Error:', error.message);
-    }
-    useAlert('Gagal menyimpan data. Cek konsol untuk detail.', 'alert-danger');
-  } finally {
-    loadingSave.value = false;
-  }
-}
-
-function scrollToBottom() {
-  nextTick(() => {
-    if (chatContainer.value) {
-      chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
-    }
-  });
-}
-
-
-function renderMarkdown(text) {
-  return md.render(text);
-}
-
-async function chat() {
-  if (loadingChat.value || !chatInput.value.trim()) return;
-
-  const question = chatInput.value.trim();
-  messages.value.push({
-    role: 'user',
-    content: question,
-  });
-  chatInput.value = '';
-  scrollToBottom();
-
-  try {
-    loadingChat.value = true;
-    const res = await aiAgents.chat(props.data.id, {
-      question,
-      session_id: sessionId.value,
-    });
-    
-    messages.value.push({
-      role: 'assistant',
-      content: res.data.response,
-    });
-    scrollToBottom();
-  } catch (error) {
-    messages.value.push({
-      role: 'assistant',
-      content: 'Maaf, terjadi kesalahan saat memproses pertanyaan Anda.',
-    });
-    scrollToBottom();
-  } finally {
-    loadingChat.value = false;
-  }
-}
-
-function resetChat() {
-  messages.value = [];
-  sessionId.value = crypto.randomUUID();
-}
-</script>
-
-<template>
-  <div class="flex flex-col lg:flex-row justify-stretch gap-4">
-    <form class="lg:flex-1 lg:min-w-0" @submit.prevent="() => submit()">
-      <div class="flex flex-col space-y-3">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div>
-            <label for="name">{{ t('AGENT_MGMT.FORM_CREATE.AI_AGENT_NAME') }}</label>
-            <Input id="name" v-model="state.name" :disabled="isDebugMode" :placeholder="t('AGENT_MGMT.FORM_CREATE.AI_AGENT_NAME')" />
-          </div>
-          <!-- <div>
-            <label for="description">{{ t('AGENT_MGMT.FORM_CREATE.AI_AGENT_DESC') }}</label>
-            <Input
-              id="description"
-              v-model="state.description"
-              :placeholder="t('AGENT_MGMT.FORM_CREATE.AI_AGENT_DESC')"
-            />
-          </div> -->
-        </div>
-        
-        <!-- Instruction Field -->
-        <div>
-          <label for="instruction">{{ t('AGENT_MGMT.FORM_CREATE.INSTRUCTION') }}</label>
-          <TextArea
-            id="instruction"
-            v-model="state.instructions"
-            :disabled="isDebugMode"
-            custom-text-area-wrapper-class=""
-            custom-text-area-class="!outline-none"
-            :placeholder="t('AGENT_MGMT.FORM_CREATE.INSTRUCTION_PLACEHOLDER')"
-            auto-height
-            min-height="80px"
-            max-height="300px"
-          />
-        </div>
-        
-        
-        <!-- Only show these fields if NOT a custom agent -->
-        <template v-if="!isCustomAgent">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label for="welcome_message">{{ t('AGENT_MGMT.FORM_CREATE.AI_AGENT_PERSONA_LANG_STYLE') }}</label>
-              <TextArea
-                :placeholder="t('AGENT_MGMT.FORM_CREATE.AI_AGENT_PERSONA_LANG_STYLE_PLACEHOLDER')"            id="welcome_message"
-                v-model="state.welcoming_message"
-                :disabled="isDebugMode"
-                custom-text-area-wrapper-class=""
-                custom-text-area-class="!outline-none"
-                auto-height
-                min-height="80px"
-                max-height="300px"
-              />
-            </div>
-            <div>
-              <label for="business_info">{{ t('AGENT_MGMT.FORM_CREATE.AI_AGENT_BUSINESS_INFO') }}</label>
-              <TextArea
-                id="business_info"
-                v-model="state.business_info"
-                :disabled="isDebugMode"
-                custom-text-area-wrapper-class=""
-                custom-text-area-class="!outline-none"
-                auto-height
-                :placeholder="t('AGENT_MGMT.FORM_CREATE.AI_AGENT_BUSINESS_INFO_PLACEHOLDER')"
-                min-height="80px"
-                max-height="300px"
-              />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-4">
-          
-            <div v-if="!isCustomAgent">
-              <div class="mb-4">
-                <label class="block font-medium mb-2">{{ t('AGENT_MGMT.FORM_CREATE.ENABLE_HANDOVER') }}</label>
-                <label class="inline-flex items-center cursor-pointer">
-                  <input type="checkbox" v-model="state.enable_handover" :disabled="isDebugMode" class="sr-only peer">
-                  <div
-                    class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
-                  </div>
-                  <span class="ml-3 text-sm text-slate-700 dark:text-slate-300">
-                    {{ state.enable_handover ? 'Aktif' : 'Tidak Aktif' }}
-                  </span>
-                </label>
-                <p class="text-xs text-gray-500 mt-1">{{ t('AGENT_MGMT.FORM_CREATE.HANDOVER_INSTRUCTION') }}</p>
-              </div>
-
-              <div v-if="state.enable_handover">
-                <label for="routing_conditions">{{ t('AGENT_MGMT.FORM_CREATE.ROUTING_CONDITION') }}</label>
-                <TextArea
-                  id="routing_conditions"
-                  v-model="state.routing_conditions"
-                  :disabled="isDebugMode"
-                  custom-text-area-wrapper-class=""
-                  custom-text-area-class="!outline-none"
-                  :placeholder="t('AGENT_MGMT.FORM_CREATE.ROUTING_CONDITION_PLACEHOLDER')"
-                  auto-height
-                  min-height="80px"
-                  max-height="300px"
-                />
-              </div>
-            </div>
-
-            <div>
-              <div class="mb-4">
-                <label class="block font-medium mb-2">Aktifkan Pesan Sambutan</label>
-                <label class="inline-flex items-center cursor-pointer">
-                  <input type="checkbox" v-model="state.greeting_enabled" :disabled="isDebugMode" class="sr-only peer">
-                  <div class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
-                  <span class="ml-3 text-sm text-slate-700 dark:text-slate-300">
-                    {{ state.greeting_enabled ? 'Aktif' : 'Tidak Aktif' }}
-                  </span>
-                </label>
-                <p class="text-xs text-gray-500 mt-1">Saat diaktifkan, Bot AI akan menampilkan pesan saat pertama memulai percakapan baru</p>
-              </div>
-
-              <div v-if="state.greeting_enabled" class="space-y-4">
-                <div>
-                  <label class="block font-medium mb-2">Pesan Sambutan</label>
-                  <div class="message-editor border border-solid border-slate-200 dark:border-slate-700 rounded-md p-2 bg-white dark:bg-slate-900">
-                    <Editor
-                      v-model="state.greeting_message"
-                      placeholder="Tulis pesan promo di sini... (Support gambar, bold, dll)"
-                      :enable-suggestions="false"
-                      :enable-canned-responses="false"
-                      :enable-variables="true"
-                      :enabled-menu-options="['strong', 'em', 'link', 'bulletList', 'orderedList', 'imageUpload', 'code']"
-                      :focus-on-mount="false"
-                    />
-                  </div>
-                  <p class="text-xs text-gray-500 mt-1">
-                    Gunakan ikon gambar di toolbar editor untuk mengunggah, atau cukup <b>Copy & Paste / Drag-and-Drop</b> gambar ke dalam kotak teks.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- Debug Mode Fields -->
-          <template v-if="isDebugMode">
-            <hr class="my-4 border-slate-200 dark:border-slate-700" />
-            
-            <div>
-              <label for="full_prompt">Full Prompt</label>
-              <TextArea
-                id="full_prompt"
-                v-model="state.full_prompt"
-                custom-text-area-wrapper-class=""
-                custom-text-area-class="!outline-none"
-                placeholder="Full prompt will be displayed here"
-                auto-height
-                min-height="80px"
-                max-height="300px"
-              />
-            </div>
-
-            <div>
-              <label for="temperature">Temperature</label>
-              <Input
-                id="temperature"
-                v-model="state.temperature"
-                placeholder="AI Agent temperature value"
-              />
-            </div>
-          </template>
-
-          
-        </template>        <button v-if="!isCustomAgent" class="button self-start" type="submit" :disabled="loadingSave">
-          <span v-if="loadingSave" class="mt-4 mb-4 spinner" />
-          <span v-else>{{ t('AGENT_MGMT.FORM_CREATE.SUBMIT') }}</span>
-        </button>
-      </div>
-    </form>
-    <!-- Chat Preview Section -->
-    <div class="h-[600px] w-full lg:h-[500px] lg:w-[350px]">
-      <div class="w-full rounded-xl dark:bg-black-900/80 shadow-lg dark:shadow-slate-700 overflow-hidden flex flex-col h-full">
-        <div class="bg-green-600 px-4 py-2 flex justify-end items-center">
-          <button @click="resetChat" class="text-white hover:text-gray-200 flex items-center space-x-1">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </button>
-        </div>
-        <div ref="chatContainer" class="flex-1 flex flex-col space-y-4 p-4 overflow-y-auto">
-          <div class="flex justify-start">
-            <div class="bg-slate-50 dark:bg-slate-800 px-4 py-3 rounded-lg text-sm max-w-[90%]">
-              <span class="text-[#000000] dark:text-white">Hai! Ada yang bisa saya bantu?</span>
-            </div>
-          </div>
-          <div
-            v-for="(message, index) in messages"
-            :key="index"
-            :class="message.role === 'user' ? 'flex justify-end' : 'flex justify-start'"
-          >
-            <div
-              :class="[
-                'px-4 py-2 rounded-lg text-sm max-w-[90%]',
-                message.role === 'user' ? 'bg-green-600 text-white' : 'bg-slate-50 dark:bg-slate-800 text-[#000000] dark:text-white',
-              ]"
-              v-html="message.role === 'user' ? message.content.replace(/\n/g, '<br>') : renderMarkdown(message.content)"
-            ></div>
-          </div>
-        </div>
-        <form class="flex items-center p-4" @submit.prevent="chat">
-          <Input v-model="chatInput" class="w-full" type="text" placeholder="Type your question" />
-          <button 
-            class="ml-3 bg-green-600 text-white p-2 rounded-lg hover:bg-green-700 relative"
-            type="submit"
-            :disabled="loadingChat"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12l15-6-6 15-2.25-6-6.75-3z" />
-            </svg>
-          </button>
-        </form>
-      </div>
-    </div>
-    <!-- Chat Preview Section -->
-  </div>
-
-</template>
 
 <style scoped>
 :deep(.ProseMirror-woot-style) {
@@ -1072,7 +616,7 @@ function resetChat() {
   max-height: none !important;
   height: auto !important;
   overflow-y: hidden !important;
-  padding: 8px 12px !important; 
+  padding: 8px 12px !important;
 }
 
 :deep(.ProseMirror-menubar) {
@@ -1094,4 +638,3 @@ function resetChat() {
   @apply border-green-500;
 }
 </style>
->>>>>>> Stashed changes

@@ -461,7 +461,8 @@ class Api::V2::Accounts::GoogleSheetsExportController < Api::V1::Accounts::BaseC
       headers: {
         'Content-Type' => 'application/json',
         'X-API-Key' => api_key
-      }
+      },
+      timeout: 60
     )
 
     if response.success?

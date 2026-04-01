@@ -12,6 +12,13 @@ const routes = [...dashboard.routes];
 export const router = createRouter({ history: createWebHistory(), routes });
 export const routesWithPermissions = buildPermissionsFromRouter(routes);
 
+const SUBSCRIPTION_EXEMPT_PREFIXES = ['billing', 'profile_settings'];
+
+const isSubscriptionExemptRoute = routeName => {
+  if (!routeName) return false;
+  return SUBSCRIPTION_EXEMPT_PREFIXES.some(prefix => routeName.startsWith(prefix));
+};
+
 export const validateAuthenticateRoutePermission = async (to, next) => {
   const { isLoggedIn, getCurrentUser: user } = store.getters;
 
@@ -24,21 +31,15 @@ export const validateAuthenticateRoutePermission = async (to, next) => {
     return next(frontendURL(`accounts/${user.account_id}/dashboard`));
   }
 
-  // UNCOMMENT THIS FEATURE FOR RESTRICT USER MUST HAVE ACTVIE SUBSCRIPTION TO ACCESS MENUS
-  // // Exclude halaman tertentu agar tidak dicek (misalnya billing)
-  // const exemptedPrefixes = ['billing', 'account_suspended'];
-  // const isExempted = exemptedPrefixes.some(prefix => to.name?.startsWith(prefix));
-  // if (!isExempted) {
-  //   // Lakukan pengecekan subscription
-  //   const { data } = await axios.get(`api/v1/accounts/${user.account_id}/subscriptions/status`);
-  //   if (!data.active) {
-  //     return next({
-  //       name: 'billing_settings_index',
-  //       params: { accountId: user.account_id },
-  //       query: { expired: 'true' },
-  //     });
-  //   }
-  // }
+  // Check subscription status (cached in Vuex store, fetched on boot)
+  const isActive = store.getters.isSubscriptionActive;
+  if (!isActive && !isSubscriptionExemptRoute(to.name)) {
+    return next({
+      name: 'billing_settings_index',
+      params: { accountId: user.account_id },
+      query: { expired: 'true' },
+    });
+  }
 
   const nextRoute = validateLoggedInRoutes(to, store.getters.getCurrentUser);
   return nextRoute ? next(frontendURL(nextRoute)) : next();
@@ -46,6 +47,7 @@ export const validateAuthenticateRoutePermission = async (to, next) => {
 
 export const initalizeRouter = () => {
   const userAuthentication = store.dispatch('setUser');
+  let subscriptionLoaded = false;
 
   router.beforeEach((to, _from, next) => {
     AnalyticsHelper.page(to.name || '', {
@@ -53,53 +55,16 @@ export const initalizeRouter = () => {
       name: to.name,
     });
 
-    userAuthentication.then(() => {
+    userAuthentication.then(async () => {
+      // Load subscription data once on first navigation
+      if (!subscriptionLoaded) {
+        const { getCurrentUser: user } = store.getters;
+        await store.dispatch('myActiveSubscription', user?.account_id);
+        subscriptionLoaded = true;
+      }
       return validateAuthenticateRoutePermission(to, next, store);
     });
   });
 };
-// export const initalizeRouter = () => {
-//   const userAuthentication = store.dispatch('setUser');
-
-//   router.beforeEach(async (to, _from, next) => {
-//     AnalyticsHelper.page(to.name || '', {
-//       path: to.path,
-//       name: to.name,
-//     });
-
-//     try {
-//       await userAuthentication;
-
-//       const { isLoggedIn, getCurrentUser: user } = store.getters;
-
-//       if (!isLoggedIn) {
-//         return window.location.assign('/app/pricing'); // Atau /app/login
-//       }
-
-//       if (!to.name) {
-//         return next(frontendURL(`accounts/${user.account_id}/dashboard`));
-//       }
-
-//       // Exclude halaman tertentu agar tidak dicek (misalnya billing)
-//       const exemptedRoutes = ['billing', 'account_suspended'];
-//       if (!exemptedRoutes.includes(to.name)) {
-//         // Lakukan pengecekan subscription
-//         const { data } = await axios.get(`accounts/${user.account_id}/subscriptions/status`);
-//         if (!data.active) {
-//           alert('Subscription Anda telah berakhir. Silakan perpanjang.');
-//           return next(frontendURL(`accounts/${user.account_id}/settings/billing`));
-//         }
-//       }
-
-//       // Lanjutkan route normal
-//       const nextRoute = validateLoggedInRoutes(to, user);
-//       return nextRoute ? next(frontendURL(nextRoute)) : next();
-
-//     } catch (err) {
-//       console.error('Router init error:', err);
-//       return window.location.assign('/app/login');
-//     }
-//   });
-// };
 
 export default router;

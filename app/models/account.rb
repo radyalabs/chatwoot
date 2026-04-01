@@ -87,7 +87,9 @@ class Account < ApplicationRecord
   has_many :working_hours, dependent: :destroy_async
   has_many :ai_agents, dependent: :destroy_async
   has_many :subscriptions
+  belongs_to :active_subscription, class_name: 'Subscription', optional: true
   has_many :quick_replies
+  has_many :scheduled_reminders, dependent: :destroy_async
   has_many :reminders, dependent: :destroy_async
   has_many :reminder_configs, dependent: :destroy_async
 

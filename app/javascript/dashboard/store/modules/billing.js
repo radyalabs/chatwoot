@@ -51,16 +51,17 @@ export const actions = {
       commit(types.SET_CURRENT_USER_UI_FLAGS, { isFetching: false });
     }
   },
-  myActiveSubscription: async ({ commit }) => {
+  myActiveSubscription: async ({ commit }, accountId) => {
+    if (!accountId) return;
     try {
-      commit(types.SET_CURRENT_USER_UI_FLAGS, { isFetching: false }); // Set loading
-      const response = await billingAPI.myActiveSubscription();
+      commit(types.SET_CURRENT_USER_UI_FLAGS, { isFetching: false });
+      const response = await axios.get(`/api/v1/accounts/${accountId}/subscriptions/active`);
       commit(types.SET_BILLING_MY_ACTIVE_SUBSCRIPTION, response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching subscription:', error);
     } finally {
-      commit(types.SET_CURRENT_USER_UI_FLAGS, { isFetching: false }); // Selesai loading
+      commit(types.SET_CURRENT_USER_UI_FLAGS, { isFetching: false });
     }
   },
   getLatestSubscription: async ({ commit }) => {
@@ -107,8 +108,9 @@ export const mutations = {
 
 export const getters = {
   isSubscriptionActive(state) {
-    const userSubsStatus = state?.billing?.myActiveSubscription?.status;
-    return userSubsStatus && userSubsStatus === 'active' ? true : false;  
+    const subscription = state?.billing?.myActiveSubscription;
+    if (!subscription || !subscription.ends_at) return true;
+    return new Date(subscription.ends_at) > new Date();
   },
 };
 

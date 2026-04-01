@@ -112,9 +112,13 @@ watch(
 );
 
 const loadingSave = ref(false);
+const captainTranslatorEnabled =
+  window.chatwootConfig?.captainTranslatorEnabled || 'false';
 
 async function translateToEnglish(text) {
   if (!text || text.trim() === '') return text;
+  console.log('Captain Translator Enabled:', captainTranslatorEnabled);
+  if (captainTranslatorEnabled !== 'true') return text;
 
   try {
     const response = await captainTranslator.translate(text, 'en');

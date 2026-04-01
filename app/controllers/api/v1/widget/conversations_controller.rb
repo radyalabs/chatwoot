@@ -9,7 +9,6 @@ class Api::V1::Widget::ConversationsController < Api::V1::Widget::BaseController
   end
 
   def create
-<<<<<<< Updated upstream
     return head :forbidden unless channel_available?
 
     ActiveRecord::Base.transaction do
@@ -19,21 +18,7 @@ class Api::V1::Widget::ConversationsController < Api::V1::Widget::BaseController
       # TODO: Temporary fix for message type cast issue, since message_type is returning as string instead of integer
       conversation.reload
     end
-=======
-  ActiveRecord::Base.transaction do
-    process_update_contact
-    @conversation = create_conversation
-    
-    params = message_params
-    conversation.messages.create!(params) if params.present?
-
-    send_greeting_message if should_send_greeting?
-    
-    # TODO: Temporary fix for message type cast issue, since message_type is returning as string instead of integer
-    conversation.reload
->>>>>>> Stashed changes
   end
-end
 
   def process_update_contact
     @contact = ContactIdentifyAction.new(
@@ -95,28 +80,6 @@ end
   end
 
   private
-
-  def should_send_greeting?
-    inbox.greeting_enabled? && inbox.greeting_message.present?
-  end
-
-  def send_greeting_message
-    greeting_text = inbox.greeting_message
-
-    bot_sender = inbox.ai_agent
-    
-    sender = bot_sender || inbox.members.first || inbox.account.administrators.first
-    
-    return unless sender
-    
-    conversation.messages.create!(
-      account_id: conversation.account_id,
-      inbox_id: conversation.inbox_id,
-      message_type: :outgoing,
-      content: greeting_text,
-      sender: sender
-    )
-  end
 
   def trigger_typing_event(event)
     Rails.configuration.dispatcher.dispatch(event, Time.zone.now, conversation: conversation, user: @contact)

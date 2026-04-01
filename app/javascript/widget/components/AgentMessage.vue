@@ -15,7 +15,6 @@ import { useDarkMode } from 'widget/composables/useDarkMode';
 import ReplyToChip from 'widget/components/ReplyToChip.vue';
 import { BUS_EVENTS } from 'shared/constants/busEvents';
 import { emitter } from 'shared/helpers/mitt';
-import { useMessageFormatter } from 'shared/composables/useMessageFormatter';
 
 export default {
   name: 'AgentMessage',
@@ -42,10 +41,8 @@ export default {
   },
   setup() {
     const { getThemeClass } = useDarkMode();
-    const { formatMessage } = useMessageFormatter();
     return {
       getThemeClass,
-      formatMessage,
     };
   },
   data() {
@@ -141,12 +138,6 @@ export default {
     hasReplyTo() {
       return this.replyTo && (this.replyTo.content || this.replyTo.attachments);
     },
-    // Check if this message has both image attachment AND text content
-    hasImageAndText() {
-      return this.hasAttachments && 
-             this.shouldDisplayAgentMessage &&
-             this.message.attachments?.some(att => att.file_type === 'image');
-    },
   },
   watch: {
     message() {
@@ -193,43 +184,17 @@ export default {
           <ReplyToChip :reply-to="replyTo" />
         </div>
         <div class="flex gap-1">
-          <!-- COMBINED BUBBLE: Image + Text in ONE bubble -->
-          <div v-if="hasImageAndText" class="space-y-0">
+          <div class="space-y-2">
+            <AgentMessageBubble
+              v-if="shouldDisplayAgentMessage"
+              :content-type="contentType"
+              :message-content-attributes="messageContentAttributes"
+              :message-id="message.id"
+              :message-type="messageType"
+              :message="message.content"
+            />
             <div
-              class="chat-bubble agent has-attachment combined-bubble"
-              :class="getThemeClass('bg-white', 'dark:bg-slate-700 has-dark-mode')"
-            >
-              <!-- Images FIRST -->
-              <div
-                v-for="attachment in message.attachments"
-                :key="attachment.id"
-                class="attachment-item"
-              >
-                <ImageBubble
-                  v-if="attachment.file_type === 'image' && !hasImageError"
-                  :url="attachment.data_url"
-                  :thumb="attachment.data_url"
-                  :readable-time="readableTime"
-                  :hide-time="true"
-                  :full-width="true"
-                  @error="onImageLoadError"
-                />
-              </div>
-              
-              <!-- Text BELOW image (inside same bubble) -->
-              <div
-                v-if="shouldDisplayAgentMessage"
-                v-dompurify-html="formatMessage(message.content, false)"
-                class="message-content text-slate-900 dark:text-slate-50 pt-2"
-              />
-            </div>
-          </div>
-
-          <!-- SEPARATE RENDERING: For messages with ONLY text or ONLY attachments (not both) -->
-          <div v-else class="space-y-2">
-            <!-- Attachments first (for non-image or when no text) -->
-            <div
-              v-if="hasAttachments && !hasImageAndText"
+              v-if="hasAttachments"
               class="space-y-2 chat-bubble has-attachment agent"
               :class="
                 (wrapClass, getThemeClass('bg-white', 'dark:bg-slate-700'))
@@ -260,18 +225,7 @@ export default {
                 <FileBubble v-else :url="attachment.data_url" />
               </div>
             </div>
-
-            <!-- Text bubble (only if no combined rendering) -->
-            <AgentMessageBubble
-              v-if="shouldDisplayAgentMessage && !hasImageAndText"
-              :content-type="contentType"
-              :message-content-attributes="messageContentAttributes"
-              :message-id="message.id"
-              :message-type="messageType"
-              :message="message.content"
-            />
           </div>
-
           <div class="flex flex-col justify-end">
             <MessageReplyButton
               class="transition-opacity delay-75 opacity-0 group-hover:opacity-100 sm:opacity-0"
@@ -298,49 +252,3 @@ export default {
     </div>
   </div>
 </template>
-
-<style scoped>
-.combined-bubble {
-  overflow: hidden;
-  padding: 0 !important;
-}
-
-.combined-bubble .attachment-item {
-  margin: 0;
-  display: flex;
-  justify-content: center;
-  background-color: inherit;
-}
-
-.combined-bubble .attachment-item .image {
-  display: block;
-  margin-bottom: 0;
-  width: 100%;
-}
-
-.combined-bubble .attachment-item .image .wrap {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-
-.combined-bubble .attachment-item .image img {
-  display: block;
-  border-radius: 0;
-  width: 100%;
-  max-width: 100%;
-  object-fit: cover;
-}
-
-.combined-bubble .message-content {
-  padding: 12px 16px;
-}
-
-.combined-bubble .attachment-item:first-child .image img {
-  border-radius: 8px 8px 0 0;
-}
-
-.combined-bubble .attachment-item .image .wrap::before {
-  display: none;
-}
-</style>

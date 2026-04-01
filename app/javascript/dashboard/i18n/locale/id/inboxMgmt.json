@@ -122,11 +122,6 @@
           "LABEL": "Pesan sambutan channel",
           "PLACEHOLDER": "Acme Inc biasanya membalas dalam beberapa jam."
         },
-        "CHANNEL_GREETING_IMAGE": {
-          "TITLE": "Sisipkan Gambar",
-          "DESC": "Klik untuk upload gambar",
-          "MAX_SIZE": "JPG, PNG, GIF (Maks. 4MB)"
-        },
         "CHANNEL_GREETING_TOGGLE": {
           "LABEL": "Aktifkan sambutan channel",
           "HELP_TEXT": "Pesan sapaan akan dikirim otomatis saat ada percakapan baru.",

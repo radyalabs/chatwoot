@@ -8,9 +8,6 @@ class Api::V1::Widget::MessagesController < Api::V1::Widget::BaseController
 
   def create
     @message = conversation.messages.new(message_params)
-    @message.inbox = conversation.inbox
-    @message.account_id = conversation.account_id
-    @message.message_type = :incoming
     build_attachment
     @message.save!
   end
@@ -41,20 +38,7 @@ class Api::V1::Widget::MessagesController < Api::V1::Widget::BaseController
         file: uploaded_attachment
       )
 
-      # [PERBAIKAN] Cek tipe file secara manual berdasarkan content_type
-      # agar tidak dianggap 'file' biasa oleh helper
-      if uploaded_attachment.is_a?(ActionDispatch::Http::UploadedFile)
-        content_type = uploaded_attachment.content_type
-        attachment.file_type = if content_type.include?('image')
-                                 :image
-                               elsif content_type.include?('audio')
-                                 :audio
-                               elsif content_type.include?('video')
-                                 :video
-                               else
-                                 :file
-                               end
-      end
+      attachment.file_type = helpers.file_type(uploaded_attachment&.content_type) if uploaded_attachment.is_a?(ActionDispatch::Http::UploadedFile)
     end
   end
 

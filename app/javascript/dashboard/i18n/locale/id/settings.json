@@ -22,7 +22,6 @@
       },
       "SEND_MESSAGE": {
         "TITLE": "Pintasan keyboard untuk mengirim pesan",
-        "IMAGE_UPLOAD_SUCCESS": "Gambar berhasil ditambahkan",
         "NOTE": "Anda dapat memilih pintasan keyboard (baik Enter atau Cmd/Ctrl+Enter) berdasarkan preferensi Anda dalam menulis.",
         "UPDATE_SUCCESS": "Pengaturan Anda berhasil diperbarui",
         "CARD": {

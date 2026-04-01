@@ -459,7 +459,7 @@ async function uploadImageToStorage(file) {
       onImageInsertInEditor(fileUrl);
     }
     useAlert(
-      t('PROFILE_SETTINGS.FORM.SEND_MESSAGE.IMAGE_UPLOAD_SUCCESS')
+      t('PROFILE_SETTINGS.FORM.MESSAGE_SIGNATURE_SECTION.IMAGE_UPLOAD_SUCCESS')
     );
   } catch (error) {
     useAlert(

@@ -1,30 +1,24 @@
 import { buildSearchParamsWithLocale } from '../helpers/urlParamsHelper';
 import { generateEventParams } from './events';
 
-const createConversation = (params = {}) => {
+const createConversation = params => {
   const referrerURL = window.referrerURL || '';
   const search = buildSearchParamsWithLocale(window.location.search);
-  
-  const payload = {
-    contact: {
-      name: params.fullName || '',
-      email: params.emailAddress || '',
-      phone_number: params.phoneNumber || '',
-    },
-    custom_attributes: params.customAttributes || {},
-  };
-
-  if (params.message && params.message.trim() !== '') {
-    payload.message = {
-      content: params.message,
-      timestamp: new Date().toString(),
-      referer_url: referrerURL,
-    };
-  }
-
   return {
     url: `/api/v1/widget/conversations${search}`,
-    params: payload,
+    params: {
+      contact: {
+        name: params.fullName,
+        email: params.emailAddress,
+        phone_number: params.phoneNumber,
+      },
+      message: {
+        content: params.message,
+        timestamp: new Date().toString(),
+        referer_url: referrerURL,
+      },
+      custom_attributes: params.customAttributes,
+    },
   };
 };
 

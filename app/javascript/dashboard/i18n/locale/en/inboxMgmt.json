@@ -113,11 +113,6 @@
           "LABEL": "Channel greeting message",
           "PLACEHOLDER": "Acme Inc typically replies in a few hours."
         },
-        "CHANNEL_GREETING_IMAGE": {
-          "TITLE": "Insert Image",
-          "DESC": "Click to upload an image",
-          "MAX_SIZE": "JPG, PNG, GIF (Max. 4MB)"
-        },
         "CHANNEL_GREETING_TOGGLE": {
           "LABEL": "Enable channel greeting",
           "HELP_TEXT": "Auto-send greeting messages when customers start a conversation and send their first message.",

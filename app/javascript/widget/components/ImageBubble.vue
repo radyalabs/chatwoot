@@ -4,8 +4,6 @@ export default {
     url: { type: String, default: '' },
     thumb: { type: String, default: '' },
     readableTime: { type: String, default: '' },
-    hideTime: { type: Boolean, default: false },
-    fullWidth: { type: Boolean, default: false },
   },
   emits: ['error'],
   methods: {
@@ -22,11 +20,10 @@ export default {
     target="_blank"
     rel="noreferrer noopener nofollow"
     class="image"
-    :class="{ 'full-width': fullWidth }"
   >
     <div class="wrap">
       <img :src="thumb" alt="Picture message" @error="onImgError" />
-      <span v-if="!hideTime" class="time">{{ readableTime }}</span>
+      <span class="time">{{ readableTime }}</span>
     </div>
   </a>
 </template>
@@ -70,27 +67,6 @@ export default {
     position: absolute;
     right: $space-slab;
     white-space: nowrap;
-  }
-
-  // Full-width variant for combined messages
-  &.full-width {
-    width: 100%;
-
-    .wrap {
-      width: 100%;
-      max-width: 100%;
-    }
-
-    img {
-      max-width: 100%;
-      width: 100%;
-      object-fit: cover;
-    }
-
-    // Hide the gradient overlay for full-width images
-    .wrap::before {
-      display: none;
-    }
   }
 }
 </style>

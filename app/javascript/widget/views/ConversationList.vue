@@ -237,32 +237,27 @@ export default {
     },
 
     async onNewConversation() {
-      if (this.isLoading) {
-        console.log('[ConversationList] Already creating conversation, skipping...');
-        return;
-      }
-      
       try {
         this.isLoading = true;
-        
-        const newConversationId = await this.createConversation({
-          fullName: '',
-          emailAddress: '',
-          phoneNumber: '',
+        const newConversationId = await this.createConversation({ 
+          message: 'Halo',
+          // Jika backend Anda butuh status custom, tambahkan di sini
         });
 
         if (newConversationId) {
+          await this.loadConversation(newConversationId);
           this.$router.push({ 
             name: 'conversation-chat', 
             params: { conversationId: newConversationId } 
           });
         }
+
       } catch (error) {
         console.error("Gagal membuat percakapan:", error);
       } finally {
         this.isLoading = false;
       }
-    },
+    }
   },
   async mounted() {
     console.log('[ConversationList] mounted');

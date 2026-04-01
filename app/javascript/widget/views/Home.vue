@@ -176,26 +176,20 @@ export default {
     },
     
     async onNewConversation() {
-      if (this.isLoading) {
-        console.log('[Home] Already creating conversation, skipping...');
-        return;
-      }
-      
       try {
         this.isLoading = true;
-        
-        const newConversationId = await this.createConversation({
-          fullName: '',
-          emailAddress: '',
-          phoneNumber: '',
+        const newConversationId = await this.createConversation({ 
+          message: 'Halo', 
         });
 
         if (newConversationId) {
+          await this.loadConversation(newConversationId);
           this.$router.push({ 
             name: 'conversation-chat', 
             params: { conversationId: newConversationId } 
           });
         }
+
       } catch (error) {
         console.error("Gagal membuat percakapan:", error);
       } finally {

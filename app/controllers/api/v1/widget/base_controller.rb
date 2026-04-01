@@ -40,7 +40,7 @@ class Api::V1::Widget::BaseController < ApplicationController
         browser_language: browser.accept_language&.first&.code,
         browser: browser_params,
         initiated_at: timestamp_params,
-        referer: permitted_params[:message]&.dig(:referer_url)
+        referer: permitted_params[:message][:referer_url]
       },
       custom_attributes: permitted_params[:custom_attributes].presence || {}
     }
@@ -71,13 +71,10 @@ class Api::V1::Widget::BaseController < ApplicationController
   end
 
   def timestamp_params
-    return {} if permitted_params[:message].nil? || permitted_params[:message][:timestamp].nil?
     { timestamp: permitted_params[:message][:timestamp] }
   end
 
   def message_params
-    return nil if permitted_params[:message].nil? || permitted_params[:message][:content].blank?
-    
     {
       account_id: conversation.account_id,
       sender: @contact,

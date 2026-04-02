@@ -49,10 +49,10 @@ export default {
       const maxChannels = this.maxChannels;
       
       // Handle different database values:
-      // null = limited but no specific limit set (block creation)
-      // 0 = unlimited (no restriction) 
+      // null/undefined = limited but no specific limit set (block creation)
+      // 0 = unlimited (no restriction)
       // positive number = limited to that number
-      if (maxChannels === null) {
+      if (maxChannels == null) {
         return true; // Block channel creation
       }
       
@@ -99,7 +99,10 @@ export default {
     async initializeEnabledFeatures() {
       try {
         this.isLoadingFeatures = true;
-        const response = await this.$store.dispatch('myActiveSubscription');
+        const response = await this.$store.dispatch(
+          'myActiveSubscription',
+          this.accountId
+        );
         this.enabledFeatures = response || {};
       } catch (error) {
         console.error('Failed to fetch active subscription:', error);
@@ -146,7 +149,6 @@ export default {
     },
   },
 };
-
 </script>
 
 <template>

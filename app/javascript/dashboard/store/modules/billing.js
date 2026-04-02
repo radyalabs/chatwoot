@@ -51,11 +51,12 @@ export const actions = {
       commit(types.SET_CURRENT_USER_UI_FLAGS, { isFetching: false });
     }
   },
-  myActiveSubscription: async ({ commit }, accountId) => {
-    if (!accountId) return;
+  myActiveSubscription: async ({ commit, rootGetters }, accountId) => {
+    const id = accountId || rootGetters.getCurrentAccountId;
+    if (!id) return;
     try {
       commit(types.SET_CURRENT_USER_UI_FLAGS, { isFetching: false });
-      const response = await axios.get(`/api/v1/accounts/${accountId}/subscriptions/active`);
+      const response = await axios.get(`/api/v1/accounts/${id}/subscriptions/active`);
       commit(types.SET_BILLING_MY_ACTIVE_SUBSCRIPTION, response.data);
       return response.data;
     } catch (error) {

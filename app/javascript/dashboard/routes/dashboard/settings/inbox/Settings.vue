@@ -11,7 +11,6 @@ import MicrosoftReauthorize from './channels/microsoft/Reauthorize.vue';
 import GoogleReauthorize from './channels/google/Reauthorize.vue';
 import PreChatFormSettings from './PreChatForm/Settings.vue';
 import WeeklyAvailability from './components/WeeklyAvailability.vue';
-import GreetingsEditor from 'shared/components/GreetingsEditor.vue';
 import CollaboratorsPage from './settingsPage/CollaboratorsPage.vue';
 import WidgetBuilder from './WidgetBuilder.vue';
 import BotConfiguration from './components/BotConfiguration.vue';
@@ -24,7 +23,6 @@ export default {
     BotConfiguration,
     CollaboratorsPage,
     FacebookReauthorize,
-    GreetingsEditor,
     PreChatFormSettings,
     SettingIntroBanner,
     SettingsSection,
@@ -43,10 +41,6 @@ export default {
     return {
       avatarFile: null,
       avatarUrl: '',
-      greetingEnabled: true,
-      greetingMessage: '',
-      greetingImageFile: null, 
-      greetingImageUrl: '',
       emailCollectEnabled: false,
       csatSurveyEnabled: false,
       senderNameType: 'friendly',
@@ -257,9 +251,6 @@ export default {
         this.avatarUrl = this.inbox.avatar_url;
         this.selectedInboxName = this.inbox.name;
         this.webhookUrl = this.inbox.webhook_url;
-        this.greetingEnabled = this.inbox.greeting_enabled || false;
-        this.greetingMessage = this.inbox.greeting_message || '';
-        this.greetingImageUrl = this.inbox.greeting_image_url || '';
         this.emailCollectEnabled = this.inbox.enable_email_collect;
         this.csatSurveyEnabled = this.inbox.csat_survey_enabled;
         this.senderNameType = this.inbox.sender_name_type;
@@ -278,32 +269,6 @@ export default {
           : '';
       });
     },
-    handleGreetingImageUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
-      if (!validTypes.includes(file.type)) {
-        useAlert(this.$t('Format file harus JPG, PNG, atau GIF'));
-        return;
-      }
-      
-      if (file.size > 4 * 1024 * 1024) {
-        useAlert(this.$t('Ukuran file terlalu besar (Maks 4MB)'));
-        return;
-      }
-
-      this.greetingImageFile = file;
-      this.greetingImageUrl = URL.createObjectURL(file);
-    },
-
-    deleteGreetingImage() {
-      this.greetingImageFile = null;
-      this.greetingImageUrl = '';
-      if (this.$refs.greetingImageInput) {
-        this.$refs.greetingImageInput.value = null;
-      }
-    },
     async updateInbox() {
       try {
         const payload = {
@@ -312,8 +277,6 @@ export default {
           enable_email_collect: this.emailCollectEnabled,
           csat_survey_enabled: this.csatSurveyEnabled,
           allow_messages_after_resolved: this.allowMessagesAfterResolved,
-          greeting_enabled: this.greetingEnabled,
-          greeting_message: this.greetingMessage || '',
           portal_id: this.selectedPortalSlug
             ? this.portals.find(
                 portal => portal.slug === this.selectedPortalSlug
@@ -333,12 +296,6 @@ export default {
             continuity_via_email: this.continuityViaEmail,
           },
         };
-        if (this.greetingImageFile) {
-          payload.greeting_image = this.greetingImageFile;
-        } else if (this.greetingImageUrl === '' && this.inbox.greeting_image_url) {
-          payload.delete_greeting_image = true;
-        }
-
         if (this.avatarFile) {
           payload.avatar = this.avatarFile;
         }
@@ -525,94 +482,6 @@ export default {
           <input v-model="whatsAppAPIProviderName" type="text" disabled />
         </label>
 
-        <!-- <label class="w-3/4 pb-4">
-          {{
-            $t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_GREETING_TOGGLE.LABEL')
-          }}
-          <select v-model="greetingEnabled">
-            <option :value="true">
-              {{
-                $t(
-                  'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_GREETING_TOGGLE.ENABLED'
-                )
-              }}
-            </option>
-            <option :value="false">
-              {{
-                $t(
-                  'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_GREETING_TOGGLE.DISABLED'
-                )
-              }}
-            </option>
-          </select>
-          <p class="pb-1 text-sm not-italic text-slate-600 dark:text-slate-400">
-            {{
-              $t(
-                'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_GREETING_TOGGLE.HELP_TEXT'
-              )
-            }}
-          </p>
-        </label>
-        <div v-if="greetingEnabled" class="pb-4">
-          <GreetingsEditor
-            v-model="greetingMessage"
-            :label="
-              $t(
-                'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_GREETING_MESSAGE.LABEL'
-              )
-            "
-            :placeholder="
-              $t(
-                'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_GREETING_MESSAGE.PLACEHOLDER'
-              )
-            "
-            :richtext="!textAreaChannels"
-          />
-          <div class="mb-4 w-3/4">
-            <label class="block text-sm font-bold text-slate-800 dark:text-slate-200 mb-2">
-              {{ $t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_GREETING_IMAGE.TITLE') }}
-            </label>
-
-            <div v-if="greetingImageUrl" class="relative inline-block group">
-              <img 
-                :src="greetingImageUrl" 
-                class="h-40 w-auto rounded-lg border border-slate-200 dark:border-slate-700 object-cover shadow-sm"
-                alt="Greeting Preview" 
-              />
-              <button
-                type="button"
-                @click="deleteGreetingImage"
-                class="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-md transition-all opacity-0 group-hover:opacity-100"
-                title="Hapus gambar"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div v-else class="w-full">
-              <label 
-                for="greeting-image-upload" 
-                class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg cursor-pointer bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-              >
-                <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                  <svg class="w-8 h-8 mb-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                  <p class="mb-1 text-sm text-slate-500 dark:text-slate-400"><span class="font-semibold">{{ $t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_GREETING_IMAGE.DESC') }}</span></p>
-                  <p class="text-xs text-slate-400">{{ $t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_GREETING_IMAGE.MAX_SIZE') }}</p>
-                </div>
-                <input 
-                  ref="greetingImageInput"
-                  id="greeting-image-upload" 
-                  type="file" 
-                  class="hidden" 
-                  accept="image/png, image/jpeg, image/jpg, image/gif"
-                  @change="handleGreetingImageUpload" 
-                />
-              </label>
-            </div>
-          </div>
-        </div>
         <label v-if="isAWebWidgetInbox" class="w-3/4 pb-4">
           {{ $t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.REPLY_TIME.TITLE') }}
           <select v-model="replyTime">

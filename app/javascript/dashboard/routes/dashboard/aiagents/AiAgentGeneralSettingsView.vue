@@ -4,11 +4,8 @@ import {
   nextTick,
   reactive,
   ref,
-  useTemplateRef,
   watch,
-  watchEffect,
 } from 'vue';
-import Editor from 'dashboard/components/widgets/WootWriter/Editor.vue';
 import Input from 'dashboard/components-next/input/Input.vue';
 import TextArea from 'dashboard/components-next/textarea/TextArea.vue';
 import { required } from '@vuelidate/validators';
@@ -62,11 +59,37 @@ const state = reactive({
   enable_handover: true,
   greeting_enabled: false,
   greeting_message: '',
+  greeting_image: '',
   has_website: '',
   website_url: '',
   full_prompt: '',
   temperature: '',
 });
+
+const greetingImageInput = ref(null);
+
+function handleGreetingImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    useAlert('Hanya file gambar yang diperbolehkan', 'alert-danger');
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    useAlert('Ukuran file maksimal 5MB', 'alert-danger');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    state.greeting_image = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+function removeGreetingImage() {
+  state.greeting_image = '';
+}
 const rules = {
   name: { required },
   description: {},
@@ -95,6 +118,7 @@ watch(
     if (flowData.greeting_config) {
       state.greeting_enabled = flowData.greeting_config.enabled || false;
       state.greeting_message = flowData.greeting_config.message || '';
+      state.greeting_image = flowData.greeting_config.image || '';
     }
 
     console.log('flowData:', flowData);
@@ -197,6 +221,7 @@ async function submit() {
     const greetingConfig = {
       enabled: state.greeting_enabled,
       message: state.greeting_message,
+      image: state.greeting_image || '',
     };
     flowData.greeting_config = greetingConfig;
     displayFlowData.greeting_config = greetingConfig;
@@ -430,41 +455,93 @@ function resetChat() {
                   </span>
                 </label>
                 <p class="text-xs text-gray-500 mt-1">
-                  Saat diaktifkan, Bot AI akan menampilkan pesan saat pertama
-                  memulai percakapan baru
+                  Saat diaktifkan, Bot AI akan menggunakan kondisi berikut
+                  sebagai panduan untuk menghasilkan pesan sambutan yang dinamis
+                  saat pelanggan pertama kali memulai percakapan
                 </p>
               </div>
 
               <div v-if="state.greeting_enabled" class="space-y-4">
                 <div>
-                  <label class="block font-medium mb-2">Pesan Sambutan</label>
-                  <div
-                    class="message-editor border border-solid border-slate-200 dark:border-slate-700 rounded-md p-2 bg-white dark:bg-slate-900"
-                  >
-                    <Editor
+                  <label for="greeting_message" class="block font-medium mb-2">
+                    Kondisi Pesan Sambutan
+                  </label>
+                  <div class="relative">
+                    <TextArea
+                      id="greeting_message"
                       v-model="state.greeting_message"
-                      placeholder="Tulis pesan promo di sini... (Support gambar, bold, dll)"
-                      :enable-suggestions="false"
-                      :enable-canned-responses="false"
-                      :enable-variables="true"
-                      :enabled-menu-options="[
-                        'strong',
-                        'em',
-                        'link',
-                        'bulletList',
-                        'orderedList',
-                        'imageUpload',
-                        'code',
-                      ]"
-                      :focus-on-mount="false"
+                      :disabled="isDebugMode || loadingSave"
+                      custom-text-area-wrapper-class=""
+                      custom-text-area-class="!outline-none"
+                      placeholder="Tuliskan kondisi atau instruksi untuk pesan sambutan. Contoh: Sambut pelanggan dengan ramah, tawarkan promo terbaru, dan tanyakan kebutuhan mereka."
+                      auto-height
+                      min-height="80px"
+                      max-height="300px"
                     />
+                    <div class="flex items-center mt-2">
+                      <input
+                        ref="greetingImageInput"
+                        type="file"
+                        accept="image/*"
+                        class="hidden"
+                        @change="handleGreetingImageUpload"
+                      />
+                      <button
+                        type="button"
+                        class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                        :disabled="isDebugMode || loadingSave"
+                        @click="greetingImageInput?.click()"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                          />
+                        </svg>
+                        Lampirkan Gambar
+                      </button>
+                    </div>
                   </div>
-                  <p class="text-xs text-gray-500 mt-1">
-                    Gunakan ikon gambar di toolbar editor untuk mengunggah, atau
-                    cukup
-                    <b>Copy &amp; Paste / Drag-and-Drop</b> gambar ke dalam
-                    kotak teks.
-                  </p>
+
+                  <div
+                    v-if="state.greeting_image"
+                    class="mt-3"
+                  >
+                    <div class="relative group/image inline-block">
+                      <img
+                        :src="state.greeting_image"
+                        class="max-w-[200px] max-h-[150px] rounded-lg object-cover border border-slate-200 dark:border-slate-700"
+                      />
+                      <button
+                        type="button"
+                        class="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full bg-black/60 text-white opacity-0 group-hover/image:opacity-100 transition-opacity duration-150 hover:bg-black/80"
+                        @click="removeGreetingImage"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="w-3.5 h-3.5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -610,31 +687,3 @@ function resetChat() {
   </div>
 </template>
 
-<style scoped>
-:deep(.ProseMirror-woot-style) {
-  min-height: 80px !important;
-  max-height: none !important;
-  height: auto !important;
-  overflow-y: hidden !important;
-  padding: 8px 12px !important;
-}
-
-:deep(.ProseMirror-menubar) {
-  margin-left: 0 !important;
-  padding: 4px 8px !important;
-  @apply border-b border-slate-100 dark:border-slate-800;
-}
-
-:deep(.ProseMirror p) {
-  margin-bottom: 0 !important;
-}
-
-.message-editor {
-  @apply border border-solid border-slate-200 dark:border-slate-700 rounded-md overflow-hidden;
-  transition: border-color 0.2s;
-}
-
-.message-editor:focus-within {
-  @apply border-green-500;
-}
-</style>

@@ -11,6 +11,8 @@ import TextArea from 'dashboard/components-next/textarea/TextArea.vue';
 import { required } from '@vuelidate/validators';
 import useVuelidate from '@vuelidate/core';
 import { useAlert } from 'dashboard/composables';
+import { useFileUpload } from 'dashboard/composables/useFileUpload';
+import { useMapGetter } from 'dashboard/composables/store';
 import { useI18n } from 'vue-i18n';
 import aiAgents from '../../../api/aiAgents';
 import captainTranslator from '../../../api/captainTranslator';
@@ -59,36 +61,79 @@ const state = reactive({
   enable_handover: true,
   greeting_enabled: false,
   greeting_message: '',
-  greeting_image: '',
   has_website: '',
   website_url: '',
   full_prompt: '',
   temperature: '',
 });
 
+// Greeting image uploads via ActiveStorage direct uploads
 const greetingImageInput = ref(null);
+const greetingAttachments = ref([]);
+const accountId = useMapGetter('getCurrentAccountId');
+
+const { onFileUpload: onGreetingFileUpload } = useFileUpload({
+  uploadUrl: computed(
+    () => `/api/v1/accounts/${accountId.value}/direct_uploads`
+  ).value,
+  attachFile: ({ file, uploading = false, tempId = null }) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file.file);
+    reader.onloadend = () => {
+      greetingAttachments.value.push({
+        thumb: reader.result,
+        blobSignedId: undefined,
+        uploading,
+        tempId,
+      });
+    };
+  },
+  updateAttachment: (tempId, blob) => {
+    const idx = greetingAttachments.value.findIndex(a => a.tempId === tempId);
+    if (idx !== -1) {
+      greetingAttachments.value[idx] = {
+        ...greetingAttachments.value[idx],
+        blobSignedId: blob.signed_id,
+        uploading: false,
+      };
+    }
+  },
+  removeAttachment: tempId => {
+    greetingAttachments.value = greetingAttachments.value.filter(
+      a => a.tempId !== tempId
+    );
+  },
+});
 
 function handleGreetingImageUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  if (!file.type.startsWith('image/')) {
-    useAlert('Hanya file gambar yang diperbolehkan', 'alert-danger');
-    return;
-  }
-  if (file.size > 5 * 1024 * 1024) {
-    useAlert('Ukuran file maksimal 5MB', 'alert-danger');
-    return;
-  }
-  const reader = new FileReader();
-  reader.onload = e => {
-    state.greeting_image = e.target.result;
-  };
-  reader.readAsDataURL(file);
+  const files = Array.from(event.target.files);
+  files.forEach(file => {
+    if (!file.type.startsWith('image/')) {
+      useAlert(
+        `${file.name}: Hanya file gambar yang diperbolehkan`,
+        'alert-danger'
+      );
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      useAlert(`${file.name}: Ukuran file maksimal 5MB`, 'alert-danger');
+      return;
+    }
+    onGreetingFileUpload({ file, size: file.size, type: file.type });
+  });
   event.target.value = '';
 }
 
-function removeGreetingImage() {
-  state.greeting_image = '';
+function removeGreetingImage(index) {
+  greetingAttachments.value.splice(index, 1);
+}
+
+const previewImageSrc = ref('');
+function openImagePreview(src) {
+  previewImageSrc.value = src;
+}
+function closeImagePreview() {
+  previewImageSrc.value = '';
 }
 const rules = {
   name: { required },
@@ -118,7 +163,24 @@ watch(
     if (flowData.greeting_config) {
       state.greeting_enabled = flowData.greeting_config.enabled || false;
       state.greeting_message = flowData.greeting_config.message || '';
-      state.greeting_image = flowData.greeting_config.image || '';
+
+      const savedImages = flowData.greeting_config.images || [];
+      const legacyImage = flowData.greeting_config.image || '';
+      const imageUrls = v.greeting_image_urls || [];
+      const allImages = savedImages.length > 0
+        ? savedImages
+        : legacyImage ? [legacyImage] : [];
+
+      greetingAttachments.value = allImages.map((val, idx) => {
+        const isBase64 = typeof val === 'string' && val.startsWith('data:');
+        return {
+          thumb: isBase64 ? val : (imageUrls[idx] || ''),
+          blobSignedId: isBase64 ? null : val,
+          rawValue: val,
+          uploading: false,
+          tempId: null,
+        };
+      });
     }
 
     console.log('flowData:', flowData);
@@ -218,10 +280,14 @@ async function submit() {
     });
 
     // Save greeting_config to BOTH flow_data (sent to Jangkau) and display_flow_data (frontend display)
+    // Use blobSignedId for new uploads, rawValue for legacy base64 that wasn't re-uploaded
+    const greetingImages = greetingAttachments.value
+      .map(a => a.blobSignedId || a.rawValue)
+      .filter(Boolean);
     const greetingConfig = {
       enabled: state.greeting_enabled,
       message: state.greeting_message,
-      image: state.greeting_image || '',
+      images: greetingImages,
     };
     flowData.greeting_config = greetingConfig;
     displayFlowData.greeting_config = greetingConfig;
@@ -483,6 +549,7 @@ function resetChat() {
                         ref="greetingImageInput"
                         type="file"
                         accept="image/*"
+                        multiple
                         class="hidden"
                         @change="handleGreetingImageUpload"
                       />
@@ -512,36 +579,74 @@ function resetChat() {
                   </div>
 
                   <div
-                    v-if="state.greeting_image"
-                    class="mt-3"
+                    v-if="greetingAttachments.length > 0"
+                    class="mt-3 flex flex-wrap gap-3"
                   >
-                    <div class="relative group/image inline-block">
-                      <img
-                        :src="state.greeting_image"
-                        class="max-w-[200px] max-h-[150px] rounded-lg object-cover border border-slate-200 dark:border-slate-700"
-                      />
+                    <div
+                      v-for="(attachment, index) in greetingAttachments"
+                      :key="index"
+                      class="flex flex-col items-center gap-1"
+                    >
+                      <div class="relative">
+                        <img
+                          :src="attachment.thumb"
+                          class="w-[72px] h-[72px] rounded-lg object-cover border border-slate-200 dark:border-slate-700 cursor-pointer hover:opacity-80 transition-opacity"
+                          @click="openImagePreview(attachment.thumb)"
+                        />
+                        <div
+                          v-if="attachment.uploading"
+                          class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-lg"
+                        >
+                          <span class="spinner" />
+                        </div>
+                      </div>
                       <button
                         type="button"
-                        class="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full bg-black/60 text-white opacity-0 group-hover/image:opacity-100 transition-opacity duration-150 hover:bg-black/80"
-                        @click="removeGreetingImage"
+                        class="text-xs text-slate-400 hover:text-red-500 transition-colors"
+                        title="Hapus gambar"
+                        @click="removeGreetingImage(index)"
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          class="w-3.5 h-3.5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          stroke-width="2"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
+                        Hapus
                       </button>
                     </div>
                   </div>
+
+                  <!-- Image Lightbox -->
+                  <Teleport to="body">
+                    <div
+                      v-if="previewImageSrc"
+                      class="fixed inset-0 z-[9999] flex items-center justify-center"
+                      style="background: rgba(0, 0, 0, 0.5)"
+                      @click.self="closeImagePreview"
+                    >
+                      <div class="flex flex-col items-end gap-3">
+                        <button
+                          type="button"
+                          class="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+                          @click="closeImagePreview"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="w-6 h-6"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
+                        <img
+                          :src="previewImageSrc"
+                          class="max-w-[90vw] max-h-[85vh] object-contain rounded-lg shadow-2xl"
+                        />
+                      </div>
+                    </div>
+                  </Teleport>
                 </div>
               </div>
             </div>

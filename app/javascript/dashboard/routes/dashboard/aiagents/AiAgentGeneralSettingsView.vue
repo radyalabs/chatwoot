@@ -110,13 +110,13 @@ function handleGreetingImageUpload(event) {
   files.forEach(file => {
     if (!file.type.startsWith('image/')) {
       useAlert(
-        `${file.name}: Hanya file gambar yang diperbolehkan`,
+        `${file.name}: ${t('AGENT_MGMT.FORM_CREATE.IMAGE_ONLY_ALLOWED')}`,
         'alert-danger'
       );
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      useAlert(`${file.name}: Ukuran file maksimal 5MB`, 'alert-danger');
+      useAlert(`${file.name}: ${t('AGENT_MGMT.FORM_CREATE.IMAGE_SIZE_LIMIT')}`, 'alert-danger');
       return;
     }
     onGreetingFileUpload({ file, size: file.size, type: file.type });
@@ -505,7 +505,9 @@ function resetChat() {
 
             <div>
               <div class="mb-4">
-                <label class="block font-medium mb-2">Aktifkan Pesan Sambutan</label>
+                <label class="block font-medium mb-2">{{
+                  t('AGENT_MGMT.FORM_CREATE.ENABLE_GREETING')
+                }}</label>
                 <label class="inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
@@ -517,20 +519,18 @@ function resetChat() {
                     class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"
                   ></div>
                   <span class="ml-3 text-sm text-slate-700 dark:text-slate-300">
-                    {{ state.greeting_enabled ? 'Aktif' : 'Tidak Aktif' }}
+                    {{ state.greeting_enabled ? t('AGENT_MGMT.FORM_CREATE.GREETING_ACTIVE') : t('AGENT_MGMT.FORM_CREATE.GREETING_INACTIVE') }}
                   </span>
                 </label>
                 <p class="text-xs text-gray-500 mt-1">
-                  Saat diaktifkan, Bot AI akan menggunakan kondisi berikut
-                  sebagai panduan untuk menghasilkan pesan sambutan yang dinamis
-                  saat pelanggan pertama kali memulai percakapan
+                  {{ t('AGENT_MGMT.FORM_CREATE.GREETING_INSTRUCTION') }}
                 </p>
               </div>
 
               <div v-if="state.greeting_enabled" class="space-y-4">
                 <div>
                   <label for="greeting_message" class="block font-medium mb-2">
-                    Kondisi Pesan Sambutan
+                    {{ t('AGENT_MGMT.FORM_CREATE.GREETING_CONDITION') }}
                   </label>
                   <div class="relative">
                     <TextArea
@@ -539,7 +539,7 @@ function resetChat() {
                       :disabled="isDebugMode || loadingSave"
                       custom-text-area-wrapper-class=""
                       custom-text-area-class="!outline-none"
-                      placeholder="Tuliskan kondisi atau instruksi untuk pesan sambutan. Contoh: Sambut pelanggan dengan ramah, tawarkan promo terbaru, dan tanyakan kebutuhan mereka."
+                      :placeholder="t('AGENT_MGMT.FORM_CREATE.GREETING_CONDITION_PLACEHOLDER')"
                       auto-height
                       min-height="80px"
                       max-height="300px"
@@ -555,7 +555,7 @@ function resetChat() {
                       />
                       <button
                         type="button"
-                        class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                        class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors border border-slate-300 dark:border-slate-600 rounded-md px-3 py-1.5"
                         :disabled="isDebugMode || loadingSave"
                         @click="greetingImageInput?.click()"
                       >
@@ -573,7 +573,7 @@ function resetChat() {
                             d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
                           />
                         </svg>
-                        Lampirkan Gambar
+                        {{ t('AGENT_MGMT.FORM_CREATE.ATTACH_IMAGE') }}
                       </button>
                     </div>
                   </div>
@@ -585,28 +585,31 @@ function resetChat() {
                     <div
                       v-for="(attachment, index) in greetingAttachments"
                       :key="index"
-                      class="flex flex-col items-center gap-1"
+                      class="relative group/image w-[72px] h-[72px]"
                     >
-                      <div class="relative">
-                        <img
-                          :src="attachment.thumb"
-                          class="w-[72px] h-[72px] rounded-lg object-cover border border-slate-200 dark:border-slate-700 cursor-pointer hover:opacity-80 transition-opacity"
-                          @click="openImagePreview(attachment.thumb)"
-                        />
+                      <img
+                        :src="attachment.thumb"
+                        class="object-cover w-[72px] h-[72px] rounded-lg cursor-pointer"
+                        :class="{ 'opacity-50': attachment.uploading }"
+                        @click="openImagePreview(attachment.thumb)"
+                      />
+                      <div
+                        v-if="attachment.uploading"
+                        class="absolute inset-0 flex items-center justify-center"
+                      >
                         <div
-                          v-if="attachment.uploading"
-                          class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-lg"
-                        >
-                          <span class="spinner" />
-                        </div>
+                          class="w-6 h-6 border-2 border-woot-500 border-t-transparent rounded-full animate-spin"
+                        />
                       </div>
                       <button
+                        v-else
                         type="button"
-                        class="text-xs text-slate-400 hover:text-red-500 transition-colors"
-                        title="Hapus gambar"
-                        @click="removeGreetingImage(index)"
+                        :disabled="loadingSave"
+                        :title="t('AGENT_MGMT.FORM_CREATE.DELETE_IMAGE')"
+                        class="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors shadow-sm"
+                        @click.stop="removeGreetingImage(index)"
                       >
-                        Hapus
+                        <span class="text-xs font-bold leading-none">&times;</span>
                       </button>
                     </div>
                   </div>

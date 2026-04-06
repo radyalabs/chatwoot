@@ -35,6 +35,10 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
   end
 
   def send_messages
+    # Cache before API call to avoid race condition — new messages arriving
+    # during the request would change the count and skip greeting images
+    is_welcome = welcome_message?
+
     send_message = Captain::Llm::AssistantChatService.new(
       @message,
       @context.conversation,
@@ -57,7 +61,7 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
       }
     )
 
-    send_greeting_images if welcome_message?
+    send_greeting_images if is_welcome
   end
 
   def welcome_message?

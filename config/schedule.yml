@@ -59,10 +59,17 @@ notify_upcoming_expiry_user:
   class: 'NotifyUpcomingExpiryUser'
   queue: scheduled_jobs
 
+
 # executed every 5 minutes to send reminders
 send_reminders_job:
   cron: '*/5 * * * *'
   class: 'SendRemindersJob'
+  queue: scheduled_jobs
+
+# executed every hour to send scheduled reminders
+send_scheduled_reminders_job:
+  cron: '0 * * * *'
+  class: 'SendScheduledRemindersJob'
   queue: scheduled_jobs
 
 process_idle_conversations_job:

@@ -1,4 +1,6 @@
 class Webhooks::GowaEventJob < ApplicationJob
+  include WebhookExpiryHandler
+
   queue_as :default
 
   ALLOWED_EVENTS = %w[
@@ -8,7 +10,7 @@ class Webhooks::GowaEventJob < ApplicationJob
 
   def perform(params)
     event = params['event']
-    return if allowed_events(params).present?
+    return unless ALLOWED_EVENTS.include?(event)
     return if should_skip_processing?(params)
 
     channel = find_channel_by_phone_number(params)
@@ -18,9 +20,14 @@ class Webhooks::GowaEventJob < ApplicationJob
     case event
     when 'message'
       WhatsappUnofficial::IncomingMessageService.new(inbox: channel.inbox, params: params).perform
+      send_expired_auto_reply(channel, params) unless account_subscription_active?(channel)
     when 'message.edited'
       # WhatsappUnofficial::UpdateMessageService.new(inbox: channel.inbox, params: data).perform
     end
+  rescue StandardError => e
+    Rails.logger.error("[GowaEventJob] Unhandled error processing event: #{e.class} - #{e.message}")
+    Rails.logger.error(e.backtrace&.first(5)&.join("\n"))
+    raise
   end
 
   private
@@ -32,19 +39,15 @@ class Webhooks::GowaEventJob < ApplicationJob
 
   def should_skip_processing?(params)
     payload = params['payload'] || {}
-    return if payload.empty?
-    return if payload['from'] == params['device_id']
-    return if group_chat?(payload)
+    return true if payload.empty?
+    return true if payload['from'] == params['device_id']
+    return true if group_chat?(payload)
 
     false
   end
 
   def group_chat?(payload)
     payload['chat_id'].to_s.end_with?('@g.us')
-  end
-
-  def allowed_events(params)
-    ALLOWED_EVENTS.select { |event| params.key?(event) }
   end
 
   def channel_available?(channel)

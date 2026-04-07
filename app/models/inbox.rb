@@ -74,6 +74,7 @@ class Inbox < ApplicationRecord
 
   has_one :ai_agent, through: :agent_bot_inbox
 
+  has_many :scheduled_reminders, dependent: :destroy_async
   has_many :reminders, dependent: :delete_all
   has_many :agent_notification_settings, dependent: :delete_all
   has_many :webhooks, dependent: :destroy_async

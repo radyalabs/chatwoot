@@ -55,6 +55,7 @@ import billing from './modules/billing';
 import quickReplies from './modules/quickReplies';
 import shippingStores from './modules/shippingStores';
 import agentNotificationSettings from './modules/agentNotificationSettings';
+import scheduledReminders from './modules/scheduledReminders';
 const plugins = [];
 
 export default createStore({
@@ -114,6 +115,7 @@ export default createStore({
     quickReplies,
     shippingStores,
     agentNotificationSettings,
+    scheduledReminders,
   },
   plugins,
 });

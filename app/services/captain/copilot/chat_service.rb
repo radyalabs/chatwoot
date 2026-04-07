@@ -113,12 +113,20 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
     Rails.logger.error "[BOT] Failed to send greeting image #{index}: #{e.message}"
   end
 
+  MAX_GREETING_IMAGE_SIZE = 10.megabytes
+
   def attach_base64_image(message, data_url, attrs, index)
     matches = data_url.match(%r{\Adata:(image/\w+);base64,(.+)\z}m)
     return unless matches
 
     content_type = matches[1]
     decoded = Base64.decode64(matches[2])
+
+    if decoded.bytesize > MAX_GREETING_IMAGE_SIZE
+      Rails.logger.warn "[BOT] Greeting image #{index} exceeds size limit (#{decoded.bytesize} bytes), skipping"
+      return
+    end
+
     ext = { 'image/png' => '.png', 'image/gif' => '.gif', 'image/webp' => '.webp' }.fetch(content_type, '.jpg')
     filename = "greeting_#{attrs[:conversation_id]}_#{index}_#{Time.current.to_i}#{ext}"
 
@@ -131,6 +139,12 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
 
   def attach_signed_id_image(message, signed_id)
     blob = ActiveStorage::Blob.find_signed!(signed_id)
+
+    if blob.byte_size > MAX_GREETING_IMAGE_SIZE
+      Rails.logger.warn "[BOT] Greeting blob #{blob.filename} exceeds size limit (#{blob.byte_size} bytes), skipping"
+      return
+    end
+
     message.attachments.build(
       account_id: message.account_id,
       file_type: 'image',

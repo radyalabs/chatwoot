@@ -71,8 +71,14 @@ class WhatsappUnofficial::IncomingMessageService
         content_type: processed_file[:content_type]
       }
     )
+  rescue StandardError => e
+    Rails.logger.error "attach_files failed: #{e.message}"
   ensure
-    attachment_file&.close
+    begin
+      attachment_file&.close
+    rescue StandardError
+      nil
+    end
     attachment_file&.unlink if attachment_file.respond_to?(:unlink)
   end
 
@@ -116,8 +122,11 @@ class WhatsappUnofficial::IncomingMessageService
                 .saver(quality: 85)
                 .call
 
+    io = File.open(processed.path, 'rb')
+    io.rewind
+
     {
-      io: File.open(processed.path),
+      io: io,
       filename: attachment_file.original_filename,
       content_type: attachment_file.content_type
     }
@@ -127,6 +136,7 @@ class WhatsappUnofficial::IncomingMessageService
   end
 
   def default_file_attributes(attachment_file)
+    attachment_file.rewind
     {
       io: attachment_file,
       filename: attachment_file.original_filename,

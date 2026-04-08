@@ -103,7 +103,7 @@ const { onFileUpload } = useFileUpload({
         uploading,
         tempId,
       };
-      emit('attachFile', [...props.attachedFiles, newFile]);
+      emit('attachFile', newFile);
     };
   },
   updateAttachment: (tempId, blob) => {

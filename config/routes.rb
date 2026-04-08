@@ -487,6 +487,7 @@ Rails.application.routes.draw do
             end
 
             resources :agent_notification_settings, only: %i[index create update destroy]
+            resources :scheduled_reminders, only: %i[index create update destroy]
 
             # Sheet numbering configs routes
             resources :sheet_numbering_configs, only: [] do
@@ -558,6 +559,14 @@ Rails.application.routes.draw do
           collection do
             put :upsert
             delete :delete
+          end
+        end
+
+        resources :scheduled_reminders, only: [:create] do
+          collection do
+            get :index_by_receiver
+            put :update_by_key
+            delete :destroy_by_key
           end
         end
 

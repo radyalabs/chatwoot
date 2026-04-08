@@ -65,6 +65,12 @@ send_reminders_job:
   class: 'SendRemindersJob'
   queue: scheduled_jobs
 
+# executed every hour to send scheduled reminders
+send_scheduled_reminders_job:
+  cron: '0 * * * *'
+  class: 'SendScheduledRemindersJob'
+  queue: scheduled_jobs
+
 process_idle_conversations_job:
   cron: '*/5 * * * *'
   class: 'NotifyIdleConversationJob'

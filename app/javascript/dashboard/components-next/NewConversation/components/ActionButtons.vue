@@ -103,7 +103,7 @@ const { onFileUpload } = useFileUpload({
         uploading,
         tempId,
       };
-      emit('attachFile', [...props.attachedFiles, newFile]);
+      emit('attachFile', newFile);
     };
   },
   updateAttachment: (tempId, blob) => {
@@ -177,7 +177,7 @@ useKeyboardEvents(keyboardEvents);
         />
       </div>
       <FileUpload
-        v-if="hasSelectedInbox && !isWhatsappInbox && !hasNoInbox"
+        v-if="!isWhatsappInbox && !hasNoInbox"
         ref="uploadAttachment"
         input-id="composeNewConversationAttachment"
         :size="4096 * 4096"

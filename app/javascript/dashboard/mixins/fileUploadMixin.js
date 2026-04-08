@@ -15,7 +15,7 @@ export default {
   },
   methods: {
     onFileUpload(file) {
-      if (this.globalConfig.directUploadsEnabled) {
+      if (this.globalConfig.directUploadsEnabled && this.currentChat?.id) {
         this.onDirectFileUpload(file);
       } else {
         this.onIndirectFileUpload(file);

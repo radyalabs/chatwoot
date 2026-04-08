@@ -50,30 +50,21 @@ class WhatsappUnofficial::IncomingMessageService
     attach_location
   end
 
-  def attach_files # rubocop:disable Metrics/MethodLength
-    return unless file
+  def attach_files
+    return if file[:media_path].blank?
 
-    file_download_path = file[:media_path]
-    if file_download_path.blank?
-      Rails.logger.info "WhatsApp Go file download path is blank for inbox_id: #{inbox.id}"
-      return
-    end
-
-    attachment_file = download_file(file_download_path)
-    processed_file = process_file(attachment_file)
+    attachment_file = download_attachment_file
+    return if attachment_file.blank?
 
     @message.attachments.new(
       account_id: @message.account_id,
       file_type: file_content_type,
       file: {
-        io: processed_file[:io],
-        filename: processed_file[:filename],
-        content_type: processed_file[:content_type]
+        io: attachment_file,
+        filename: attachment_file.original_filename,
+        content_type: attachment_file.content_type
       }
     )
-  ensure
-    attachment_file&.close
-    attachment_file&.unlink if attachment_file.respond_to?(:unlink)
   end
 
   def attach_location
@@ -116,8 +107,11 @@ class WhatsappUnofficial::IncomingMessageService
                 .saver(quality: 85)
                 .call
 
+    io = File.open(processed.path, 'rb')
+    io.rewind
+
     {
-      io: File.open(processed.path),
+      io: io,
       filename: attachment_file.original_filename,
       content_type: attachment_file.content_type
     }
@@ -127,6 +121,7 @@ class WhatsappUnofficial::IncomingMessageService
   end
 
   def default_file_attributes(attachment_file)
+    attachment_file.rewind
     {
       io: attachment_file,
       filename: attachment_file.original_filename,
@@ -138,7 +133,9 @@ class WhatsappUnofficial::IncomingMessageService
     content_type&.start_with?('image/') && content_type&.exclude?('svg')
   end
 
-  def download_file(file_path)
-    Down.download("#{ENV.fetch('GOWA_API_URL', 'https://gowa.jangkau.ai/')}/#{file_path}")
+  def download_attachment_file
+    return if file[:media_path].blank?
+
+    Down.download("#{ENV.fetch('GOWA_API_URL', 'https://gowa.jangkau.ai/')}/#{file[:media_path]}")
   end
 end

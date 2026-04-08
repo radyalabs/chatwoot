@@ -110,7 +110,7 @@ export const prepareAttachmentPayload = (
   attachedFiles.forEach(attachment => {
     if (directUploadsEnabled && attachment.blobSignedId) {
       files.push(attachment.blobSignedId);
-    } else {
+    } else if (attachment.resource?.file) {
       files.push(attachment.resource.file);
     }
   });

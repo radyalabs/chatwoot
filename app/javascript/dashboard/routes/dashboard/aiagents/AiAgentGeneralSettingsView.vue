@@ -19,7 +19,12 @@ import captainTranslator from '../../../api/captainTranslator';
 import MarkdownIt from 'markdown-it';
 import { useRoute } from 'vue-router';
 
-const md = new MarkdownIt();
+const md = new MarkdownIt({ linkify: true });
+md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
+  tokens[idx].attrSet('target', '_blank');
+  tokens[idx].attrSet('rel', 'noopener noreferrer');
+  return self.renderToken(tokens, idx, options);
+};
 const route = useRoute();
 
 const props = defineProps({
@@ -593,11 +598,7 @@ function resetChat() {
               </template>
               <div
                 v-if="message.content"
-                v-dompurify-html="
-                  message.role === 'user'
-                    ? message.content.replace(/\n/g, '<br>')
-                    : renderMarkdown(message.content)
-                "
+                v-dompurify-html="renderMarkdown(message.content)"
                 class="chat-message-content"
               />
             </div>

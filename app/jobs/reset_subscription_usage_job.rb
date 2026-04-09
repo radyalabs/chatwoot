@@ -13,7 +13,9 @@ class ResetSubscriptionUsageJob < ApplicationJob
       usage.update(
         mau_count: 0,
         ai_responses_count: 0,
-        last_reset_at: Time.current,
+        last_notify_mau_threshold: 0,
+        last_notify_ai_response_threshold: 0,
+        last_reset_at: Time.current
       )
 
       Rails.logger.info("[ResetSubscriptionUsageJob] Reset usage for Subscription ID: #{subscription.id}")

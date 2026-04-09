@@ -248,9 +248,9 @@ export default {
     },
     setAttachmentPayload(payload) {
       this.attachedFiles.forEach(attachment => {
-        if (this.globalConfig.directUploadsEnabled) {
+        if (this.globalConfig.directUploadsEnabled && attachment.blobSignedId) {
           payload.files.push(attachment.blobSignedId);
-        } else {
+        } else if (attachment.resource?.file) {
           payload.files.push(attachment.resource.file);
         }
       });

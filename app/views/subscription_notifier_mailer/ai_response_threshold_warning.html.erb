@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <title>Perpanjang Paket - Jangkau.ai</title>
+  <title>Peringatan Kuota AI Response - Jangkau.ai</title>
 </head>
 <body style="background-color:#f8f9fa; padding:2rem 0; font-family: Arial, sans-serif; margin:0;">
   <div style="max-width:700px; margin:auto; background:#fff; padding:2rem; border:1px solid #dee2e6; border-radius:4px; box-shadow:0 2px 6px rgba(0,0,0,0.05);">
@@ -11,7 +11,7 @@
     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem;">
       <img src="<%= "#{ENV['FRONTEND_URL']}/assets/images/logo-primary-color.png" %>" alt="Logo Jangkau.ai" style="height:40px;" />
       <div style="text-align:right; width: 100%;">
-        <p style="margin:0;"><%= @payment_date %></p>
+        <p style="margin:0;"><%= Time.now.utc.strftime('%d %b %Y') %></p>
       </div>
     </div>
 
@@ -20,13 +20,26 @@
     <!-- Body -->
     <div style="margin-bottom:1.5rem;">
       <p>Halo <strong><%= @customer_name %></strong>,</p>
-      <p>Kami ingin mengingatkan bahwa paket <%= @nama_paket %> Anda di Jangkau.ai akan berakhir pada <%= @tanggal_expired_paket %>, atau dalam 7 hari lagi.</p>
-      <p>Agar chatbot dan fitur Jangkau lainnya tetap aktif melayani pelanggan Anda, yuk perpanjang sebelum masa aktifnya habis.</p>
-      <p>Klik tombol di bawah untuk memperpanjang layanan 👇</p>
+
+      <% if @threshold_percentage >= 100 %>
+        <p>Kuota <strong>Jawaban AI</strong> pada paket <strong><%= @plan_name %></strong> Anda di Jangkau.ai sudah <strong>habis</strong>.</p>
+        <p>Penggunaan saat ini: <strong><%= @ai_count %> / <%= @ai_limit %></strong></p>
+        <p>Chatbot AI Anda tidak dapat merespons hingga kuota ditambah atau direset. Segera upgrade atau beli tambahan kuota agar layanan AI tetap berjalan.</p>
+      <% elsif @threshold_percentage >= 90 %>
+        <p>Penggunaan <strong>Jawaban AI</strong> pada paket <strong><%= @plan_name %></strong> Anda di Jangkau.ai sudah mencapai <strong><%= @threshold_percentage %>%</strong>.</p>
+        <p>Penggunaan saat ini: <strong><%= @ai_count %> / <%= @ai_limit %></strong></p>
+        <p>Kuota AI Anda hampir habis. Segera upgrade paket atau beli tambahan kuota untuk menghindari gangguan layanan AI.</p>
+      <% else %>
+        <p>Penggunaan <strong>Jawaban AI</strong> pada paket <strong><%= @plan_name %></strong> Anda di Jangkau.ai sudah mencapai <strong><%= @threshold_percentage %>%</strong>.</p>
+        <p>Penggunaan saat ini: <strong><%= @ai_count %> / <%= @ai_limit %></strong></p>
+        <p>Pertimbangkan untuk upgrade paket atau membeli tambahan kuota agar layanan AI chatbot Anda tetap berjalan lancar.</p>
+      <% end %>
+
+      <p>Klik tombol di bawah untuk mengelola langganan Anda:</p>
       <a href="<%= "#{ENV['FRONTEND_URL']}/app/accounts/#{@account_id}/settings/billing" %>" style="text-decoration: none;">
-          <div style="background-color:#198754; color:#fff; text-align:center; padding:0.75rem; border-radius:4px;">
-            Perpanjang Layanan
-          </div>
+        <div style="background-color:#198754; color:#fff; text-align:center; padding:0.75rem; border-radius:4px;">
+          Kelola Langganan
+        </div>
       </a>
     </div>
 
@@ -50,7 +63,7 @@
         <a href="#" style="margin:0 0.5rem;"><img src="https://img.icons8.com/ios-filled/30/4caf50/twitter.png" alt="Twitter" /></a>
         <a href="#" style="margin:0 0.5rem;"><img src="https://img.icons8.com/ios-filled/30/4caf50/youtube-play.png" alt="YouTube" /></a>
         <a href="#" style="margin:0 0.5rem;"><img src="https://img.icons8.com/ios-filled/30/4caf50/internet.png" alt="Website" /></a>
-        <p style="margin-top:1rem; font-size:0.9rem; color:#6c757d;">© 2026 PT. Radya Anugerah Digital. All Rights Reserved</p>
+        <p style="margin-top:1rem; font-size:0.9rem; color:#6c757d;">&copy; 2026 PT. Radya Anugerah Digital. All Rights Reserved</p>
       </div>
     </div>
 

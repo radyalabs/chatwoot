@@ -57,6 +57,7 @@ const loadingChat = ref(false);
 const chatContainer = ref(null);
 const pendingAttachments = ref([]);
 const fileInput = ref(null);
+const failedImages = ref(new Set());
 
 const state = reactive({
   name: '',
@@ -254,6 +255,10 @@ function toDirectImageUrl(url) {
   } catch {
     return url;
   }
+}
+
+function onImageError(url) {
+  failedImages.value = new Set([...failedImages.value, url]);
 }
 
 function onFileSelected(event) {
@@ -581,12 +586,24 @@ function resetChat() {
                   : 'bg-slate-50 dark:bg-slate-800 text-[#000000] dark:text-white',
               ]"
             >
+              <template v-if="message.imageUrl">
               <img
-                v-if="message.imageUrl"
+                  v-if="!failedImages.has(message.imageUrl)"
                 :src="message.imageUrl"
                 :alt="message.content || 'attachment'"
                 class="max-w-full rounded-lg my-2"
-              />
+                  @error="onImageError(message.imageUrl)"
+                />
+                <a
+                  v-else
+                  :href="message.imageUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-blue-500 underline break-all"
+                >
+                  {{ message.imageUrl }}
+                </a>
+              </template>
               <template v-if="message.attachments?.length">
                 <img
                   v-for="(att, ai) in message.attachments"

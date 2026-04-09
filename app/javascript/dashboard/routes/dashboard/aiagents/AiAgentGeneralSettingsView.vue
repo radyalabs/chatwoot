@@ -50,6 +50,8 @@ const messages = ref([]);
 const sessionId = ref(crypto.randomUUID());
 const loadingChat = ref(false);
 const chatContainer = ref(null);
+const pendingAttachments = ref([]);
+const fileInput = ref(null);
 
 const state = reactive({
   name: '',
@@ -231,30 +233,103 @@ function renderMarkdown(text) {
   return md.render(text);
 }
 
-async function chat() {
-  if (loadingChat.value || !chatInput.value.trim()) return;
+function toDirectImageUrl(url) {
+  if (!url) return url;
+  try {
+    const parsed = new URL(url);
+    if (
+      parsed.hostname === 'drive.google.com' &&
+      parsed.pathname === '/uc' &&
+      parsed.searchParams.get('id')
+    ) {
+      const fileId = parsed.searchParams.get('id');
+      return `https://lh3.googleusercontent.com/d/${encodeURIComponent(fileId)}=s1000`;
+    }
+    return url;
+  } catch {
+    return url;
+  }
+}
 
+function onFileSelected(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    pendingAttachments.value.push({
+      file,
+      preview: e.target.result,
+      name: file.name,
+    });
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+function removeAttachment(index) {
+  pendingAttachments.value.splice(index, 1);
+}
+
+async function chat() {
   const question = chatInput.value.trim();
+  const attachments = [...pendingAttachments.value];
+  if (loadingChat.value || (!question && !attachments.length)) return;
+
   messages.value.push({
     role: 'user',
     content: question,
+    attachments: attachments.map(a => ({
+      data_url: a.preview,
+      filename: a.name,
+      file_type: a.file.type,
+    })),
   });
   chatInput.value = '';
+  pendingAttachments.value = [];
   scrollToBottom();
 
   try {
     loadingChat.value = true;
-    const res = await aiAgents.chat(props.data.id, {
-      question,
-      session_id: sessionId.value,
+
+    const formData = new FormData();
+    formData.append('question', question);
+    formData.append('session_id', sessionId.value);
+    attachments.forEach(att => {
+      formData.append('attachments[]', att.file);
     });
+
+    const res = await aiAgents.chat(props.data.id, formData);
+
+    // Message 2-N: One message per attachment (title + image)
+    const resAttachments = res.data.attachments || [];
+
+    // Strip image markdown from main text since attachments render separately
+    let responseText = res.data.response;
+    if (resAttachments.length > 0) {
+      responseText = responseText
+        .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+    }
 
     messages.value.push({
       role: 'assistant',
-      content: res.data.response,
+      content: responseText,
+    });
+    resAttachments.forEach(att => {
+      messages.value.push({
+        role: 'assistant',
+        content: att.title || '',
+        imageUrl: toDirectImageUrl(att.url) || att.data_url || null,
+      });
     });
     scrollToBottom();
   } catch (error) {
+    console.error('Chat error:', error);
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data);
+    }
     messages.value.push({
       role: 'assistant',
       content: 'Maaf, terjadi kesalahan saat memproses pertanyaan Anda.',
@@ -262,6 +337,13 @@ async function chat() {
     scrollToBottom();
   } finally {
     loadingChat.value = false;
+  }
+}
+
+function handleChatKeydown(event) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    chat();
   }
 }
 
@@ -440,7 +522,7 @@ function resetChat() {
       </div>
     </form>
     <!-- Chat Preview Section -->
-    <div class="h-[600px] w-full lg:h-[500px] lg:w-[350px]">
+    <div class="h-[800px] w-full lg:h-[650px] lg:w-[350px]">
       <div
         class="w-full rounded-xl dark:bg-black-900/80 shadow-lg dark:shadow-slate-700 overflow-hidden flex flex-col h-full"
       >
@@ -493,25 +575,98 @@ function resetChat() {
                   ? 'bg-green-600 text-white'
                   : 'bg-slate-50 dark:bg-slate-800 text-[#000000] dark:text-white',
               ]"
-              v-html="
-                message.role === 'user'
-                  ? message.content.replace(/\n/g, '<br>')
-                  : renderMarkdown(message.content)
-              "
-            ></div>
+            >
+              <img
+                v-if="message.imageUrl"
+                :src="message.imageUrl"
+                :alt="message.content || 'attachment'"
+                class="max-w-full rounded-lg my-2"
+              />
+              <template v-if="message.attachments?.length">
+                <img
+                  v-for="(att, ai) in message.attachments"
+                  :key="ai"
+                  :src="att.data_url"
+                  :alt="att.filename || 'attachment'"
+                  class="max-w-full rounded-lg my-2"
+                />
+              </template>
+              <div
+                v-if="message.content"
+                v-dompurify-html="
+                  message.role === 'user'
+                    ? message.content.replace(/\n/g, '<br>')
+                    : renderMarkdown(message.content)
+                "
+                class="chat-message-content"
+              />
+            </div>
+          </div>
+        </div>
+        <!-- Pending attachments preview -->
+        <div
+          v-if="pendingAttachments.length"
+          class="flex gap-2 px-4 pt-2 flex-wrap"
+        >
+          <div
+            v-for="(att, i) in pendingAttachments"
+            :key="i"
+            class="relative"
+          >
+            <img
+              :src="att.preview"
+              :alt="att.name"
+              class="w-16 h-16 object-cover rounded-lg border border-slate-200 dark:border-slate-600"
+            />
+            <button
+              type="button"
+              class="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center leading-none hover:bg-red-600"
+              @click="removeAttachment(i)"
+            >
+              &times;
+            </button>
           </div>
         </div>
         <form class="flex items-end p-4" @submit.prevent="chat">
-          <TextArea
-            v-model="chatInput"
-            class="w-full"
-            placeholder="Type your question"
-            auto-height
-            min-height="20px"
-            max-height="120px"
-            custom-text-area-class="resize-none"
-            :rows="1"
+          <input
+            ref="fileInput"
+            type="file"
+            accept="image/*"
+            class="hidden"
+            @change="onFileSelected"
           />
+          <button
+            type="button"
+            class="mr-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 self-end mb-1"
+            @click="fileInput.click()"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-5 h-5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13"
+              />
+            </svg>
+          </button>
+          <div class="flex-1" @keydown="handleChatKeydown">
+            <TextArea
+              v-model="chatInput"
+              class="w-full"
+              placeholder="Enter to send, Shift+Enter for new line"
+              auto-height
+              min-height="20px"
+              max-height="120px"
+              custom-text-area-class="resize-none"
+              :rows="1"
+            />
+          </div>
           <button
             class="ml-3 bg-green-600 text-white p-2 rounded-lg hover:bg-green-700 relative self-end mb-1"
             type="submit"
@@ -538,3 +693,33 @@ function resetChat() {
     <!-- Chat Preview Section -->
   </div>
 </template>
+
+<style scoped>
+.chat-message-content :deep(ul),
+.chat-message-content :deep(ol) {
+  padding-left: 1.5em;
+  margin: 0.25em 0;
+}
+
+.chat-message-content :deep(ul) {
+  list-style-type: disc;
+}
+
+.chat-message-content :deep(ol) {
+  list-style-type: decimal;
+}
+
+.chat-message-content :deep(li) {
+  margin-bottom: 0.25em;
+}
+
+.chat-message-content :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.chat-message-content :deep(img) {
+  max-width: 100%;
+  border-radius: 0.5rem;
+  margin: 0.5em 0;
+}
+</style>

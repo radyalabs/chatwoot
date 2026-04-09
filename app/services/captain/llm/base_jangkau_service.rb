@@ -4,11 +4,12 @@ class Captain::Llm::BaseJangkauService
   include HTTParty
   base_uri ENV.fetch('JANGKAU_AGENT_API_URL', 'https://agent.jangkau.ai/')
 
-  def initialize(account_id, ai_agent, conversation, message)
+  def initialize(account_id, ai_agent, conversation, message, preview_attachments: [])
     @conversation = conversation
     @account_id = account_id
     @ai_agent = ai_agent
     @message = message
+    @preview_attachments = preview_attachments
     @question, @additional_attributes = extract_message_data
   end
 
@@ -53,6 +54,8 @@ class Captain::Llm::BaseJangkauService
   end
 
   def formatted_attachments
+    return @preview_attachments if @preview_attachments.present?
+
     last_message_attachments.map do |att|
       {
         key: att.file.key,

@@ -587,11 +587,11 @@ function resetChat() {
               ]"
             >
               <template v-if="message.imageUrl">
-              <img
+                <img
                   v-if="!failedImages.has(message.imageUrl)"
-                :src="message.imageUrl"
-                :alt="message.content || 'attachment'"
-                class="max-w-full rounded-lg my-2"
+                  :src="message.imageUrl"
+                  :alt="message.content || 'attachment'"
+                  class="max-w-full rounded-lg my-2"
                   @error="onImageError(message.imageUrl)"
                 />
                 <a
@@ -739,5 +739,26 @@ function resetChat() {
   max-width: 100%;
   border-radius: 0.5rem;
   margin: 0.5em 0;
+}
+
+.chat-message-content {
+  overflow-wrap: break-word;
+}
+
+.chat-message-content :deep(a) {
+  word-break: break-all;
+}
+
+.chat-message-content :deep(a:hover) {
+  color: #3ecf8e; /* blue-700 */
+}
+
+.bg-green-600 .chat-message-content :deep(a) {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.bg-green-600 .chat-message-content :deep(a:hover) {
+  color: #c8f2de; /* green-200 */
 }
 </style>

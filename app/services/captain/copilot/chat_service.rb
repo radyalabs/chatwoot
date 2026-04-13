@@ -154,7 +154,8 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
       Captain::Copilot::AttachMessageImageJob.perform_later(
         attrs,
         attachment,
-        idx + 1
+        idx + 1,
+        content
       )
     end
   end

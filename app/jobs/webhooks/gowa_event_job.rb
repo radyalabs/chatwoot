@@ -1,6 +1,4 @@
 class Webhooks::GowaEventJob < ApplicationJob
-  include WebhookExpiryHandler
-
   queue_as :default
 
   ALLOWED_EVENTS = %w[
@@ -8,7 +6,7 @@ class Webhooks::GowaEventJob < ApplicationJob
     message.edited
   ].freeze
 
-  def perform(params)
+  def perform(params) # rubocop:disable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
     event = params['event']
     return unless ALLOWED_EVENTS.include?(event)
     return if should_skip_processing?(params)

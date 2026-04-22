@@ -19,7 +19,12 @@ import captainTranslator from '../../../api/captainTranslator';
 import MarkdownIt from 'markdown-it';
 import { useRoute } from 'vue-router';
 
-const md = new MarkdownIt();
+const md = new MarkdownIt({ linkify: true });
+md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
+  tokens[idx].attrSet('target', '_blank');
+  tokens[idx].attrSet('rel', 'noopener noreferrer');
+  return self.renderToken(tokens, idx, options);
+};
 const route = useRoute();
 
 const props = defineProps({
@@ -52,6 +57,7 @@ const loadingChat = ref(false);
 const chatContainer = ref(null);
 const pendingAttachments = ref([]);
 const fileInput = ref(null);
+const failedImages = ref(new Set());
 
 const state = reactive({
   name: '',
@@ -249,6 +255,10 @@ function toDirectImageUrl(url) {
   } catch {
     return url;
   }
+}
+
+function onImageError(url) {
+  failedImages.value = new Set([...failedImages.value, url]);
 }
 
 function onFileSelected(event) {
@@ -576,12 +586,24 @@ function resetChat() {
                   : 'bg-slate-50 dark:bg-slate-800 text-[#000000] dark:text-white',
               ]"
             >
-              <img
-                v-if="message.imageUrl"
-                :src="message.imageUrl"
-                :alt="message.content || 'attachment'"
-                class="max-w-full rounded-lg my-2"
-              />
+              <template v-if="message.imageUrl">
+                <img
+                  v-if="!failedImages.has(message.imageUrl)"
+                  :src="message.imageUrl"
+                  :alt="message.content || 'attachment'"
+                  class="max-w-full rounded-lg my-2"
+                  @error="onImageError(message.imageUrl)"
+                />
+                <a
+                  v-else
+                  :href="message.imageUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-blue-500 underline break-all"
+                >
+                  {{ message.imageUrl }}
+                </a>
+              </template>
               <template v-if="message.attachments?.length">
                 <img
                   v-for="(att, ai) in message.attachments"
@@ -593,11 +615,7 @@ function resetChat() {
               </template>
               <div
                 v-if="message.content"
-                v-dompurify-html="
-                  message.role === 'user'
-                    ? message.content.replace(/\n/g, '<br>')
-                    : renderMarkdown(message.content)
-                "
+                v-dompurify-html="renderMarkdown(message.content)"
                 class="chat-message-content"
               />
             </div>
@@ -721,5 +739,26 @@ function resetChat() {
   max-width: 100%;
   border-radius: 0.5rem;
   margin: 0.5em 0;
+}
+
+.chat-message-content {
+  overflow-wrap: break-word;
+}
+
+.chat-message-content :deep(a) {
+  word-break: break-all;
+}
+
+.chat-message-content :deep(a:hover) {
+  color: #3ecf8e; /* blue-700 */
+}
+
+.bg-green-600 .chat-message-content :deep(a) {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.bg-green-600 .chat-message-content :deep(a:hover) {
+  color: #c8f2de; /* green-200 */
 }
 </style>

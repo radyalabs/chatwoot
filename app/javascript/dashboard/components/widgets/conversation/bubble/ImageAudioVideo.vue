@@ -60,7 +60,11 @@ export default {
       return attachments;
     },
     dataUrl() {
-      return this.attachment.data_url;
+      const url = this.attachment.data_url;
+      if (url && url.includes('0.0.0.0')) {
+        return url.replace('0.0.0.0', window.location.hostname);
+      }
+      return url;
     },
     imageWidth() {
       return this.attachment.width ? `${this.attachment.width}px` : 'auto';

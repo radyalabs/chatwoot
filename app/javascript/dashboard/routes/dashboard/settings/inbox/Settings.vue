@@ -11,7 +11,6 @@ import MicrosoftReauthorize from './channels/microsoft/Reauthorize.vue';
 import GoogleReauthorize from './channels/google/Reauthorize.vue';
 import PreChatFormSettings from './PreChatForm/Settings.vue';
 import WeeklyAvailability from './components/WeeklyAvailability.vue';
-import GreetingsEditor from 'shared/components/GreetingsEditor.vue';
 import CollaboratorsPage from './settingsPage/CollaboratorsPage.vue';
 import WidgetBuilder from './WidgetBuilder.vue';
 import BotConfiguration from './components/BotConfiguration.vue';
@@ -24,7 +23,6 @@ export default {
     BotConfiguration,
     CollaboratorsPage,
     FacebookReauthorize,
-    GreetingsEditor,
     PreChatFormSettings,
     SettingIntroBanner,
     SettingsSection,
@@ -43,8 +41,6 @@ export default {
     return {
       avatarFile: null,
       avatarUrl: '',
-      greetingEnabled: true,
-      greetingMessage: '',
       emailCollectEnabled: false,
       csatSurveyEnabled: false,
       senderNameType: 'friendly',
@@ -190,7 +186,9 @@ export default {
       if (
         this.isATwilioChannel ||
         this.isATwitterInbox ||
-        this.isAFacebookInbox
+        this.isAFacebookInbox ||
+        this.isAWhatsAppChannel ||
+        this.isAWhatsAppUnofficialChannel
       )
         return true;
       return false;
@@ -253,8 +251,6 @@ export default {
         this.avatarUrl = this.inbox.avatar_url;
         this.selectedInboxName = this.inbox.name;
         this.webhookUrl = this.inbox.webhook_url;
-        this.greetingEnabled = this.inbox.greeting_enabled || false;
-        this.greetingMessage = this.inbox.greeting_message || '';
         this.emailCollectEnabled = this.inbox.enable_email_collect;
         this.csatSurveyEnabled = this.inbox.csat_survey_enabled;
         this.senderNameType = this.inbox.sender_name_type;
@@ -281,8 +277,6 @@ export default {
           enable_email_collect: this.emailCollectEnabled,
           csat_survey_enabled: this.csatSurveyEnabled,
           allow_messages_after_resolved: this.allowMessagesAfterResolved,
-          greeting_enabled: this.greetingEnabled,
-          greeting_message: this.greetingMessage || '',
           portal_id: this.selectedPortalSlug
             ? this.portals.find(
                 portal => portal.slug === this.selectedPortalSlug
@@ -488,50 +482,6 @@ export default {
           <input v-model="whatsAppAPIProviderName" type="text" disabled />
         </label>
 
-        <!-- <label class="w-3/4 pb-4">
-          {{
-            $t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_GREETING_TOGGLE.LABEL')
-          }}
-          <select v-model="greetingEnabled">
-            <option :value="true">
-              {{
-                $t(
-                  'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_GREETING_TOGGLE.ENABLED'
-                )
-              }}
-            </option>
-            <option :value="false">
-              {{
-                $t(
-                  'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_GREETING_TOGGLE.DISABLED'
-                )
-              }}
-            </option>
-          </select>
-          <p class="pb-1 text-sm not-italic text-slate-600 dark:text-slate-400">
-            {{
-              $t(
-                'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_GREETING_TOGGLE.HELP_TEXT'
-              )
-            }}
-          </p>
-        </label>
-        <div v-if="greetingEnabled" class="pb-4">
-          <GreetingsEditor
-            v-model="greetingMessage"
-            :label="
-              $t(
-                'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_GREETING_MESSAGE.LABEL'
-              )
-            "
-            :placeholder="
-              $t(
-                'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_GREETING_MESSAGE.PLACEHOLDER'
-              )
-            "
-            :richtext="!textAreaChannels"
-          />
-        </div>
         <label v-if="isAWebWidgetInbox" class="w-3/4 pb-4">
           {{ $t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.REPLY_TIME.TITLE') }}
           <select v-model="replyTime">

@@ -140,6 +140,7 @@ Rails.application.routes.draw do
             resource :contact_merge, only: [:create]
           end
           resource :bulk_actions, only: [:create]
+          resource :direct_uploads, only: [:create]
           resources :ai_agents, only: [:index, :create, :show, :update, :destroy] do
             collection do
               get :ai_agent_templates

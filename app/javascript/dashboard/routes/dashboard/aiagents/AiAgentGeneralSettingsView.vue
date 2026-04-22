@@ -4,15 +4,15 @@ import {
   nextTick,
   reactive,
   ref,
-  useTemplateRef,
   watch,
-  watchEffect,
 } from 'vue';
 import Input from 'dashboard/components-next/input/Input.vue';
 import TextArea from 'dashboard/components-next/textarea/TextArea.vue';
 import { required } from '@vuelidate/validators';
 import useVuelidate from '@vuelidate/core';
 import { useAlert } from 'dashboard/composables';
+import { useFileUpload } from 'dashboard/composables/useFileUpload';
+import { useMapGetter } from 'dashboard/composables/store';
 import { useI18n } from 'vue-i18n';
 import aiAgents from '../../../api/aiAgents';
 import captainTranslator from '../../../api/captainTranslator';
@@ -67,11 +67,82 @@ const state = reactive({
   welcoming_message: '',
   routing_conditions: '',
   enable_handover: true,
-  has_website: '', // 'yes' or 'no'
+  greeting_enabled: false,
+  greeting_message: '',
+  has_website: '',
   website_url: '',
   full_prompt: '',
   temperature: '',
 });
+
+// Greeting image uploads via ActiveStorage direct uploads
+const greetingImageInput = ref(null);
+const greetingAttachments = ref([]);
+const accountId = useMapGetter('getCurrentAccountId');
+
+const { onFileUpload: onGreetingFileUpload } = useFileUpload({
+  uploadUrl: computed(
+    () => `/api/v1/accounts/${accountId.value}/direct_uploads`
+  ).value,
+  attachFile: ({ file, uploading = false, tempId = null }) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file.file);
+    reader.onloadend = () => {
+      greetingAttachments.value.push({
+        thumb: reader.result,
+        blobSignedId: undefined,
+        uploading,
+        tempId,
+      });
+    };
+  },
+  updateAttachment: (tempId, blob) => {
+    const idx = greetingAttachments.value.findIndex(a => a.tempId === tempId);
+    if (idx !== -1) {
+      greetingAttachments.value[idx] = {
+        ...greetingAttachments.value[idx],
+        blobSignedId: blob.signed_id,
+        uploading: false,
+      };
+    }
+  },
+  removeAttachment: tempId => {
+    greetingAttachments.value = greetingAttachments.value.filter(
+      a => a.tempId !== tempId
+    );
+  },
+});
+
+function handleGreetingImageUpload(event) {
+  const files = Array.from(event.target.files);
+  files.forEach(file => {
+    if (!file.type.startsWith('image/')) {
+      useAlert(
+        `${file.name}: ${t('AGENT_MGMT.FORM_CREATE.IMAGE_ONLY_ALLOWED')}`,
+        'alert-danger'
+      );
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      useAlert(`${file.name}: ${t('AGENT_MGMT.FORM_CREATE.IMAGE_SIZE_LIMIT')}`, 'alert-danger');
+      return;
+    }
+    onGreetingFileUpload({ file, size: file.size, type: file.type });
+  });
+  event.target.value = '';
+}
+
+function removeGreetingImage(index) {
+  greetingAttachments.value.splice(index, 1);
+}
+
+const previewImageSrc = ref('');
+function openImagePreview(src) {
+  previewImageSrc.value = src;
+}
+function closeImagePreview() {
+  previewImageSrc.value = '';
+}
 const rules = {
   name: { required },
   description: {},
@@ -93,11 +164,35 @@ watch(
     if (!v) return;
 
     chatflowId.value = v?.chat_flow_id;
-
     state.name = v.name || '';
 
-    const flowData = v.display_flow_data;
+    const flowData = v.display_flow_data || {};
+
+    if (flowData.greeting_config) {
+      state.greeting_enabled = flowData.greeting_config.enabled || false;
+      state.greeting_message = flowData.greeting_config.message || '';
+
+      const savedImages = flowData.greeting_config.images || [];
+      const legacyImage = flowData.greeting_config.image || '';
+      const imageUrls = v.greeting_image_urls || [];
+      const allImages = savedImages.length > 0
+        ? savedImages
+        : legacyImage ? [legacyImage] : [];
+
+      greetingAttachments.value = allImages.map((val, idx) => {
+        const isBase64 = typeof val === 'string' && val.startsWith('data:');
+        return {
+          thumb: isBase64 ? val : (imageUrls[idx] || ''),
+          blobSignedId: isBase64 ? null : val,
+          rawValue: val,
+          uploading: false,
+          tempId: null,
+        };
+      });
+    }
+
     console.log('flowData:', flowData);
+
     if (flowData?.agents_config) {
       // Initialize enable_handover from the first agent's configurations if present
       const firstAgent = flowData.agents_config[0];
@@ -192,6 +287,19 @@ async function submit() {
       agent_config.configurations.enable_handover = !!state.enable_handover;
     });
 
+    // Save greeting_config to BOTH flow_data (sent to Jangkau) and display_flow_data (frontend display)
+    // Use blobSignedId for new uploads, rawValue for legacy base64 that wasn't re-uploaded
+    const greetingImages = greetingAttachments.value
+      .map(a => a.blobSignedId || a.rawValue)
+      .filter(Boolean);
+    const greetingConfig = {
+      enabled: state.greeting_enabled,
+      message: state.greeting_message,
+      images: greetingImages,
+    };
+    flowData.greeting_config = greetingConfig;
+    displayFlowData.greeting_config = greetingConfig;
+
     const payload = {
       flow_data: flowData,
       display_flow_data: displayFlowData,
@@ -202,7 +310,7 @@ async function submit() {
     // Refresh agent data to get latest chat_flow_id
     const detailAgent = await aiAgents.detailAgent(agentId).then(v => v?.data);
 
-    // ✅ Emit updated data to parent so props.data gets refreshed
+    // Emit updated data to parent so props.data gets refreshed
     emit('update:data', detailAgent);
 
     chatflowId.value = undefined;
@@ -379,14 +487,6 @@ function resetChat() {
               :placeholder="t('AGENT_MGMT.FORM_CREATE.AI_AGENT_NAME')"
             />
           </div>
-          <!-- <div>
-            <label for="description">{{ t('AGENT_MGMT.FORM_CREATE.AI_AGENT_DESC') }}</label>
-            <Input
-              id="description"
-              v-model="state.description"
-              :placeholder="t('AGENT_MGMT.FORM_CREATE.AI_AGENT_DESC')"
-            />
-          </div> -->
         </div>
 
         <!-- Instruction Field -->
@@ -450,46 +550,201 @@ function resetChat() {
             </div>
           </div>
 
-          <div class="mb-6">
-            <label class="block font-medium mb-2">{{
-              t('AGENT_MGMT.FORM_CREATE.ENABLE_HANDOVER')
-            }}</label>
-            <p class="text-sm text-gray-500 mb-3">
-              {{ t('AGENT_MGMT.FORM_CREATE.HANDOVER_INSTRUCTION') }}
-            </p>
-            <label class="inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                v-model="state.enable_handover"
-                :disabled="isDebugMode || loadingSave"
-                class="sr-only peer"
-              />
-              <div
-                class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"
-              ></div>
-              <span class="ml-3 text-sm text-slate-700 dark:text-slate-300">
-                {{ state.enable_handover ? 'Aktif' : 'Tidak Aktif' }}
-              </span>
-            </label>
-          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-4">
+            <div v-if="!isCustomAgent">
+              <div class="mb-4">
+                <label class="block font-medium mb-2">{{
+                  t('AGENT_MGMT.FORM_CREATE.ENABLE_HANDOVER')
+                }}</label>
+                <label class="inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    v-model="state.enable_handover"
+                    :disabled="isDebugMode || loadingSave"
+                    class="sr-only peer"
+                  />
+                  <div
+                    class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"
+                  ></div>
+                  <span class="ml-3 text-sm text-slate-700 dark:text-slate-300">
+                    {{ state.enable_handover ? 'Aktif' : 'Tidak Aktif' }}
+                  </span>
+                </label>
+                <p class="text-xs text-gray-500 mt-1">
+                  {{ t('AGENT_MGMT.FORM_CREATE.HANDOVER_INSTRUCTION') }}
+                </p>
+              </div>
 
-          <div v-if="state.enable_handover">
-            <label for="routing_conditions">{{
-              t('AGENT_MGMT.FORM_CREATE.ROUTING_CONDITION')
-            }}</label>
-            <TextArea
-              id="routing_conditions"
-              v-model="state.routing_conditions"
-              :disabled="isDebugMode || loadingSave"
-              custom-text-area-wrapper-class=""
-              custom-text-area-class="!outline-none"
-              :placeholder="
-                t('AGENT_MGMT.FORM_CREATE.ROUTING_CONDITION_PLACEHOLDER')
-              "
-              auto-height
-              min-height="80px"
-              max-height="300px"
-            />
+              <div v-if="state.enable_handover">
+                <label for="routing_conditions">{{
+                  t('AGENT_MGMT.FORM_CREATE.ROUTING_CONDITION')
+                }}</label>
+                <TextArea
+                  id="routing_conditions"
+                  v-model="state.routing_conditions"
+                  :disabled="isDebugMode || loadingSave"
+                  custom-text-area-wrapper-class=""
+                  custom-text-area-class="!outline-none"
+                  :placeholder="
+                    t('AGENT_MGMT.FORM_CREATE.ROUTING_CONDITION_PLACEHOLDER')
+                  "
+                  auto-height
+                  min-height="80px"
+                  max-height="300px"
+                />
+              </div>
+            </div>
+
+            <div>
+              <div class="mb-4">
+                <label class="block font-medium mb-2">{{
+                  t('AGENT_MGMT.FORM_CREATE.ENABLE_GREETING')
+                }}</label>
+                <label class="inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    v-model="state.greeting_enabled"
+                    :disabled="isDebugMode || loadingSave"
+                    class="sr-only peer"
+                  />
+                  <div
+                    class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"
+                  ></div>
+                  <span class="ml-3 text-sm text-slate-700 dark:text-slate-300">
+                    {{ state.greeting_enabled ? t('AGENT_MGMT.FORM_CREATE.GREETING_ACTIVE') : t('AGENT_MGMT.FORM_CREATE.GREETING_INACTIVE') }}
+                  </span>
+                </label>
+                <p class="text-xs text-gray-500 mt-1">
+                  {{ t('AGENT_MGMT.FORM_CREATE.GREETING_INSTRUCTION') }}
+                </p>
+              </div>
+
+              <div v-if="state.greeting_enabled" class="space-y-4">
+                <div>
+                  <label for="greeting_message" class="block font-medium mb-2">
+                    {{ t('AGENT_MGMT.FORM_CREATE.GREETING_CONDITION') }}
+                  </label>
+                  <div class="relative">
+                    <TextArea
+                      id="greeting_message"
+                      v-model="state.greeting_message"
+                      :disabled="isDebugMode || loadingSave"
+                      custom-text-area-wrapper-class=""
+                      custom-text-area-class="!outline-none"
+                      :placeholder="t('AGENT_MGMT.FORM_CREATE.GREETING_CONDITION_PLACEHOLDER')"
+                      auto-height
+                      min-height="80px"
+                      max-height="300px"
+                    />
+                    <div class="flex items-center mt-2">
+                      <input
+                        ref="greetingImageInput"
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        class="hidden"
+                        @change="handleGreetingImageUpload"
+                      />
+                      <button
+                        type="button"
+                        class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors border border-slate-300 dark:border-slate-600 rounded-md px-3 py-1.5"
+                        :disabled="isDebugMode || loadingSave"
+                        @click="greetingImageInput?.click()"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                          />
+                        </svg>
+                        {{ t('AGENT_MGMT.FORM_CREATE.ATTACH_IMAGE') }}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
+                    v-if="greetingAttachments.length > 0"
+                    class="mt-3 flex flex-wrap gap-3"
+                  >
+                    <div
+                      v-for="(attachment, index) in greetingAttachments"
+                      :key="index"
+                      class="relative group/image w-[72px] h-[72px]"
+                    >
+                      <img
+                        :src="attachment.thumb"
+                        class="object-cover w-[72px] h-[72px] rounded-lg cursor-pointer"
+                        :class="{ 'opacity-50': attachment.uploading }"
+                        @click="openImagePreview(attachment.thumb)"
+                      />
+                      <div
+                        v-if="attachment.uploading"
+                        class="absolute inset-0 flex items-center justify-center"
+                      >
+                        <div
+                          class="w-6 h-6 border-2 border-woot-500 border-t-transparent rounded-full animate-spin"
+                        />
+                      </div>
+                      <button
+                        v-else
+                        type="button"
+                        :disabled="loadingSave"
+                        :title="t('AGENT_MGMT.FORM_CREATE.DELETE_IMAGE')"
+                        class="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors shadow-sm"
+                        @click.stop="removeGreetingImage(index)"
+                      >
+                        <span class="text-xs font-bold leading-none">&times;</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Image Lightbox -->
+                  <Teleport to="body">
+                    <div
+                      v-if="previewImageSrc"
+                      class="fixed inset-0 z-[9999] flex items-center justify-center"
+                      style="background: rgba(0, 0, 0, 0.5)"
+                      @click.self="closeImagePreview"
+                    >
+                      <div class="flex flex-col items-end gap-3">
+                        <button
+                          type="button"
+                          class="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+                          @click="closeImagePreview"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="w-6 h-6"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
+                        <img
+                          :src="previewImageSrc"
+                          class="max-w-[90vw] max-h-[85vh] object-contain rounded-lg shadow-2xl"
+                        />
+                      </div>
+                    </div>
+                  </Teleport>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Debug Mode Fields -->
@@ -520,6 +775,7 @@ function resetChat() {
             </div>
           </template>
         </template>
+
         <button
           v-if="!isCustomAgent"
           class="button self-start"

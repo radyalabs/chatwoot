@@ -9,6 +9,7 @@ import filterQueryGenerator from 'dashboard/helper/filterQueryGenerator';
 
 import ContactsListLayout from 'dashboard/components-next/Contacts/ContactsListLayout.vue';
 import ContactsList from 'dashboard/components-next/Contacts/Pages/ContactsList.vue';
+import ContactsTable from 'dashboard/components-next/Contacts/ContactsTable/ContactsTable.vue';
 import ContactEmptyState from 'dashboard/components-next/Contacts/EmptyState/ContactEmptyState.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 
@@ -50,6 +51,40 @@ const sortState = reactive({
   activeSort: initialSort,
   activeOrdering: initialOrder,
 });
+
+const viewMode = ref(uiSettings.value?.contacts_view_mode || 'card');
+const visibleColumns = ref(
+  uiSettings.value?.contacts_visible_columns || [
+    'name',
+    'phoneNumber',
+    'companyName',
+    'location',
+    'createdAt',
+  ]
+);
+const customColumns = ref(uiSettings.value?.contacts_custom_columns || []);
+
+const handleViewModeChange = async newMode => {
+  viewMode.value = newMode;
+  await updateUISettings({
+    contacts_view_mode: newMode,
+  });
+};
+
+const handleSendMessage = contactId => {
+  router.push({
+    name: 'contacts_edit',
+    params: { contactId },
+    query: { openConversation: true },
+  });
+};
+
+const handleViewContact = contactId => {
+  router.push({
+    name: 'contacts_edit',
+    params: { contactId },
+  });
+};
 
 const activeLabel = computed(() => route.params.label);
 const activeSegmentId = computed(() => route.params.segmentId);
@@ -258,11 +293,13 @@ onMounted(async () => {
       :segments-id="activeSegmentId"
       :is-fetching-list="isFetchingList"
       :has-applied-filters="hasAppliedFilters"
+      :view-mode="viewMode"
       @update:current-page="fetchContactsBasedOnContext"
       @search="searchContacts"
       @update:sort="handleSort"
       @apply-filter="fetchSavedOrAppliedFilteredContact"
       @clear-filters="fetchContacts"
+      @update:view-mode="handleViewModeChange"
     >
       <div
         v-if="isFetchingList"
@@ -294,6 +331,14 @@ onMounted(async () => {
           </span>
         </div>
 
+        <ContactsTable
+          v-else-if="viewMode === 'table'"
+          :contacts="contacts"
+          :custom-attributes="customColumns"
+          :mandatory-columns="visibleColumns"
+          @send-message="handleSendMessage"
+          @view-contact="handleViewContact"
+        />
         <ContactsList v-else :contacts="contacts" />
       </template>
     </ContactsListLayout>

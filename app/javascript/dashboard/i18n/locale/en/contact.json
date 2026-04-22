@@ -548,6 +548,28 @@
       "BUTTON_LABEL": "Add contact",
       "SEARCH_EMPTY_STATE_TITLE": "No contacts matches your search 🔍",
       "LIST_EMPTY_STATE_TITLE": "No contacts available in this view 📋"
+    },
+    "TABLE": {
+      "COLUMN": {
+        "NAME": "Name",
+        "EMAIL": "Email",
+        "PHONE": "Phone",
+        "COMPANY": "Company",
+        "LOCATION": "Location",
+        "CREATED_AT": "Created",
+        "LAST_ACTIVITY": "Last Activity"
+      },
+      "SEND_MESSAGE": "Send message",
+      "VIEW_DETAILS": "View details",
+      "VIEW_MODE": {
+        "CARD": "Card view",
+        "TABLE": "Table view"
+      },
+      "COLUMN_SETTINGS": "Columns",
+      "COLUMN_SETTINGS_TITLE": "Column Settings",
+      "ADD_CUSTOM_COLUMN": "Add Custom Column",
+      "COLUMN_KEY": "Key",
+      "COLUMN_LABEL": "Label"
     }
   },
 

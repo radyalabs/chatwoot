@@ -43,6 +43,10 @@ defineProps({
     type: Boolean,
     default: false,
   },
+  viewMode: {
+    type: String,
+    default: 'card',
+  },
 });
 
 const emit = defineEmits([
@@ -54,6 +58,7 @@ const emit = defineEmits([
   'export',
   'createSegment',
   'deleteSegment',
+  'update:viewMode',
 ]);
 </script>
 
@@ -125,6 +130,28 @@ const emit = defineEmits([
             :active-ordering="activeOrdering"
             @update:sort="emit('update:sort', $event)"
           />
+          <div class="flex items-center border border-n-weak rounded-md">
+            <Button
+              :icon="
+                viewMode === 'card'
+                  ? 'i-lucide-layout-grid'
+                  : 'i-lucide-layout-grid'
+              "
+              :variant="viewMode === 'card' ? 'secondary' : 'ghost'"
+              size="xs"
+              class="rounded-r-none"
+              @click="emit('update:viewMode', 'card')"
+            />
+            <Button
+              :icon="
+                viewMode === 'table' ? 'i-lucide-table-2' : 'i-lucide-table-2'
+              "
+              :variant="viewMode === 'table' ? 'secondary' : 'ghost'"
+              size="xs"
+              class="rounded-l-none"
+              @click="emit('update:viewMode', 'table')"
+            />
+          </div>
           <ContactMoreActions
             @add="emit('add')"
             @import="emit('import')"

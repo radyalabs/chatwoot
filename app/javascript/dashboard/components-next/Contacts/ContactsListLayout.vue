@@ -19,6 +19,7 @@ defineProps({
   segmentsId: { type: [String, Number], default: 0 },
   hasAppliedFilters: { type: Boolean, default: false },
   isFetchingList: { type: Boolean, default: false },
+  viewMode: { type: String, default: 'card' },
 });
 
 const emit = defineEmits([
@@ -27,6 +28,7 @@ const emit = defineEmits([
   'search',
   'applyFilter',
   'clearFilters',
+  'update:viewMode',
 ]);
 
 const route = useRoute();
@@ -66,10 +68,12 @@ const openFilter = () => {
         :segments-id="segmentsId"
         :has-applied-filters="hasAppliedFilters"
         :is-label-view="isLabelView"
+        :view-mode="viewMode"
         @update:sort="emit('update:sort', $event)"
         @search="emit('search', $event)"
         @apply-filter="emit('applyFilter', $event)"
         @clear-filters="emit('clearFilters')"
+        @update:view-mode="emit('update:viewMode', $event)"
       />
       <main class="flex-1 overflow-y-auto">
         <div class="w-full mx-auto max-w-[960px]">

@@ -103,7 +103,7 @@ export const useFileUpload = ({
   };
 
   const onFileUpload = file => {
-    if (uploadUrl || globalConfig.value.directUploadsEnabled) {
+    if (uploadUrl || (globalConfig.value.directUploadsEnabled && currentChat.value?.id)) {
       handleDirectFileUpload(file);
     } else {
       handleIndirectFileUpload(file);

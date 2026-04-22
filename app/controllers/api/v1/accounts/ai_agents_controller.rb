@@ -45,11 +45,14 @@ class Api::V1::Accounts::AiAgentsController < Api::V1::Accounts::BaseController
       inbox_id: nil
     )
 
+    preview_attachments = upload_preview_attachments
+
     Captain::Llm::AssistantChatService.new(
       params[:question],
       conversation,
       ai_agent,
-      account.id
+      account.id,
+      attachments: preview_attachments[:metadata]
     ).perform.then do |response|
       if response.success?
         response = response.parsed_response
@@ -59,6 +62,9 @@ class Api::V1::Accounts::AiAgentsController < Api::V1::Accounts::BaseController
         handle_error('Failed to generate AI response', status: :unprocessable_entity, exception: response)
       end
     end
+  ensure
+    # Clean up unattached preview blobs after the API call completes
+    preview_attachments&.dig(:blobs)&.each(&:purge_later)
   end
 
   def ai_agent_templates
@@ -86,6 +92,30 @@ class Api::V1::Accounts::AiAgentsController < Api::V1::Accounts::BaseController
 
   def agent_custom?
     params[:agent_type] == 'custom_agent'
+  end
+
+  MAX_PREVIEW_FILE_SIZE = 10.megabytes
+  ALLOWED_PREVIEW_TYPES = %w[image/jpeg image/png image/gif image/webp].freeze
+
+  def upload_preview_attachments
+    return { metadata: [], blobs: [] } unless params[:attachments].is_a?(Array)
+
+    blobs = []
+    metadata = params[:attachments].filter_map do |file|
+      next unless file.respond_to?(:tempfile)
+      next if file.size > MAX_PREVIEW_FILE_SIZE
+      next unless ALLOWED_PREVIEW_TYPES.include?(file.content_type)
+
+      blob = ActiveStorage::Blob.create_and_upload!(
+        io: file.tempfile,
+        filename: file.original_filename,
+        content_type: file.content_type
+      )
+      blobs << blob
+      { key: blob.key, file_type: blob.content_type, filename: blob.filename.to_s }
+    end
+
+    { metadata: metadata, blobs: blobs }
   end
 
   def check_max_ai_agents

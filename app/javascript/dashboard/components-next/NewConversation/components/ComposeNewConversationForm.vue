@@ -216,8 +216,8 @@ const handleRemoveSignature = signature => {
   state.message = removeSignature(state.message, signature);
 };
 
-const handleAttachFile = files => {
-  state.attachedFiles = files;
+const handleAttachFile = newFile => {
+  state.attachedFiles.push(newFile);
 };
 
 const handleUpdateAttachment = ({ tempId, blob }) => {

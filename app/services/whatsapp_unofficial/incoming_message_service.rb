@@ -21,6 +21,7 @@ class WhatsappUnofficial::IncomingMessageService
       inbox_id: @inbox.id,
       message_type: :incoming,
       sender: @contact,
+      source_id: payload[:id].to_s,
       additional_attributes: additional_attributes,
       content_attributes: gowa_reply_content_attributes
     )

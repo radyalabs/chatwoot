@@ -137,7 +137,7 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
       inbox_id: @context.conversation.inbox_id,
       conversation_id: @context.conversation.id,
       content_type: 0,
-      status: 0
+      status: 0,
     }
 
     attrs[:sender_id] = @context.ai_agent&.id

@@ -176,6 +176,11 @@ export default {
       // since old messages are only loaded when the user scrolls up
       return this.data.content_attributes?.in_reply_to;
     },
+    gowaReplyText() {
+      const gowaReply = this.contentAttributes.gowa_reply;
+      if (!gowaReply) return null;
+      return gowaReply.quoted_text || null;
+    },
     isAnInstagramStory() {
       return this.contentAttributes.image_type === 'story_mention';
     },
@@ -475,6 +480,21 @@ export default {
           :message-type="data.message_type"
           :parent-has-attachments="hasAttachments"
         />
+        <div
+          v-if="gowaReplyText"
+          class="px-2 py-1.5 rounded-sm min-w-[10rem] mb-2 border-l-2 border-slate-300 dark:border-slate-500"
+          :class="{
+            'bg-slate-50 dark:bg-slate-600 dark:text-slate-50':
+              data.message_type === 0,
+            'bg-woot-600 text-woot-50': data.message_type === 1,
+            '-mx-2': !hasAttachments,
+          }"
+        >
+          <p class="text-xs font-semibold opacity-60 mb-0.5">{{ $t('CONVERSATION.REPLY_TO') }}</p>
+          <p class="text-xs line-clamp-2 break-all opacity-80 mb-0">
+            {{ gowaReplyText }}
+          </p>
+        </div>
         <div v-if="isUnsupported">
           <template v-if="isAFacebookInbox && isInstagram">
             {{ $t('CONVERSATION.UNSUPPORTED_MESSAGE_INSTAGRAM') }}

@@ -50,6 +50,7 @@
     "RATING_TITLE": "Penilaian",
     "FEEDBACK_TITLE": "Umpan Balik",
     "REPLY_MESSAGE_NOT_FOUND": "Pesan tidak tersedia",
+    "REPLY_TO":"Membalas",
     "CARD": {
       "SHOW_LABELS": "Tampilkan label",
       "HIDE_LABELS": "Sembunyikan label"

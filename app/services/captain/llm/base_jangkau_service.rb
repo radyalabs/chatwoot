@@ -114,8 +114,58 @@ class Captain::Llm::BaseJangkauService
     else
       # If message has no text content but has attachments, use a placeholder
       question = (@message.content.presence || '')
+      question = enrich_question_with_reply_context(question)
       [question, @message.additional_attributes || {}]
     end
+  end
+
+  def enrich_question_with_reply_context(question)
+    return question unless reply_context_enabled?
+
+    replied_text = replied_to_message_text
+    return question if replied_text.blank?
+
+    replied_text = replied_text.to_s.strip.truncate(1000)
+    question_text = question.to_s
+
+    if question_text.present?
+      "User replied to:\n#{replied_text}\n\nUser message:\n#{question_text}"
+    else
+      "User replied to:\n#{replied_text}"
+    end
+  rescue StandardError
+    question
+  end
+
+  def reply_context_enabled?
+    return false unless @message.is_a?(Message)
+
+    channel = @message.additional_attributes&.[]('channel') || @message.additional_attributes&.[](:channel)
+    return true if channel.to_s == 'WhatsappUnofficial'
+
+    false
+  end
+
+  def replied_to_message_text
+    return nil unless @message.is_a?(Message)
+
+    content_attrs = @message.content_attributes || {}
+    in_reply_to = content_attrs[:in_reply_to] || content_attrs['in_reply_to']
+    in_reply_to_external_id = content_attrs[:in_reply_to_external_id] || content_attrs['in_reply_to_external_id']
+
+    replied_message = if in_reply_to.present?
+                        @message.conversation.messages.find_by(id: in_reply_to)
+                      elsif in_reply_to_external_id.present?
+                        @message.conversation.messages.find_by(source_id: in_reply_to_external_id)
+                      end
+
+    replied_message_content = replied_message&.content
+    return replied_message_content if replied_message_content.present?
+
+    gowa_reply = content_attrs[:gowa_reply] || content_attrs['gowa_reply']
+    return nil unless gowa_reply.is_a?(Hash)
+
+    gowa_reply[:quoted_text] || gowa_reply['quoted_text']
   end
 
   def headers

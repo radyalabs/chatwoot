@@ -148,6 +148,13 @@ export const actions = {
     }
   },
 
+  createCustomAttribute: async ({ dispatch }, params) => {
+    await dispatch('attributes/create', {
+      ...params,
+      attribute_model: 'contact_attribute',
+    }, { root: true });
+  },
+
   export: async ({ commit }, { payload, label }) => {
     commit(types.SET_CONTACT_UI_FLAG, { isExporting: true });
     try {

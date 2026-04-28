@@ -1,16 +1,19 @@
 <script setup>
-import { computed, h } from 'vue';
+import { computed, h, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
   useVueTable,
   createColumnHelper,
   getCoreRowModel,
 } from '@tanstack/vue-table';
-import { useMapGetter } from 'dashboard/composables/store';
+import { useStore, useMapGetter } from 'dashboard/composables/store';
+import { useAlert } from 'dashboard/composables';
 
 import Table from 'dashboard/components/table/Table.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
+import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
+import ContactsForm from 'dashboard/components-next/Contacts/ContactsForm/ContactsForm.vue';
 
 const props = defineProps({
   contacts: { type: Array, required: true },
@@ -28,15 +31,61 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['sendMessage', 'viewContact']);
+const emit = defineEmits(['viewContact']);
 
 const { t } = useI18n();
+const store = useStore();
 
 const uiFlags = useMapGetter('contacts/getUIFlags');
-// eslint-disable-next-line no-unused-vars
 const isUpdating = computed(() => uiFlags.value?.isUpdating || false);
 
 const columnHelper = createColumnHelper();
+
+const contactForEdit = ref(null);
+const contactsFormRef = ref(null);
+const editDialogRef = ref(null);
+
+const getContactData = contact => ({
+  id: contact.id,
+  name: contact.name,
+  email: contact.email,
+  phoneNumber: contact.phoneNumber,
+  additionalAttributes: contact.additionalAttributes || {},
+  customAttributes: contact.customAttributes || {},
+});
+
+const openEditModal = contact => {
+  contactForEdit.value = getContactData(contact);
+  editDialogRef.value?.open();
+};
+
+const closeEditModal = () => {
+  editDialogRef.value?.close();
+};
+
+const onDialogClose = () => {
+  contactForEdit.value = null;
+};
+
+const handleFormUpdate = updatedData => {
+  Object.assign(contactForEdit.value, updatedData);
+};
+
+const handleUpdateContact = async () => {
+  if (!contactForEdit.value) return;
+
+  try {
+    await store.dispatch('contacts/update', contactForEdit.value);
+    useAlert(t('CONTACTS_LAYOUT.CARD.EDIT_DETAILS_FORM.SUCCESS_MESSAGE'));
+    closeEditModal();
+  } catch (error) {
+    useAlert(t('CONTACTS_LAYOUT.CARD.EDIT_DETAILS_FORM.FORM.ERROR_MESSAGE'));
+  }
+};
+
+const onClickViewDetails = id => {
+  emit('viewContact', id);
+};
 
 const formatDate = timestamp => {
   if (!timestamp) return '---';
@@ -51,24 +100,12 @@ const formatLocation = additionalAttributes => {
   if (!additionalAttributes) return '---';
   const { country, countryCode, city } = additionalAttributes;
   if (!country && !countryCode && !city) return '---';
-
-  const flag = countryCode
-    ? `<span class="fi fi-${countryCode.toLowerCase()} mr-1"></span>`
-    : '';
   const locationText = [city, country].filter(Boolean).join(', ');
-  return flag + locationText;
+  return locationText;
 };
 
 const formatCompanyName = additionalAttributes => {
   return additionalAttributes?.companyName || '---';
-};
-
-const onClickViewDetails = id => {
-  emit('viewContact', id);
-};
-
-const onSendMessage = id => {
-  emit('sendMessage', id);
 };
 
 const columns = computed(() => {
@@ -76,7 +113,8 @@ const columns = computed(() => {
 
   if (props.mandatoryColumns.includes('name')) {
     cols.push(
-      columnHelper.accessor('name', {
+      columnHelper.display({
+        id: 'name',
         header: t('CONTACTS_LAYOUT.TABLE.COLUMN.NAME'),
         cell: ({ row }) => {
           const contact = row.original;
@@ -84,7 +122,7 @@ const columns = computed(() => {
             h(Avatar, {
               name: contact.name,
               src: contact.thumbnail,
-              size: 32,
+              size: 36,
             }),
             h('div', { class: 'flex flex-col' }, [
               h(
@@ -92,7 +130,7 @@ const columns = computed(() => {
                 { class: 'font-medium text-n-slate-12' },
                 contact.name || '---'
               ),
-              contact.email
+              props.mandatoryColumns.includes('email') && contact.email
                 ? h('span', { class: 'text-xs text-n-slate-10' }, contact.email)
                 : null,
             ]),
@@ -103,13 +141,39 @@ const columns = computed(() => {
     );
   }
 
+  if (
+    !props.mandatoryColumns.includes('name') &&
+    props.mandatoryColumns.includes('email')
+  ) {
+    cols.push(
+      columnHelper.display({
+        id: 'email',
+        header: t('CONTACTS_LAYOUT.TABLE.COLUMN.EMAIL'),
+        cell: ({ row }) => {
+          const value = row.original.email;
+          return h(
+            'span',
+            { class: value ? '' : 'text-n-slate-8' },
+            value || '---'
+          );
+        },
+        size: 200,
+      })
+    );
+  }
+
   if (props.mandatoryColumns.includes('phoneNumber')) {
     cols.push(
-      columnHelper.accessor('phoneNumber', {
+      columnHelper.display({
+        id: 'phoneNumber',
         header: t('CONTACTS_LAYOUT.TABLE.COLUMN.PHONE'),
-        cell: ({ getValue }) => {
-          const value = getValue();
-          return h('span', {}, value || '---');
+        cell: ({ row }) => {
+          const value = row.original.phoneNumber;
+          return h(
+            'span',
+            { class: value ? '' : 'text-n-slate-8' },
+            value || '---'
+          );
         },
         size: 150,
       })
@@ -118,10 +182,11 @@ const columns = computed(() => {
 
   if (props.mandatoryColumns.includes('companyName')) {
     cols.push(
-      columnHelper.accessor('additionalAttributes', {
+      columnHelper.display({
+        id: 'companyName',
         header: t('CONTACTS_LAYOUT.TABLE.COLUMN.COMPANY'),
-        cell: ({ getValue }) => {
-          const value = formatCompanyName(getValue());
+        cell: ({ row }) => {
+          const value = formatCompanyName(row.original.additionalAttributes);
           return h(
             'span',
             { class: value === '---' ? 'text-n-slate-8' : '' },
@@ -135,31 +200,30 @@ const columns = computed(() => {
 
   if (props.mandatoryColumns.includes('location')) {
     cols.push(
-      columnHelper.accessor('additionalAttributes', {
+      columnHelper.display({
+        id: 'location',
         header: t('CONTACTS_LAYOUT.TABLE.COLUMN.LOCATION'),
-        cell: ({ getValue }) => {
-          const value = formatLocation(getValue());
+        cell: ({ row }) => {
+          const value = formatLocation(row.original.additionalAttributes);
           return h(
             'span',
-            {
-              class: value === '---' ? 'text-n-slate-8' : '',
-              innerHTML: value,
-            },
-            ''
+            { class: value === '---' ? 'text-n-slate-8' : '' },
+            value
           );
         },
-        size: 180,
+        size: 150,
       })
     );
   }
 
   if (props.mandatoryColumns.includes('createdAt')) {
     cols.push(
-      columnHelper.accessor('createdAt', {
+      columnHelper.display({
+        id: 'createdAt',
         header: t('CONTACTS_LAYOUT.TABLE.COLUMN.CREATED_AT'),
-        cell: ({ getValue }) => {
-          const value = getValue();
-          return h('span', {}, formatDate(value));
+        cell: ({ row }) => {
+          const value = row.original.createdAt;
+          return h('span', { class: 'text-n-slate-11' }, formatDate(value));
         },
         size: 120,
       })
@@ -168,20 +232,23 @@ const columns = computed(() => {
 
   if (props.mandatoryColumns.includes('lastActivityAt')) {
     cols.push(
-      columnHelper.accessor('lastActivityAt', {
+      columnHelper.display({
+        id: 'lastActivityAt',
         header: t('CONTACTS_LAYOUT.TABLE.COLUMN.LAST_ACTIVITY'),
-        cell: ({ getValue }) => {
-          const value = getValue();
-          return h('span', {}, formatDate(value));
+        cell: ({ row }) => {
+          const value = row.original.lastActivityAt;
+          return h('span', { class: 'text-n-slate-11' }, formatDate(value));
         },
         size: 140,
       })
     );
   }
 
-  props.customAttributes.forEach(attr => {
+  props.customAttributes
+    .filter(attr => props.mandatoryColumns.includes(attr.key))
+    .forEach(attr => {
     cols.push(
-      columnHelper.accessor('customAttributes', {
+      columnHelper.display({
         id: attr.key,
         header: attr.label || attr.key,
         cell: ({ row }) => {
@@ -201,21 +268,23 @@ const columns = computed(() => {
   cols.push(
     columnHelper.display({
       id: 'actions',
-      header: '',
+      header: t('CONTACTS_LAYOUT.TABLE.COLUMN.ACTIONS'),
       cell: ({ row }) => {
         const contact = row.original;
-        return h('div', { class: 'flex items-center gap-2' }, [
+        return h('div', { class: 'flex items-center gap-1' }, [
           h(Button, {
-            icon: 'i-lucide-message-circle',
+            icon: 'i-lucide-pen',
             variant: 'ghost',
-            size: 'xs',
-            'aria-label': t('CONTACTS_LAYOUT.TABLE.SEND_MESSAGE'),
-            onClick: () => onSendMessage(contact.id),
+            size: 'sm',
+            color: 'slate',
+            'aria-label': t('CONTACTS_LAYOUT.TABLE.EDIT_CONTACT'),
+            onClick: () => openEditModal(contact),
           }),
           h(Button, {
             icon: 'i-lucide-eye',
             variant: 'ghost',
-            size: 'xs',
+            size: 'sm',
+            color: 'slate',
             'aria-label': t('CONTACTS_LAYOUT.TABLE.VIEW_DETAILS'),
             onClick: () => onClickViewDetails(contact.id),
           }),
@@ -240,18 +309,54 @@ const table = useVueTable({
 
 <template>
   <div class="contacts-table-container">
-    <div class="table-wrapper overflow-x-auto">
-      <Table :table="table" class="w-full min-w-[800px]" />
+    <div class="table-wrapper">
+      <Table :table="table" class="w-full min-w-[900px]" />
     </div>
+
+    <Dialog
+      ref="editDialogRef"
+      :title="t('CONTACTS_LAYOUT.CARD.EDIT_DETAILS_FORM.TITLE')"
+      width="3xl"
+      @close="onDialogClose"
+    >
+      <template #default>
+        <ContactsForm
+          v-if="contactForEdit"
+          ref="contactsFormRef"
+          :contact-data="contactForEdit"
+          @update="handleFormUpdate"
+        />
+      </template>
+      <template #footer>
+        <div class="flex items-center justify-between w-full gap-3">
+          <Button
+            variant="link"
+            class="h-10 hover:!no-underline hover:text-n-brand"
+            @click="closeEditModal"
+          >
+            {{ t('DIALOG.BUTTONS.CANCEL') }}
+          </Button>
+          <Button
+            color="blue"
+            :is-loading="isUpdating"
+            :disabled="isUpdating"
+            @click="handleUpdateContact"
+          >
+            {{ t('CONTACTS_LAYOUT.CARD.EDIT_DETAILS_FORM.UPDATE_BUTTON') }}
+          </Button>
+        </div>
+      </template>
+    </Dialog>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .contacts-table-container {
-  @apply flex flex-col flex-1;
+  @apply flex flex-col flex-1 min-h-0;
 
   .table-wrapper {
-    @apply overflow-x-auto;
+    @apply w-full min-w-[900px] overflow-auto;
+    max-height: calc(100vh - 5rem);
   }
 }
 </style>

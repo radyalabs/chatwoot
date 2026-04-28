@@ -69,7 +69,10 @@ const handleFormUpdate = updatedData => {
 const updateContact = async () => {
   try {
     const { customAttributes, ...basicContactData } = contactData.value;
-    await store.dispatch('contacts/update', basicContactData);
+    await store.dispatch('contacts/update', {
+      ...basicContactData,
+      customAttributes,
+    });
     await store.dispatch(
       'contacts/fetchContactableInbox',
       props.selectedContact.id

@@ -71,6 +71,7 @@ const toggleExpanded = id => {
       :thumbnail="contact.thumbnail"
       :phone-number="contact.phoneNumber"
       :additional-attributes="contact.additionalAttributes"
+      :custom-attributes="contact.customAttributes"
       :is-expanded="expandedCardId === contact.id"
       :is-updating="isUpdating"
       @toggle="toggleExpanded(contact.id)"

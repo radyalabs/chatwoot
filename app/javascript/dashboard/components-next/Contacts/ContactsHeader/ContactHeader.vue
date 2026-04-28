@@ -59,11 +59,12 @@ const emit = defineEmits([
   'createSegment',
   'deleteSegment',
   'update:viewMode',
+  'columnSettings',
 ]);
 </script>
 
 <template>
-  <header class="sticky top-0 z-10">
+  <header class="sticky top-0 z-50">
     <div
       class="flex items-center justify-between w-full h-20 px-6 gap-2 mx-auto max-w-[960px]"
     >
@@ -152,6 +153,13 @@ const emit = defineEmits([
               @click="emit('update:viewMode', 'table')"
             />
           </div>
+          <Button
+            v-if="viewMode === 'table'"
+            icon="i-lucide-settings-2"
+            variant="ghost"
+            size="sm"
+            @click="emit('columnSettings')"
+          />
           <ContactMoreActions
             @add="emit('add')"
             @import="emit('import')"

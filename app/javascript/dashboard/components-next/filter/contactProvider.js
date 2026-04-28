@@ -1,7 +1,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useOperators } from './operators';
-import { useMapGetter } from 'dashboard/composables/store.js';
+import { useMapGetter, useStoreGetters } from 'dashboard/composables/store.js';
 import { buildAttributesFilterTypes } from './helper/filterHelper.js';
 import countries from 'shared/constants/countries.js';
 
@@ -65,7 +65,27 @@ export function useContactFilterContext() {
   /**
    * @type {import('vue').ComputedRef<FilterType[]>}
    */
+  const customColumnFilterTypes = computed(() => {
+    const getters = useStoreGetters();
+    const uiSettings = getters.getUISettings.value || {};
+    const customColumns = uiSettings.contacts_custom_columns || [];
+    return customColumns.map(col => ({
+      attributeKey: col.key,
+      value: col.key,
+      attributeName: col.label || col.key,
+      label: col.label || col.key,
+      inputType: 'plainText',
+      dataType: 'text',
+      filterOperators: containmentOperators.value,
+      attributeModel: 'contact_attribute',
+    }));
+  });
+
+  /**
+   * @type {import('vue').ComputedRef<FilterType[]>}
+   */
   const filterTypes = computed(() => [
+    ...customColumnFilterTypes.value,
     {
       attributeKey: 'name',
       value: 'name',
@@ -122,36 +142,6 @@ export function useContactFilterContext() {
       value: 'city',
       attributeName: t('CONTACTS_LAYOUT.FILTER.CITY'),
       label: t('CONTACTS_LAYOUT.FILTER.CITY'),
-      inputType: 'plainText',
-      dataType: 'text',
-      filterOperators: containmentOperators.value,
-      attributeModel: 'additional',
-    },
-    {
-      attributeKey: 'location',
-      value: 'location',
-      attributeName: t('CONTACTS_LAYOUT.FILTER.LOCATION'),
-      label: t('CONTACTS_LAYOUT.FILTER.LOCATION'),
-      inputType: 'plainText',
-      dataType: 'text',
-      filterOperators: containmentOperators.value,
-      attributeModel: 'additional',
-    },
-    {
-      attributeKey: 'company_name',
-      value: 'company_name',
-      attributeName: t('CONTACTS_LAYOUT.FILTER.COMPANY'),
-      label: t('CONTACTS_LAYOUT.FILTER.COMPANY'),
-      inputType: 'plainText',
-      dataType: 'text',
-      filterOperators: containmentOperators.value,
-      attributeModel: 'additional',
-    },
-    {
-      attributeKey: 'labels',
-      value: 'labels',
-      attributeName: t('CONTACTS_LAYOUT.FILTER.LABELS'),
-      label: t('CONTACTS_LAYOUT.FILTER.LABELS'),
       inputType: 'plainText',
       dataType: 'text',
       filterOperators: containmentOperators.value,

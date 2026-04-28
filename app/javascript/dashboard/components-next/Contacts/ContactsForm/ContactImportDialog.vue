@@ -120,9 +120,24 @@ defineExpose({ dialogRef });
               @click="handleRemoveFile"
             />
           </div>
-        </div>
+</div>
       </div>
     </div>
+
+    <div class="mt-4 p-3 bg-n-alpha-2 rounded-lg">
+      <p class="text-sm font-medium text-n-slate-12 mb-2">
+        {{ t('CONTACTS_LAYOUT.HEADER.ACTIONS.IMPORT_CONTACT.GUIDE.TITLE') }}
+      </p>
+      <ol class="list-decimal list-inside text-sm text-n-slate-11 space-y-1">
+        <li>{{ t('CONTACTS_LAYOUT.HEADER.ACTIONS.IMPORT_CONTACT.GUIDE.STEP_1') }}</li>
+        <li>{{ t('CONTACTS_LAYOUT.HEADER.ACTIONS.IMPORT_CONTACT.GUIDE.STEP_2') }}</li>
+        <li>{{ t('CONTACTS_LAYOUT.HEADER.ACTIONS.IMPORT_CONTACT.GUIDE.STEP_3') }}</li>
+      </ol>
+      <p class="text-xs text-n-slate-10 mt-2">
+        {{ t('CONTACTS_LAYOUT.HEADER.ACTIONS.IMPORT_CONTACT.GUIDE.NOTES') }}
+      </p>
+    </div>
+
     <input
       ref="fileInput"
       type="file"

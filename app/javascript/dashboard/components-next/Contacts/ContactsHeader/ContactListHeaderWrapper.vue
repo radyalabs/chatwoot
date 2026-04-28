@@ -45,6 +45,7 @@ const emit = defineEmits([
   'applyFilter',
   'clearFilters',
   'update:viewMode',
+  'columnSettings',
 ]);
 
 const { t } = useI18n();
@@ -291,6 +292,7 @@ defineExpose({
     @create-segment="openCreateSegmentDialog"
     @delete-segment="openDeleteSegmentDialog"
     @update:view-mode="emit('update:viewMode', $event)"
+    @column-settings="emit('columnSettings')"
   >
     <template #filter>
       <ContactsFilter
@@ -299,6 +301,7 @@ defineExpose({
         :segment-name="activeSegmentName"
         :is-segment-view="hasActiveSegments"
         class="absolute mt-1 ltr:right-0 rtl:left-0 top-full"
+        style="z-index: 100;"
         @apply-filter="onApplyFilter"
         @update-segment="onUpdateSegment"
         @close="closeAdvanceFiltersModal"

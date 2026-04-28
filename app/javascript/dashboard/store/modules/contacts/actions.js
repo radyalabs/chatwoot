@@ -11,7 +11,11 @@ import { CONTACTS_EVENTS } from '../../../helper/AnalyticsHelper/events';
 
 const buildContactFormData = contactParams => {
   const formData = new FormData();
-  const { additional_attributes = {}, ...contactProperties } = contactParams;
+  const {
+    additional_attributes = {},
+    custom_attributes = {},
+    ...contactProperties
+  } = contactParams;
   Object.keys(contactProperties).forEach(key => {
     if (contactProperties[key]) {
       formData.append(key, contactProperties[key]);
@@ -30,6 +34,9 @@ const buildContactFormData = contactParams => {
       `additional_attributes[social_profiles][${key}]`,
       social_profiles[key]
     );
+  });
+  Object.keys(custom_attributes).forEach(key => {
+    formData.append(`custom_attributes[${key}]`, custom_attributes[key] ?? '');
   });
   return formData;
 };
@@ -146,6 +153,17 @@ export const actions = {
         throw new ExceptionWithMessage(error.response.data.message);
       }
     }
+  },
+
+  createCustomAttribute: async ({ dispatch }, params) => {
+    await dispatch(
+      'attributes/create',
+      {
+        ...params,
+        attribute_model: 'contact_attribute',
+      },
+      { root: true }
+    );
   },
 
   export: async ({ commit }, { payload, label }) => {

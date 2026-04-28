@@ -191,10 +191,13 @@
     }
   },
   "CUSTOM_ATTRIBUTES": {
+    "TITLE": "Atribut Kustom",
+    "KEY_PLACEHOLDER": "Nama atribut",
+    "VALUE_PLACEHOLDER": "Nilai",
     "BUTTON": "Tambahkan atribut kustom",
     "COPY_SUCCESSFUL": "Berhasil disalin ke clipboard",
-    "SHOW_MORE": "Show all attributes",
-    "SHOW_LESS": "Show less attributes",
+    "SHOW_MORE": "Tampilkan semua atribut",
+    "SHOW_LESS": "Tampilkan atribut lebih sedikit",
     "ACTIONS": {
       "COPY": "Salin Atribut",
       "DELETE": "Hapus Atribut",
@@ -281,6 +284,7 @@
       "ID": "(ID: {identifier})"
     }
   },
+  
   "CONTACTS_LAYOUT": {
     "HEADER": {
       "TITLE": "Kontak",
@@ -312,7 +316,14 @@
           "CANCEL": "Batalkan",
           "IMPORT": "Impor",
           "SUCCESS_MESSAGE": "You will be notified via email when the import is complete.",
-          "ERROR_MESSAGE": "Terjadi kesalahan, harap coba lagi"
+          "ERROR_MESSAGE": "Terjadi kesalahan, harap coba lagi",
+          "GUIDE": {
+            "TITLE": "Cara menyiapkan data",
+            "STEP_1": "Buat atau isi data di Google Sheets",
+            "STEP_2": "Buka File → Download → CSV (.csv)",
+            "STEP_3": "Unggah file CSV yang sudah diunduh",
+            "NOTES": "Catatan: Gunakan header sesuai template. Hindari merge cell atau format khusus."
+          }
         },
         "EXPORT_CONTACT": {
           "TITLE": "Ekspor kontak",
@@ -451,8 +462,40 @@
             "PLACEHOLDER": "Add Twitter"
           }
         }
+      },
+      "CUSTOM_ATTRIBUTES": {
+        "TITLE": "Atribut Kustom",
+        "KEY_PLACEHOLDER": "Nama atribut",
+        "VALUE_PLACEHOLDER": "Nilai"
       }
     },
+    "TABLE": {
+      "COLUMN": {
+        "NAME": "Nama",
+        "EMAIL": "Email",
+        "PHONE": "Telepon",
+        "COMPANY": "Perusahaan",
+        "LOCATION": "Lokasi",
+        "CREATED_AT": "Dibuat",
+        "LAST_ACTIVITY": "Aktivitas Terakhir",
+        "ACTIONS": "Aksi"
+      },
+      "SEND_MESSAGE": "Kirim pesan",
+      "VIEW_DETAILS": "Lihat detail",
+      "EDIT_CONTACT": "Edit kontak",
+      "VIEW_MODE": {
+        "CARD": "Tampilan kartu",
+        "TABLE": "Tampilan tabel"
+      },
+      "COLUMN_SETTINGS": "Kolom",
+      "COLUMN_SETTINGS_TITLE": "Pengaturan Kolom",
+      "COLUMNS": "Kolom",
+      "ADD_CUSTOM_COLUMN": "Tambah Kolom Kustom",
+      "COLUMN_KEY": "Kunci",
+      "COLUMN_LABEL": "Label"
+    }
+  },
+  "DETAILS": {
     "DETAILS": {
       "CREATED_AT": "Dibuat {date}",
       "LAST_ACTIVITY": "Last active {date}",

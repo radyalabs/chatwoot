@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { required, email } from '@vuelidate/validators';
 import { useVuelidate } from '@vuelidate/core';
@@ -9,6 +9,7 @@ import Input from 'dashboard/components-next/input/Input.vue';
 import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import PhoneNumberInput from 'dashboard/components-next/phonenumberinput/PhoneNumberInput.vue';
+import Button from 'dashboard/components-next/button/Button.vue';
 
 const props = defineProps({
   contactData: {
@@ -25,7 +26,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['update']);
+const emit = defineEmits(['update', 'removeCustomAttr']);
 
 const { t } = useI18n();
 
@@ -69,6 +70,7 @@ const defaultState = {
       twitter: '',
     },
   },
+  customAttributes: {},
 };
 
 const state = reactive({ ...defaultState });
@@ -93,6 +95,7 @@ const prepareStateBasedOnProps = () => {
     email: emailAddress,
     phoneNumber,
     additionalAttributes = {},
+    customAttributes = {},
   } = props.contactData || {};
   const { firstName, lastName } = splitName(name || '');
   const {
@@ -103,6 +106,25 @@ const prepareStateBasedOnProps = () => {
     city = '',
     socialProfiles = {},
   } = additionalAttributes || {};
+
+  // Separate standard keys from custom attributes
+  const standardKeys = [
+    'description',
+    'companyName',
+    'countryCode',
+    'country',
+    'city',
+    'socialProfiles',
+  ];
+  const customAttrs = Object.entries(customAttributes || {}).reduce(
+    (acc, [key, value]) => {
+      if (!standardKeys.includes(key)) {
+        acc[key] = value;
+      }
+      return acc;
+    },
+    {}
+  );
 
   Object.assign(state, {
     id,
@@ -119,6 +141,7 @@ const prepareStateBasedOnProps = () => {
       city,
       socialProfiles,
     },
+    customAttributes: customAttrs,
   });
 };
 
@@ -218,6 +241,36 @@ const resetForm = () => {
   Object.assign(state, defaultState);
 };
 
+const newCustomAttrKey = ref('');
+const newCustomAttrValue = ref('');
+
+const customAttrsDisplay = computed(() => state.customAttributes || {});
+
+const addCustomAttr = () => {
+  if (!newCustomAttrKey.value.trim()) return;
+
+  const key = newCustomAttrKey.value.trim();
+  const value = newCustomAttrValue.value?.trim() || '';
+
+  if (!state.customAttributes) {
+    state.customAttributes = {};
+  }
+  state.customAttributes[key] = value;
+
+  newCustomAttrKey.value = '';
+  newCustomAttrValue.value = '';
+  emit('update', state);
+};
+
+const removeCustomAttr = key => {
+  const newAttrs = {};
+  Object.keys(state.customAttributes).forEach(k => {
+    if (k !== key) newAttrs[k] = state.customAttributes[k];
+  });
+  state.customAttributes = newAttrs;
+  emit('removeCustomAttr', key);
+};
+
 watch(() => props.contactData, prepareStateBasedOnProps, {
   immediate: true,
   deep: true,
@@ -309,6 +362,60 @@ defineExpose({
             @input="emit('update', state)"
           />
         </div>
+      </div>
+    </div>
+    <div
+      v-if="Object.keys(customAttrsDisplay).length > 0"
+      class="flex flex-col items-start gap-2"
+    >
+      <span class="py-1 text-sm font-medium text-n-slate-12">
+        {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.TITLE') }}
+      </span>
+      <div class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
+        <template v-for="(value, key) in customAttrsDisplay" :key="key">
+          <div class="flex items-center gap-1">
+            <Input
+              v-model="state.customAttributes[key]"
+              :placeholder="key"
+              class="flex-1"
+              @input="emit('update', state)"
+            />
+            <button
+              type="button"
+              class="text-n-slate-10 hover:text-n-ruby-11"
+              @click="removeCustomAttr(key)"
+            >
+              <Icon icon="i-lucide-x" class="size-3" />
+            </button>
+          </div>
+        </template>
+      </div>
+    </div>
+    <div class="flex flex-col items-start gap-2">
+      <span
+        v-if="Object.keys(customAttrsDisplay).length === 0"
+        class="py-1 text-sm font-medium text-n-slate-12"
+      >
+        {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.TITLE') }}
+      </span>
+      <div class="flex items-center gap-2">
+        <Input
+          v-model="newCustomAttrKey"
+          :placeholder="
+            t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.KEY_PLACEHOLDER')
+          "
+          class="w-32"
+        />
+        <Input
+          v-model="newCustomAttrValue"
+          :placeholder="
+            t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.VALUE_PLACEHOLDER')
+          "
+          class="w-32"
+        />
+        <Button size="sm" @click="addCustomAttr">
+          <Icon icon="i-lucide-plus" class="size-4" />
+        </Button>
       </div>
     </div>
   </div>

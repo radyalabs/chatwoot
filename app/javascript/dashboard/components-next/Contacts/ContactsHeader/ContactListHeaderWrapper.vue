@@ -36,6 +36,7 @@ const props = defineProps({
   activeSegment: { type: Object, default: null },
   hasAppliedFilters: { type: Boolean, default: false },
   isLabelView: { type: Boolean, default: false },
+  viewMode: { type: String, default: 'card' },
 });
 
 const emit = defineEmits([
@@ -43,6 +44,8 @@ const emit = defineEmits([
   'search',
   'applyFilter',
   'clearFilters',
+  'update:viewMode',
+  'columnSettings',
 ]);
 
 const { t } = useI18n();
@@ -279,6 +282,7 @@ defineExpose({
     :is-label-view="isLabelView"
     :has-active-filters="hasAppliedFilters"
     :button-label="t('CONTACTS_LAYOUT.HEADER.MESSAGE_BUTTON')"
+    :view-mode="viewMode"
     @search="emit('search', $event)"
     @update:sort="emit('update:sort', $event)"
     @add="openCreateNewContactDialog"
@@ -287,6 +291,8 @@ defineExpose({
     @filter="onToggleFilters"
     @create-segment="openCreateSegmentDialog"
     @delete-segment="openDeleteSegmentDialog"
+    @update:view-mode="emit('update:viewMode', $event)"
+    @column-settings="emit('columnSettings')"
   >
     <template #filter>
       <ContactsFilter
@@ -295,6 +301,7 @@ defineExpose({
         :segment-name="activeSegmentName"
         :is-segment-view="hasActiveSegments"
         class="absolute mt-1 ltr:right-0 rtl:left-0 top-full"
+        style="z-index: 100;"
         @apply-filter="onApplyFilter"
         @update-segment="onUpdateSegment"
         @close="closeAdvanceFiltersModal"

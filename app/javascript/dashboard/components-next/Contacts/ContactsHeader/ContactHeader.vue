@@ -43,6 +43,10 @@ defineProps({
     type: Boolean,
     default: false,
   },
+  viewMode: {
+    type: String,
+    default: 'card',
+  },
 });
 
 const emit = defineEmits([
@@ -54,11 +58,13 @@ const emit = defineEmits([
   'export',
   'createSegment',
   'deleteSegment',
+  'update:viewMode',
+  'columnSettings',
 ]);
 </script>
 
 <template>
-  <header class="sticky top-0 z-10">
+  <header class="sticky top-0 z-50">
     <div
       class="flex items-center justify-between w-full h-20 px-6 gap-2 mx-auto max-w-[960px]"
     >
@@ -124,6 +130,35 @@ const emit = defineEmits([
             :active-sort="activeSort"
             :active-ordering="activeOrdering"
             @update:sort="emit('update:sort', $event)"
+          />
+          <div class="flex items-center border border-n-weak rounded-md">
+            <Button
+              :icon="
+                viewMode === 'card'
+                  ? 'i-lucide-layout-grid'
+                  : 'i-lucide-layout-grid'
+              "
+              :variant="viewMode === 'card' ? 'solid' : 'ghost'"
+              size="xs"
+              class="rounded-r-none"
+              @click="emit('update:viewMode', 'card')"
+            />
+            <Button
+              :icon="
+                viewMode === 'table' ? 'i-lucide-table-2' : 'i-lucide-table-2'
+              "
+              :variant="viewMode === 'table' ? 'solid' : 'ghost'"
+              size="xs"
+              class="rounded-l-none"
+              @click="emit('update:viewMode', 'table')"
+            />
+          </div>
+          <Button
+            v-if="viewMode === 'table'"
+            icon="i-lucide-settings-2"
+            variant="ghost"
+            size="sm"
+            @click="emit('columnSettings')"
           />
           <ContactMoreActions
             @add="emit('add')"

@@ -1,7 +1,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useOperators } from './operators';
-import { useMapGetter } from 'dashboard/composables/store.js';
+import { useMapGetter, useStoreGetters } from 'dashboard/composables/store.js';
 import { buildAttributesFilterTypes } from './helper/filterHelper.js';
 import countries from 'shared/constants/countries.js';
 
@@ -65,7 +65,27 @@ export function useContactFilterContext() {
   /**
    * @type {import('vue').ComputedRef<FilterType[]>}
    */
+  // const customColumnFilterTypes = computed(() => {
+  //   const getters = useStoreGetters();
+  //   const uiSettings = getters.getUISettings.value || {};
+  //   const customColumns = uiSettings.contacts_custom_columns || [];
+  //   return customColumns.map(col => ({
+  //     attributeKey: col.key,
+  //     value: col.key,
+  //     attributeName: col.label || col.key,
+  //     label: col.label || col.key,
+  //     inputType: 'plainText',
+  //     dataType: 'text',
+  //     filterOperators: containmentOperators.value,
+  //     attributeModel: 'contact_attribute',
+  //   }));
+  // });
+
+  /**
+   * @type {import('vue').ComputedRef<FilterType[]>}
+   */
   const filterTypes = computed(() => [
+    // ...customColumnFilterTypes.value,
     {
       attributeKey: 'name',
       value: 'name',

@@ -9,8 +9,12 @@ import filterQueryGenerator from 'dashboard/helper/filterQueryGenerator';
 
 import ContactsListLayout from 'dashboard/components-next/Contacts/ContactsListLayout.vue';
 import ContactsList from 'dashboard/components-next/Contacts/Pages/ContactsList.vue';
+import ContactsTable from 'dashboard/components-next/Contacts/ContactsTable/ContactsTable.vue';
 import ContactEmptyState from 'dashboard/components-next/Contacts/EmptyState/ContactEmptyState.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
+import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
+import Button from 'dashboard/components-next/button/Button.vue';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 
 const DEFAULT_SORT_FIELD = 'last_activity_at';
 const DEBOUNCE_DELAY = 300;
@@ -23,6 +27,7 @@ const { t } = useI18n();
 const { updateUISettings, uiSettings } = useUISettings();
 
 const contacts = useMapGetter('contacts/getContactsList');
+const contactAttributes = useMapGetter('attributes/getContactAttributes');
 const uiFlags = useMapGetter('contacts/getUIFlags');
 const customViewsUiFlags = useMapGetter('customViews/getUIFlags');
 const segments = useMapGetter('customViews/getContactCustomViews');
@@ -51,7 +56,125 @@ const sortState = reactive({
   activeOrdering: initialOrder,
 });
 
+const viewMode = ref(uiSettings.value?.contacts_view_mode || 'table');
+
+const DEFAULT_MANDATORY_COLUMNS = [
+  'name',
+  'phoneNumber',
+  'companyName',
+  'location',
+  'createdAt',
+];
+
+const customColumns = ref(uiSettings.value?.contacts_custom_columns || []);
+
+const visibleColumns = computed(() => {
+  const savedCustom = uiSettings.value?.contacts_visible_custom_columns || [];
+  return [...DEFAULT_MANDATORY_COLUMNS, ...savedCustom];
+});
+
+const columnSettingsDialogRef = ref(null);
+const columnSettingsData = ref([]);
+const newCustomColumnKey = ref('');
+
+const mandatoryColumns = [
+  { key: 'name', label: t('CONTACTS_LAYOUT.TABLE.COLUMN.NAME') },
+  { key: 'phoneNumber', label: t('CONTACTS_LAYOUT.TABLE.COLUMN.PHONE') },
+  { key: 'companyName', label: t('CONTACTS_LAYOUT.TABLE.COLUMN.COMPANY') },
+  { key: 'location', label: t('CONTACTS_LAYOUT.TABLE.COLUMN.LOCATION') },
+  // { key: 'createdAt', label: t('CONTACTS_LAYOUT.TABLE.COLUMN.CREATED_AT') },
+];
+
+const handleViewModeChange = async newMode => {
+  viewMode.value = newMode;
+  await updateUISettings({
+    contacts_view_mode: newMode,
+  });
+};
+
+const handleViewContact = contactId => {
+  router.push({
+    name: 'contacts_edit',
+    params: { contactId },
+  });
+};
+
+const openColumnSettings = () => {
+  const savedCustom = uiSettings.value?.contacts_visible_custom_columns || [];
+  const initialData = [...DEFAULT_MANDATORY_COLUMNS, ...savedCustom];
+  columnSettingsData.value = initialData;
+  columnSettingsDialogRef.value?.open();
+};
+
+const allColumns = computed(() => [
+  ...mandatoryColumns,
+  ...(customColumns.value || []),
+]);
+
+const isMandatory = key => {
+  return mandatoryColumns.some(m => m.key === key);
+};
+
+const isChecked = key => columnSettingsData.value.includes(key);
+
+const toggleColumn = key => {
+  if (!isMandatory(key)) {
+    const idx = columnSettingsData.value.indexOf(key);
+    if (idx > -1) {
+      columnSettingsData.value = columnSettingsData.value.filter(
+        k => k !== key
+      );
+    } else {
+      columnSettingsData.value = [...columnSettingsData.value, key];
+    }
+  }
+};
+
+const addCustomColumn = () => {
+  if (newCustomColumnKey.value.trim()) {
+    const key = newCustomColumnKey.value.trim();
+    if (!customColumns.value.find(c => c.key === key)) {
+      customColumns.value = [...customColumns.value, { key, label: key }];
+      store.dispatch('contacts/createCustomAttribute', {
+        attribute_key: key,
+        attribute_display_name: key,
+        attribute_display_type: 'text',
+        attribute_model: 'contact_attribute',
+      });
+    }
+    newCustomColumnKey.value = '';
+  }
+};
+
+const deleteCustomColumn = key => {
+  customColumns.value = customColumns.value.filter(c => c.key !== key);
+  columnSettingsData.value = columnSettingsData.value.filter(k => k !== key);
+  const attr = contactAttributes.value?.find(a => a.attributeKey === key);
+  if (attr) {
+    store.dispatch('attributes/delete', attr.id);
+  }
+};
+
+const saveColumnSettings = async () => {
+  const selectedCustom = columnSettingsData.value.filter(
+    k => !DEFAULT_MANDATORY_COLUMNS.includes(k)
+  );
+  await updateUISettings({
+    contacts_visible_custom_columns: selectedCustom,
+    contacts_custom_columns: customColumns.value,
+  });
+  columnSettingsDialogRef.value?.close();
+
+  // eslint-disable-next-line no-use-before-define
+  await fetchContacts();
+};
+
+const closeColumnSettings = () => {
+  columnSettingsDialogRef.value?.close();
+};
+
 const activeLabel = computed(() => route.params.label);
+
 const activeSegmentId = computed(() => route.params.segmentId);
 const isFetchingList = computed(
   () => uiFlags.value.isFetching || customViewsUiFlags.value.isFetching
@@ -244,7 +367,7 @@ onMounted(async () => {
 
 <template>
   <div
-    class="flex flex-col justify-between flex-1 h-full m-0 overflow-auto bg-n-background"
+    class="flex-col justify-between flex-1 h-full m-0 overflow-auto bg-n-background"
   >
     <ContactsListLayout
       :search-value="searchValue"
@@ -258,11 +381,14 @@ onMounted(async () => {
       :segments-id="activeSegmentId"
       :is-fetching-list="isFetchingList"
       :has-applied-filters="hasAppliedFilters"
+      :view-mode="viewMode"
       @update:current-page="fetchContactsBasedOnContext"
       @search="searchContacts"
       @update:sort="handleSort"
       @apply-filter="fetchSavedOrAppliedFilteredContact"
       @clear-filters="fetchContacts"
+      @update:view-mode="handleViewModeChange"
+      @column-settings="openColumnSettings"
     >
       <div
         v-if="isFetchingList"
@@ -294,8 +420,75 @@ onMounted(async () => {
           </span>
         </div>
 
+        <ContactsTable
+          v-else-if="viewMode === 'table'"
+          :contacts="contacts"
+          :custom-attributes="customColumns"
+          :mandatory-columns="visibleColumns"
+          @view-contact="handleViewContact"
+        />
         <ContactsList v-else :contacts="contacts" />
       </template>
     </ContactsListLayout>
+
+    <Dialog
+      ref="columnSettingsDialogRef"
+      :title="t('CONTACTS_LAYOUT.TABLE.COLUMN_SETTINGS_TITLE')"
+      width="sm"
+    >
+      <div class="flex flex-col gap-3">
+        <p class="text-sm font-medium text-n-slate-12">
+          {{ t('CONTACTS_LAYOUT.TABLE.COLUMNS') }}
+        </p>
+        <div class="max-h-64 overflow-y-auto space-y-1">
+          <label
+            v-for="col in allColumns"
+            :key="col.key"
+            class="flex items-center justify-between gap-2 py-1"
+          >
+            <div class="flex items-center gap-2">
+              <input
+                type="checkbox"
+                class="w-4 h-4"
+                :checked="isChecked(col.key)"
+                :disabled="isMandatory(col.key)"
+                @change="toggleColumn(col.key)"
+              />
+              <span class="text-sm text-n-slate-12">{{ col.label }}</span>
+            </div>
+            <button
+              type="button"
+              class="text-n-slate-10 hover:text-n-ruby-11"
+              @click="deleteCustomColumn(col.key)"
+            >
+              <Icon icon="i-lucide-trash-2" class="size-4" />
+            </button>
+          </label>
+        </div>
+
+        <div class="flex items-center gap-2 mt-2">
+          <input
+            v-model="newCustomColumnKey"
+            type="text"
+            :placeholder="t('CONTACTS_LAYOUT.TABLE.COLUMN_KEY')"
+            class="flex-1 h-8 px-2 text-sm border rounded-lg"
+            @keyup.enter="addCustomColumn"
+          />
+          <Button size="sm" @click="addCustomColumn">
+            <Icon icon="i-lucide-plus" class="size-4" />
+          </Button>
+        </div>
+      </div>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <Button variant="ghost" size="sm" @click="closeColumnSettings">
+            {{ t('DIALOG.BUTTONS.CANCEL') }}
+          </Button>
+          <Button size="sm" @click="saveColumnSettings">
+            {{ t('DIALOG.BUTTONS.CONFIRM') }}
+          </Button>
+        </div>
+      </template>
+    </Dialog>
   </div>
 </template>

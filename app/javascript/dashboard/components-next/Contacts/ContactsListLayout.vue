@@ -19,6 +19,7 @@ defineProps({
   segmentsId: { type: [String, Number], default: 0 },
   hasAppliedFilters: { type: Boolean, default: false },
   isFetchingList: { type: Boolean, default: false },
+  viewMode: { type: String, default: 'card' },
 });
 
 const emit = defineEmits([
@@ -27,6 +28,8 @@ const emit = defineEmits([
   'search',
   'applyFilter',
   'clearFilters',
+  'update:viewMode',
+  'columnSettings',
 ]);
 
 const route = useRoute();
@@ -52,7 +55,7 @@ const openFilter = () => {
 
 <template>
   <section
-    class="flex w-full h-full gap-4 overflow-hidden justify-evenly bg-n-background"
+    class="flex w-full h-full gap-4 justify-evenly bg-n-background overflow-y-auto"
   >
     <div class="flex flex-col w-full h-full transition-all duration-300">
       <ContactListHeaderWrapper
@@ -66,13 +69,16 @@ const openFilter = () => {
         :segments-id="segmentsId"
         :has-applied-filters="hasAppliedFilters"
         :is-label-view="isLabelView"
+        :view-mode="viewMode"
         @update:sort="emit('update:sort', $event)"
         @search="emit('search', $event)"
         @apply-filter="emit('applyFilter', $event)"
         @clear-filters="emit('clearFilters')"
+        @update:view-mode="emit('update:viewMode', $event)"
+        @column-settings="emit('columnSettings')"
       />
-      <main class="flex-1 overflow-y-auto">
-        <div class="w-full mx-auto max-w-[960px]">
+      <div class="flex-1 overflow-auto">
+        <div class="mx-auto max-w-[1400px]">
           <ContactsActiveFiltersPreview
             v-if="
               (hasAppliedFilters || !isNotSegmentView) &&
@@ -85,10 +91,10 @@ const openFilter = () => {
           />
           <slot name="default" />
         </div>
-      </main>
+      </div>
       <footer
         v-if="showPaginationFooter"
-        class="sticky bottom-0 z-10 px-4 pb-4"
+        class="flex-shrink-0 px-4 pb-4"
       >
         <PaginationFooter
           current-page-info="CONTACTS_LAYOUT.PAGINATION_FOOTER.SHOWING"

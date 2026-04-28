@@ -191,6 +191,9 @@
     }
   },
   "CUSTOM_ATTRIBUTES": {
+    "TITLE": "Custom Attributes",
+    "KEY_PLACEHOLDER": "Attribute name",
+    "VALUE_PLACEHOLDER": "Value",
     "BUTTON": "Add custom attribute",
     "COPY_SUCCESSFUL": "Copied to clipboard successfully",
     "SHOW_MORE": "Show all attributes",
@@ -313,7 +316,14 @@
           "CANCEL": "Cancel",
           "IMPORT": "Import",
           "SUCCESS_MESSAGE": "You will be notified via email when the import is complete.",
-          "ERROR_MESSAGE": "There was an error, please try again"
+          "ERROR_MESSAGE": "There was an error, please try again",
+          "GUIDE": {
+            "TITLE": "How to prepare your data",
+            "STEP_1": "Create or fill your data in Google Sheets",
+            "STEP_2": "Go to File → Download → CSV (.csv)",
+            "STEP_3": "Upload the downloaded CSV file here",
+            "NOTES": "Note: Use headers from the template. Avoid merge cells or special formatting."
+          }
         },
         "EXPORT_CONTACT": {
           "TITLE": "Export contacts",
@@ -373,6 +383,9 @@
       "IDENTIFIER": "Identifier",
       "COUNTRY": "Country",
       "CITY": "City",
+      "LOCATION": "Location",
+      "COMPANY": "Company",
+      "LABELS": "Labels",
       "CREATED_AT": "Created at",
       "LAST_ACTIVITY": "Last activity",
       "REFERER_LINK": "Referer link",
@@ -452,6 +465,11 @@
             "PLACEHOLDER": "Add Twitter"
           }
         }
+      },
+      "CUSTOM_ATTRIBUTES": {
+        "TITLE": "Custom Attributes",
+        "KEY_PLACEHOLDER": "Attribute name",
+        "VALUE_PLACEHOLDER": "Value"
       }
     },
     "DETAILS": {
@@ -548,6 +566,31 @@
       "BUTTON_LABEL": "Add contact",
       "SEARCH_EMPTY_STATE_TITLE": "No contacts matches your search 🔍",
       "LIST_EMPTY_STATE_TITLE": "No contacts available in this view 📋"
+    },
+    "TABLE": {
+      "COLUMN": {
+        "NAME": "Name",
+        "EMAIL": "Email",
+        "PHONE": "Phone",
+        "COMPANY": "Company",
+        "LOCATION": "Location",
+        "CREATED_AT": "Created",
+        "LAST_ACTIVITY": "Last Activity",
+        "ACTIONS": "Actions"
+      },
+      "SEND_MESSAGE": "Send message",
+      "VIEW_DETAILS": "View details",
+      "EDIT_CONTACT": "Edit contact",
+      "VIEW_MODE": {
+        "CARD": "Card view",
+        "TABLE": "Table view"
+      },
+      "COLUMN_SETTINGS": "Columns",
+      "COLUMN_SETTINGS_TITLE": "Column Settings",
+      "COLUMNS": "Columns",
+      "ADD_CUSTOM_COLUMN": "Add Custom Column",
+      "COLUMN_KEY": "Key",
+      "COLUMN_LABEL": "Label"
     }
   },
 

@@ -1,3 +1,4 @@
+import components from './components.json';
 import advancedFilters from './advancedFilters.json';
 import agentBots from './agentBots.json';
 import agentMgmt from './agentMgmt.json';
@@ -34,6 +35,7 @@ import billing from './billing.json';
 import payment from './payment.json';
 
 export default {
+  ...components,
   ...advancedFilters,
   ...agentBots,
   ...agentMgmt,

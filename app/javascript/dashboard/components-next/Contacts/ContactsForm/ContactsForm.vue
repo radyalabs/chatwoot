@@ -26,7 +26,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['update']);
+const emit = defineEmits(['update', 'removeCustomAttr']);
 
 const { t } = useI18n();
 
@@ -263,10 +263,12 @@ const addCustomAttr = () => {
 };
 
 const removeCustomAttr = key => {
-  if (state.customAttributes && state.customAttributes[key]) {
-    delete state.customAttributes[key];
-    emit('update', state);
-  }
+  const newAttrs = {};
+  Object.keys(state.customAttributes).forEach(k => {
+    if (k !== key) newAttrs[k] = state.customAttributes[k];
+  });
+  state.customAttributes = newAttrs;
+  emit('removeCustomAttr', key);
 };
 
 watch(() => props.contactData, prepareStateBasedOnProps, {
@@ -362,7 +364,10 @@ defineExpose({
         </div>
       </div>
     </div>
-    <div v-if="Object.keys(customAttrsDisplay).length > 0" class="flex flex-col items-start gap-2">
+    <div
+      v-if="Object.keys(customAttrsDisplay).length > 0"
+      class="flex flex-col items-start gap-2"
+    >
       <span class="py-1 text-sm font-medium text-n-slate-12">
         {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.TITLE') }}
       </span>
@@ -387,7 +392,10 @@ defineExpose({
       </div>
     </div>
     <div class="flex flex-col items-start gap-2">
-      <span v-if="Object.keys(customAttrsDisplay).length === 0" class="py-1 text-sm font-medium text-n-slate-12">
+      <span
+        v-if="Object.keys(customAttrsDisplay).length === 0"
+        class="py-1 text-sm font-medium text-n-slate-12"
+      >
         {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.TITLE') }}
       </span>
       <div class="flex items-center gap-2">

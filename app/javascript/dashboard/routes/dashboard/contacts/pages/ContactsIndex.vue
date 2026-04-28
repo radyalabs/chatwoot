@@ -27,6 +27,7 @@ const { t } = useI18n();
 const { updateUISettings, uiSettings } = useUISettings();
 
 const contacts = useMapGetter('contacts/getContactsList');
+const contactAttributes = useMapGetter('attributes/getContactAttributes');
 const uiFlags = useMapGetter('contacts/getUIFlags');
 const customViewsUiFlags = useMapGetter('customViews/getUIFlags');
 const segments = useMapGetter('customViews/getContactCustomViews');
@@ -148,6 +149,10 @@ const addCustomColumn = () => {
 const deleteCustomColumn = key => {
   customColumns.value = customColumns.value.filter(c => c.key !== key);
   columnSettingsData.value = columnSettingsData.value.filter(k => k !== key);
+  const attr = contactAttributes.value?.find(a => a.attributeKey === key);
+  if (attr) {
+    store.dispatch('attributes/delete', attr.id);
+  }
 };
 
 const saveColumnSettings = async () => {

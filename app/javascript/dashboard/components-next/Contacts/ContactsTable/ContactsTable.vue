@@ -26,7 +26,7 @@ const props = defineProps({
       'phoneNumber',
       'companyName',
       'location',
-      'createdAt',
+      // 'createdAt',
     ],
   },
 });
@@ -44,6 +44,7 @@ const columnHelper = createColumnHelper();
 const contactForEdit = ref(null);
 const contactsFormRef = ref(null);
 const editDialogRef = ref(null);
+const removedCustomAttrs = ref([]);
 
 const getContactData = contact => ({
   id: contact.id,
@@ -56,6 +57,7 @@ const getContactData = contact => ({
 
 const openEditModal = contact => {
   contactForEdit.value = getContactData(contact);
+  removedCustomAttrs.value = [];
   editDialogRef.value?.open();
 };
 
@@ -71,10 +73,29 @@ const handleFormUpdate = updatedData => {
   Object.assign(contactForEdit.value, updatedData);
 };
 
+const handleRemoveCustomAttr = key => {
+  if (!contactForEdit.value) return;
+  const newAttrs = { ...contactForEdit.value.customAttributes };
+  delete newAttrs[key];
+  contactForEdit.value = {
+    ...contactForEdit.value,
+    customAttributes: newAttrs,
+  };
+  if (!removedCustomAttrs.value.includes(key)) {
+    removedCustomAttrs.value = [...removedCustomAttrs.value, key];
+  }
+};
+
 const handleUpdateContact = async () => {
   if (!contactForEdit.value) return;
 
   try {
+    if (removedCustomAttrs.value.length > 0) {
+      await store.dispatch('contacts/deleteCustomAttributes', {
+        id: contactForEdit.value.id,
+        customAttributes: removedCustomAttrs.value,
+      });
+    }
     await store.dispatch('contacts/update', contactForEdit.value);
     useAlert(t('CONTACTS_LAYOUT.CARD.EDIT_DETAILS_FORM.SUCCESS_MESSAGE'));
     closeEditModal();
@@ -85,15 +106,6 @@ const handleUpdateContact = async () => {
 
 const onClickViewDetails = id => {
   emit('viewContact', id);
-};
-
-const formatDate = timestamp => {
-  if (!timestamp) return '---';
-  return new Date(timestamp * 1000).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
 };
 
 const formatLocation = additionalAttributes => {
@@ -216,54 +228,54 @@ const columns = computed(() => {
     );
   }
 
-  if (props.mandatoryColumns.includes('createdAt')) {
-    cols.push(
-      columnHelper.display({
-        id: 'createdAt',
-        header: t('CONTACTS_LAYOUT.TABLE.COLUMN.CREATED_AT'),
-        cell: ({ row }) => {
-          const value = row.original.createdAt;
-          return h('span', { class: 'text-n-slate-11' }, formatDate(value));
-        },
-        size: 120,
-      })
-    );
-  }
+  // if (props.mandatoryColumns.includes('createdAt')) {
+  //   cols.push(
+  //     columnHelper.display({
+  //       id: 'createdAt',
+  //       header: t('CONTACTS_LAYOUT.TABLE.COLUMN.CREATED_AT'),
+  //       cell: ({ row }) => {
+  //         const value = row.original.createdAt;
+  //         return h('span', { class: 'text-n-slate-11' }, formatDate(value));
+  //       },
+  //       size: 120,
+  //     })
+  //   );
+  // }
 
-  if (props.mandatoryColumns.includes('lastActivityAt')) {
-    cols.push(
-      columnHelper.display({
-        id: 'lastActivityAt',
-        header: t('CONTACTS_LAYOUT.TABLE.COLUMN.LAST_ACTIVITY'),
-        cell: ({ row }) => {
-          const value = row.original.lastActivityAt;
-          return h('span', { class: 'text-n-slate-11' }, formatDate(value));
-        },
-        size: 140,
-      })
-    );
-  }
+  // if (props.mandatoryColumns.includes('lastActivityAt')) {
+  //   cols.push(
+  //     columnHelper.display({
+  //       id: 'lastActivityAt',
+  //       header: t('CONTACTS_LAYOUT.TABLE.COLUMN.LAST_ACTIVITY'),
+  //       cell: ({ row }) => {
+  //         const value = row.original.lastActivityAt;
+  //         return h('span', { class: 'text-n-slate-11' }, formatDate(value));
+  //       },
+  //       size: 140,
+  //     })
+  //   );
+  // }
 
   props.customAttributes
     .filter(attr => props.mandatoryColumns.includes(attr.key))
     .forEach(attr => {
-    cols.push(
-      columnHelper.display({
-        id: attr.key,
-        header: attr.label || attr.key,
-        cell: ({ row }) => {
-          const customAttrs = row.original.customAttributes || {};
-          const value = customAttrs[attr.key];
-          return h(
-            'span',
-            { class: value ? '' : 'text-n-slate-8' },
-            value || '---'
-          );
-        },
-        size: 150,
-      })
-    );
-  });
+      cols.push(
+        columnHelper.display({
+          id: attr.key,
+          header: attr.label || attr.key,
+          cell: ({ row }) => {
+            const customAttrs = row.original.customAttributes || {};
+            const value = customAttrs[attr.key];
+            return h(
+              'span',
+              { class: value ? '' : 'text-n-slate-8' },
+              value || '---'
+            );
+          },
+          size: 150,
+        })
+      );
+    });
 
   cols.push(
     columnHelper.display({
@@ -325,6 +337,7 @@ const table = useVueTable({
           ref="contactsFormRef"
           :contact-data="contactForEdit"
           @update="handleFormUpdate"
+          @remove-custom-attr="handleRemoveCustomAttr"
         />
       </template>
       <template #footer>

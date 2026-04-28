@@ -138,7 +138,7 @@ const emit = defineEmits([
                   ? 'i-lucide-layout-grid'
                   : 'i-lucide-layout-grid'
               "
-              :variant="viewMode === 'card' ? 'secondary' : 'ghost'"
+              :variant="viewMode === 'card' ? 'solid' : 'ghost'"
               size="xs"
               class="rounded-r-none"
               @click="emit('update:viewMode', 'card')"
@@ -147,7 +147,7 @@ const emit = defineEmits([
               :icon="
                 viewMode === 'table' ? 'i-lucide-table-2' : 'i-lucide-table-2'
               "
-              :variant="viewMode === 'table' ? 'secondary' : 'ghost'"
+              :variant="viewMode === 'table' ? 'solid' : 'ghost'"
               size="xs"
               class="rounded-l-none"
               @click="emit('update:viewMode', 'table')"

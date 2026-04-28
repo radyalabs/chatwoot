@@ -65,27 +65,27 @@ export function useContactFilterContext() {
   /**
    * @type {import('vue').ComputedRef<FilterType[]>}
    */
-  const customColumnFilterTypes = computed(() => {
-    const getters = useStoreGetters();
-    const uiSettings = getters.getUISettings.value || {};
-    const customColumns = uiSettings.contacts_custom_columns || [];
-    return customColumns.map(col => ({
-      attributeKey: col.key,
-      value: col.key,
-      attributeName: col.label || col.key,
-      label: col.label || col.key,
-      inputType: 'plainText',
-      dataType: 'text',
-      filterOperators: containmentOperators.value,
-      attributeModel: 'contact_attribute',
-    }));
-  });
+  // const customColumnFilterTypes = computed(() => {
+  //   const getters = useStoreGetters();
+  //   const uiSettings = getters.getUISettings.value || {};
+  //   const customColumns = uiSettings.contacts_custom_columns || [];
+  //   return customColumns.map(col => ({
+  //     attributeKey: col.key,
+  //     value: col.key,
+  //     attributeName: col.label || col.key,
+  //     label: col.label || col.key,
+  //     inputType: 'plainText',
+  //     dataType: 'text',
+  //     filterOperators: containmentOperators.value,
+  //     attributeModel: 'contact_attribute',
+  //   }));
+  // });
 
   /**
    * @type {import('vue').ComputedRef<FilterType[]>}
    */
   const filterTypes = computed(() => [
-    ...customColumnFilterTypes.value,
+    // ...customColumnFilterTypes.value,
     {
       attributeKey: 'name',
       value: 'name',

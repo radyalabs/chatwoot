@@ -59,4 +59,19 @@ class WhatsappUnofficial::SendOnWhatsappUnofficialService < Base::SendOnChannelS
   def outgoing_message?
     message.outgoing? || message.template?
   end
+
+  private
+
+  def extract_reply_message_id
+    return nil unless message.is_a?(Message)
+
+    last_incoming = message.conversation.messages
+                           .where(message_type: :incoming)
+                           .where('created_at <= ?', message.created_at)
+                           .where.not(source_id: nil)
+                           .order(:created_at)
+                           .last
+
+    last_incoming&.source_id
+  end
 end

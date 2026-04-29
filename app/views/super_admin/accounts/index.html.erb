@@ -1,0 +1,129 @@
+<% content_for(:title) do %>
+  <%= display_resource_name(page.resource_name) %>
+<% end %>
+
+<header class="main-content__header" role="banner">
+  <h1 class="main-content__page-title" id="page-title">
+    <%= content_for(:title) %>
+  </h1>
+
+  <div class="search-filter-wrapper">
+    <% if show_search_bar %>
+      <div class="search-filter-wrapper__search">
+        <%= render(
+          "search",
+          search_term: search_term,
+          resource_name: display_resource_name(page.resource_name)
+        ) %>
+      </div>
+    <% end %>
+
+    <%= form_tag(request.path, method: :get, class: "search-filter-wrapper__filter") do %>
+      <%= hidden_field_tag :search, search_term %>
+      <div class="filter-dropdown-wrapper">
+        <span class="filter-dropdown-label">Status</span>
+        <%= select_tag :subscription_expiration_status,
+              options_for_select(
+                [['All', ''], ['Active', 'active'], ['Expired', 'expired']],
+                params[:subscription_expiration_status]
+              ),
+              onchange: "this.form.submit()",
+              class: "filter-dropdown-select" %>
+        <% if params[:subscription_expiration_status].present? %>
+          <%= link_to "✕", request.path, class: "filter-clear-btn", title: "Clear filter" %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <div>
+    <%= link_to(
+      t("administrate.actions.new_resource", name: page.resource_name.titleize.downcase),
+      [:new, namespace, page.resource_path.to_sym],
+      class: "button",
+    ) if accessible_action?(new_resource, :new) %>
+  </div>
+</header>
+
+<style>
+  .search-filter-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    margin: 0 16px;
+  }
+
+  .search-filter-wrapper__search {
+    flex: 1;
+  }
+
+  /* Pastikan form search bawaan Administrate full width */
+  .search-filter-wrapper__search form,
+  .search-filter-wrapper__search .search-form {
+    width: 100%;
+    margin: 0;
+  }
+
+  .search-filter-wrapper__filter {
+    flex-shrink: 0;
+    margin: 0;
+  }
+
+  .filter-dropdown-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 0 10px;
+    height: 36px;
+  }
+
+  .filter-dropdown-label {
+    font-size: 13px;
+    color: #667781;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  .filter-dropdown-select {
+    border: none;
+    outline: none;
+    font-size: 13px;
+    color: #111;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    min-width: 90px;
+  }
+
+  .filter-clear-btn {
+    font-size: 12px;
+    color: #999;
+    text-decoration: none;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .filter-clear-btn:hover {
+    background: #f0f0f0;
+    color: #333;
+  }
+</style>
+
+<section class="main-content__body main-content__body--flush">
+  <%= render(
+    "collection",
+    collection_presenter: page,
+    collection_field_name: resource_name,
+    page: page,
+    resources: resources,
+    table_title: "page-title"
+  ) %>
+
+  <%= paginate resources, param_name: '_page' %>
+</section>

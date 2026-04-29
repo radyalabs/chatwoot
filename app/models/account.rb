@@ -109,6 +109,12 @@ class Account < ApplicationRecord
     active_subscription&.plan_name || 'N/A'
   end
 
+  def subscription_expiration_status
+    return 'N/A' unless active_subscription
+
+    active_subscription.ends_at&.>(Time.current) ? 'ACTIVE' : 'EXPIRED'
+  end
+
   before_validation :validate_limit_keys
   after_create_commit :notify_creation
   after_destroy :remove_account_sequences

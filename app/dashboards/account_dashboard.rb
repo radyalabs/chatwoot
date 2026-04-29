@@ -30,6 +30,7 @@ class AccountDashboard < Administrate::BaseDashboard
     administrators: AdministratorsField,
     custom_attributes: Field::String,
     subscription_plan_name: Field::String.with_options(searchable: false),
+    subscription_expiration_status: Field::String.with_options(searchable: false),
     expires_at: Field::Date.with_options(searchable: false)
   }.merge(enterprise_attribute_types).freeze
 
@@ -43,6 +44,7 @@ class AccountDashboard < Administrate::BaseDashboard
     name
     subscription_plan_name
     expires_at
+    subscription_expiration_status
     users
     conversations
   ].freeze

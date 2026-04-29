@@ -27,7 +27,11 @@ class AccountDashboard < Administrate::BaseDashboard
     locale: Field::Select.with_options(collection: LANGUAGES_CONFIG.map { |_x, y| y[:iso_639_1_code] }),
     status: Field::Select.with_options(collection: [%w[Active active], %w[Suspended suspended]]),
     account_users: Field::HasMany,
-    custom_attributes: Field::String
+    administrators: AdministratorsField,
+    custom_attributes: Field::String,
+    subscription_plan_name: Field::String.with_options(searchable: false),
+    subscription_expiration_status: Field::String.with_options(searchable: false),
+    expires_at: Field::Date.with_options(searchable: false)
   }.merge(enterprise_attribute_types).freeze
 
   # COLLECTION_ATTRIBUTES
@@ -38,10 +42,11 @@ class AccountDashboard < Administrate::BaseDashboard
   COLLECTION_ATTRIBUTES = %i[
     id
     name
-    locale
+    subscription_plan_name
+    expires_at
+    subscription_expiration_status
     users
     conversations
-    status
   ].freeze
 
   # SHOW_PAGE_ATTRIBUTES
@@ -52,9 +57,10 @@ class AccountDashboard < Administrate::BaseDashboard
     name
     created_at
     updated_at
-    locale
-    status
+    subscription_plan_name
+    expires_at
     conversations
+    administrators
     account_users
   ] + enterprise_show_page_attributes).freeze
 

@@ -81,6 +81,8 @@ class Account < ApplicationRecord
   has_many :twilio_sms, dependent: :destroy_async, class_name: '::Channel::TwilioSms'
   has_many :twitter_profiles, dependent: :destroy_async, class_name: '::Channel::TwitterProfile'
   has_many :users, through: :account_users
+  has_many :administrator_account_users, -> { where(role: :administrator) }, class_name: 'AccountUser'
+  has_many :administrators, through: :administrator_account_users, source: :user
   has_many :web_widgets, dependent: :destroy_async, class_name: '::Channel::WebWidget'
   has_many :webhooks, dependent: :destroy_async
   has_many :whatsapp_channels, dependent: :destroy_async, class_name: '::Channel::Whatsapp'
@@ -96,6 +98,21 @@ class Account < ApplicationRecord
 
   enum locale: LANGUAGES_CONFIG.map { |key, val| [val[:iso_639_1_code], key] }.to_h
   enum status: { active: 0, suspended: 1 }
+
+  # Virtual attributes from active_subscription
+  def expires_at
+    active_subscription&.ends_at
+  end
+
+  def subscription_plan_name
+    active_subscription&.plan_name || 'N/A'
+  end
+
+  def subscription_expiration_status
+    return 'N/A' unless active_subscription
+
+    active_subscription.ends_at&.>(Time.current) ? 'ACTIVE' : 'EXPIRED'
+  end
 
   before_validation :validate_limit_keys
   after_create_commit :notify_creation

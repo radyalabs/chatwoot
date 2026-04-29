@@ -7,29 +7,41 @@ const props = defineProps({
 });
 
 const prepareData = sourceData => {
-  const labels = [], data = [];
-  sourceData.forEach(item => { labels.push(item[0]); data.push(item[1]); });
+  const labels = [],
+    data = [];
+  sourceData.forEach(item => {
+    labels.push(item[0]);
+    data.push(item[1]);
+  });
   return {
     labels,
-    datasets: [{
-      type: 'bar',
-      backgroundColor: 'rgba(55,138,221,0.85)',
-      borderRadius: 6,
-      borderSkipped: false,
-      yAxisID: 'y',
-      label: 'Conversations',
-      data,
-    }],
+    datasets: [
+      {
+        type: 'bar',
+        backgroundColor: 'rgba(55,138,221,0.85)',
+        borderRadius: 6,
+        borderSkipped: false,
+        yAxisID: 'y',
+        label: 'Conversations',
+        data,
+      },
+    ],
   };
 };
 
 const chartData = computed(() => prepareData(props.componentData.chartData));
 
 const {
-  accountsCount, accountsSubscriptionsCount,
-  accountsActiveCount, accountsExpiredCount,
-  administratorsCount, agentsCount,
-  usersCount, inboxesCount, conversationsCount,
+  accountsCount,
+  accountsSubscriptionsCount,
+  accountsActiveCount,
+  accountsExpiredCount,
+  administratorsCount,
+  agentsCount,
+  usersUnverifiedCount,
+  usersCount,
+  inboxesCount,
+  conversationsCount,
 } = props.componentData;
 
 const cardGroups = [
@@ -37,27 +49,28 @@ const cardGroups = [
     group: 'Accounts',
     color: 'blue',
     cards: [
-      { label: 'Total',         value: accountsCount },
+      { label: 'Total', value: accountsCount },
       { label: 'Subscriptions', value: accountsSubscriptionsCount },
-      { label: 'Active',        value: accountsActiveCount },
-      { label: 'Expired',       value: accountsExpiredCount },
+      { label: 'Active', value: accountsActiveCount },
+      { label: 'Expired', value: accountsExpiredCount },
     ],
   },
   {
     group: 'Users',
     color: 'teal',
     cards: [
-      { label: 'Total',          value: usersCount },
+      { label: 'Total', value: usersCount },
       { label: 'Administrators', value: administratorsCount },
-      { label: 'Agents',         value: agentsCount },
+      { label: 'Agents', value: agentsCount },
+      { label: 'Unverified', value: usersUnverifiedCount, color: 'coral' },
     ],
   },
   {
     group: 'Activity',
     color: 'amber',
     cards: [
-      { label: 'Inboxes',        value: inboxesCount,        color: 'amber' },
-      { label: 'Conversations',  value: conversationsCount,  color: 'coral' },
+      { label: 'Inboxes', value: inboxesCount, color: 'amber' },
+      { label: 'Conversations', value: conversationsCount, color: 'coral' },
     ],
   },
 ];
@@ -78,7 +91,9 @@ const cardGroups = [
           :class="['metric-card', `metric-card--${card.color ?? group.color}`]"
         >
           <div class="metric-card__accent" />
-          <div class="metric-card__value">{{ card.value?.toLocaleString() ?? '—' }}</div>
+          <div class="metric-card__value">
+            {{ card.value?.toLocaleString() ?? '—' }}
+          </div>
           <div class="metric-card__label">{{ card.label }}</div>
         </div>
       </div>
@@ -86,13 +101,19 @@ const cardGroups = [
 
     <section class="chart-section">
       <div class="chart-title">Conversations over time</div>
-      <BarChart class="w-full" :collection="chartData" style="max-height: 400px" />
+      <BarChart
+        class="w-full"
+        :collection="chartData"
+        style="max-height: 400px"
+      />
     </section>
   </div>
 </template>
 
 <style scoped>
-.card-group { margin-bottom: 1.5rem; }
+.card-group {
+  margin-bottom: 1.5rem;
+}
 
 .card-group__label {
   font-size: 11px;
@@ -119,18 +140,30 @@ const cardGroups = [
   overflow: hidden;
   transition: border-color 0.2s;
 }
-.metric-card:hover { border-color: #d1d5db; }
+.metric-card:hover {
+  border-color: #d1d5db;
+}
 
 .metric-card__accent {
   position: absolute;
-  top: 0; left: 0; right: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   height: 3px;
   border-radius: 12px 12px 0 0;
 }
-.metric-card--blue  .metric-card__accent { background: #378ADD; }
-.metric-card--teal  .metric-card__accent { background: #1D9E75; }
-.metric-card--amber .metric-card__accent { background: #EF9F27; }
-.metric-card--coral .metric-card__accent { background: #D85A30; }
+.metric-card--blue .metric-card__accent {
+  background: #378add;
+}
+.metric-card--teal .metric-card__accent {
+  background: #1d9e75;
+}
+.metric-card--amber .metric-card__accent {
+  background: #ef9f27;
+}
+.metric-card--coral .metric-card__accent {
+  background: #d85a30;
+}
 
 .metric-card__value {
   font-size: 24px;

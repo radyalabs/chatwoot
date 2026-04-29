@@ -4,7 +4,13 @@
 
 <%= render_vue_component('DashboardIndex', {
   accountsCount: @accounts_count,
+  accountsSubscriptionsCount: @accounts_subscriptions_count,
+  accountsActiveCount: @accounts_active_count,
+  accountsExpiredCount: @accounts_expired_count,
   usersCount: @users_count,
+  administratorsCount: @administrators_count,
+  agentsCount: @agents_count,
+  usersUnverifiedCount: @users_unverified_count,
   inboxesCount: @inboxes_count,
   conversationsCount: @conversations_count,
   chartData: @data

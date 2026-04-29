@@ -21,7 +21,23 @@ class SuperAdmin::AccountsController < SuperAdmin::ApplicationController
   # this will be used to set the records shown on the `index` action.
   #
   def scoped_resource
-    super.includes(:active_subscription, administrators: :account_users)
+    resources = super.includes(:active_subscription, administrators: :account_users)
+
+    # Apply subscription expiration status filter
+    if params[:subscription_expiration_status].present?
+      case params[:subscription_expiration_status]
+      when 'active'
+        resources = resources.where(
+          active_subscription_id: Subscription.where('ends_at > ?', Time.current).select(:id)
+        )
+      when 'expired'
+        resources = resources.where(
+          active_subscription_id: Subscription.where('ends_at <= ?', Time.current).select(:id)
+        )
+      end
+    end
+
+    resources
   end
 
   # Override `resource_params` if you want to transform the submitted

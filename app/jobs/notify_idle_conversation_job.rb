@@ -49,6 +49,8 @@ class NotifyIdleConversationJob < ApplicationJob
       step: idle_conversation.step
     ).perform
 
+    return if message.nil?
+
     create_message(
       message, {
         account_id: idle_conversation.account_id,

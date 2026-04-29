@@ -273,6 +273,7 @@
     "AUDIT_LOGS": "Audit Logs",
     "INBOXES": "Inboxes",
     "NOTIFICATIONS": "Notifications",
+    "BLASTING": "Broadcast",
     "CANNED_RESPONSES": "Canned Responses",
     "INTEGRATIONS": "Integrations",
     "PROFILE_SETTINGS": "Profile Settings",

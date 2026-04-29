@@ -373,5 +373,43 @@
   },
   "AI_AGENTS": {
     "CREATE_NEW": "Create AI Bot"
+  },
+  "BROADCAST": {
+    "TITLE": "Manage Broadcasts",
+    "DESC": "Manage and monitor all your mass messages here.",
+    "NEW_BROADCAST": "New Broadcast",
+    "CREATE_FIRST": "Create your first broadcast",
+    "LIST_PLACEHOLDER": "Displaying broadcast list...",
+    "ADD_TITLE": "Create New Broadcast Campaign",
+    "ADD_DESC": "Send mass messages (broadcast) to your customers via WhatsApp integration.",
+    "INBOX_LABEL": "Select Sender Inbox",
+    "INBOX_PLACEHOLDER": "-- Select WhatsApp Channel --",
+    "INBOX_EMPTY": "No WhatsApp Inbox available.",
+    "TARGET_LABEL": "Target Segment / Label",
+    "TARGET_ALL": "All Contacts",
+    "TARGET_LABEL_PREFIX": "Label:",
+    "MESSAGE_LABEL": "Main Message Content",
+    "ADVANCED_SETTINGS": "Advanced Settings",
+    "SPIN_TEXT_LABEL": "Enable Spin Text",
+    "SPIN_TEXT_DESC": "Vary messages to prevent blocking. Example: {Hello|Hi|Good Morning}",
+    "UNSUBSCRIBE_LABEL": "Include Unsubscribe Option",
+    "UNSUBSCRIBE_DESC": "Automatically append unsubscribe instructions at the end of the message.",
+    "CANCEL": "Cancel",
+    "RESET": "Reset",
+    "SUBMIT": "Send Broadcast",
+    "SUCCESS_MESSAGE": "Broadcast Campaign successfully scheduled!",
+    "ERROR_MESSAGE": "Failed to create broadcast. Check your connection."
+  },
+  "BROADCAST_DETAIL": {
+    "BACK": "Back to List",
+    "TITLE": "Broadcast Report",
+    "SENT_AT": "Sent at",
+    "METRIC_SENT": "Sent",
+    "METRIC_READ": "Read",
+    "METRIC_REPLIED": "Replied",
+    "METRIC_FAILED": "Failed",
+    "MESSAGE_PREVIEW": "Message Preview",
+    "INFO": "Campaign Information",
+    "TARGET": "Target Segment / Label"
   }
 }

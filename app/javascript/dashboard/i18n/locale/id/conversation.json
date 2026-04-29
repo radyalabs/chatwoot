@@ -349,5 +349,43 @@
   },
   "AI_AGENTS": {
     "CREATE_NEW": "Buat Bot AI"
+  },
+  "BROADCAST": {
+    "TITLE": "Kelola Broadcast",
+    "DESC": "Kelola dan pantau semua pesan massal Anda di sini.",
+    "NEW_BROADCAST": "Broadcast Baru",
+    "CREATE_FIRST": "Buat broadcast pertama Anda",
+    "LIST_PLACEHOLDER": "Menampilkan daftar broadcast...",
+    "ADD_TITLE": "Buat Campaign Blasting Baru",
+    "ADD_DESC": "Kirim pesan massal (broadcast) ke pelanggan Anda melalui integrasi WhatsApp.",
+    "INBOX_LABEL": "Pilih Inbox Sender",
+    "INBOX_PLACEHOLDER": "-- Pilih Saluran WhatsApp --",
+    "INBOX_EMPTY": "Tidak ada Inbox WhatsApp yang tersedia.",
+    "TARGET_LABEL": "Target Segmen / Label",
+    "TARGET_ALL": "Semua Kontak",
+    "TARGET_LABEL_PREFIX": "Label:",
+    "MESSAGE_LABEL": "Isi Pesan Utama",
+    "ADVANCED_SETTINGS": "Pengaturan Lanjutan",
+    "SPIN_TEXT_LABEL": "Aktifkan Spin Text",
+    "SPIN_TEXT_DESC": "Variasikan pesan untuk mencegah pemblokiran. Contoh: {Halo|Hai|Selamat Pagi}",
+    "UNSUBSCRIBE_LABEL": "Sertakan Opsi Unsubscribe",
+    "UNSUBSCRIBE_DESC": "Otomatis tambahkan instruksi berhenti berlangganan di akhir pesan.",
+    "CANCEL": "Batal",
+    "RESET": "Reset",
+    "SUBMIT": "Kirim Blasting",
+    "SUCCESS_MESSAGE": "Campaign Blasting berhasil dijadwalkan!",
+    "ERROR_MESSAGE": "Gagal membuat blasting. Periksa koneksi Anda."
+  },
+  "BROADCAST_DETAIL": {
+    "BACK": "Kembali ke Daftar",
+    "TITLE": "Laporan Broadcast",
+    "SENT_AT": "Dikirim pada",
+    "METRIC_SENT": "Terkirim",
+    "METRIC_READ": "Dibaca",
+    "METRIC_REPLIED": "Mendapat Balasan",
+    "METRIC_FAILED": "Gagal",
+    "MESSAGE_PREVIEW": "Pratinjau Pesan",
+    "INFO": "Informasi Campaign",
+    "TARGET": "Target Segmen / Label"
   }
 }

@@ -8,7 +8,8 @@ class Captain::Llm::GenerateIdleMessage
   def perform
     raise ArgumentError, 'conversation is nil' if conversation.nil?
     raise ArgumentError, 'agent_bot_inbox not found' if agent_bot_inbox.nil?
-    raise ArgumentError, 'ai_agent not found' if ai_agent.nil?
+
+    return if ai_agent.nil?
 
     generate_response
   end
@@ -38,7 +39,11 @@ class Captain::Llm::GenerateIdleMessage
   end
 
   def ai_agent
+    return nil if agent_bot_inbox.nil?
+
     @ai_agent ||= AiAgent.find_by(id: agent_bot_inbox.ai_agent_id)
+    Rails.logger.warn "[GenerateIdleMessage] ai_agent not found for ai_agent_id: #{agent_bot_inbox.ai_agent_id}" if @ai_agent.nil?
+    @ai_agent
   end
 
   def request_body

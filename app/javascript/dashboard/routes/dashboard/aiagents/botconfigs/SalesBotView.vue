@@ -1428,7 +1428,7 @@
                         class="border-t border-gray-200 dark:border-gray-700 p-4 space-y-4 transition-all duration-200 ease-in-out"
                       >
                         <!-- Coming Soon -->
-                        <div class="flex items-center justify-center py-8">
+                        <!-- <div class="flex items-center justify-center py-8">
                           <div class="text-center">
                             <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
                               <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400">
@@ -1439,10 +1439,10 @@
                             <h4 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Coming Soon</h4>
                             <p class="text-sm text-gray-500 dark:text-gray-400">Payment gateway configuration will be available soon.</p>
                           </div>
-                        </div>
+                        </div> -->
   
                         <!-- DONT DELETE! -->
-                        <!--
+                        
                         <div>
                           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             {{ $t('AGENT_MGMT.SALESBOT.PAYMENT.PROVIDER_LABEL') }} <span class="text-red-500">*</span>
@@ -1481,7 +1481,7 @@
                             class="border-n-weak dark:border-n-weak hover:border-n-slate-6 dark:hover:border-n-slate-6 disabled:border-n-weak dark:disabled:border-n-weak focus:border-n-brand dark:focus:border-n-brand block w-full reset-base text-sm h-10 !px-3 !py-2.5 !mb-0 border rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out"
                           />
                         </div>
-                        -->
+                       
                       </div>
                     </div>
                   </div>

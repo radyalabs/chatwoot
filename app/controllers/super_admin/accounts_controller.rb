@@ -20,13 +20,9 @@ class SuperAdmin::AccountsController < SuperAdmin::ApplicationController
   # Override this if you have certain roles that require a subset
   # this will be used to set the records shown on the `index` action.
   #
-  # def scoped_resource
-  #   if current_user.super_admin?
-  #     resource_class
-  #   else
-  #     resource_class.with_less_stuff
-  #   end
-  # end
+  def scoped_resource
+    super.includes(:active_subscription, administrators: :account_users)
+  end
 
   # Override `resource_params` if you want to transform the submitted
   # data before it's persisted. For example, the following would turn all
@@ -45,6 +41,8 @@ class SuperAdmin::AccountsController < SuperAdmin::ApplicationController
     @conversation_counts = Conversation.where(account_id: requested_resource.id)
                                         .group(:inbox_id, :contact_id)
                                         .count
+    # Eager load active_subscription to avoid N+1 query for expires_at field
+    requested_resource.association(:active_subscription).load_target
     # Get last conversation (session) for each inbox/contact
     latest_session = Conversation.where(account_id: requested_resource.id)
                                      .select('inbox_id, contact_id, MAX(created_at) as latest_session')

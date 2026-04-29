@@ -31,6 +31,7 @@ class UserDashboard < Administrate::BaseDashboard
     name: Field::String.with_options(searchable: true),
     display_name: Field::String,
     email: Field::String.with_options(searchable: true),
+    phone: Field::String,
     tokens: Field::String.with_options(searchable: false),
     created_at: Field::DateTime,
     updated_at: Field::DateTime,
@@ -50,6 +51,7 @@ class UserDashboard < Administrate::BaseDashboard
     avatar_url
     name
     email
+    phone
     accounts
     type
   ].freeze

@@ -44,23 +44,38 @@ class NotifyIdleConversationJob < ApplicationJob
   end
 
   def idle_conversation_processor(idle_conversation)
-    message = Captain::Llm::GenerateIdleMessage.new(
+    handle_orphaned_conversation(idle_conversation) && return if orphaned?(idle_conversation)
+    return if (message = generate_message(idle_conversation)).nil?
+
+    create_message(message, conversation_attributes(idle_conversation))
+    idle_conversation.mark_as_sent!
+    idle_conversation.mark_as_conversation_resolved! if idle_conversation.completed?
+  end
+
+  def orphaned?(idle_conversation)
+    conversation = idle_conversation.conversation
+    inbox = idle_conversation.inbox
+    conversation.blank? || inbox.blank?
+  rescue ActiveRecord::RecordNotFound
+    true
+  end
+
+  def handle_orphaned_conversation(idle_conversation)
+    log_and_delete(idle_conversation, 'conversation or inbox not found')
+    true
+  end
+
+  def log_and_delete(idle_conversation, reason)
+    Rails.logger.warn "[NotifyIdleConversationJob] Orphaned idle_conversation id:#{idle_conversation.id} - #{reason}, deleting"
+    idle_conversation.destroy
+    true
+  end
+
+  def generate_message(idle_conversation)
+    Captain::Llm::GenerateIdleMessage.new(
       conversation: idle_conversation.conversation,
       step: idle_conversation.step
     ).perform
-
-    return if message.nil?
-
-    create_message(
-      message, {
-        account_id: idle_conversation.account_id,
-        inbox_id: idle_conversation.inbox_id,
-        conversation_id: idle_conversation.conversation_id
-      }
-    )
-
-    idle_conversation.mark_as_sent!
-    idle_conversation.mark_as_conversation_resolved! if idle_conversation.completed?
   end
 
   def create_message(message, conversation_attr)
@@ -73,6 +88,14 @@ class NotifyIdleConversationJob < ApplicationJob
       content_type: CONTENT_TYPE_TEXT,
       status: MESSAGE_STATUS_SENT
     )
+  end
+
+  def conversation_attributes(idle_conversation)
+    {
+      account_id: idle_conversation.account_id,
+      inbox_id: idle_conversation.inbox_id,
+      conversation_id: idle_conversation.conversation_id
+    }
   end
 
   def idle_conversations

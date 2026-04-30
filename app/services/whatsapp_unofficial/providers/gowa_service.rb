@@ -66,23 +66,37 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
   end
 
   def send_image(phone_number, attachment, caption: nil) # rubocop:disable Metrics/MethodLength
-    tempfile = Tempfile.new(
-      [File.basename(attachment[:filename], '.*'), File.extname(attachment[:filename])]
-    )
+    raw_filename = attachment[:filename].to_s
+    safe_filename = raw_filename
+                      .encode('UTF-8', invalid: :replace, undef: :replace, replace: '_')
+                      .gsub(/[^\w\s\-.]/, '_')
+    
+    ext = File.extname(safe_filename).presence || '.jpg'
+    base = File.basename(safe_filename, ext).presence || 'upload'
 
+    tempfile = Tempfile.new([base, ext])
     tempfile.binmode
-    tempfile.write(attachment[:io].read)
+
+    io = attachment[:io]
+    io.binmode if io.respond_to?(:binmode)
+    io.rewind   if io.respond_to?(:rewind)
+    tempfile.write(io.read)
     tempfile.rewind
+
+    safe_caption = caption
+                     &.to_s
+                     &.encode('UTF-8', invalid: :replace, undef: :replace, replace: '')
+                     &.presence
 
     body = {
       phone: normalize_phone_target(phone_number),
-      image: Multipart::Post::UploadIO.new(tempfile, attachment[:content_type], attachment[:filename])
+      image: Multipart::Post::UploadIO.new(tempfile.path, attachment[:content_type], safe_filename)
     }
-    body[:caption] = caption if caption
+    body[:caption] = safe_caption if safe_caption
 
     response = HTTParty.post(
       "#{api_base_path}/send/image",
-      headers: api_headers,
+      headers: api_headers_multipart,
       body: body,
       multipart: true
     )
@@ -111,7 +125,7 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
 
     response = HTTParty.post(
       "#{api_base_path}/send/file",
-      headers: api_headers,
+      headers: api_headers_multipart,
       body: body,
       multipart: true
     )
@@ -130,7 +144,7 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
 
     response = HTTParty.post(
       "#{api_base_path}/send/audio",
-      headers: api_headers,
+      headers: api_headers_multipart,
       body: body,
       multipart: true
     )
@@ -147,7 +161,7 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
 
     response = HTTParty.post(
       "#{api_base_path}/send/video",
-      headers: api_headers,
+      headers: api_headers_multipart,
       body: body,
       multipart: true
     )
@@ -171,6 +185,13 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
       'Authorization' => "Basic #{ENV.fetch('GOWA_BASIC_AUTH', '')}",
       'X-Device-Id' => whatsapp_channel.device_id,
       'Content-Type' => 'application/json'
+    }
+  end
+
+  def api_headers_multipart
+    {
+      'Authorization' => "Basic #{ENV.fetch('GOWA_BASIC_AUTH', '')}",
+      'X-Device-Id' => whatsapp_channel.device_id
     }
   end
 

@@ -506,12 +506,6 @@ export default {
             {{ $t('CONVERSATION.UNSUPPORTED_MESSAGE') }}
           </template>
         </div>
-        <BubbleText
-          v-else-if="data.content"
-          :message="message"
-          :is-email="isEmailContentType"
-          :display-quoted-button="displayQuotedButton"
-        />
         <BubbleIntegration
           :message-id="data.id"
           :content-attributes="contentAttributes"
@@ -549,6 +543,12 @@ export default {
             <BubbleFile v-else :url="attachment.data_url" />
           </div>
         </div>
+        <BubbleText
+          v-if="data.content"
+          :message="message"
+          :is-email="isEmailContentType"
+          :display-quoted-button="displayQuotedButton"
+        />
         <BubbleActions
           :id="data.id"
           :sender="data.sender"

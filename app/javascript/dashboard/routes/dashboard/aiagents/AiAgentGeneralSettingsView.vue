@@ -114,21 +114,31 @@ const { onFileUpload: onGreetingFileUpload } = useFileUpload({
 });
 
 function handleGreetingImageUpload(event) {
-  const files = Array.from(event.target.files);
-  files.forEach(file => {
-    if (!file.type.startsWith('image/')) {
-      useAlert(
-        `${file.name}: ${t('AGENT_MGMT.FORM_CREATE.IMAGE_ONLY_ALLOWED')}`,
-        'alert-danger'
-      );
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      useAlert(`${file.name}: ${t('AGENT_MGMT.FORM_CREATE.IMAGE_SIZE_LIMIT')}`, 'alert-danger');
-      return;
-    }
-    onGreetingFileUpload({ file, size: file.size, type: file.type });
-  });
+  if (greetingAttachments.value.length >= 1) {
+    useAlert(t('AGENT_MGMT.FORM_CREATE.IMAGE_LIMIT_ONE'), 'alert-danger');
+    event.target.value = '';
+    return;
+  }
+
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    useAlert(
+      `${file.name}: ${t('AGENT_MGMT.FORM_CREATE.IMAGE_ONLY_ALLOWED')}`,
+      'alert-danger'
+    );
+    event.target.value = '';
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    useAlert(`${file.name}: ${t('AGENT_MGMT.FORM_CREATE.IMAGE_SIZE_LIMIT')}`, 'alert-danger');
+    event.target.value = '';
+    return;
+  }
+
+  onGreetingFileUpload({ file, size: file.size, type: file.type });
   event.target.value = '';
 }
 
@@ -179,10 +189,22 @@ watch(
         ? savedImages
         : legacyImage ? [legacyImage] : [];
 
+      const currentAttachments = [...greetingAttachments.value];
+
       greetingAttachments.value = allImages.map((val, idx) => {
         const isBase64 = typeof val === 'string' && val.startsWith('data:');
+        let thumbUrl = '';
+
+        if (isBase64) {
+          thumbUrl = val;
+        } else if (imageUrls[idx]) {
+          thumbUrl = imageUrls[idx];
+        } else if (currentAttachments[idx] && currentAttachments[idx].thumb) {
+          thumbUrl = currentAttachments[idx].thumb; 
+        }
+
         return {
-          thumb: isBase64 ? val : (imageUrls[idx] || ''),
+          thumb: thumbUrl,
           blobSignedId: isBase64 ? null : val,
           rawValue: val,
           uploading: false,
@@ -472,7 +494,7 @@ function resetChat() {
 </script>
 
 <template>
-  <div class="flex flex-col lg:flex-row justify-stretch gap-4">
+  <div class="flex flex-col lg:flex-row items-start gap-4">
     <form class="lg:flex-1 lg:min-w-0" @submit.prevent="() => submit()">
       <div class="flex flex-col space-y-3">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -641,14 +663,13 @@ function resetChat() {
                         ref="greetingImageInput"
                         type="file"
                         accept="image/*"
-                        multiple
                         class="hidden"
                         @change="handleGreetingImageUpload"
                       />
                       <button
                         type="button"
                         class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors border border-slate-300 dark:border-slate-600 rounded-md px-3 py-1.5"
-                        :disabled="isDebugMode || loadingSave"
+                        :disabled="isDebugMode || loadingSave || greetingAttachments.length >= 1"
                         @click="greetingImageInput?.click()"
                       >
                         <svg
@@ -680,6 +701,7 @@ function resetChat() {
                       class="relative group/image w-[72px] h-[72px]"
                     >
                       <img
+                        v-if="attachment.thumb"
                         :src="attachment.thumb"
                         class="object-cover w-[72px] h-[72px] rounded-lg cursor-pointer"
                         :class="{ 'opacity-50': attachment.uploading }"
@@ -782,13 +804,13 @@ function resetChat() {
           type="submit"
           :disabled="loadingSave"
         >
-          <span v-if="loadingSave" class="mt-4 mb-4 spinner" />
+          <span v-if="loadingSave" class="spinner" />
           <span v-else>{{ t('AGENT_MGMT.FORM_CREATE.SUBMIT') }}</span>
         </button>
       </div>
     </form>
     <!-- Chat Preview Section -->
-    <div class="h-[800px] w-full lg:h-[650px] lg:w-[350px]">
+    <div class="h-[800px] w-full lg:h-[650px] lg:w-[350px] lg:sticky lg:top-4">
       <div
         class="w-full rounded-xl dark:bg-black-900/80 shadow-lg dark:shadow-slate-700 overflow-hidden flex flex-col h-full"
       >

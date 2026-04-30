@@ -28,11 +28,10 @@ class WhatsappUnofficial::SendOnWhatsappUnofficialService < Base::SendOnChannelS
       next unless attachment.file.attached?
 
       file_data = attachment.file.download
-      file_data.force_encoding('BINARY') if file_data.respond_to?(:force_encoding)
-
+      file_data = file_data.b if file_data.respond_to?(:b)
       {
-        filename: attachment.file.filename.to_s,
-        content_type: attachment.file.content_type,
+        filename: attachment.file.filename.to_s.encode('UTF-8'),
+        content_type: attachment.file.content_type.to_s.encode('UTF-8'),
         io: StringIO.new(file_data),
         file_type: attachment.file_type,
         download_url: attachment.download_url

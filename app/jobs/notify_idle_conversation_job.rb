@@ -54,8 +54,7 @@ class NotifyIdleConversationJob < ApplicationJob
 
   def orphaned?(idle_conversation)
     conversation = idle_conversation.conversation
-    inbox = idle_conversation.inbox
-    conversation.blank? || inbox.blank?
+    conversation.inbox.blank?
   rescue ActiveRecord::RecordNotFound
     true
   end

@@ -52,16 +52,29 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
     response = send_message.parsed_response
     parsed = parsed_response(response, is_custom_agent: @context.ai_agent.custom_agent?)
 
-    send_reply(
-      parsed,
-      additional_attributes: {
-        message_type: 1,
-        sender_type: 'AiAgent',
-        attachments: parsed[:attachments]
-      }
-    )
+    if is_welcome
+      sent = send_greeting_images(caption: parsed[:response])
 
-    send_greeting_images if is_welcome
+      unless sent
+        send_reply(
+          parsed,
+          additional_attributes: {
+            message_type: 1,
+            sender_type: 'AiAgent',
+            attachments: parsed[:attachments]
+          }
+        )
+      end
+    else
+      send_reply(
+        parsed,
+        additional_attributes: {
+          message_type: 1,
+          sender_type: 'AiAgent',
+          attachments: parsed[:attachments]
+        }
+      )
+    end
   end
 
   def welcome_message?
@@ -71,12 +84,12 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
     @context.conversation.messages.incoming.where(private: false).count == 1
   end
 
-  def send_greeting_images
+  def send_greeting_images(caption: nil)
     greeting_config = @context.ai_agent.flow_data&.dig('greeting_config') || {}
     images = greeting_config['images'] || []
     images = [greeting_config['image']] if images.empty? && greeting_config['image'].present?
 
-    return if images.empty?
+    return false if images.empty?
 
     Rails.logger.info "[BOT] Sending #{images.count} greeting image(s) for conversation #{@context.conversation.id}"
 
@@ -92,14 +105,17 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
     }
 
     images.each_with_index do |image_ref, idx|
-      send_greeting_image(image_ref, attrs, idx)
+      image_caption = idx.zero? ? caption : nil
+      send_greeting_image(image_ref, attrs, idx, caption: image_caption)
     end
+
+    true
   end
 
-  def send_greeting_image(image_ref, attrs, index)
+  def send_greeting_image(image_ref, attrs, index, caption: nil)
     return unless image_ref.is_a?(String) && image_ref.present?
 
-    message = Message.new(attrs.merge(content: ''))
+    message = Message.new(attrs.merge(content: caption.presence || ''))
 
     if image_ref.start_with?('data:image/')
       attach_base64_image(message, image_ref, attrs, index)
@@ -145,10 +161,20 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
       return
     end
 
+    binary_data = blob.download
+    io = StringIO.new(binary_data)
+    io.binmode
+
+    safe_filename = blob.filename.to_s.encode('UTF-8', invalid: :replace, undef: :replace, replace: '_')
+
     message.attachments.build(
       account_id: message.account_id,
       file_type: 'image',
-      file: { io: StringIO.new(blob.download), filename: blob.filename.to_s, content_type: blob.content_type }
+      file: {
+        io: io,
+        filename: safe_filename,
+        content_type: blob.content_type.to_s.encode('UTF-8', invalid: :replace, undef: :replace, replace: '')
+      }
     )
   end
 

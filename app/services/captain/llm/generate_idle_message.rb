@@ -35,7 +35,9 @@ class Captain::Llm::GenerateIdleMessage
   end
 
   def agent_bot_inbox
-    @agent_bot_inbox ||= AgentBotInbox.find_by(inbox_id: conversation.inbox_id)
+    @agent_bot_inbox ||= AgentBotInbox
+                         .with_ai_agent
+                         .find_by(inbox_id: conversation.inbox_id)
   end
 
   def ai_agent

@@ -26,6 +26,8 @@ class AgentBotInbox < ApplicationRecord
 
   enum status: { active: 0, inactive: 1 }
 
+  scope :with_ai_agent, -> { where.not(ai_agent_id: nil) }
+
   private
 
   def ensure_account_id

@@ -45,6 +45,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  multiSelectCategories: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['save', 'close']);
@@ -53,6 +57,7 @@ const dialogRef = ref(null);
 
 const senderInboxId = ref('');
 const category = ref('');
+const selectedCategories = ref([]);
 const interestLevel = ref('');
 const messageType = ref('personal');
 const receiverAddress = ref('');
@@ -79,6 +84,7 @@ const formatInboxLabel = inbox => {
 const resetForm = () => {
   senderInboxId.value = '';
   category.value = '';
+  selectedCategories.value = [];
   interestLevel.value = '';
   messageType.value = 'personal';
   receiverAddress.value = '';
@@ -89,7 +95,14 @@ const resetForm = () => {
 const populateForm = rule => {
   isPopulating.value = true;
   senderInboxId.value = rule.inbox_id || '';
-  category.value = rule.category || '';
+  const ruleCategory = rule.category || '';
+  if (props.multiSelectCategories && ruleCategory) {
+    selectedCategories.value = ruleCategory.split(',').map(s => s.trim()).filter(Boolean);
+    category.value = '';
+  } else {
+    category.value = ruleCategory;
+    selectedCategories.value = [];
+  }
   interestLevel.value = rule.interest_level || '';
   messageType.value = rule.message_type || 'personal';
   receiverAddress.value = rule.receiver_address || '';
@@ -118,6 +131,15 @@ const close = () => {
   emit('close');
 };
 
+const categoryValue = computed(() => {
+  if (props.multiSelectCategories) {
+    return selectedCategories.value.length > 0
+      ? selectedCategories.value.join(',')
+      : null;
+  }
+  return category.value || null;
+});
+
 const handleSave = () => {
   // For group messages, resolve name from selected group; for personal, use phone number
   let nameToSave = receiverName.value;
@@ -132,7 +154,7 @@ const handleSave = () => {
 
   const payload = {
     inbox_id: senderInboxId.value,
-    category: category.value || null,
+    category: categoryValue.value,
     interest_level: interestLevel.value || null,
     message_type: messageType.value,
     receiver_channel_type: 'whatsapp_unofficial',
@@ -160,13 +182,22 @@ const editingDisconnectedInbox = computed(() => {
   );
 });
 
+const categorySelected = computed(() => {
+  if (props.multiSelectCategories) {
+    // In multi-select mode, any selection (including empty = wildcard) is valid
+    return true;
+  }
+  return true;
+});
+
 const canSave = computed(() => {
   return (
     senderInboxId.value &&
     !editingDisconnectedInbox.value &&
     receiverAddress.value.trim() &&
     messageTemplate.value.trim() &&
-    hasContentSummary.value
+    hasContentSummary.value &&
+    categorySelected.value
   );
 });
 
@@ -260,30 +291,55 @@ defineExpose({ open });
         </p>
       </div>
 
-      <!-- Category Notification - Dropdown -->
+      <!-- Category Notification -->
       <div v-if="showFilters" class="flex flex-col gap-1">
-        <label class="mb-0.5 text-sm font-medium text-n-slate-12">
-          {{ $t('AGENT_MGMT.NOTIFICATION.CATEGORY_LABEL') }}
-        </label>
-        <select
-          v-model="category"
-          class="w-full p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 transition-all"
-        >
-          <option value="">
-            {{ $t('AGENT_MGMT.NOTIFICATION.CATEGORY_ALL') }}
-          </option>
-          <option
-            v-for="cat in categories"
-            :key="cat.key"
-            :value="cat.key"
+        <template v-if="multiSelectCategories">
+          <label class="mb-0.5 text-sm font-medium text-n-slate-12">
+            {{ $t('AGENT_MGMT.NOTIFICATION.CATEGORY_LABEL') }}
+          </label>
+          <div class="flex flex-wrap gap-2 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800">
+            <label
+              v-for="cat in categories"
+              :key="cat.key"
+              class="inline-flex items-center gap-1.5 cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                :value="cat.key"
+                v-model="selectedCategories"
+                class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+              />
+              <span class="text-sm text-slate-900 dark:text-slate-100">{{ cat.label || cat.key }}</span>
+            </label>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            {{ selectedCategories.length === 0 ? $t('AGENT_MGMT.NOTIFICATION.CATEGORY_ALL_SELECTED_HINT') : $t('AGENT_MGMT.NOTIFICATION.CATEGORY_SELECTED_HINT', { count: selectedCategories.length }) }}
+          </p>
+        </template>
+        <template v-else>
+          <label class="mb-0.5 text-sm font-medium text-n-slate-12">
+            {{ $t('AGENT_MGMT.NOTIFICATION.CATEGORY_LABEL') }}
+          </label>
+          <select
+            v-model="category"
+            class="w-full p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 transition-all"
           >
-            {{ cat.key }}
-          </option>
-        </select>
+            <option value="">
+              {{ $t('AGENT_MGMT.NOTIFICATION.CATEGORY_ALL') }}
+            </option>
+            <option
+              v-for="cat in categories"
+              :key="cat.key"
+              :value="cat.key"
+            >
+              {{ cat.label || cat.key }}
+            </option>
+          </select>
+        </template>
       </div>
 
       <!-- Interest Level -->
-      <div v-if="showFilters" class="flex flex-col gap-1">
+      <div v-if="showFilters && priorities.length > 0" class="flex flex-col gap-1">
         <label class="mb-0.5 text-sm font-medium text-n-slate-12">
           {{ interestLevelLabel }}
         </label>

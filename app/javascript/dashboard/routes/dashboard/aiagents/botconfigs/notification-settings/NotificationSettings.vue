@@ -60,6 +60,10 @@ Waktu Konsultasi: 07:00:00`,
     type: Boolean,
     default: false,
   },
+  multiSelectCategories: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const store = useStore();
@@ -245,6 +249,7 @@ const handleFormClose = () => {
           v-for="rule in notifications"
           :key="rule.id"
           :rule="rule"
+          :categories="categories"
           :whatsapp-unofficial-inboxes="whatsappUnofficialInboxes"
           :all-whatsapp-unofficial-inboxes="allWhatsappUnofficialInboxesWithLiveStatus"
           :whatsapp-groups="[]"
@@ -271,6 +276,7 @@ const handleFormClose = () => {
       :variable-config="variableConfig"
       :show-filters="showFilters"
       :is-customer-service-bot="isCustomerServiceBot"
+      :multi-select-categories="multiSelectCategories"
       @save="handleSave"
       @close="handleFormClose"
     />

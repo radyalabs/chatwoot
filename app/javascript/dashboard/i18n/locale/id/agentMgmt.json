@@ -216,6 +216,8 @@
       "FORM_TITLE_EDIT": "Edit Notifikasi",
       "CATEGORY_LABEL": "Kategori (Opsional)",
       "CATEGORY_ALL": "Semua",
+      "CATEGORY_ALL_SELECTED_HINT": "Tidak ada kategori dipilih — aturan ini akan cocok dengan semua tipe event.",
+      "CATEGORY_SELECTED_HINT": "{count} kategori dipilih",
       "INTEREST_LEVEL_LABEL": "Klasifikasi (Opsional)",
       "INTEREST_LEVEL_LABEL_PRIORITY": "Prioritas (Opsional)",
       "CLASSIFICATION_ALL": "Semua",

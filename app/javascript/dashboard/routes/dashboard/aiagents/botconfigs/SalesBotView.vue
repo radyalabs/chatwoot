@@ -236,8 +236,9 @@
                 <!-- Notification Settings -->
                 <NotificationSettings
                   :ai-agent-id="data.id"
-                  :categories="[]"
-                  :show-filters="false"
+                  :categories="salesCategories"
+                  :show-filters="true"
+                  :multi-select-categories="true"
                   title-key="AGENT_MGMT.SALESBOT.NOTIFICATION.TITLE"
                   desc-key="AGENT_MGMT.SALESBOT.NOTIFICATION.DESC"
                   :variable-config="salesVariableConfig"
@@ -1886,6 +1887,16 @@ const salesAuthError = computed(() => {
 });
 
 const notification = ref(null);
+
+const salesCategories = computed(() => [
+  { key: 'cart_created', label: 'Cart Created' },
+  { key: 'cart_updated', label: 'Cart Updated' },
+  { key: 'cart_deleted', label: 'Cart Deleted' },
+  { key: 'order_created', label: 'Order Created' },
+  { key: 'order_updated', label: 'Order Updated' },
+  { key: 'order_canceled', label: 'Order Canceled' },
+  { key: 'payment_created', label: 'Payment Created' },
+]);
 
 const salesVariableConfig = computed(() => ({
   helpKey: 'AGENT_MGMT.SALESBOT.NOTIFICATION.TEMPLATE_HELP',

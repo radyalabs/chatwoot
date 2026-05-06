@@ -53,10 +53,12 @@ class Api::V2::Internal::NotificationsController < ActionController::API
     variables = notification_params[:variables] || {}
     settings = account.agent_notification_settings.where(ai_agent_id: ai_agent.id)
 
-
     if variables['category'].present?
       category = variables['category'].to_s.downcase
-      settings = settings.where('category IS NULL OR LOWER(category) = ?', category)
+      settings = settings.where(
+        'category IS NULL OR LOWER(category) = ? OR ? = ANY(string_to_array(LOWER(category), \',\'))',
+        category, category
+      )
     end
 
     if variables['priority'].present?

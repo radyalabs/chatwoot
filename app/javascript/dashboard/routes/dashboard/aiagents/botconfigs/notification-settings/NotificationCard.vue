@@ -22,6 +22,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  categories: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const emit = defineEmits(['edit', 'delete']);
@@ -110,6 +114,20 @@ watch(
   }
 );
 
+// Parse comma-separated category string into array of individual categories
+const parsedCategories = computed(() => {
+  if (!props.rule.category) return [];
+  const keys = props.rule.category.split(',').map(s => s.trim()).filter(Boolean);
+  const labelMap = {};
+  props.categories.forEach(cat => {
+    labelMap[cat.key] = cat.label || cat.key;
+  });
+  return keys.map(key => ({
+    key,
+    label: labelMap[key] || key,
+  }));
+});
+
 const interestBadgeColor =
   'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400';
 </script>
@@ -124,16 +142,29 @@ const interestBadgeColor =
       <div class="flex items-center gap-3 flex-1 min-w-0">
         <div class="flex items-center gap-2 flex-1 min-w-0">
           <span class="i-lucide-bell text-slate-400 dark:text-slate-500 size-5 flex-shrink-0" />
-          <template v-if="rule.category">
+          <template v-if="parsedCategories.length > 0">
             <span class="text-sm text-slate-500 dark:text-slate-400">
               {{ $t('AGENT_MGMT.NOTIFICATION.CARD_CATEGORY_LABEL') }}:
             </span>
-            <span
-              class="text-base font-semibold text-slate-900 dark:text-slate-100 truncate"
-              :title="rule.category"
-            >
-              {{ rule.category }}
-            </span>
+            <template v-if="parsedCategories.length === 1">
+              <span
+                class="text-base font-semibold text-slate-900 dark:text-slate-100 truncate"
+                :title="rule.category"
+              >
+                {{ parsedCategories[0].label }}
+              </span>
+            </template>
+            <template v-else>
+              <div class="flex flex-wrap gap-1">
+                <span
+                  v-for="cat in parsedCategories"
+                  :key="cat.key"
+                  class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                >
+                  {{ cat.label }}
+                </span>
+              </div>
+            </template>
           </template>
           <template v-else>
             <span class="text-sm text-slate-500 dark:text-slate-400">

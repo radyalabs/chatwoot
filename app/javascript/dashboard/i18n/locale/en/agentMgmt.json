@@ -216,6 +216,8 @@
       "FORM_TITLE_EDIT": "Edit Notification",
       "CATEGORY_LABEL": "Category (Optional)",
       "CATEGORY_ALL": "All",
+      "CATEGORY_ALL_SELECTED_HINT": "No category selected — this rule will match all event types.",
+      "CATEGORY_SELECTED_HINT": "{count} category selected | {count} categories selected",
       "INTEREST_LEVEL_LABEL": "Classification (Optional)",
       "INTEREST_LEVEL_LABEL_PRIORITY": "Priority (Optional)",
       "CLASSIFICATION_ALL": "All",

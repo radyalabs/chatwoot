@@ -74,13 +74,12 @@
             </td>
             <td class="p-4 truncate max-w-xs">{{ campaign.message_body }}</td>
             <td class="p-4">
-              <!-- Badge Status Sederhana -->
               <span 
-                class="px-2 py-1 rounded text-xs font-medium"
+                class="px-2.5 py-1 rounded-md text-xs font-semibold tracking-wide uppercase border"
                 :class="{
-                  'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400': campaign.status === 'processing',
-                  'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400': campaign.status === 'completed',
-                  'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300': campaign.status === 'draft'
+                  'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900 dark:text-amber-300 dark:border-amber-700': campaign.status === 'processing',
+                  'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900 dark:text-emerald-300 dark:border-emerald-700': campaign.status === 'completed',
+                  'bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600': campaign.status === 'draft'
                 }"
               >
                 {{ campaign.status }}
@@ -89,6 +88,13 @@
             <td class="p-4 text-right">
               <button @click="$router.push({ name: 'broadcast_detail', params: { id: campaign.id } })" class="text-slate-400 hover:text-woot-500 transition-colors" title="Lihat Detail">
                 <span class="i-lucide-eye w-5 h-5 block"></span>
+              </button>
+              <button 
+                @click="deleteCampaign(campaign.id)"
+                class="text-slate-400 hover:text-rose-500 transition-colors" 
+                title="Hapus Broadcast"
+              >
+                <span class="i-lucide-trash-2 w-5 h-5 block"></span>
               </button>
             </td>
           </tr>
@@ -100,6 +106,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
 import Button from 'dashboard/components-next/button/Button.vue';
 
 export default {
@@ -107,33 +114,32 @@ export default {
   components: {
     Button,
   },
-  data() {
-    return {
-      broadcasts: [
-        {
-          id: 101,
-          target_segment: 'VIP Customers',
-          message_body: 'Halo {{full_name}}, ada promo eksklusif untuk Anda!',
-          status: 'completed'
-        },
-        {
-          id: 102,
-          target_segment: 'all',
-          message_body: 'Pemberitahuan maintenance server malam ini pukul 00:00.',
-          status: 'processing'
-        },
-        {
-          id: 103,
-          target_segment: 'Promo Lebaran',
-          message_body: '{Halo|Hai|Selamat Siang}, dapatkan diskon 50% hari ini!',
-          status: 'draft'
-        }
-      ], 
-    };
+  computed: {
+    // Ambil data langsung dari state Vuex
+    ...mapGetters({
+      broadcasts: 'broadcasts/getBroadcasts',
+      uiFlags: 'broadcasts/getUIFlags',
+    })
+  },
+  mounted() {
+    // Perintahkan Vuex untuk mengambil data list dari Mock API
+    this.$store.dispatch('broadcasts/get');
   },
   methods: {
     goToNewBroadcast() {
       this.$router.push({ name: 'new_broadcast' });
+    },
+    async deleteCampaign(id) {
+      // Munculkan pop-up konfirmasi bawaan browser
+      if (window.confirm('Apakah Anda yakin ingin menghapus broadcast ini?')) {
+        try {
+          await this.$store.dispatch('broadcasts/delete', id);
+          
+          window.bus.$emit('new-toast-message', 'Broadcast berhasil dihapus');
+        } catch (error) {
+          window.bus.$emit('new-toast-message', 'Gagal menghapus broadcast');
+        }
+      }
     }
   }
 };

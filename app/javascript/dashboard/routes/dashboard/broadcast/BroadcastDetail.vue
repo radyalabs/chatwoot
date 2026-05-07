@@ -130,30 +130,42 @@ export default {
   name: 'BroadcastDetail',
   data() {
     return {
-      // Data MOCK untuk menguji UI
-      campaign: {
-        id: this.$route.params.id || 101, // Mengambil ID dari URL jika ada
-        target_segment: 'VIP Customers',
-        inbox_name: 'WhatsApp CS Pusat',
-        message_body: 'Halo {{full_name}},\n\nKami memiliki penawaran eksklusif khusus untuk pelanggan VIP seperti Anda! Dapatkan diskon 50% untuk semua layanan kami hingga akhir bulan ini.\n\nJangan lewatkan!',
-        status: 'completed',
-        scheduled_at: '29 Apr 2026, 14:00 WIB',
-        spin_text_enabled: true,
-        unsubscribe_link_enabled: true,
-      },
+      isLoading: true,
+      campaign: {},
       metrics: {
-        sent: 1250,
-        read: 1105,
-        replied: 84,
-        failed: 12
+        sent: 0,
+        read: 0,
+        replied: 0,
+        failed: 0
       }
     };
   },
   mounted() {
-    // TODO: Nanti di sini kita akan me-load data dari backend berdasarkan ID
-    // this.fetchCampaignDetail(this.$route.params.id);
+    // Panggil fungsi saat halaman pertama kali dibuka
+    this.fetchCampaignDetail();
   },
   methods: {
+    async fetchCampaignDetail() {
+      this.isLoading = true;
+      try {
+        const broadcastId = this.$route.params.id;
+        
+        // Minta data ke Mock API melalui Vuex
+        const data = await this.$store.dispatch('broadcasts/show', broadcastId);
+        
+        // Masukkan data yang didapat ke state komponen
+        this.campaign = data;
+        this.metrics = data.metrics || this.metrics;
+      } catch (error) {
+        window.$bus.$emit('global-toast', {
+          message: 'Gagal memuat detail broadcast.',
+          type: 'error',
+        });
+        this.goBack(); // Jika error/ID tidak ada, kembalikan ke list
+      } finally {
+        this.isLoading = false;
+      }
+    },
     goBack() {
       this.$router.push({ name: 'blasting_index' });
     }

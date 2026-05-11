@@ -405,7 +405,13 @@
     "PREVIEW_MIC_ARIA": "Rekam pesan suara",
     "PREVIEW_EMPTY": "Ketik pesan Anda di form sebelah kiri untuk melihat preview...",
     "SUCCESS_MESSAGE": "Campaign Blasting berhasil dijadwalkan!",
-    "ERROR_MESSAGE": "Gagal membuat blasting. Periksa koneksi Anda."
+    "ERROR_MESSAGE": "Gagal membuat blasting. Periksa koneksi Anda.",
+    "FILTER_LABEL": "Filter Kontak Target",
+    "FILTER_ADD": "Tambah filter",
+    "FILTER_REMOVE": "Hapus filter ini",
+    "FILTER_VALUE_PLACEHOLDER": "Masukkan nilai...",
+    "FILTER_ESTIMATED": "~{count} kontak cocok",
+    "FILTER_COUNTING": "Menghitung..."
   },
   "BROADCAST_DETAIL": {
     "BACK": "Kembali ke Daftar",

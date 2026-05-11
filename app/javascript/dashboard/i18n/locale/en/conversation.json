@@ -429,7 +429,13 @@
     "PREVIEW_MIC_ARIA": "Record voice message",
     "PREVIEW_EMPTY": "Type your message in the form on the left to see the preview...",
     "SUCCESS_MESSAGE": "Blast campaign scheduled successfully!",
-    "ERROR_MESSAGE": "Failed to create broadcast. Please check your connection."
+    "ERROR_MESSAGE": "Failed to create broadcast. Please check your connection.",
+    "FILTER_LABEL": "Target Contact Filter",
+    "FILTER_ADD": "Add filter",
+    "FILTER_REMOVE": "Remove this filter",
+    "FILTER_VALUE_PLACEHOLDER": "Enter value...",
+    "FILTER_ESTIMATED": "~{count} contacts matched",
+    "FILTER_COUNTING": "Counting..."
   },
   "BROADCAST_DETAIL": {
     "BACK": "Back to List",

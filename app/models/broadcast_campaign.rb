@@ -37,6 +37,18 @@ class BroadcastCampaign < ApplicationRecord
 
   validate :account_active?
 
+  def as_json(options = {})
+    super(options).merge({
+      inbox_name: inbox&.name,
+      metrics: { 
+        sent: 0, 
+        read: 0, 
+        replied: 0, 
+        failed: 0 
+      }
+    })
+  end
+
   private
 
   def account_active?

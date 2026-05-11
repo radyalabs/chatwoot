@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_04_29_040326) do
+ActiveRecord::Schema[7.0].define(version: 2026_05_07_080040) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -805,6 +805,41 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_29_040326) do
     t.string "name"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
+  end
+
+  create_table "group_chat_logs", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "group_monitored_chat_id", null: false
+    t.string "event_type", null: false
+    t.string "message_id"
+    t.string "sender_jid"
+    t.string "sender_name"
+    t.text "content"
+    t.string "replied_to_id"
+    t.text "quoted_body"
+    t.string "reaction_emoji"
+    t.string "reaction_target_id"
+    t.jsonb "raw_payload", default: {}
+    t.datetime "sent_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_group_chat_logs_on_account_id"
+    t.index ["event_type"], name: "index_group_chat_logs_on_event_type"
+    t.index ["group_monitored_chat_id", "message_id"], name: "index_group_chat_logs_on_group_monitored_chat_id_and_message_id"
+    t.index ["group_monitored_chat_id"], name: "index_group_chat_logs_on_group_monitored_chat_id"
+  end
+
+  create_table "group_monitored_chats", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "inbox_id", null: false
+    t.string "group_id", null: false
+    t.string "group_name"
+    t.boolean "active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "group_id"], name: "index_group_monitored_chats_on_account_id_and_group_id", unique: true
+    t.index ["account_id"], name: "index_group_monitored_chats_on_account_id"
+    t.index ["inbox_id"], name: "index_group_monitored_chats_on_inbox_id"
   end
 
   create_table "idle_configs", force: :cascade do |t|
@@ -1650,6 +1685,10 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_29_040326) do
   add_foreign_key "ai_agent_selected_labels", "labels"
   add_foreign_key "broadcast_campaigns", "accounts"
   add_foreign_key "broadcast_campaigns", "inboxes"
+  add_foreign_key "group_chat_logs", "accounts"
+  add_foreign_key "group_chat_logs", "group_monitored_chats"
+  add_foreign_key "group_monitored_chats", "accounts"
+  add_foreign_key "group_monitored_chats", "inboxes"
   add_foreign_key "idle_configs", "accounts"
   add_foreign_key "idle_configs", "ai_agents"
   add_foreign_key "idle_conversations", "conversations", on_delete: :cascade

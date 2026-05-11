@@ -7,6 +7,7 @@
 #  custom_attributes      :jsonb
 #  domain                 :string(100)
 #  feature_flags          :bigint           default(0), not null
+#  internal_attributes    :jsonb            not null
 #  limits                 :jsonb
 #  locale                 :integer          default("en")
 #  name                   :string           not null
@@ -94,6 +95,7 @@ class Account < ApplicationRecord
   has_many :scheduled_reminders, dependent: :destroy_async
   has_many :reminders, dependent: :destroy_async
   has_many :reminder_configs, dependent: :destroy_async
+  has_many :broadcast_campaigns, dependent: :destroy
 
   has_one_attached :contacts_export
 

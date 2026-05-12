@@ -180,7 +180,9 @@ module WhatsappUnofficial::IncomingMessageServiceHelpers
 
     deep_find_first_value_by_keys(
       payload,
-      %i[stanzaId stanza_id quotedMsgId quoted_msg_id quotedMessageId quoted_message_id quotedStanzaId quoted_stanza_id]
+      %i[stanzaId stanza_id quotedMsgId quoted_msg_id quotedMessageId 
+         quoted_message_id quotedStanzaId quoted_stanza_id 
+         replied_to_id reply_to_id]
     )
   end
 
@@ -191,7 +193,9 @@ module WhatsappUnofficial::IncomingMessageServiceHelpers
                        [:quotedText],
                        [:quoted_text],
                        [:quoted_body],
-                       [:quotedBody]
+                       [:quotedBody],
+                       [:image, :caption],
+                       [:imageMessage, :caption]
                      ])
     return direct if direct.is_a?(String) && direct.present?
 

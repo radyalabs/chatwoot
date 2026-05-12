@@ -18,24 +18,26 @@ class WhatsappUnofficial::Providers::GowaService < WhatsappUnofficial::Providers
   def send_attachment_message(message, attachments)
     phone_number = message[:phone_number]
     caption = message[:content]
+    last_response = nil
 
     attachments.each_with_index do |attachment, index|
       file_type = attachment[:file_type]
       download_url = attachment[:download_url]
-
       current_caption = index.zero? ? caption : nil
 
-      case file_type
-      when 'image'
-        send_image(phone_number, attachment, caption: current_caption)
-      when 'audio'
-        send_audio(phone_number, download_url, caption: current_caption)
-      when 'video'
-        send_video(phone_number, download_url, caption: current_caption)
-      when 'file'
-        send_document(phone_number, attachment, caption: current_caption)
-      end
+      last_response = case file_type
+                      when 'image'
+                        send_image(phone_number, attachment, caption: current_caption)
+                      when 'audio'
+                        send_audio(phone_number, download_url, caption: current_caption)
+                      when 'video'
+                        send_video(phone_number, download_url, caption: current_caption)
+                      when 'file'
+                        send_document(phone_number, attachment, caption: current_caption)
+                      end
     end
+
+    last_response
   end
 
   def send_message_text(message)

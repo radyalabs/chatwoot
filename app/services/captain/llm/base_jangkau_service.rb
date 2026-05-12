@@ -132,7 +132,10 @@ class Captain::Llm::BaseJangkauService
 
     content_attrs = @message.content_attributes || {}
     in_reply_to = content_attrs[:in_reply_to] || content_attrs['in_reply_to']
-    in_reply_to_external_id = content_attrs[:in_reply_to_external_id] || content_attrs['in_reply_to_external_id']
+    in_reply_to_external_id = content_attrs[:in_reply_to_external_id] || 
+                               content_attrs['in_reply_to_external_id'] ||
+                               content_attrs.dig('gowa_reply', 'raw_in_reply_to_external_id') ||
+                               content_attrs.dig(:gowa_reply, :raw_in_reply_to_external_id)
 
     replied_message = if in_reply_to.present?
                         @message.conversation.messages.find_by(id: in_reply_to)
@@ -140,9 +143,17 @@ class Captain::Llm::BaseJangkauService
                         @message.conversation.messages.find_by(source_id: in_reply_to_external_id)
                       end
 
-    replied_message_content = replied_message&.content
-    return replied_message_content if replied_message_content.present?
+    # Cek content teks dulu
+    return replied_message.content if replied_message&.content.present?
 
+    # Fallback ke attachment jika pesan adalah gambar/file
+    if replied_message&.attachments&.any?
+      attachment = replied_message.attachments.first
+      file_type = attachment.file_type
+      return "[User replied to a #{file_type}: #{attachment.file.filename rescue file_type}]"
+    end
+
+    # Fallback ke gowa_reply quoted_text
     gowa_reply = content_attrs[:gowa_reply] || content_attrs['gowa_reply']
     return nil unless gowa_reply.is_a?(Hash)
 

@@ -1,4 +1,6 @@
-class Webhooks::GowaEventJob < MutexApplicationJob
+class Webhooks::GowaEventJob < ApplicationJob
+  include WebhookExpiryHandler
+
   queue_as :default
   retry_on LockAcquisitionError, wait: 1.second, attempts: 8
 

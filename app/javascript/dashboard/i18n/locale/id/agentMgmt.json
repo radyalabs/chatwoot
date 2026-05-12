@@ -451,7 +451,16 @@
       "NOTIFICATION": {
         "TITLE": "Pengaturan Notifikasi Tim Internal",
         "DESC": "Atur notifikasi internal otomatis saat pesanan baru dibuat.",
-        "TEMPLATE_HELP": "Pesan ini akan dikirim otomatis ke tim internal Anda untuk memberitahukan pesanan yang masuk."
+        "TEMPLATE_HELP": "Pesan ini akan dikirim otomatis ke tim internal Anda untuk memberitahukan pesanan yang masuk.",
+        "CATEGORIES": {
+          "CART_CREATED": "Keranjang Dibuat",
+          "CART_UPDATED": "Keranjang Diperbarui",
+          "CART_DELETED": "Keranjang Dihapus",
+          "ORDER_CREATED": "Pesanan Dibuat",
+          "ORDER_UPDATED": "Pesanan Diperbarui",
+          "ORDER_CANCELED": "Pesanan Dibatalkan",
+          "PAYMENT_CREATED": "Pembayaran Dibuat"
+        }
       }
     },
     "EOBOT": {

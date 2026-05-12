@@ -1889,13 +1889,13 @@ const salesAuthError = computed(() => {
 const notification = ref(null);
 
 const salesCategories = computed(() => [
-  { key: 'cart_created', label: 'Cart Created' },
-  { key: 'cart_updated', label: 'Cart Updated' },
-  { key: 'cart_deleted', label: 'Cart Deleted' },
-  { key: 'order_created', label: 'Order Created' },
-  { key: 'order_updated', label: 'Order Updated' },
-  { key: 'order_canceled', label: 'Order Canceled' },
-  { key: 'payment_created', label: 'Payment Created' },
+  { key: 'cart_created', label: t('AGENT_MGMT.SALESBOT.NOTIFICATION.CATEGORIES.CART_CREATED') },
+  { key: 'cart_updated', label: t('AGENT_MGMT.SALESBOT.NOTIFICATION.CATEGORIES.CART_UPDATED') },
+  { key: 'cart_deleted', label: t('AGENT_MGMT.SALESBOT.NOTIFICATION.CATEGORIES.CART_DELETED') },
+  { key: 'order_created', label: t('AGENT_MGMT.SALESBOT.NOTIFICATION.CATEGORIES.ORDER_CREATED') },
+  { key: 'order_updated', label: t('AGENT_MGMT.SALESBOT.NOTIFICATION.CATEGORIES.ORDER_UPDATED') },
+  { key: 'order_canceled', label: t('AGENT_MGMT.SALESBOT.NOTIFICATION.CATEGORIES.ORDER_CANCELED') },
+  { key: 'payment_created', label: t('AGENT_MGMT.SALESBOT.NOTIFICATION.CATEGORIES.PAYMENT_CREATED') },
 ]);
 
 const salesVariableConfig = computed(() => ({

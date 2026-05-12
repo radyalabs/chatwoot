@@ -74,6 +74,16 @@ export const mutations = {
     });
   },
 
+  [types.REMOVE_CONTACT_CUSTOM_ATTR_KEY]: ($state, key) => {
+    Object.keys($state.records).forEach(id => {
+      const attrs = $state.records[id]?.custom_attributes;
+      if (attrs && key in attrs) {
+        const { [key]: _, ...rest } = attrs;
+        $state.records[id] = { ...$state.records[id], custom_attributes: rest };
+      }
+    });
+  },
+
   [types.SET_CONTACT_FILTERS](_state, data) {
     _state.appliedFilters = data;
   },

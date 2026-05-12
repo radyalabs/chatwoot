@@ -133,20 +133,14 @@ const emit = defineEmits([
           />
           <div class="flex items-center border border-n-weak rounded-md">
             <Button
-              :icon="
-                viewMode === 'card'
-                  ? 'i-lucide-layout-grid'
-                  : 'i-lucide-layout-grid'
-              "
+              icon="i-lucide-layout-grid"
               :variant="viewMode === 'card' ? 'solid' : 'ghost'"
               size="xs"
               class="rounded-r-none"
               @click="emit('update:viewMode', 'card')"
             />
             <Button
-              :icon="
-                viewMode === 'table' ? 'i-lucide-table-2' : 'i-lucide-table-2'
-              "
+              icon="i-lucide-table-2"
               :variant="viewMode === 'table' ? 'solid' : 'ghost'"
               size="xs"
               class="rounded-l-none"

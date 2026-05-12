@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onUnmounted, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { required, email } from '@vuelidate/validators';
 import { useVuelidate } from '@vuelidate/core';
@@ -10,6 +10,7 @@ import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import PhoneNumberInput from 'dashboard/components-next/phonenumberinput/PhoneNumberInput.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
+import { useStore, useMapGetter } from 'dashboard/composables/store';
 
 const props = defineProps({
   contactData: {
@@ -29,6 +30,9 @@ const props = defineProps({
 const emit = defineEmits(['update', 'removeCustomAttr']);
 
 const { t } = useI18n();
+
+const store = useStore();
+const contactAttributeKeys = useMapGetter('contactAttributeKeys/getContactAttributeKeys');
 
 const FORM_CONFIG = {
   FIRST_NAME: { field: 'firstName' },
@@ -243,10 +247,41 @@ const resetForm = () => {
 
 const newCustomAttrKey = ref('');
 const newCustomAttrValue = ref('');
+const showKeyDropdown = ref(false);
+const newKeyInput = ref('');
 
 const customAttrsDisplay = computed(() => state.customAttributes || {});
 
-const addCustomAttr = () => {
+// Attribute keys defined in the system but not yet added to this contact
+const availableAttributeKeys = computed(() => {
+  const existing = Object.keys(customAttrsDisplay.value);
+  return (contactAttributeKeys.value || []).filter(
+    r => !existing.includes(r.key)
+  );
+});
+
+const selectExistingKey = key => {
+  newCustomAttrKey.value = key;
+  showKeyDropdown.value = false;
+};
+
+const selectNewKey = () => {
+  if (!newKeyInput.value.trim()) return;
+  newCustomAttrKey.value = newKeyInput.value.trim();
+  newKeyInput.value = '';
+  showKeyDropdown.value = false;
+};
+
+const closeDropdownOnOutsideClick = e => {
+  if (!e.target.closest('[data-key-dropdown]')) {
+    showKeyDropdown.value = false;
+  }
+};
+
+document.addEventListener('click', closeDropdownOnOutsideClick);
+onUnmounted(() => document.removeEventListener('click', closeDropdownOnOutsideClick));
+
+const addCustomAttr = async () => {
   if (!newCustomAttrKey.value.trim()) return;
 
   const key = newCustomAttrKey.value.trim();
@@ -257,18 +292,39 @@ const addCustomAttr = () => {
   }
   state.customAttributes[key] = value;
 
+  const exists = (contactAttributeKeys.value || []).some(r => r.key === key);
+  if (!exists) {
+    await store.dispatch('contactAttributeKeys/create', key);
+  }
+
   newCustomAttrKey.value = '';
   newCustomAttrValue.value = '';
+  showKeyDropdown.value = false;
   emit('update', state);
 };
 
-const removeCustomAttr = key => {
+const pendingDeleteKey = ref(null);
+
+const handleTrashClick = key => {
+  pendingDeleteKey.value = pendingDeleteKey.value === key ? null : key;
+};
+
+const removeFromContact = key => {
   const newAttrs = {};
   Object.keys(state.customAttributes).forEach(k => {
     if (k !== key) newAttrs[k] = state.customAttributes[k];
   });
   state.customAttributes = newAttrs;
+  pendingDeleteKey.value = null;
   emit('removeCustomAttr', key);
+};
+
+const removeDefinition = async key => {
+  const record = (contactAttributeKeys.value || []).find(r => r.key === key);
+  if (record) {
+    await store.dispatch('contactAttributeKeys/destroy', record.id);
+  }
+  removeFromContact(key);
 };
 
 watch(() => props.contactData, prepareStateBasedOnProps, {
@@ -366,54 +422,131 @@ defineExpose({
     </div>
     <div
       v-if="Object.keys(customAttrsDisplay).length > 0"
-      class="flex flex-col items-start gap-2"
+      class="flex flex-col w-full gap-3 p-4 rounded-lg bg-n-alpha-black2"
     >
-      <span class="py-1 text-sm font-medium text-n-slate-12">
+      <span class="text-base font-semibold text-n-slate-12">
         {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.TITLE') }}
       </span>
       <div class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
         <template v-for="(value, key) in customAttrsDisplay" :key="key">
-          <div class="flex items-center gap-1">
-            <Input
-              v-model="state.customAttributes[key]"
-              :placeholder="key"
-              class="flex-1"
-              @input="emit('update', state)"
-            />
-            <button
-              type="button"
-              class="text-n-slate-10 hover:text-n-ruby-11"
-              @click="removeCustomAttr(key)"
+          <div class="flex flex-col items-start gap-2">
+            <span class="text-sm font-medium text-n-slate-12">{{ key }}</span>
+            <div class="flex items-center w-full gap-2">
+              <Input
+                v-model="state.customAttributes[key]"
+                :placeholder="'Masukkan ' + key + ' Anda'"
+                class="flex-1"
+                @input="emit('update', state)"
+              />
+              <button
+                type="button"
+                class="flex items-center justify-center p-2 text-n-slate-10 rounded-md hover:bg-n-ruby-4 hover:text-n-ruby-11"
+                @click="handleTrashClick(key)"
+              >
+                <Icon icon="i-lucide-trash-2" class="size-4" />
+              </button>
+            </div>
+            <div
+              v-if="pendingDeleteKey === key"
+              class="flex items-center gap-2"
             >
-              <Icon icon="i-lucide-x" class="size-3" />
-            </button>
+              <span class="text-xs text-n-slate-11">Hapus:</span>
+              <button
+                type="button"
+                class="px-2 py-0.5 text-xs rounded bg-n-alpha-black2 text-n-slate-12 hover:bg-n-ruby-4 hover:text-n-ruby-11"
+                @click="removeFromContact(key)"
+              >
+                {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.DELETE_CONTACT') }}
+              </button>
+              <button
+                type="button"
+                class="px-2 py-0.5 text-xs rounded bg-n-alpha-black2 text-n-slate-12 hover:bg-n-ruby-4 hover:text-n-ruby-11"
+                @click="removeDefinition(key)"
+              >
+                {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.DELETE_ALL') }}
+              </button>
+              <button
+                type="button"
+                class="text-n-slate-10 hover:text-n-slate-12"
+                @click="pendingDeleteKey = null"
+              >
+                <Icon icon="i-lucide-x" class="size-3" />
+              </button>
+            </div>
           </div>
         </template>
       </div>
     </div>
-    <div class="flex flex-col items-start gap-2">
+    <div class="flex flex-col items-start gap-3">
       <span
         v-if="Object.keys(customAttrsDisplay).length === 0"
         class="py-1 text-sm font-medium text-n-slate-12"
       >
         {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.TITLE') }}
       </span>
-      <div class="flex items-center gap-2">
-        <Input
-          v-model="newCustomAttrKey"
-          :placeholder="
-            t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.KEY_PLACEHOLDER')
-          "
-          class="w-32"
-        />
-        <Input
-          v-model="newCustomAttrValue"
-          :placeholder="
-            t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.VALUE_PLACEHOLDER')
-          "
-          class="w-32"
-        />
-        <Button size="sm" @click="addCustomAttr">
+      <div class="flex items-end gap-2 w-full">
+        <!-- Key dropdown -->
+        <div class="flex flex-col gap-1 flex-1" data-key-dropdown>
+          <span class="text-xs text-n-slate-11">
+            {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.KEY_PLACEHOLDER') }}
+          </span>
+          <div class="relative">
+            <button
+              type="button"
+              class="h-8 w-full px-2 text-sm border border-n-weak rounded-lg bg-n-alpha-black2 text-left flex items-center justify-between gap-1 focus:outline-none focus:border-n-brand"
+              :class="newCustomAttrKey ? 'text-n-slate-12' : 'text-n-slate-10'"
+              @click.stop="showKeyDropdown = !showKeyDropdown"
+            >
+              <span class="truncate">{{ newCustomAttrKey || t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.KEY_PLACEHOLDER') }}</span>
+              <Icon icon="i-lucide-chevron-down" class="size-3 flex-shrink-0 text-n-slate-10" />
+            </button>
+            <div
+              v-if="showKeyDropdown"
+              class="absolute top-full left-0 mt-1 w-full min-w-[160px] bg-n-solid-1 border border-n-weak rounded-lg shadow-lg z-50 overflow-hidden"
+            >
+              <div class="max-h-40 overflow-y-auto">
+                <button
+                  v-for="r in availableAttributeKeys"
+                  :key="r.key"
+                  type="button"
+                  class="w-full px-3 py-1.5 text-sm text-left text-n-slate-12 hover:bg-n-alpha-2 truncate"
+                  @click.stop="selectExistingKey(r.key)"
+                >
+                  {{ r.key }}
+                </button>
+                <p
+                  v-if="!availableAttributeKeys.length"
+                  class="px-3 py-2 text-xs text-n-slate-10"
+                >
+                  {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.NO_AVAILABLE_KEYS') }}
+                </p>
+              </div>
+              <div class="border-t border-n-weak p-2">
+                <input
+                  v-model="newKeyInput"
+                  type="text"
+                  :placeholder="t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.NEW_KEY_PLACEHOLDER')"
+                  class="h-7 w-full px-2 text-sm border border-n-weak rounded-md bg-n-alpha-black2 text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:border-n-brand"
+                  @click.stop
+                  @keyup.enter="selectNewKey"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Value input -->
+        <div class="flex flex-col gap-1 flex-1">
+          <span class="text-xs text-n-slate-11">
+            {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.VALUE_PLACEHOLDER') }}
+          </span>
+          <Input
+            v-model="newCustomAttrValue"
+            :placeholder="newCustomAttrKey ? t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.VALUE_WITH_KEY', { key: newCustomAttrKey }) : t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.VALUE_PLACEHOLDER')"
+            :custom-input-class="'h-8 !pt-1 !pb-1'"
+          />
+        </div>
+        <!-- Add button -->
+        <Button size="sm" class="mb-0.5" @click="addCustomAttr">
           <Icon icon="i-lucide-plus" class="size-4" />
         </Button>
       </div>

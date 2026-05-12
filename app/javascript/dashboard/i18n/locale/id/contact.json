@@ -193,7 +193,7 @@
   "CUSTOM_ATTRIBUTES": {
     "TITLE": "Atribut Kustom",
     "KEY_PLACEHOLDER": "Nama atribut",
-    "VALUE_PLACEHOLDER": "Nilai",
+    "VALUE_PLACEHOLDER": "Masukkan nilai",
     "BUTTON": "Tambahkan atribut kustom",
     "COPY_SUCCESSFUL": "Berhasil disalin ke clipboard",
     "SHOW_MORE": "Tampilkan semua atribut",
@@ -466,7 +466,12 @@
       "CUSTOM_ATTRIBUTES": {
         "TITLE": "Atribut Kustom",
         "KEY_PLACEHOLDER": "Nama atribut",
-        "VALUE_PLACEHOLDER": "Nilai"
+        "VALUE_PLACEHOLDER": "Masukkan nilai",
+        "DELETE_CONTACT": "Kontak ini saja",
+        "DELETE_ALL": "Semua kontak",
+        "NO_AVAILABLE_KEYS": "Semua atribut sudah ditambahkan",
+        "NEW_KEY_PLACEHOLDER": "Nama atribut baru...",
+        "VALUE_WITH_KEY": "Masukkan '{key}' Anda"
       }
     },
     "TABLE": {
@@ -489,9 +494,8 @@
       },
       "COLUMN_SETTINGS": "Kolom",
       "COLUMN_SETTINGS_TITLE": "Pengaturan Kolom",
-      "COLUMNS": "Kolom",
       "ADD_CUSTOM_COLUMN": "Tambah Kolom Kustom",
-      "COLUMN_KEY": "Kunci",
+      "COLUMN_KEY": "Tambah kunci atribut",
       "COLUMN_LABEL": "Label"
     }
   },

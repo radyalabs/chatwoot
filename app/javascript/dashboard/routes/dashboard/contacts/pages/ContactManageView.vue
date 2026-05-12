@@ -84,15 +84,12 @@ const fetchContactConversations = () => {
   if (contactId) store.dispatch('contactConversations/get', contactId);
 };
 
-const fetchAttributes = () => {
-  store.dispatch('attributes/get');
-};
-
 onMounted(() => {
   fetchActiveContact();
   fetchContactNotes();
   fetchContactConversations();
-  fetchAttributes();
+  store.dispatch('attributes/get');
+  store.dispatch('contactAttributeKeys/get');
 });
 </script>
 

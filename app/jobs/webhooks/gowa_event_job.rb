@@ -1,5 +1,5 @@
 class Webhooks::GowaEventJob < ApplicationJob
-  # include WebhookExpiryHandler
+  include WebhookExpiryHandler
 
   queue_as :default
 

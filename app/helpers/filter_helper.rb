@@ -45,12 +45,11 @@ module FilterHelper
     custom_attr_query = custom_attribute_query(query_hash, attribute_type, current_index)
     return custom_attr_query if custom_attr_query.present?
 
-    # Fallback: build query directly from custom_attributes column for any key
     filter_operator_value = filter_operation(query_hash, current_index)
     table_name = filter_config[:table_name]
-    attribute_key = query_hash[:attribute_key]
+    attribute_key = ActiveRecord::Base.connection.quote(query_hash[:attribute_key].to_s)
 
-    " (#{table_name}.custom_attributes ->> '#{attribute_key}') #{filter_operator_value} #{query_hash[:query_operator]}"
+    " (#{table_name}.custom_attributes ->> #{attribute_key}) #{filter_operator_value} #{query_hash[:query_operator]}"
   end
 
   def handle_additional_attributes(query_hash, filter_operator_value, data_type)

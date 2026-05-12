@@ -18,16 +18,9 @@ import ContactsForm from 'dashboard/components-next/Contacts/ContactsForm/Contac
 const props = defineProps({
   contacts: { type: Array, required: true },
   customAttributes: { type: Array, default: () => [] },
-  mandatoryColumns: {
+  visibleColumns: {
     type: Array,
-    default: () => [
-      'name',
-      'email',
-      'phoneNumber',
-      'companyName',
-      'location',
-      // 'createdAt',
-    ],
+    default: () => ['name', 'phoneNumber', 'companyName', 'location'],
   },
 });
 
@@ -77,10 +70,7 @@ const handleRemoveCustomAttr = key => {
   if (!contactForEdit.value) return;
   const newAttrs = { ...contactForEdit.value.customAttributes };
   delete newAttrs[key];
-  contactForEdit.value = {
-    ...contactForEdit.value,
-    customAttributes: newAttrs,
-  };
+  contactForEdit.value = { ...contactForEdit.value, customAttributes: newAttrs };
   if (!removedCustomAttrs.value.includes(key)) {
     removedCustomAttrs.value = [...removedCustomAttrs.value, key];
   }
@@ -88,7 +78,6 @@ const handleRemoveCustomAttr = key => {
 
 const handleUpdateContact = async () => {
   if (!contactForEdit.value) return;
-
   try {
     if (removedCustomAttrs.value.length > 0) {
       await store.dispatch('contacts/deleteCustomAttributes', {
@@ -108,12 +97,20 @@ const onClickViewDetails = id => {
   emit('viewContact', id);
 };
 
+const formatDate = timestamp => {
+  if (!timestamp) return '---';
+  return new Date(timestamp * 1000).toLocaleDateString('id-ID', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+};
+
 const formatLocation = additionalAttributes => {
   if (!additionalAttributes) return '---';
-  const { country, countryCode, city } = additionalAttributes;
-  if (!country && !countryCode && !city) return '---';
-  const locationText = [city, country].filter(Boolean).join(', ');
-  return locationText;
+  const { country, city } = additionalAttributes;
+  if (!country && !city) return '---';
+  return [city, country].filter(Boolean).join(', ');
 };
 
 const formatCompanyName = additionalAttributes => {
@@ -123,7 +120,7 @@ const formatCompanyName = additionalAttributes => {
 const columns = computed(() => {
   const cols = [];
 
-  if (props.mandatoryColumns.includes('name')) {
+  if (props.visibleColumns.includes('name')) {
     cols.push(
       columnHelper.display({
         id: 'name',
@@ -131,18 +128,10 @@ const columns = computed(() => {
         cell: ({ row }) => {
           const contact = row.original;
           return h('div', { class: 'flex items-center gap-3' }, [
-            h(Avatar, {
-              name: contact.name,
-              src: contact.thumbnail,
-              size: 36,
-            }),
+            h(Avatar, { name: contact.name, src: contact.thumbnail, size: 36 }),
             h('div', { class: 'flex flex-col' }, [
-              h(
-                'span',
-                { class: 'font-medium text-n-slate-12' },
-                contact.name || '---'
-              ),
-              props.mandatoryColumns.includes('email') && contact.email
+              h('span', { class: 'font-medium text-n-slate-12' }, contact.name || '---'),
+              props.visibleColumns.includes('email') && contact.email
                 ? h('span', { class: 'text-xs text-n-slate-10' }, contact.email)
                 : null,
             ]),
@@ -153,124 +142,98 @@ const columns = computed(() => {
     );
   }
 
-  if (
-    !props.mandatoryColumns.includes('name') &&
-    props.mandatoryColumns.includes('email')
-  ) {
+  if (!props.visibleColumns.includes('name') && props.visibleColumns.includes('email')) {
     cols.push(
       columnHelper.display({
         id: 'email',
         header: t('CONTACTS_LAYOUT.TABLE.COLUMN.EMAIL'),
         cell: ({ row }) => {
           const value = row.original.email;
-          return h(
-            'span',
-            { class: value ? '' : 'text-n-slate-8' },
-            value || '---'
-          );
+          return h('span', { class: value ? '' : 'text-n-slate-8' }, value || '---');
         },
         size: 200,
       })
     );
   }
 
-  if (props.mandatoryColumns.includes('phoneNumber')) {
+  if (props.visibleColumns.includes('phoneNumber')) {
     cols.push(
       columnHelper.display({
         id: 'phoneNumber',
         header: t('CONTACTS_LAYOUT.TABLE.COLUMN.PHONE'),
         cell: ({ row }) => {
           const value = row.original.phoneNumber;
-          return h(
-            'span',
-            { class: value ? '' : 'text-n-slate-8' },
-            value || '---'
-          );
+          return h('span', { class: value ? '' : 'text-n-slate-8' }, value || '---');
         },
         size: 150,
       })
     );
   }
 
-  if (props.mandatoryColumns.includes('companyName')) {
+  if (props.visibleColumns.includes('companyName')) {
     cols.push(
       columnHelper.display({
         id: 'companyName',
         header: t('CONTACTS_LAYOUT.TABLE.COLUMN.COMPANY'),
         cell: ({ row }) => {
           const value = formatCompanyName(row.original.additionalAttributes);
-          return h(
-            'span',
-            { class: value === '---' ? 'text-n-slate-8' : '' },
-            value
-          );
+          return h('span', { class: value === '---' ? 'text-n-slate-8' : '' }, value);
         },
         size: 180,
       })
     );
   }
 
-  if (props.mandatoryColumns.includes('location')) {
+  if (props.visibleColumns.includes('location')) {
     cols.push(
       columnHelper.display({
         id: 'location',
         header: t('CONTACTS_LAYOUT.TABLE.COLUMN.LOCATION'),
         cell: ({ row }) => {
           const value = formatLocation(row.original.additionalAttributes);
-          return h(
-            'span',
-            { class: value === '---' ? 'text-n-slate-8' : '' },
-            value
-          );
+          return h('span', { class: value === '---' ? 'text-n-slate-8' : '' }, value);
         },
         size: 150,
       })
     );
   }
 
-  // if (props.mandatoryColumns.includes('createdAt')) {
-  //   cols.push(
-  //     columnHelper.display({
-  //       id: 'createdAt',
-  //       header: t('CONTACTS_LAYOUT.TABLE.COLUMN.CREATED_AT'),
-  //       cell: ({ row }) => {
-  //         const value = row.original.createdAt;
-  //         return h('span', { class: 'text-n-slate-11' }, formatDate(value));
-  //       },
-  //       size: 120,
-  //     })
-  //   );
-  // }
+  if (props.visibleColumns.includes('createdAt')) {
+    cols.push(
+      columnHelper.display({
+        id: 'createdAt',
+        header: t('CONTACTS_LAYOUT.TABLE.COLUMN.CREATED_AT'),
+        cell: ({ row }) => {
+          return h('span', { class: 'text-n-slate-11' }, formatDate(row.original.createdAt));
+        },
+        size: 120,
+      })
+    );
+  }
 
-  // if (props.mandatoryColumns.includes('lastActivityAt')) {
-  //   cols.push(
-  //     columnHelper.display({
-  //       id: 'lastActivityAt',
-  //       header: t('CONTACTS_LAYOUT.TABLE.COLUMN.LAST_ACTIVITY'),
-  //       cell: ({ row }) => {
-  //         const value = row.original.lastActivityAt;
-  //         return h('span', { class: 'text-n-slate-11' }, formatDate(value));
-  //       },
-  //       size: 140,
-  //     })
-  //   );
-  // }
+  if (props.visibleColumns.includes('lastActivityAt')) {
+    cols.push(
+      columnHelper.display({
+        id: 'lastActivityAt',
+        header: t('CONTACTS_LAYOUT.TABLE.COLUMN.LAST_ACTIVITY'),
+        cell: ({ row }) => {
+          return h('span', { class: 'text-n-slate-11' }, formatDate(row.original.lastActivityAt));
+        },
+        size: 140,
+      })
+    );
+  }
 
   props.customAttributes
-    .filter(attr => props.mandatoryColumns.includes(attr.key))
+    .filter(attr => props.visibleColumns.includes(attr.key))
     .forEach(attr => {
       cols.push(
         columnHelper.display({
           id: attr.key,
           header: attr.label || attr.key,
           cell: ({ row }) => {
-            const customAttrs = row.original.customAttributes || {};
-            const value = customAttrs[attr.key];
-            return h(
-              'span',
-              { class: value ? '' : 'text-n-slate-8' },
-              value || '---'
-            );
+            const value = (row.original.customAttributes || {})[attr.key];
+            return h('span', { class: value ? '' : 'text-n-slate-8' }, value ?? '---');
           },
           size: 150,
         })
@@ -313,9 +276,10 @@ const table = useVueTable({
   get data() {
     return props.contacts;
   },
-  columns: columns.value,
+  get columns() {
+    return columns.value;
+  },
   getCoreRowModel: getCoreRowModel(),
-  enableSorting: true,
 });
 </script>
 
@@ -368,7 +332,7 @@ const table = useVueTable({
   @apply flex flex-col flex-1 min-h-0;
 
   .table-wrapper {
-    @apply w-full min-w-[900px] overflow-auto;
+    @apply w-full overflow-auto;
     max-height: calc(100vh - 5rem);
   }
 }

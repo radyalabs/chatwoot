@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_04_09_000000) do
+ActiveRecord::Schema[7.0].define(version: 2026_05_12_000001) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -568,6 +568,16 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_09_000000) do
     t.index ["status"], name: "index_channel_whatsapp_unofficials_on_status"
   end
 
+  create_table "contact_attribute_keys", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "key", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "data_type", default: 0, null: false
+    t.index ["account_id", "key"], name: "index_contact_attribute_keys_on_account_id_and_key", unique: true
+    t.index ["account_id"], name: "index_contact_attribute_keys_on_account_id"
+  end
+
   create_table "contact_inboxes", force: :cascade do |t|
     t.bigint "contact_id"
     t.bigint "inbox_id"
@@ -1099,15 +1109,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_09_000000) do
     t.datetime "updated_at", precision: nil, null: false
   end
 
-  create_table "portal_members", force: :cascade do |t|
-    t.bigint "portal_id"
-    t.bigint "user_id"
-    t.datetime "created_at", precision: nil, null: false
-    t.datetime "updated_at", precision: nil, null: false
-    t.index ["portal_id", "user_id"], name: "index_portal_members_on_portal_id_and_user_id", unique: true
-    t.index ["user_id", "portal_id"], name: "index_portal_members_on_user_id_and_portal_id", unique: true
-  end
-
   create_table "portals", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "name", null: false
@@ -1635,6 +1636,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_09_000000) do
   add_foreign_key "ai_agent_followups", "ai_agents"
   add_foreign_key "ai_agent_selected_labels", "ai_agents"
   add_foreign_key "ai_agent_selected_labels", "labels"
+  add_foreign_key "contact_attribute_keys", "accounts"
   add_foreign_key "idle_configs", "accounts"
   add_foreign_key "idle_configs", "ai_agents"
   add_foreign_key "idle_conversations", "conversations", on_delete: :cascade

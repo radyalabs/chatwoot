@@ -66,6 +66,13 @@ const handleFormUpdate = updatedData => {
   Object.assign(contactData.value, updatedData);
 };
 
+const handleRemoveCustomAttr = key => {
+  if (contactData.value?.customAttributes) {
+    const { [key]: _, ...rest } = contactData.value.customAttributes;
+    contactData.value = { ...contactData.value, customAttributes: rest };
+  }
+};
+
 const updateContact = async () => {
   try {
     const { customAttributes, ...basicContactData } = contactData.value;
@@ -168,6 +175,7 @@ const handleAvatarDelete = async () => {
         :contact-data="contactData"
         is-details-view
         @update="handleFormUpdate"
+        @remove-custom-attr="handleRemoveCustomAttr"
       />
       <Button
         :label="t('CONTACTS_LAYOUT.CARD.EDIT_DETAILS_FORM.UPDATE_BUTTON')"

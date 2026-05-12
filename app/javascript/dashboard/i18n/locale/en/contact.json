@@ -469,7 +469,12 @@
       "CUSTOM_ATTRIBUTES": {
         "TITLE": "Custom Attributes",
         "KEY_PLACEHOLDER": "Attribute name",
-        "VALUE_PLACEHOLDER": "Value"
+        "VALUE_PLACEHOLDER": "Value",
+        "DELETE_CONTACT": "This contact only",
+        "DELETE_ALL": "All contacts",
+        "NO_AVAILABLE_KEYS": "All attributes already added",
+        "NEW_KEY_PLACEHOLDER": "New attribute name...",
+        "VALUE_WITH_KEY": "Enter your '{key}'"
       }
     },
     "DETAILS": {
@@ -587,9 +592,8 @@
       },
       "COLUMN_SETTINGS": "Columns",
       "COLUMN_SETTINGS_TITLE": "Column Settings",
-      "COLUMNS": "Columns",
       "ADD_CUSTOM_COLUMN": "Add Custom Column",
-      "COLUMN_KEY": "Key",
+      "COLUMN_KEY": "Add attribute key",
       "COLUMN_LABEL": "Label"
     }
   },

@@ -63,7 +63,7 @@ const appliedFilter = ref([]);
 const segmentsQuery = ref({});
 
 const appliedFilters = useMapGetter('contacts/getAppliedContactFiltersV4');
-const contactAttributes = useMapGetter('attributes/getContactAttributes');
+const contactAttributeKeys = useMapGetter('contactAttributeKeys/getContactAttributeKeys');
 const hasActiveSegments = computed(
   () => props.activeSegment && props.segmentsId !== 0
 );
@@ -216,7 +216,7 @@ const setParamsForEditSegmentModal = () => {
   return {
     countries,
     filterTypes: contactFilterItems,
-    allCustomAttributes: useSnakeCase(contactAttributes.value),
+    allCustomAttributes: (contactAttributeKeys.value || []).map(r => ({ key: r.key, attribute_display_type: 'text', attribute_model: 'contact_attribute' })),
   };
 };
 
@@ -300,8 +300,7 @@ defineExpose({
         v-model="appliedFilter"
         :segment-name="activeSegmentName"
         :is-segment-view="hasActiveSegments"
-        class="absolute mt-1 ltr:right-0 rtl:left-0 top-full"
-        style="z-index: 100;"
+        class="absolute mt-1 ltr:right-0 rtl:left-0 top-full z-[100]"
         @apply-filter="onApplyFilter"
         @update-segment="onUpdateSegment"
         @close="closeAdvanceFiltersModal"

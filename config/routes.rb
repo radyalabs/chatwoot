@@ -296,6 +296,7 @@ Rails.application.routes.draw do
             end
           end
           resources :custom_attribute_definitions, only: [:index, :show, :create, :update, :destroy]
+          resources :contact_attribute_keys, only: [:index, :create, :destroy]
           resources :custom_filters, only: [:index, :show, :create, :update, :destroy]
           resources :inboxes, only: [:index, :show, :create, :update, :destroy] do
             get :assignable_agents, on: :member

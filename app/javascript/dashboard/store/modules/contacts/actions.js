@@ -305,4 +305,8 @@ export const actions = {
   clearContactFilters({ commit }) {
     commit(types.CLEAR_CONTACT_FILTERS);
   },
+
+  removeCustomAttrKey({ commit }, key) {
+    commit(types.REMOVE_CONTACT_CUSTOM_ATTR_KEY, key);
+  },
 };

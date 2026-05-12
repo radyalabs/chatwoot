@@ -14,8 +14,8 @@ const actions = {
     commit('SET_KEYS', response.data);
   },
 
-  create: async ({ commit }, key) => {
-    const response = await ContactAttributeKeysAPI.create(key);
+  create: async ({ commit }, { key, dataType = 'text' }) => {
+    const response = await ContactAttributeKeysAPI.create(key, dataType);
     commit('ADD_KEY', response.data);
     return response.data;
   },

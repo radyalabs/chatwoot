@@ -10,8 +10,8 @@ class ContactAttributeKeysAPI extends ApiClient {
     return axios.get(this.url);
   }
 
-  create(key) {
-    return axios.post(this.url, { key });
+  create(key, dataType = 'text') {
+    return axios.post(this.url, { key, data_type: dataType });
   }
 
   delete(id) {

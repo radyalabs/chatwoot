@@ -50,7 +50,7 @@ const SOCIAL_CONFIG = {
   FACEBOOK: 'i-ri-facebook-circle-fill',
   INSTAGRAM: 'i-ri-instagram-line',
   TWITTER: 'i-ri-twitter-x-fill',
-  GITHUB: 'i-ri-github-fill',
+  // GITHUB: 'i-ri-github-fill',
 };
 
 const defaultState = {
@@ -247,6 +247,7 @@ const resetForm = () => {
 
 const newCustomAttrKey = ref('');
 const newCustomAttrValue = ref('');
+const newCustomAttrDataType = ref('text');
 const showKeyDropdown = ref(false);
 const newKeyInput = ref('');
 
@@ -260,8 +261,9 @@ const availableAttributeKeys = computed(() => {
   );
 });
 
-const selectExistingKey = key => {
-  newCustomAttrKey.value = key;
+const selectExistingKey = r => {
+  newCustomAttrKey.value = r.key;
+  newCustomAttrDataType.value = r.data_type || 'text';
   showKeyDropdown.value = false;
 };
 
@@ -270,6 +272,10 @@ const selectNewKey = () => {
   newCustomAttrKey.value = newKeyInput.value.trim();
   newKeyInput.value = '';
   showKeyDropdown.value = false;
+};
+
+const setDataType = dt => {
+  newCustomAttrDataType.value = dt;
 };
 
 const closeDropdownOnOutsideClick = e => {
@@ -285,22 +291,22 @@ const addCustomAttr = async () => {
   if (!newCustomAttrKey.value.trim()) return;
 
   const key = newCustomAttrKey.value.trim();
-  const value = newCustomAttrValue.value?.trim() || '';
+  const dataType = newCustomAttrDataType.value;
+  const value = newCustomAttrValue.value?.trim?.() ?? String(newCustomAttrValue.value ?? '');
 
-  if (!state.customAttributes) {
-    state.customAttributes = {};
-  }
+  if (!state.customAttributes) state.customAttributes = {};
   state.customAttributes[key] = value;
 
-  const exists = (contactAttributeKeys.value || []).some(r => r.key === key);
-  if (!exists) {
-    await store.dispatch('contactAttributeKeys/create', key);
-  }
-
+  newCustomAttrDataType.value = 'text';
   newCustomAttrKey.value = '';
   newCustomAttrValue.value = '';
   showKeyDropdown.value = false;
   emit('update', state);
+
+  const exists = (contactAttributeKeys.value || []).some(r => r.key === key);
+  if (!exists) {
+    await store.dispatch('contactAttributeKeys/create', { key, dataType });
+  }
 };
 
 const pendingDeleteKey = ref(null);
@@ -509,10 +515,11 @@ defineExpose({
                   v-for="r in availableAttributeKeys"
                   :key="r.key"
                   type="button"
-                  class="w-full px-3 py-1.5 text-sm text-left text-n-slate-12 hover:bg-n-alpha-2 truncate"
-                  @click.stop="selectExistingKey(r.key)"
+                  class="w-full px-3 py-1.5 text-sm text-left text-n-slate-12 hover:bg-n-alpha-2 flex items-center justify-between gap-2"
+                  @click.stop="selectExistingKey(r)"
                 >
-                  {{ r.key }}
+                  <span class="truncate">{{ r.key }}</span>
+                  <span class="text-xs text-n-slate-10 flex-shrink-0">{{ r.data_type }}</span>
                 </button>
                 <p
                   v-if="!availableAttributeKeys.length"
@@ -521,7 +528,7 @@ defineExpose({
                   {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.NO_AVAILABLE_KEYS') }}
                 </p>
               </div>
-              <div class="border-t border-n-weak p-2">
+              <div class="border-t border-n-weak p-2 flex flex-col gap-1.5">
                 <input
                   v-model="newKeyInput"
                   type="text"
@@ -530,6 +537,20 @@ defineExpose({
                   @click.stop
                   @keyup.enter="selectNewKey"
                 />
+                <div class="flex gap-1" @click.stop>
+                  <button
+                    v-for="dt in ['text', 'number', 'date']"
+                    :key="dt"
+                    type="button"
+                    class="flex-1 py-0.5 text-xs rounded border transition-colors"
+                    :class="newCustomAttrDataType === dt
+                      ? 'bg-n-brand text-white border-n-brand'
+                      : 'border-n-weak text-n-slate-11 hover:bg-n-alpha-2'"
+                    @click="setDataType(dt)"
+                  >
+                    {{ dt }}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -539,8 +560,16 @@ defineExpose({
           <span class="text-xs text-n-slate-11">
             {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.VALUE_PLACEHOLDER') }}
           </span>
-          <Input
+          <input
+            v-if="newCustomAttrDataType === 'date'"
             v-model="newCustomAttrValue"
+            type="date"
+            class="h-8 w-full px-2 text-sm border border-n-weak rounded-lg bg-n-alpha-black2 text-n-slate-12 focus:outline-none focus:border-n-brand"
+          />
+          <Input
+            v-else
+            v-model="newCustomAttrValue"
+            :type="newCustomAttrDataType === 'number' ? 'number' : 'text'"
             :placeholder="newCustomAttrKey ? t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.VALUE_WITH_KEY', { key: newCustomAttrKey }) : t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.VALUE_PLACEHOLDER')"
             :custom-input-class="'h-8 !pt-1 !pb-1'"
           />

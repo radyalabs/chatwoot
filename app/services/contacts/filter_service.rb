@@ -43,6 +43,13 @@ class Contacts::FilterService < FilterService
 
   private
 
+  def custom_attribute(attribute_key, account, custom_attribute_type)
+    super
+    return @custom_attribute if @custom_attribute.present?
+
+    @custom_attribute = (account || Current.account).contact_attribute_keys.find_by(key: attribute_key)
+  end
+
   def equals_to_filter_string(filter_operator, current_index)
     return "= :value_#{current_index}" if filter_operator == 'equal_to'
 

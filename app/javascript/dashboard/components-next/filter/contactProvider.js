@@ -50,20 +50,29 @@ export function useContactFilterContext() {
   const {
     equalityOperators,
     containmentOperators,
+    comparisonOperators,
     dateOperators,
   } = useOperators();
 
   const customFilterTypes = computed(() =>
-    (contactAttributeKeys.value || []).map(r => ({
-      attributeKey: r.key,
-      value: r.key,
-      attributeName: r.key,
-      label: r.key,
-      inputType: 'plainText',
-      dataType: 'text',
-      filterOperators: containmentOperators.value,
-      attributeModel: 'customAttributes',
-    }))
+    (contactAttributeKeys.value || []).map(r => {
+      const isDate = r.data_type === 'date';
+      const isNumber = r.data_type === 'number';
+      return {
+        attributeKey: r.key,
+        value: r.key,
+        attributeName: r.key,
+        label: r.key,
+        inputType: isDate ? 'date' : 'plainText',
+        dataType: isNumber ? 'number' : 'text',
+        filterOperators: isDate
+          ? dateOperators.value
+          : isNumber
+            ? comparisonOperators.value
+            : containmentOperators.value,
+        attributeModel: 'customAttributes',
+      };
+    })
   );
 
   /**

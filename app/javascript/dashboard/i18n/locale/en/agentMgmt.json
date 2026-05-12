@@ -632,7 +632,16 @@
       "NOTIFICATION": {
         "TITLE": "Internal Team Notification Settings",
         "DESC": "Configure automatic internal notifications when a new order is placed.",
-        "TEMPLATE_HELP": "This message will be sent automatically to your internal team to notify them of new orders."
+        "TEMPLATE_HELP": "This message will be sent automatically to your internal team to notify them of new orders.",
+        "CATEGORIES": {
+          "CART_CREATED": "Cart Created",
+          "CART_UPDATED": "Cart Updated",
+          "CART_DELETED": "Cart Deleted",
+          "ORDER_CREATED": "Order Created",
+          "ORDER_UPDATED": "Order Updated",
+          "ORDER_CANCELED": "Order Canceled",
+          "PAYMENT_CREATED": "Payment Created"
+        }
       }
     },
     "EOBOT": {

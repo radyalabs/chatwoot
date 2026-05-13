@@ -214,7 +214,9 @@ Rails.application.routes.draw do
               member do
                 get :status
                 get :qr_code
+                get :get_settings
                 post :start_session # Route baru untuk alur callback yang benar
+                patch :update_settings
               end
             end
             resource :twilio_channel, only: [:create]

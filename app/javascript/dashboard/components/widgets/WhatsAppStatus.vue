@@ -56,6 +56,8 @@ export default {
       qrDuration: 60,
       qrCountdown: 60,
       statusPollingTimer: null,
+      autoMarkRead: false,
+      isUpdatingSettings: false,
     };
   },
   computed: {
@@ -130,6 +132,7 @@ export default {
   },
   async mounted() {
     await this.checkStatus(true);
+    await this.loadSettings();
     this.setupWebSocketSubscription();
     if (this.autoRefresh) {
       this.startAutoRefresh();
@@ -488,6 +491,31 @@ export default {
     async forceRefresh() {
       await this.checkStatus(true);
     },
+
+    async loadSettings() {
+      try {
+        const response = await WhatsAppUnofficialChannels.getSettings(this.inboxId);
+        this.autoMarkRead = response.data?.auto_mark_read !== false;
+      } catch (e) {
+        this.autoMarkRead = false;
+      }
+    },
+
+    async toggleAutoMarkRead() {
+      this.isUpdatingSettings = true;
+      const newValue = this.autoMarkRead;
+      try {
+        await WhatsAppUnofficialChannels.updateSettings(this.inboxId, {
+          auto_mark_read: newValue
+        });
+        useAlert(this.t('INBOX_MGMT.WHATSAPP_STATUS.SETTINGS.SAVED'));
+      } catch (e) {
+        this.autoMarkRead = !newValue;
+        useAlert(this.t('INBOX_MGMT.WHATSAPP_STATUS.SETTINGS.ERROR'));
+      } finally {
+        this.isUpdatingSettings = false;
+      }
+    },
   },
 };
 </script>
@@ -772,6 +800,32 @@ export default {
       <p class="text-sm text-red-700 dark:text-red-300">
         {{ t('INBOX_MGMT.WHATSAPP_STATUS.MESSAGES.DISCONNECTED_GUIDE') }}
       </p>
+    </div>
+    <!-- Auto Mark Read Toggle -->
+    <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-900 dark:text-slate-100">
+            {{ t('INBOX_MGMT.WHATSAPP_STATUS.SETTINGS.AUTO_MARK_READ') }}
+          </p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            {{ t('INBOX_MGMT.WHATSAPP_STATUS.SETTINGS.AUTO_MARK_READ_DESC') }}
+          </p>
+        </div>
+        <button
+          :disabled="isUpdatingSettings"
+          class="relative inline-flex h-6 w-11 items-center flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
+          :class="autoMarkRead ? 'bg-green-600' : 'bg-gray-200 dark:bg-gray-700'"
+          role="switch"
+          :aria-checked="autoMarkRead"
+          @click="autoMarkRead = !autoMarkRead; toggleAutoMarkRead()"
+        >
+          <span
+            class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+            :class="autoMarkRead ? 'translate-x-5' : 'translate-x-0'"
+          />
+        </button>
+      </div>
     </div>
   </div>
 </template>

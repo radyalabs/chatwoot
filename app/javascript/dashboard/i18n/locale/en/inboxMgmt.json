@@ -843,6 +843,12 @@
       "ALERTS": {
         "CONNECTED": "WhatsApp connected successfully!",
         "DISCONNECTED_NOTICE": "WhatsApp disconnected from device. Please reconnect to continue."
+      },
+      "SETTINGS": {
+        "AUTO_MARK_READ": "Auto Mark as Read",
+        "AUTO_MARK_READ_DESC": "Automatically mark incoming WhatsApp messages as read",
+        "SAVED": "Settings saved",
+        "ERROR": "Failed to save settings"
       }
     },
     "DAYS_OF_WEEK": {

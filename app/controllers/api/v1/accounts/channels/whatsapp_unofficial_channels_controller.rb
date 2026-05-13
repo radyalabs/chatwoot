@@ -53,4 +53,32 @@ class Api::V1::Accounts::Channels::WhatsappUnofficialChannelsController < Api::V
   rescue ActiveRecord::RecordNotFound
     render json: { error: 'Channel not found' }, status: :not_found
   end
+
+  def get_settings
+    channel = find_channel_by_inbox
+    render json: {
+      auto_mark_read: channel.provider_config&.dig('auto_mark_read') == true
+    }
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: 'Channel not found' }, status: :not_found
+  end
+
+  def update_settings
+    channel = find_channel_by_inbox
+    provider_config = channel.provider_config || {}
+    provider_config['auto_mark_read'] = ActiveModel::Type::Boolean.new.cast(params[:auto_mark_read])
+    channel.update!(provider_config: provider_config)
+    render json: { success: true, auto_mark_read: provider_config['auto_mark_read'] }
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: 'Channel not found' }, status: :not_found
+  rescue StandardError => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
+  private
+
+  def find_channel_by_inbox
+    inbox = Current.account.inboxes.find(params[:id])
+    inbox.channel
+  end
 end

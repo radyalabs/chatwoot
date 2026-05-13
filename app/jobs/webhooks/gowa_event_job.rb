@@ -20,6 +20,18 @@ class Webhooks::GowaEventJob < ApplicationJob
     case event
     when 'message'
       WhatsappUnofficial::IncomingMessageService.new(inbox: channel.inbox, params: params).perform
+      
+      message = channel.inbox.messages.find_by(
+        source_id: params.dig('payload', 'id')
+      )
+      if message
+        WhatsappUnofficial::MarkMessageReadService.new(
+          channel: channel,
+          message: message
+        ).perform
+      end
+
+      send_expired_auto_reply(channel, params) unless account_subscription_active?(channel)
     when 'message.edited'
       # WhatsappUnofficial::UpdateMessageService.new(inbox: channel.inbox, params: data).perform
     end

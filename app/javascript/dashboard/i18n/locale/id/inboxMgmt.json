@@ -912,6 +912,12 @@
       "ALERTS": {
         "CONNECTED": "WhatsApp berhasil terkoneksi!",
         "DISCONNECTED_NOTICE": "WhatsApp terputus dari perangkat. Silakan sambung ulang untuk melanjutkan."
+      },
+      "SETTINGS": {
+        "AUTO_MARK_READ": "Tandai Otomatis sebagai Dibaca",
+        "AUTO_MARK_READ_DESC": "Tandai pesan WhatsApp masuk secara otomatis sebagai sudah dibaca",
+        "SAVED": "Pengaturan tersimpan",
+        "ERROR": "Gagal menyimpan pengaturan"
       }
     }
   }

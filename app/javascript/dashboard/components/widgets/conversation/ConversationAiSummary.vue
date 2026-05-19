@@ -20,12 +20,13 @@ export default {
     },
     formattedSummary() {
       if (!this.summary) return [];
-      const matches = [
-        ...this.summary.matchAll(/\*\*(.+?)\*\*\n+([\s\S]*?)(?=\n+\*\*|$)/g),
-      ];
-      return matches
-        .map(m => ({ title: m[1].trim(), content: m[2].trim() }))
-        .filter(s => s.content);
+      return this.summary
+        .split(/\n{2,}(?=\*\*)/)
+        .map(part => {
+          const match = part.match(/^\*\*(.+?)\*\*\n+([\s\S]+)/);
+          return match ? { title: match[1].trim(), content: match[2].trim() } : null;
+        })
+        .filter(Boolean);
     },
   },
 

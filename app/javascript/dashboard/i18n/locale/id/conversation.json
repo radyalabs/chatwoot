@@ -230,7 +230,14 @@
       "PART_4": "File yang akan ditambahkan:",
       "CHAR": "Karakter"
     },
-    "UPLOAD_MAX_REACHED": "File terlalu besar. Maksimal ukuran file adalah 20MB."
+    "UPLOAD_MAX_REACHED": "File terlalu besar. Maksimal ukuran file adalah 20MB.",
+    "AI_SUMMARY": {
+      "GENERATE_BUTTON": "Lihat Ringkasan AI",
+      "LOADING": "Sedang membuat ringkasan...",
+      "TITLE": "Ringkasan AI",
+      "COPY": "Salin ringkasan",
+      "CLOSE": "Tutup"
+    }
   },
   "EMAIL_TRANSCRIPT": {
     "TITLE": "Kirim transkrip percakapan",

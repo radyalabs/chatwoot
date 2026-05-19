@@ -474,6 +474,11 @@
         "VALUE_PLACEHOLDER": "Masukkan nilai",
         "DELETE_CONTACT": "Kontak ini saja",
         "DELETE_ALL": "Semua kontak",
+        "DELETE_ALL_CONFIRM": {
+          "TITLE": "Hapus atribut dari semua kontak?",
+          "DESCRIPTION": "Atribut '{key}' akan dihapus permanen dari seluruh kontak. Tindakan ini tidak dapat dibatalkan.",
+          "CONFIRM": "Ya, Hapus Permanen"
+        },
         "NO_AVAILABLE_KEYS": "Semua informasi sudah ditambahkan",
         "NEW_KEY_PLACEHOLDER": "Nama informasi baru...",
         "VALUE_WITH_KEY": "Masukkan '{key}' Anda",

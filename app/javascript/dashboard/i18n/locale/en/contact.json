@@ -476,6 +476,11 @@
         "VALUE_PLACEHOLDER": "Value",
         "DELETE_CONTACT": "This contact only",
         "DELETE_ALL": "All contacts",
+        "DELETE_ALL_CONFIRM": {
+          "TITLE": "Delete attribute from all contacts?",
+          "DESCRIPTION": "The attribute '{key}' will be permanently deleted from all contacts. This action cannot be undone.",
+          "CONFIRM": "Yes, Delete Permanently"
+        },
         "NO_AVAILABLE_KEYS": "All information already added",
         "NEW_KEY_PLACEHOLDER": "New information name...",
         "VALUE_WITH_KEY": "Enter your '{key}'",

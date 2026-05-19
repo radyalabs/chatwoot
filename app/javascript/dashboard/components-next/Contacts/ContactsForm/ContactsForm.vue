@@ -337,6 +337,7 @@ const addCustomAttr = async () => {
 };
 
 const pendingDeleteKey = ref(null);
+const keyToDeleteGlobally = ref(null);
 
 const handleTrashClick = key => {
   pendingDeleteKey.value = pendingDeleteKey.value === key ? null : key;
@@ -352,7 +353,19 @@ const removeFromContact = key => {
   emit('removeCustomAttr', key);
 };
 
-const removeDefinition = async key => {
+const requestRemoveDefinition = key => {
+  pendingDeleteKey.value = null;
+  keyToDeleteGlobally.value = key;
+};
+
+const cancelRemoveDefinition = () => {
+  keyToDeleteGlobally.value = null;
+};
+
+const confirmRemoveDefinition = async () => {
+  const key = keyToDeleteGlobally.value;
+  if (!key) return;
+  keyToDeleteGlobally.value = null;
   const record = (contactAttributeKeys.value || []).find(r => r.key === key);
   if (record) {
     await store.dispatch('contactAttributeKeys/destroy', record.id);
@@ -502,7 +515,7 @@ defineExpose({
               <button
                 type="button"
                 class="px-2 py-0.5 text-xs rounded bg-n-alpha-black2 text-n-slate-12 hover:bg-n-ruby-4 hover:text-n-ruby-11"
-                @click="removeDefinition(key)"
+                @click="requestRemoveDefinition(key)"
               >
                 {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.DELETE_ALL') }}
               </button>
@@ -517,6 +530,42 @@ defineExpose({
           </div>
         </template>
       </div>
+      <Transition
+        enter-active-class="transition-all duration-200 ease-out"
+        enter-from-class="opacity-0 -translate-y-1"
+        enter-to-class="opacity-100 translate-y-0"
+        leave-active-class="transition-all duration-150 ease-in"
+        leave-from-class="opacity-100 translate-y-0"
+        leave-to-class="opacity-0 -translate-y-1"
+      >
+        <div
+          v-if="keyToDeleteGlobally"
+          class="flex flex-col gap-2 p-3 rounded-lg bg-n-ruby-3 ring-1 ring-n-ruby-7"
+        >
+          <div class="flex items-start gap-2">
+            <Icon icon="i-lucide-triangle-alert" class="size-4 flex-shrink-0 text-n-ruby-11 mt-0.5" />
+            <p class="text-sm text-n-ruby-12">
+              {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.DELETE_ALL_CONFIRM.DESCRIPTION', { key: keyToDeleteGlobally }) }}
+            </p>
+          </div>
+          <div class="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              class="px-3 py-1 text-xs rounded-md border border-n-weak bg-n-solid-1 text-n-slate-12 hover:bg-n-alpha-2 transition-colors"
+              @click="cancelRemoveDefinition"
+            >
+              {{ t('DIALOG.BUTTONS.CANCEL') }}
+            </button>
+            <button
+              type="button"
+              class="px-3 py-1 text-xs rounded-md bg-n-ruby-9 text-white hover:bg-n-ruby-10 transition-colors"
+              @click="confirmRemoveDefinition"
+            >
+              {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.DELETE_ALL_CONFIRM.CONFIRM') }}
+            </button>
+          </div>
+        </div>
+      </Transition>
       <div
         v-if="Object.keys(customAttrsDisplay).length > 0"
         class="border-t border-n-weak"

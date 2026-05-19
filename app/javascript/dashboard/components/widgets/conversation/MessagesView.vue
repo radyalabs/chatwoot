@@ -12,6 +12,7 @@ import Message from './Message.vue';
 import NextMessageList from 'next/message/MessageList.vue';
 import ConversationLabelSuggestion from './conversation/LabelSuggestion.vue';
 import Banner from 'dashboard/components/ui/Banner.vue';
+import ConversationAiSummary from './ConversationAiSummary.vue';
 
 // stores and apis
 import { mapGetters } from 'vuex';
@@ -44,6 +45,7 @@ export default {
     ReplyBox,
     Banner,
     ConversationLabelSuggestion,
+    ConversationAiSummary,
   },
   mixins: [inboxMixin],
   props: {
@@ -487,6 +489,7 @@ export default {
       :href-link="replyWindowLink"
       :href-link-text="replyWindowLinkText"
     />
+    <ConversationAiSummary />
     <div class="flex justify-end">
       <woot-button
         variant="smooth"

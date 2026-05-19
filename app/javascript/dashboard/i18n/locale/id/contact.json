@@ -464,13 +464,13 @@
         }
       },
       "CUSTOM_ATTRIBUTES": {
-        "TITLE": "Atribut Kustom",
-        "KEY_PLACEHOLDER": "Nama atribut",
+        "TITLE": "Informasi Tambahan",
+        "KEY_PLACEHOLDER": "Nama informasi",
         "VALUE_PLACEHOLDER": "Masukkan nilai",
         "DELETE_CONTACT": "Kontak ini saja",
         "DELETE_ALL": "Semua kontak",
-        "NO_AVAILABLE_KEYS": "Semua atribut sudah ditambahkan",
-        "NEW_KEY_PLACEHOLDER": "Nama atribut baru...",
+        "NO_AVAILABLE_KEYS": "Semua informasi sudah ditambahkan",
+        "NEW_KEY_PLACEHOLDER": "Nama informasi baru...",
         "VALUE_WITH_KEY": "Masukkan '{key}' Anda"
       }
     },

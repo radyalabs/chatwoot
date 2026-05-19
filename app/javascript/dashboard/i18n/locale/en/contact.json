@@ -467,13 +467,13 @@
         }
       },
       "CUSTOM_ATTRIBUTES": {
-        "TITLE": "Custom Attributes",
-        "KEY_PLACEHOLDER": "Attribute name",
+        "TITLE": "Additional Information",
+        "KEY_PLACEHOLDER": "Information name",
         "VALUE_PLACEHOLDER": "Value",
         "DELETE_CONTACT": "This contact only",
         "DELETE_ALL": "All contacts",
-        "NO_AVAILABLE_KEYS": "All attributes already added",
-        "NEW_KEY_PLACEHOLDER": "New attribute name...",
+        "NO_AVAILABLE_KEYS": "All information already added",
+        "NEW_KEY_PLACEHOLDER": "New information name...",
         "VALUE_WITH_KEY": "Enter your '{key}'"
       }
     },

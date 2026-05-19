@@ -492,6 +492,17 @@ const actions = {
     commit(types.SET_CONTEXT_MENU_CHAT_ID, chatId);
   },
 
+  async generateAiSummary({ commit }, { conversationId }) {
+    const response = await ConversationApi.generateSummary(conversationId);
+    const { summary, generated_at: generatedAt } = response.data;
+    commit(types.UPDATE_CONVERSATION_AI_SUMMARY, {
+      conversationId,
+      aiSummary: summary,
+      generatedAt,
+    });
+    return summary;
+  },
+
   ...messageReadActions,
   ...messageTranslateActions,
 };

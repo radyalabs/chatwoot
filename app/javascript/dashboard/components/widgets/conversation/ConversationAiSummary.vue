@@ -6,7 +6,7 @@ export default {
 
   data() {
     return {
-      state: 'idle', // idle | loading | loaded | hidden
+      state: 'idle', // idle | loading | loaded
       isMinimized: true,
     };
   },
@@ -61,15 +61,12 @@ export default {
     toggleMinimize() {
       this.isMinimized = !this.isMinimized;
     },
-    closeSummary() {
-      this.state = 'hidden';
-    },
   },
 };
 </script>
 
 <template>
-  <div v-if="state !== 'hidden'" class="conversation-ai-summary">
+  <div class="conversation-ai-summary">
     <!-- Idle: generate button -->
     <button
       v-if="state === 'idle'"
@@ -116,13 +113,6 @@ export default {
             @click="copySummary"
           >
             <span class="i-lucide-copy size-4" />
-          </button>
-          <button
-            class="p-1 text-n-slate-500 hover:text-n-slate-800 rounded transition-colors"
-            :title="$t('CONVERSATION.AI_SUMMARY.CLOSE')"
-            @click="closeSummary"
-          >
-            <span class="i-lucide-x size-4" />
           </button>
         </div>
       </div>

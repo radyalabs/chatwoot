@@ -471,7 +471,14 @@
         "DELETE_ALL": "Semua kontak",
         "NO_AVAILABLE_KEYS": "Semua informasi sudah ditambahkan",
         "NEW_KEY_PLACEHOLDER": "Nama informasi baru...",
-        "VALUE_WITH_KEY": "Masukkan '{key}' Anda"
+        "VALUE_WITH_KEY": "Masukkan '{key}' Anda",
+        "SEARCH_PLACEHOLDER": "Cari atau tulis nama baru...",
+        "CREATE_NEW": "Tambah \"{key}\"",
+        "DATA_TYPES": {
+          "TEXT": "Teks",
+          "NUMBER": "Angka",
+          "DATE": "Tanggal"
+        }
       }
     },
     "TABLE": {

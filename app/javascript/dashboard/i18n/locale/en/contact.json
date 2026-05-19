@@ -474,7 +474,14 @@
         "DELETE_ALL": "All contacts",
         "NO_AVAILABLE_KEYS": "All information already added",
         "NEW_KEY_PLACEHOLDER": "New information name...",
-        "VALUE_WITH_KEY": "Enter your '{key}'"
+        "VALUE_WITH_KEY": "Enter your '{key}'",
+        "SEARCH_PLACEHOLDER": "Search or type a new name...",
+        "CREATE_NEW": "Add \"{key}\"",
+        "DATA_TYPES": {
+          "TEXT": "Text",
+          "NUMBER": "Number",
+          "DATE": "Date"
+        }
       }
     },
     "DETAILS": {

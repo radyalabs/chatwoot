@@ -24,6 +24,7 @@ const createNewContact = contactItem => {
 
 const handleDialogConfirm = async () => {
   if (!contact.value) return;
+  await contactsFormRef.value?.flushPendingAttr?.();
   emit('create', contact.value);
 };
 

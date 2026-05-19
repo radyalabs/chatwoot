@@ -144,6 +144,18 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
     @conversation.save!
   end
 
+  def generate_summary
+    summary = if @conversation.ai_summary.present?
+                 @conversation.ai_summary
+               else
+                 Captain::Llm::ConversationSummaryService.new(@conversation).perform
+               end
+    render json: { summary: summary, generated_at: @conversation.ai_summary_generated_at&.to_i }
+  rescue StandardError => e
+    Rails.logger.error("[ConversationsController] Summary generation failed: #{e.message}")
+    render json: { error: 'Failed to generate summary' }, status: :unprocessable_entity
+  end
+
   private
 
   def ensure_contact_inbox!

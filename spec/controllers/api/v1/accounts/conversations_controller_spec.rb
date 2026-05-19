@@ -905,4 +905,62 @@ RSpec.describe 'Conversations API', type: :request do
       end
     end
   end
+
+  describe 'POST /api/v1/accounts/{account.id}/conversations/:id/generate_summary' do
+    let(:conversation) { create(:conversation, account: account) }
+
+    before do
+      allow_any_instance_of(Subscriptions::IncrementUsageService).to receive(:perform)
+      allow_any_instance_of(Api::V1::Accounts::BaseController).to receive(:ensure_active_subscription)
+    end
+
+    context 'when it is an unauthenticated user' do
+      it 'returns unauthorized' do
+        post "/api/v1/accounts/#{account.id}/conversations/#{conversation.display_id}/generate_summary"
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context 'when it is an authenticated agent' do
+      let(:agent) { create(:user, account: account, role: :agent) }
+      let(:summary_text) { "**Permintaan Klien**\nKlien ingin refund order.\n\n**Perlu Ditindaklanjuti**\n- Bot tidak bisa proses refund." }
+
+      before do
+        create(:inbox_member, user: agent, inbox: conversation.inbox)
+        allow(Captain::Llm::ConversationSummaryService)
+          .to receive(:new).with(conversation).and_return(
+            instance_double(Captain::Llm::ConversationSummaryService, perform: summary_text)
+          )
+      end
+
+      it 'returns the generated summary' do
+        post "/api/v1/accounts/#{account.id}/conversations/#{conversation.display_id}/generate_summary",
+             headers: agent.create_new_auth_token,
+             as: :json
+
+        expect(response).to have_http_status(:success)
+        expect(JSON.parse(response.body)['summary']).to eq(summary_text)
+      end
+
+      context 'when summary already exists' do
+        before do
+          conversation.update!(
+            ai_summary: 'existing summary',
+            ai_summary_generated_at: 1.hour.ago
+          )
+        end
+
+        it 'returns cached summary without calling LLM' do
+          expect(Captain::Llm::ConversationSummaryService).not_to receive(:new)
+
+          post "/api/v1/accounts/#{account.id}/conversations/#{conversation.display_id}/generate_summary",
+               headers: agent.create_new_auth_token,
+               as: :json
+
+          expect(response).to have_http_status(:success)
+          expect(JSON.parse(response.body)['summary']).to eq('existing summary')
+        end
+      end
+    end
+  end
 end

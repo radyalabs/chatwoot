@@ -410,6 +410,9 @@
     "CARD": {
       "OF": "dari",
       "VIEW_DETAILS": "Lihat Detail",
+      "NEW_CONTACT_FORM": {
+        "TITLE": "Tambah kontak baru"
+      },
       "EDIT_DETAILS_FORM": {
         "TITLE": "Edit detail kontak",
         "FORM": {
@@ -446,6 +449,7 @@
       },
       "SOCIAL_MEDIA": {
         "TITLE": "Ubah link media sosial",
+        "TITLE_NEW": "Tambahkan link media sosial",
         "FORM": {
           "FACEBOOK": {
             "PLACEHOLDER": "Tambahkan Facebook"

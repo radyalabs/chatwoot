@@ -412,6 +412,9 @@
     "CARD": {
       "OF": "of",
       "VIEW_DETAILS": "View details",
+      "NEW_CONTACT_FORM": {
+        "TITLE": "Add new contact"
+      },
       "EDIT_DETAILS_FORM": {
         "TITLE": "Edit contact details",
         "FORM": {
@@ -448,6 +451,7 @@
       },
       "SOCIAL_MEDIA": {
         "TITLE": "Edit social links",
+        "TITLE_NEW": "Add social links",
         "FORM": {
           "FACEBOOK": {
             "PLACEHOLDER": "Add Facebook"

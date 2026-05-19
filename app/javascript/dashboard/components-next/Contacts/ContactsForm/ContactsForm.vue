@@ -386,7 +386,7 @@ defineExpose({
   <div class="flex flex-col gap-6">
     <div class="flex flex-col items-start gap-2">
       <span class="py-1 text-sm font-medium text-n-slate-12">
-        {{ t('CONTACTS_LAYOUT.CARD.EDIT_DETAILS_FORM.TITLE') }}
+        {{ isNewContact ? t('CONTACTS_LAYOUT.CARD.NEW_CONTACT_FORM.TITLE') : t('CONTACTS_LAYOUT.CARD.EDIT_DETAILS_FORM.TITLE') }}
       </span>
       <div class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
         <template v-for="item in editDetailsForm" :key="item.key">
@@ -433,7 +433,7 @@ defineExpose({
     </div>
     <div class="flex flex-col items-start gap-2">
       <span class="py-1 text-sm font-medium text-n-slate-12">
-        {{ t('CONTACTS_LAYOUT.CARD.SOCIAL_MEDIA.TITLE') }}
+        {{ isNewContact ? t('CONTACTS_LAYOUT.CARD.SOCIAL_MEDIA.TITLE_NEW') : t('CONTACTS_LAYOUT.CARD.SOCIAL_MEDIA.TITLE') }}
       </span>
       <div class="flex flex-wrap gap-2">
         <div

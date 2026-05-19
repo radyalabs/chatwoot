@@ -4,6 +4,7 @@ import { createConsumer } from '@rails/actioncable';
 import { useAlert } from 'dashboard/composables';
 import { mapGetters } from 'vuex';
 import { useI18n } from 'vue-i18n';
+import Switch from 'dashboard/components/ui/Switch.vue';
 
 export default {
   props: {
@@ -32,6 +33,9 @@ export default {
     'sessionReconnected',
     'reconnectError',
   ],
+  components: {
+    Switch,
+  },
   setup() {
     const { t } = useI18n();
     return { t };
@@ -812,19 +816,23 @@ export default {
             {{ t('INBOX_MGMT.WHATSAPP_STATUS.SETTINGS.AUTO_MARK_READ_DESC') }}
           </p>
         </div>
-        <button
-          :disabled="isUpdatingSettings"
-          class="relative inline-flex h-6 w-11 items-center flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
-          :class="autoMarkRead ? 'bg-green-600' : 'bg-gray-200 dark:bg-gray-700'"
-          role="switch"
-          :aria-checked="autoMarkRead"
-          @click="autoMarkRead = !autoMarkRead; toggleAutoMarkRead()"
-        >
-          <span
-            class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-            :class="autoMarkRead ? 'translate-x-5' : 'translate-x-0'"
+        
+        <div class="flex items-center justify-end gap-3">
+          <span class="text-sm text-slate-700 dark:text-slate-300">
+            {{ autoMarkRead ? 'Aktif' : 'Nonaktif' }}
+          </span>
+          <Switch
+            :model-value="autoMarkRead"
+            :disabled="isUpdatingSettings"
+            color="#389947"
+            @input="
+              newValue => {
+                autoMarkRead = newValue;
+                toggleAutoMarkRead();
+              }
+            "
           />
-        </button>
+        </div>
       </div>
     </div>
   </div>

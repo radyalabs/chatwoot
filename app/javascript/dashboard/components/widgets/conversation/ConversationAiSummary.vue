@@ -18,6 +18,9 @@ export default {
     summary() {
       return this.currentChat?.ai_summary || null;
     },
+    isAssigned() {
+      return !!this.currentChat?.meta?.assignee;
+    },
     formattedSummary() {
       if (!this.summary) return [];
       return this.summary
@@ -67,7 +70,7 @@ export default {
 </script>
 
 <template>
-  <div class="conversation-ai-summary">
+  <div v-if="isAssigned" class="conversation-ai-summary">
     <!-- Idle: generate button -->
     <button
       v-if="state === 'idle'"

@@ -78,11 +78,14 @@ const visibleColumns = computed(
   () => uiSettings.value?.contacts_visible_columns || [...ALWAYS_VISIBLE_KEYS]
 );
 
+const formatAttrLabel = key =>
+  key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
 // Custom attribute column definitions to pass to the table
 const allCustomColumnDefs = computed(() =>
   (contactAttributeKeys.value || []).map(r => ({
     key: r.key,
-    label: r.key,
+    label: formatAttrLabel(r.key),
   }))
 );
 
@@ -404,7 +407,7 @@ onMounted(async () => {
                 :checked="isChecked(r.key)"
                 @change="toggleColumn(r.key)"
               />
-              <span class="text-sm text-n-slate-12 truncate">{{ r.key }}</span>
+              <span class="text-sm text-n-slate-12 truncate">{{ formatAttrLabel(r.key) }}</span>
             </label>
           </template>
         </div>

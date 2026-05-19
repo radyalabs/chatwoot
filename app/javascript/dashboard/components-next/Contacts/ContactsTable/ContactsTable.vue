@@ -13,7 +13,9 @@ import Table from 'dashboard/components/table/Table.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
+import Flag from 'dashboard/components-next/flag/Flag.vue';
 import ContactsForm from 'dashboard/components-next/Contacts/ContactsForm/ContactsForm.vue';
+import countries from 'shared/constants/countries';
 
 const props = defineProps({
   contacts: { type: Array, required: true },
@@ -100,22 +102,35 @@ const onClickViewDetails = id => {
 
 const formatDate = timestamp => {
   if (!timestamp) return '---';
-  return new Date(timestamp * 1000).toLocaleDateString('id-ID', {
+  return new Date(timestamp * 1000).toLocaleDateString(navigator.language ?? 'id-ID', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
   });
 };
 
+const countriesMap = countries.reduce((acc, c) => {
+  acc[c.id] = c;
+  acc[c.name] = c;
+  return acc;
+}, {});
+
+const getCountryCode = additionalAttributes => {
+  if (!additionalAttributes) return null;
+  const { countryCode, country } = additionalAttributes;
+  const match = countriesMap[countryCode] || countriesMap[country];
+  return match?.id || null;
+};
+
 const formatLocation = additionalAttributes => {
-  if (!additionalAttributes) return '---';
+  if (!additionalAttributes) return null;
   const { country, city } = additionalAttributes;
-  if (!country && !city) return '---';
+  if (!country && !city) return null;
   return [city, country].filter(Boolean).join(', ');
 };
 
 const formatCompanyName = additionalAttributes => {
-  return additionalAttributes?.companyName || '---';
+  return additionalAttributes?.companyName || null;
 };
 
 const columns = computed(() => {
@@ -132,7 +147,7 @@ const columns = computed(() => {
             h(Avatar, { name: contact.name, src: contact.thumbnail, size: 36 }),
             h('div', { class: 'flex flex-col' }, [
               h('span', { class: 'font-medium text-n-slate-12' }, contact.name || '---'),
-              props.visibleColumns.includes('email') && contact.email
+              contact.email
                 ? h('span', { class: 'text-xs text-n-slate-10' }, contact.email)
                 : null,
             ]),
@@ -157,6 +172,7 @@ const columns = computed(() => {
     );
   }
 
+
   if (props.visibleColumns.includes('phoneNumber')) {
     cols.push(
       columnHelper.display({
@@ -178,7 +194,11 @@ const columns = computed(() => {
         header: t('CONTACTS_LAYOUT.TABLE.COLUMN.COMPANY'),
         cell: ({ row }) => {
           const value = formatCompanyName(row.original.additionalAttributes);
-          return h('span', { class: value === '---' ? 'text-n-slate-8' : '' }, value);
+          if (!value) return h('span', { class: 'text-n-slate-8' }, '---');
+          return h('div', { class: 'flex items-center gap-1.5' }, [
+            h('span', { class: 'i-ph-building-light size-3.5 text-n-slate-10 flex-shrink-0' }),
+            h('span', {}, value),
+          ]);
         },
         size: 180,
       })
@@ -192,7 +212,12 @@ const columns = computed(() => {
         header: t('CONTACTS_LAYOUT.TABLE.COLUMN.LOCATION'),
         cell: ({ row }) => {
           const value = formatLocation(row.original.additionalAttributes);
-          return h('span', { class: value === '---' ? 'text-n-slate-8' : '' }, value);
+          if (!value) return h('span', { class: 'text-n-slate-8' }, '---');
+          const code = getCountryCode(row.original.additionalAttributes);
+          return h('div', { class: 'flex items-center gap-1.5' }, [
+            code ? h(Flag, { country: code, class: 'size-3.5 flex-shrink-0' }) : null,
+            h('span', {}, value),
+          ]);
         },
         size: 150,
       })

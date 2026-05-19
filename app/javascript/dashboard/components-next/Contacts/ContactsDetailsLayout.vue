@@ -50,7 +50,7 @@ const handleBreadcrumbClick = () => {
 };
 
 const SIDEBAR_STORAGE_KEY = 'contact_detail_sidebar_open';
-const isSidebarOpen = ref(true);
+const isSidebarOpen = ref(false);
 
 onMounted(() => {
   const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY);

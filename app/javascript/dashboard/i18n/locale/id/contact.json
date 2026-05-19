@@ -39,10 +39,10 @@
     },
     "MERGE_CONTACT": "Gabungkan Kontak",
     "CONTACT_ACTIONS": "Tindakan Kontak",
-    "MUTE_CONTACT": "Block Contact",
-    "UNMUTE_CONTACT": "Unblock Contact",
-    "MUTED_SUCCESS": "This contact is blocked successfully. You will not be notified of any future conversations.",
-    "UNMUTED_SUCCESS": "This contact is unblocked successfully.",
+    "MUTE_CONTACT": "Blokir Kontak",
+    "UNMUTE_CONTACT": "Buka Blokir Kontak",
+    "MUTED_SUCCESS": "Kontak ini berhasil diblokir. Anda tidak akan diberitahu tentang percakapan mendatang.",
+    "UNMUTED_SUCCESS": "Kontak ini berhasil dibuka blokirnya.",
     "SEND_TRANSCRIPT": "Kirim Transkrip",
     "EDIT_LABEL": "Edit",
     "SIDEBAR_SECTIONS": {
@@ -173,8 +173,8 @@
         "ERROR": "Pesan tidak boleh kosong"
       },
       "ATTACHMENTS": {
-        "SELECT": "Choose files",
-        "HELP_TEXT": "Drag and drop files here or choose files to attach"
+        "SELECT": "Pilih berkas",
+        "HELP_TEXT": "Seret dan lepas berkas di sini atau pilih berkas untuk dilampirkan"
       },
       "SUBMIT": "Kirim Pesan",
       "CANCEL": "Batalkan",
@@ -253,7 +253,7 @@
   },
   "MERGE_CONTACTS": {
     "TITLE": "Gabungkan Kontak",
-    "DESCRIPTION": "Merge contacts to combine two profiles into one, including all attributes and conversations. In case of conflict, the Primary contact’ s attributes will take precedence.",
+    "DESCRIPTION": "Gabungkan kontak untuk menyatukan dua profil menjadi satu, termasuk semua atribut dan percakapan. Jika ada konflik, atribut kontak Utama akan diprioritaskan.",
     "PRIMARY": {
       "TITLE": "Kontak Utama",
       "HELP_LABEL": "Akan dihapus"
@@ -269,7 +269,7 @@
       "ATTRIBUTE_WARNING": "Detail kontak dari <strong>{primaryContactName}</strong> akan disalin ke <strong>{parentContactName}</strong>."
     },
     "SEARCH": {
-      "ERROR": "PESAN_KESALAHAN"
+      "ERROR": "Tidak dapat mencari kontak. Silakan coba lagi nanti."
     },
     "FORM": {
       "SUBMIT": "Gabungkan Kontak",
@@ -288,7 +288,7 @@
   "CONTACTS_LAYOUT": {
     "HEADER": {
       "TITLE": "Kontak",
-      "SEARCH_TITLE": "Search contacts",
+      "SEARCH_TITLE": "Cari kontak",
       "SEARCH_PLACEHOLDER": "Cari...",
       "MESSAGE_BUTTON": "Pesan",
       "SEND_MESSAGE": "Kirim Pesan",
@@ -304,7 +304,7 @@
           "EMAIL_ADDRESS_DUPLICATE": "Alamat email ini digunakan untuk kontak lain.",
           "PHONE_NUMBER_DUPLICATE": "Nomor ini sudah digunakan oleh kontak lain.",
           "SUCCESS_MESSAGE": "Kontak berhasil disimpan",
-          "ERROR_MESSAGE": "Unable to save contact. Please try again later."
+          "ERROR_MESSAGE": "Tidak dapat menyimpan kontak. Silakan coba lagi nanti."
         },
         "IMPORT_CONTACT": {
           "TITLE": "Impor kontak",
@@ -315,7 +315,7 @@
           "CHANGE": "Ubah",
           "CANCEL": "Batalkan",
           "IMPORT": "Impor",
-          "SUCCESS_MESSAGE": "You will be notified via email when the import is complete.",
+          "SUCCESS_MESSAGE": "Anda akan mendapat notifikasi melalui email ketika impor selesai.",
           "ERROR_MESSAGE": "Terjadi kesalahan, harap coba lagi",
           "GUIDE": {
             "TITLE": "Cara menyiapkan data",
@@ -327,9 +327,9 @@
         },
         "EXPORT_CONTACT": {
           "TITLE": "Ekspor kontak",
-          "DESCRIPTION": "Quickly export a csv file with comprehensive details of your contacts",
+          "DESCRIPTION": "Ekspor cepat file CSV dengan detail lengkap kontak Anda",
           "CONFIRM": "Ekspor",
-          "SUCCESS_MESSAGE": "Export is in progress, You will be notified via email when export file is ready to dowanlod.",
+          "SUCCESS_MESSAGE": "Ekspor sedang berjalan, Anda akan mendapat notifikasi melalui email ketika file siap diunduh.",
           "ERROR_MESSAGE": "Terjadi kesalahan, harap coba lagi"
         },
         "SORT_BY": {
@@ -357,18 +357,18 @@
             "TITLE": "Apakah Anda ingin menyimpan filter ini?",
             "CONFIRM": "Simpan filter",
             "LABEL": "Nama",
-            "PLACEHOLDER": "Enter the name of the filter",
-            "ERROR": "Enter a valid name",
-            "SUCCESS_MESSAGE": "Filter saved successfully",
-            "ERROR_MESSAGE": "Unable to save filter. Please try again later."
+            "PLACEHOLDER": "Masukkan nama filter",
+            "ERROR": "Masukkan nama yang valid",
+            "SUCCESS_MESSAGE": "Filter berhasil disimpan",
+            "ERROR_MESSAGE": "Tidak dapat menyimpan filter. Silakan coba lagi nanti."
           },
           "DELETE_SEGMENT": {
             "TITLE": "Konfirmasi Penghapusan",
-            "DESCRIPTION": "Are you sure you want to delete this filter?",
+            "DESCRIPTION": "Apakah Anda yakin ingin menghapus filter ini?",
             "CONFIRM": "Ya, Hapus",
-            "CANCEL": "No, Cancel",
-            "SUCCESS_MESSAGE": "Filter deleted successfully",
-            "ERROR_MESSAGE": "Unable to delete filter. Please try again later."
+            "CANCEL": "Tidak, Batalkan",
+            "SUCCESS_MESSAGE": "Filter berhasil dihapus",
+            "ERROR_MESSAGE": "Tidak dapat menghapus filter. Silakan coba lagi nanti."
           }
         }
       }
@@ -391,24 +391,24 @@
       "BLOCKED_TRUE": "Benar",
       "BLOCKED_FALSE": "Salah",
       "BUTTONS": {
-        "CLEAR_FILTERS": "Clear filters",
-        "UPDATE_SEGMENT": "Update segment",
+        "CLEAR_FILTERS": "Hapus filter",
+        "UPDATE_SEGMENT": "Perbarui segmen",
         "APPLY_FILTERS": "Terapkan filter",
         "ADD_FILTER": "Tambah filter"
       },
       "TITLE": "Filter kontak",
       "EDIT_SEGMENT": "Edit Segmen",
       "SEGMENT": {
-        "LABEL": "Segment name",
-        "INPUT_PLACEHOLDER": "Enter the name of the segment"
+        "LABEL": "Nama segmen",
+        "INPUT_PLACEHOLDER": "Masukkan nama segmen"
       },
       "ACTIVE_FILTERS": {
-        "MORE_FILTERS": "+ {count} more filters",
-        "CLEAR_FILTERS": "Clear filters"
+        "MORE_FILTERS": "+ {count} filter lainnya",
+        "CLEAR_FILTERS": "Hapus filter"
       }
     },
     "CARD": {
-      "OF": "of",
+      "OF": "dari",
       "VIEW_DETAILS": "Lihat Detail",
       "EDIT_DETAILS_FORM": {
         "TITLE": "Edit detail kontak",
@@ -417,14 +417,14 @@
             "PLACEHOLDER": "Masukkan nama depan"
           },
           "LAST_NAME": {
-            "PLACEHOLDER": "Enter the last name"
+            "PLACEHOLDER": "Masukkan nama belakang"
           },
           "EMAIL_ADDRESS": {
             "PLACEHOLDER": "Masukkan alamat email",
             "DUPLICATE": "Alamat email ini digunakan untuk kontak lain."
           },
           "PHONE_NUMBER": {
-            "PLACEHOLDER": "Enter the phone number",
+            "PLACEHOLDER": "Masukkan nomor telepon",
             "DUPLICATE": "Nomor ini sudah digunakan oleh kontak lain."
           },
           "CITY": {
@@ -441,26 +441,26 @@
           }
         },
         "UPDATE_BUTTON": "Perbarui kontak",
-        "SUCCESS_MESSAGE": "Contact updated successfully",
-        "ERROR_MESSAGE": "Unable to update contact. Please try again later."
+        "SUCCESS_MESSAGE": "Kontak berhasil diperbarui",
+        "ERROR_MESSAGE": "Tidak dapat memperbarui kontak. Silakan coba lagi nanti."
       },
       "SOCIAL_MEDIA": {
         "TITLE": "Ubah link media sosial",
         "FORM": {
           "FACEBOOK": {
-            "PLACEHOLDER": "Add Facebook"
+            "PLACEHOLDER": "Tambahkan Facebook"
           },
           "GITHUB": {
-            "PLACEHOLDER": "Add Github"
+            "PLACEHOLDER": "Tambahkan Github"
           },
           "INSTAGRAM": {
-            "PLACEHOLDER": "Add Instagram"
+            "PLACEHOLDER": "Tambahkan Instagram"
           },
           "LINKEDIN": {
-            "PLACEHOLDER": "Add LinkedIn"
+            "PLACEHOLDER": "Tambahkan LinkedIn"
           },
           "TWITTER": {
-            "PLACEHOLDER": "Add Twitter"
+            "PLACEHOLDER": "Tambahkan Twitter"
           }
         }
       },
@@ -506,17 +506,15 @@
       "ADD_CUSTOM_COLUMN": "Tambah Kolom Kustom",
       "COLUMN_KEY": "Tambah kunci atribut",
       "COLUMN_LABEL": "Label"
-    }
-  },
-  "DETAILS": {
+    },
     "DETAILS": {
       "CREATED_AT": "Dibuat {date}",
-      "LAST_ACTIVITY": "Last active {date}",
-      "DELETE_CONTACT_DESCRIPTION": "Permanently delete this contact. This action is irreversible",
+      "LAST_ACTIVITY": "Terakhir aktif {date}",
+      "DELETE_CONTACT_DESCRIPTION": "Hapus kontak ini secara permanen. Tindakan ini tidak dapat dibatalkan.",
       "DELETE_CONTACT": "Hapus kontak",
       "DELETE_DIALOG": {
         "TITLE": "Konfirmasi Penghapusan",
-        "DESCRIPTION": "Are you sure you want to delete this {contactName} contact?",
+        "DESCRIPTION": "Apakah Anda yakin ingin menghapus kontak {contactName} ini?",
         "CONFIRM": "Ya, Hapus",
         "API": {
           "SUCCESS_MESSAGE": "Kontak berhasil dihapus",
@@ -525,19 +523,19 @@
       },
       "AVATAR": {
         "UPLOAD": {
-          "ERROR_MESSAGE": "Could not upload avatar. Please try again later.",
-          "SUCCESS_MESSAGE": "Avatar uploaded successfully"
+          "ERROR_MESSAGE": "Gagal mengunggah avatar. Silakan coba lagi nanti.",
+          "SUCCESS_MESSAGE": "Avatar berhasil diunggah"
         },
         "DELETE": {
           "SUCCESS_MESSAGE": "Avatar berhasil dihapus",
-          "ERROR_MESSAGE": "Could not delete avatar. Please try again later."
+          "ERROR_MESSAGE": "Gagal menghapus avatar. Silakan coba lagi nanti."
         }
       }
     },
     "SIDEBAR": {
       "TABS": {
         "ATTRIBUTES": "Atribut",
-        "HISTORY": "History",
+        "HISTORY": "Riwayat",
         "NOTES": "Catatan",
         "MERGE": "Gabungkan"
       },
@@ -545,8 +543,8 @@
         "EMPTY_STATE": "Tidak ada percakapan sebelumnya yang terkait dengan kontak ini"
       },
       "ATTRIBUTES": {
-        "SEARCH_PLACEHOLDER": "Search for attributes",
-        "UNUSED_ATTRIBUTES": "{count} Used attribute | {count} Unused attributes",
+        "SEARCH_PLACEHOLDER": "Cari atribut",
+        "UNUSED_ATTRIBUTES": "{count} Atribut terpakai | {count} Atribut tidak terpakai",
         "EMPTY_STATE": "Tidak ada atribut tambahan untuk kontak di akun ini. Silakan buat atribut baru melalui menu pengaturan.",
         "YES": "Ya",
         "NO": "Tidak",
@@ -555,11 +553,11 @@
           "INPUT": "Masukkan data"
         },
         "VALIDATIONS": {
-          "INVALID_NUMBER": "Invalid number",
+          "INVALID_NUMBER": "Nomor tidak valid",
           "REQUIRED": "Nilai yang valid diperlukan",
-          "INVALID_INPUT": "Invalid input",
+          "INVALID_INPUT": "Masukan tidak valid",
           "INVALID_URL": "URL tidak valid",
-          "INVALID_DATE": "Invalid date"
+          "INVALID_DATE": "Tanggal tidak valid"
         },
         "NO_ATTRIBUTES": "Tidak ditemukan atribut",
         "API": {
@@ -574,13 +572,13 @@
         "DESCRIPTION": "Satukan dua profil menjadi satu, dengan semua atribut dan percakapan. Atribut kontak utama akan diprioritaskan jika ada konflik.",
         "PRIMARY": "Kontak Utama",
         "PRIMARY_HELP_LABEL": "Akan disimpan",
-        "PRIMARY_REQUIRED_ERROR": "Please select a contact to merge with before proceeding",
+        "PRIMARY_REQUIRED_ERROR": "Pilih kontak yang akan digabungkan sebelum melanjutkan",
         "PARENT": "Akan digabungkan",
         "PARENT_HELP_LABEL": "Akan dihapus",
         "EMPTY_STATE": "Tidak ada kontak yang ditemukan",
         "PLACEHOLDER": "Cari kontak utama yang terdaftar" ,
         "SEARCH_PLACEHOLDER": "Cari kontak",
-        "SEARCH_ERROR_MESSAGE": "Could not search for contacts. Please try again later.",
+        "SEARCH_ERROR_MESSAGE": "Tidak dapat mencari kontak. Silakan coba lagi nanti.",
         "SUCCESS_MESSAGE": "Kontak berhasil digabungkan",
         "ERROR_MESSAGE": "Tidak dapat menggabungkan kontak, coba lagi!",
         "IS_SEARCHING": "Sedang mencari...",
@@ -593,7 +591,7 @@
         "PLACEHOLDER": "Tambahkan Catatan",
         "WROTE": "menulis",
         "YOU": "Anda",
-        "SAVE": "Save note",
+        "SAVE": "Simpan catatan",
         "EMPTY_STATE": "Belum ada catatan untuk kontak ini. Anda bisa menambahkan catatan dengan mengetik di kotak di atas."
       }
     },
@@ -611,13 +609,13 @@
     },
     "FORM": {
       "GO_TO_CONVERSATION": "Lihat",
-      "SUCCESS_MESSAGE": "The message was sent successfully!",
-      "ERROR_MESSAGE": "An error occurred while creating the conversation. Please try again later.",
-      "NO_INBOX_ALERT": "There are no available inboxes to start a conversation with this contact.",
+      "SUCCESS_MESSAGE": "Pesan berhasil terkirim!",
+      "ERROR_MESSAGE": "Terjadi kesalahan saat membuat percakapan. Silakan coba lagi nanti.",
+      "NO_INBOX_ALERT": "Tidak ada kotak masuk yang tersedia untuk memulai percakapan dengan kontak ini.",
       "CONTACT_SELECTOR": {
         "LABEL": "Kepada:",
         "TAG_INPUT_PLACEHOLDER": "Cari kontak berdasarkan nama, email, atau nomor telepon",
-        "CONTACT_CREATING": "Creating contact..."
+        "CONTACT_CREATING": "Membuat kontak..."
       },
       "INBOX_SELECTOR": {
         "LABEL": "Melalui:",
@@ -625,20 +623,20 @@
       },
       "EMAIL_OPTIONS": {
         "SUBJECT_LABEL": "Masukkan subjek :",
-        "SUBJECT_PLACEHOLDER": "Enter your email subject here",
+        "SUBJECT_PLACEHOLDER": "Masukkan subjek email di sini",
         "CC_LABEL": "Cc:",
-        "CC_PLACEHOLDER": "Search for a contact with their email address",
+        "CC_PLACEHOLDER": "Cari kontak berdasarkan alamat email",
         "BCC_LABEL": "Bcc:",
-        "BCC_PLACEHOLDER": "Search for a contact with their email address",
+        "BCC_PLACEHOLDER": "Cari kontak berdasarkan alamat email",
         "BCC_BUTTON": "Bcc"
       },
       "MESSAGE_EDITOR": {
         "PLACEHOLDER": "Tulis pesan Anda di sini..."
       },
       "WHATSAPP_OPTIONS": {
-        "LABEL": "Select template",
-        "SEARCH_PLACEHOLDER": "Search templates",
-        "EMPTY_STATE": "No templates found",
+        "LABEL": "Pilih template",
+        "SEARCH_PLACEHOLDER": "Cari template",
+        "EMPTY_STATE": "Tidak ada template yang ditemukan",
         "TEMPLATE_PARSER": {
           "TEMPLATE_NAME": "WhatsApp template: {templateName}",
           "VARIABLES": "Variabel",

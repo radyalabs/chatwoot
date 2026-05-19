@@ -4,6 +4,14 @@ import {
   fromUnixTime,
   formatDistanceToNow,
 } from 'date-fns';
+import { id as idLocale, enUS } from 'date-fns/locale';
+
+const getDateFnsLocale = () => {
+  const lang =
+    (typeof navigator !== 'undefined' && navigator.language?.split('-')[0]) ||
+    'en';
+  return lang === 'id' ? idLocale : enUS;
+};
 
 /**
  * Formats a Unix timestamp into a human-readable time format.
@@ -39,7 +47,7 @@ export const messageTimestamp = (time, dateFormat = 'MMM d, yyyy') => {
  */
 export const dynamicTime = time => {
   const unixTime = fromUnixTime(time);
-  return formatDistanceToNow(unixTime, { addSuffix: true });
+  return formatDistanceToNow(unixTime, { addSuffix: true, locale: getDateFnsLocale() });
 };
 
 /**

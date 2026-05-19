@@ -137,6 +137,10 @@ class ConversationApi extends ApiClient {
   requestCopilot(conversationId, body) {
     return axios.post(`${this.url}/${conversationId}/copilot`, body);
   }
+
+  generateSummary(conversationId) {
+    return axios.post(`${this.url}/${conversationId}/generate_summary`);
+  }
 }
 
 export default new ConversationApi();

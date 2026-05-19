@@ -123,6 +123,14 @@ export const mutations = {
     chat.custom_attributes = custom_attributes;
   },
 
+  [types.UPDATE_CONVERSATION_AI_SUMMARY](_state, { conversationId, aiSummary, generatedAt }) {
+    const [chat] = _state.allConversations.filter(c => c.id === conversationId);
+    if (chat) {
+      chat.ai_summary = aiSummary;
+      chat.ai_summary_generated_at = generatedAt;
+    }
+  },
+
   [types.CHANGE_CONVERSATION_STATUS](
     _state,
     { conversationId, status, snoozedUntil }

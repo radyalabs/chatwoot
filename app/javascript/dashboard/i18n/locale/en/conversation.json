@@ -242,7 +242,14 @@
       "PART_4": "Files to be added:",
       "CHAR": "Characters"
     },
-    "UPLOAD_MAX_REACHED": "File too large. Maximum size allowed is 5MB."
+    "UPLOAD_MAX_REACHED": "File too large. Maximum size allowed is 5MB.",
+    "AI_SUMMARY": {
+      "GENERATE_BUTTON": "View AI Summary",
+      "LOADING": "Generating summary...",
+      "TITLE": "AI Summary",
+      "COPY": "Copy summary",
+      "CLOSE": "Close"
+    }
   },
   "EMAIL_TRANSCRIPT": {
     "TITLE": "Send conversation transcript",

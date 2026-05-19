@@ -461,14 +461,14 @@ defineExpose({
         </div>
       </div>
     </div>
-    <div
-      v-if="Object.keys(customAttrsDisplay).length > 0"
-      class="flex flex-col w-full gap-3 p-4 rounded-lg bg-n-alpha-black2"
-    >
+    <div class="flex flex-col w-full gap-3 p-4 rounded-lg bg-n-alpha-black2">
       <span class="text-base font-semibold text-n-slate-12">
         {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.TITLE') }}
       </span>
-      <div class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
+      <div
+        v-if="Object.keys(customAttrsDisplay).length > 0"
+        class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2"
+      >
         <template v-for="(value, key) in customAttrsDisplay" :key="key">
           <div class="flex flex-col items-start gap-2">
             <span class="text-sm font-medium text-n-slate-12">{{ key }}</span>
@@ -517,14 +517,10 @@ defineExpose({
           </div>
         </template>
       </div>
-    </div>
-    <div class="flex flex-col items-start gap-3">
-      <span
-        v-if="Object.keys(customAttrsDisplay).length === 0"
-        class="py-1 text-sm font-medium text-n-slate-12"
-      >
-        {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.TITLE') }}
-      </span>
+      <div
+        v-if="Object.keys(customAttrsDisplay).length > 0"
+        class="border-t border-n-weak"
+      />
       <div class="flex flex-col gap-1.5 w-full">
       <div
         class="flex items-start gap-2 w-full rounded-xl transition-all duration-300"

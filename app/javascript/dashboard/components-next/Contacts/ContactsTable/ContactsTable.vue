@@ -79,6 +79,7 @@ const handleRemoveCustomAttr = key => {
 const handleUpdateContact = async () => {
   if (!contactForEdit.value) return;
   try {
+    await contactsFormRef.value?.flushPendingAttr?.();
     if (removedCustomAttrs.value.length > 0) {
       await store.dispatch('contacts/deleteCustomAttributes', {
         id: contactForEdit.value.id,

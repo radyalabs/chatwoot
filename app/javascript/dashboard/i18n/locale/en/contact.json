@@ -477,6 +477,7 @@
         "VALUE_WITH_KEY": "Enter your '{key}'",
         "SEARCH_PLACEHOLDER": "Search or type a new name...",
         "CREATE_NEW": "Add \"{key}\"",
+        "PENDING_HINT": "Click + to add, or save directly",
         "DATA_TYPES": {
           "TEXT": "Text",
           "NUMBER": "Number",

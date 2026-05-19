@@ -475,7 +475,7 @@ defineExpose({
             <div class="flex items-center w-full gap-2">
               <Input
                 v-model="state.customAttributes[key]"
-                :placeholder="'Masukkan ' + key + ' Anda'"
+                :placeholder="t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.VALUE_WITH_KEY', { key })"
                 class="flex-1"
                 @input="emit('update', state)"
               />
@@ -653,7 +653,7 @@ defineExpose({
           class="flex items-center gap-1.5 text-xs text-n-amber-11 px-1"
         >
           <Icon icon="i-lucide-circle-alert" class="size-3 flex-shrink-0" />
-          Klik <span class="font-semibold">+</span> untuk menambah, atau langsung klik Perbarui kontak
+          {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.PENDING_HINT') }}
         </p>
       </Transition>
       </div>

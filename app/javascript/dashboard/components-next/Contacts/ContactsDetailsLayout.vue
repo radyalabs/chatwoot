@@ -1,5 +1,5 @@
 <script setup>
-import { computed, useSlots } from 'vue';
+import { computed, onMounted, ref, useSlots } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 
@@ -48,6 +48,19 @@ const breadcrumbItems = computed(() => {
 const handleBreadcrumbClick = () => {
   emit('goToContactsList');
 };
+
+const SIDEBAR_STORAGE_KEY = 'contact_detail_sidebar_open';
+const isSidebarOpen = ref(true);
+
+onMounted(() => {
+  const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+  if (stored !== null) isSidebarOpen.value = stored === 'true';
+});
+
+const toggleSidebar = () => {
+  isSidebarOpen.value = !isSidebarOpen.value;
+  localStorage.setItem(SIDEBAR_STORAGE_KEY, String(isSidebarOpen.value));
+};
 </script>
 
 <template>
@@ -81,9 +94,24 @@ const handleBreadcrumbClick = () => {
 
     <div
       v-if="slots.sidebar"
-      class="overflow-y-auto justify-end min-w-[200px] w-full py-6 max-w-[440px] border-l border-n-weak bg-n-solid-2"
+      class="flex h-full transition-all duration-300"
+      :class="isSidebarOpen ? 'min-w-[200px] w-full max-w-[440px]' : 'flex-shrink-0'"
     >
-      <slot name="sidebar" />
+      <button
+        v-tooltip="isSidebarOpen ? 'Sembunyikan panel' : 'Tampilkan panel'"
+        class="flex-shrink-0 self-start mt-20 flex items-center justify-center w-5 h-9 border border-r-0 border-n-weak bg-n-solid-1 rounded-l-lg hover:bg-n-alpha-2 transition-colors"
+        @click="toggleSidebar"
+      >
+        <span class="text-sm font-semibold leading-none text-n-slate-11 select-none">
+          {{ isSidebarOpen ? '›' : '‹' }}
+        </span>
+      </button>
+      <div
+        class="h-full overflow-y-auto transition-all duration-300 border-l border-n-weak bg-n-solid-2"
+        :class="isSidebarOpen ? 'flex-1 py-6' : 'w-0 overflow-hidden'"
+      >
+        <slot name="sidebar" />
+      </div>
     </div>
   </section>
 </template>

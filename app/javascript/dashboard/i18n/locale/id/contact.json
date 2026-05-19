@@ -475,6 +475,7 @@
         "VALUE_WITH_KEY": "Masukkan '{key}' Anda",
         "SEARCH_PLACEHOLDER": "Cari atau tulis nama baru...",
         "CREATE_NEW": "Tambah \"{key}\"",
+        "PENDING_HINT": "Klik + untuk menambah, atau langsung simpan",
         "DATA_TYPES": {
           "TEXT": "Teks",
           "NUMBER": "Angka",

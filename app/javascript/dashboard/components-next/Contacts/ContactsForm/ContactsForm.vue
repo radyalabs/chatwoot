@@ -338,12 +338,20 @@ watch(() => props.contactData, prepareStateBasedOnProps, {
   deep: true,
 });
 
+const hasPendingAttr = computed(() => !!newCustomAttrKey.value.trim());
+
+const flushPendingAttr = async () => {
+  if (hasPendingAttr.value) await addCustomAttr();
+};
+
 // Expose state to parent component for avatar upload
 defineExpose({
   state,
   resetValidation,
   isFormInvalid,
   resetForm,
+  flushPendingAttr,
+  hasPendingAttr,
 });
 </script>
 
@@ -490,7 +498,11 @@ defineExpose({
       >
         {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.TITLE') }}
       </span>
-      <div class="flex items-end gap-2 w-full">
+      <div class="flex flex-col gap-1.5 w-full">
+      <div
+        class="flex items-end gap-2 w-full rounded-xl transition-all duration-300"
+        :class="hasPendingAttr ? 'bg-n-amber-3 dark:bg-n-amber-2 ring-1 ring-n-amber-8 p-2.5' : ''"
+      >
         <!-- Key dropdown -->
         <div class="flex flex-col gap-1 flex-1" data-key-dropdown>
           <span class="text-xs text-n-slate-11">
@@ -575,9 +587,31 @@ defineExpose({
           />
         </div>
         <!-- Add button -->
-        <Button size="sm" class="mb-0.5" @click="addCustomAttr">
+        <Button
+          size="sm"
+          class="mb-0.5 transition-all duration-200"
+          :amber="hasPendingAttr"
+          @click="addCustomAttr"
+        >
           <Icon icon="i-lucide-plus" class="size-4" />
         </Button>
+      </div>
+      <Transition
+        enter-active-class="transition-all duration-200 ease-out"
+        enter-from-class="opacity-0 -translate-y-1"
+        enter-to-class="opacity-100 translate-y-0"
+        leave-active-class="transition-all duration-150 ease-in"
+        leave-from-class="opacity-100 translate-y-0"
+        leave-to-class="opacity-0 -translate-y-1"
+      >
+        <p
+          v-if="hasPendingAttr"
+          class="flex items-center gap-1.5 text-xs text-n-amber-11 px-1"
+        >
+          <Icon icon="i-lucide-circle-alert" class="size-3 flex-shrink-0" />
+          Klik <span class="font-semibold">+</span> untuk menambah, atau langsung klik Perbarui kontak
+        </p>
+      </Transition>
       </div>
     </div>
   </div>

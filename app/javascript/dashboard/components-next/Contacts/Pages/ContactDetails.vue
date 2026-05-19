@@ -75,6 +75,7 @@ const handleRemoveCustomAttr = key => {
 
 const updateContact = async () => {
   try {
+    await contactsFormRef.value?.flushPendingAttr?.();
     const { customAttributes, ...basicContactData } = contactData.value;
     await store.dispatch('contacts/update', {
       ...basicContactData,

@@ -90,6 +90,8 @@ module WhatsappUnofficial::IncomingMessageServiceHelpers
   end
 
   def message_params?
+    return true if payload[:image].present?
+
     %i[image document video audio video_note contact location].any? { |type| payload[type].present? }
   end
 
@@ -101,10 +103,17 @@ module WhatsappUnofficial::IncomingMessageServiceHelpers
   end
 
   def file
-    @file ||= payload[:image].presence ||
-              payload[:document].presence ||
-              payload[:video].presence ||
-              payload[:audio].presence
+    @file ||= begin
+      image = payload[:image]
+      if image.is_a?(String)
+        { path: image }
+      else
+        image.presence ||
+          payload[:document].presence ||
+          payload[:video].presence ||
+          payload[:audio].presence
+      end
+    end
   end
 
   def location
@@ -196,13 +205,13 @@ module WhatsappUnofficial::IncomingMessageServiceHelpers
     return direct if direct.is_a?(String) && direct.present?
 
     quoted_message_hash = dig_any(payload, [
-                              [:contextInfo, :quotedMessage],
-                              [:context_info, :quoted_message],
-                              [:quotedMessage],
-                              [:quoted_message],
-                              [:quoted, :quotedMessage],
-                              [:quoted, :quoted_message]
-                            ])
+                                    [:contextInfo, :quotedMessage],
+                                    [:context_info, :quoted_message],
+                                    [:quotedMessage],
+                                    [:quoted_message],
+                                    [:quoted, :quotedMessage],
+                                    [:quoted, :quoted_message]
+                                  ])
 
     extracted = extract_text_from_wa_message_like_hash(quoted_message_hash)
     return extracted if extracted.present?
@@ -268,7 +277,7 @@ module WhatsappUnofficial::IncomingMessageServiceHelpers
   def deep_find_first_value_by_keys(obj, keys, max_depth: 6)
     return nil if obj.nil?
 
-    keys_set = keys.each_with_object({}) { |k, acc| acc[k] = true }
+    keys_set = keys.index_with { |_k| true }
     queue = [[obj, 0]]
 
     until queue.empty?
@@ -279,6 +288,7 @@ module WhatsappUnofficial::IncomingMessageServiceHelpers
       when Hash
         current.each do |k, v|
           return v if keys_set[k] && (v.is_a?(String) || v.is_a?(Integer)) && v.to_s.present?
+
           queue << [v, depth + 1]
         end
       when Array
@@ -292,7 +302,7 @@ module WhatsappUnofficial::IncomingMessageServiceHelpers
   def deep_find_keys(obj, keys, max_depth: 6, limit: 25)
     return [] if obj.nil?
 
-    keys_set = keys.each_with_object({}) { |k, acc| acc[k] = true }
+    keys_set = keys.index_with { |_k| true }
     found = []
     queue = [[obj, 0]]
 

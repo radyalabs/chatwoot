@@ -38,13 +38,11 @@ class WhatsAppUnofficialChannels extends ApiClient {
   }
 
   getSettings(inboxId) {
-    return axios.get(
-      `${this.baseUrl()}/channels/whatsapp_unofficial_channels/${inboxId}/get_settings`);
+    return axios.get(`${this.url}/${inboxId}/get_settings`);
   }
 
   updateSettings(inboxId, settings) {
-    return axios.patch(
-      `${this.baseUrl()}/channels/whatsapp_unofficial_channels/${inboxId}/update_settings`, settings);
+    return axios.patch(`${this.url}/${inboxId}/update_settings`, settings);
   }
 }
 

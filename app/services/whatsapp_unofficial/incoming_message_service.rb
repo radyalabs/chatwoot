@@ -61,6 +61,7 @@ class WhatsappUnofficial::IncomingMessageService
     return if media_path.blank?
 
     attachment_file = download_attachment_file
+    Rails.logger.info("[ATTACH DEBUG] attachment_file=#{attachment_file.inspect}")
     return if attachment_file.blank?
 
     @message.attachments.new(

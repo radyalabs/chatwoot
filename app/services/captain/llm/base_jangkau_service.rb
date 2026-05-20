@@ -20,6 +20,7 @@ class Captain::Llm::BaseJangkauService
 
   def generate_response
     Rails.logger.info '[generate_response] Generating response for Jangkau AI Agent'
+    Rails.logger.info "[generate_response] request_body=#{request_body.to_json}"
 
     # endpoint = feature_enabled_for_ai_agent? ? '/v2/chat/completion/' : '/v2/chat/override/'
     endpoint = '/v2/chat/completion/'
@@ -57,7 +58,8 @@ class Captain::Llm::BaseJangkauService
       {
         key: att.file.key,
         file_type: att.file.content_type,
-        filename: att.file.filename.to_s
+        filename: att.file.filename.to_s,
+        url: att.download_url
       }
     end
   end
@@ -122,9 +124,16 @@ class Captain::Llm::BaseJangkauService
     return false unless @message.is_a?(Message)
 
     channel = @message.additional_attributes&.[]('channel') || @message.additional_attributes&.[](:channel)
-    return true if channel.to_s == 'WhatsappUnofficial'
+    return false unless channel.to_s == 'WhatsappUnofficial'
 
-    false
+    content_attrs = @message.content_attributes || {}
+    in_reply_to = content_attrs[:in_reply_to] || content_attrs['in_reply_to']
+    in_reply_to_external_id = content_attrs[:in_reply_to_external_id] ||
+                               content_attrs['in_reply_to_external_id'] ||
+                               content_attrs.dig('gowa_reply', 'raw_in_reply_to_external_id') ||
+                               content_attrs.dig(:gowa_reply, :raw_in_reply_to_external_id)
+
+    in_reply_to.present? || in_reply_to_external_id.present?
   end
 
   def replied_to_message_text

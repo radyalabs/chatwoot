@@ -141,6 +141,16 @@ export function useContactFilterContext() {
       attributeModel: 'standard',
     },
     {
+      attributeKey: 'company_name',
+      value: 'company_name',
+      attributeName: t('CONTACTS_LAYOUT.FILTER.COMPANY'),
+      label: t('CONTACTS_LAYOUT.FILTER.COMPANY'),
+      inputType: 'plainText',
+      dataType: 'text',
+      filterOperators: containmentOperators.value,
+      attributeModel: 'additional',
+    },
+    {
       attributeKey: 'created_at',
       value: 'created_at',
       attributeName: t('CONTACTS_LAYOUT.FILTER.CREATED_AT'),

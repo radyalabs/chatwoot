@@ -412,6 +412,9 @@
     "CARD": {
       "OF": "of",
       "VIEW_DETAILS": "View details",
+      "NEW_CONTACT_FORM": {
+        "TITLE": "Add new contact"
+      },
       "EDIT_DETAILS_FORM": {
         "TITLE": "Edit contact details",
         "FORM": {
@@ -448,6 +451,7 @@
       },
       "SOCIAL_MEDIA": {
         "TITLE": "Edit social links",
+        "TITLE_NEW": "Add social links",
         "FORM": {
           "FACEBOOK": {
             "PLACEHOLDER": "Add Facebook"
@@ -467,14 +471,27 @@
         }
       },
       "CUSTOM_ATTRIBUTES": {
-        "TITLE": "Custom Attributes",
-        "KEY_PLACEHOLDER": "Attribute name",
+        "TITLE": "Additional Information",
+        "KEY_PLACEHOLDER": "Information name",
         "VALUE_PLACEHOLDER": "Value",
         "DELETE_CONTACT": "This contact only",
         "DELETE_ALL": "All contacts",
-        "NO_AVAILABLE_KEYS": "All attributes already added",
-        "NEW_KEY_PLACEHOLDER": "New attribute name...",
-        "VALUE_WITH_KEY": "Enter your '{key}'"
+        "DELETE_ALL_CONFIRM": {
+          "TITLE": "Delete attribute from all contacts?",
+          "DESCRIPTION": "The attribute '{key}' will be permanently deleted from all contacts. This action cannot be undone.",
+          "CONFIRM": "Yes, Delete Permanently"
+        },
+        "NO_AVAILABLE_KEYS": "All information already added",
+        "NEW_KEY_PLACEHOLDER": "New information name...",
+        "VALUE_WITH_KEY": "Enter your '{key}'",
+        "SEARCH_PLACEHOLDER": "Search or type a new name...",
+        "CREATE_NEW": "Add \"{key}\"",
+        "PENDING_HINT": "Click + to add, or save directly",
+        "DATA_TYPES": {
+          "TEXT": "Text",
+          "NUMBER": "Number",
+          "DATE": "Date"
+        }
       }
     },
     "DETAILS": {

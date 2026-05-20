@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onUnmounted, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onUnmounted, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { required, email } from '@vuelidate/validators';
 import { useVuelidate } from '@vuelidate/core';
@@ -249,11 +249,11 @@ const newCustomAttrKey = ref('');
 const newCustomAttrValue = ref('');
 const newCustomAttrDataType = ref('text');
 const showKeyDropdown = ref(false);
-const newKeyInput = ref('');
+const keySearchInput = ref('');
+const keySearchInputRef = ref(null);
 
 const customAttrsDisplay = computed(() => state.customAttributes || {});
 
-// Attribute keys defined in the system but not yet added to this contact
 const availableAttributeKeys = computed(() => {
   const existing = Object.keys(customAttrsDisplay.value);
   return (contactAttributeKeys.value || []).filter(
@@ -261,18 +261,45 @@ const availableAttributeKeys = computed(() => {
   );
 });
 
+const filteredAttributeKeys = computed(() => {
+  const search = keySearchInput.value.trim().toLowerCase();
+  if (!search) return availableAttributeKeys.value;
+  return availableAttributeKeys.value.filter(r =>
+    r.key.toLowerCase().includes(search)
+  );
+});
+
+const canCreateNew = computed(() => {
+  const search = keySearchInput.value.trim();
+  if (!search) return false;
+  return !availableAttributeKeys.value.some(r => r.key === search);
+});
+
+const openDropdown = () => {
+  keySearchInput.value = '';
+  showKeyDropdown.value = true;
+  nextTick(() => keySearchInputRef.value?.focus());
+};
+
 const selectExistingKey = r => {
   newCustomAttrKey.value = r.key;
   newCustomAttrDataType.value = r.data_type || 'text';
+  keySearchInput.value = '';
   showKeyDropdown.value = false;
 };
 
 const selectNewKey = () => {
-  if (!newKeyInput.value.trim()) return;
-  newCustomAttrKey.value = newKeyInput.value.trim();
-  newKeyInput.value = '';
+  if (!keySearchInput.value.trim()) return;
+  newCustomAttrKey.value = keySearchInput.value.trim();
+  keySearchInput.value = '';
   showKeyDropdown.value = false;
 };
+
+const dataTypeOptions = computed(() => [
+  { value: 'text', label: t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.DATA_TYPES.TEXT') },
+  { value: 'number', label: t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.DATA_TYPES.NUMBER') },
+  { value: 'date', label: t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.DATA_TYPES.DATE') },
+]);
 
 const setDataType = dt => {
   newCustomAttrDataType.value = dt;
@@ -310,6 +337,7 @@ const addCustomAttr = async () => {
 };
 
 const pendingDeleteKey = ref(null);
+const keyToDeleteGlobally = ref(null);
 
 const handleTrashClick = key => {
   pendingDeleteKey.value = pendingDeleteKey.value === key ? null : key;
@@ -325,7 +353,19 @@ const removeFromContact = key => {
   emit('removeCustomAttr', key);
 };
 
-const removeDefinition = async key => {
+const requestRemoveDefinition = key => {
+  pendingDeleteKey.value = null;
+  keyToDeleteGlobally.value = key;
+};
+
+const cancelRemoveDefinition = () => {
+  keyToDeleteGlobally.value = null;
+};
+
+const confirmRemoveDefinition = async () => {
+  const key = keyToDeleteGlobally.value;
+  if (!key) return;
+  keyToDeleteGlobally.value = null;
   const record = (contactAttributeKeys.value || []).find(r => r.key === key);
   if (record) {
     await store.dispatch('contactAttributeKeys/destroy', record.id);
@@ -338,12 +378,20 @@ watch(() => props.contactData, prepareStateBasedOnProps, {
   deep: true,
 });
 
+const hasPendingAttr = computed(() => !!newCustomAttrKey.value.trim());
+
+const flushPendingAttr = async () => {
+  if (hasPendingAttr.value) await addCustomAttr();
+};
+
 // Expose state to parent component for avatar upload
 defineExpose({
   state,
   resetValidation,
   isFormInvalid,
   resetForm,
+  flushPendingAttr,
+  hasPendingAttr,
 });
 </script>
 
@@ -351,7 +399,7 @@ defineExpose({
   <div class="flex flex-col gap-6">
     <div class="flex flex-col items-start gap-2">
       <span class="py-1 text-sm font-medium text-n-slate-12">
-        {{ t('CONTACTS_LAYOUT.CARD.EDIT_DETAILS_FORM.TITLE') }}
+        {{ isNewContact ? t('CONTACTS_LAYOUT.CARD.NEW_CONTACT_FORM.TITLE') : t('CONTACTS_LAYOUT.CARD.EDIT_DETAILS_FORM.TITLE') }}
       </span>
       <div class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
         <template v-for="item in editDetailsForm" :key="item.key">
@@ -398,7 +446,7 @@ defineExpose({
     </div>
     <div class="flex flex-col items-start gap-2">
       <span class="py-1 text-sm font-medium text-n-slate-12">
-        {{ t('CONTACTS_LAYOUT.CARD.SOCIAL_MEDIA.TITLE') }}
+        {{ isNewContact ? t('CONTACTS_LAYOUT.CARD.SOCIAL_MEDIA.TITLE_NEW') : t('CONTACTS_LAYOUT.CARD.SOCIAL_MEDIA.TITLE') }}
       </span>
       <div class="flex flex-wrap gap-2">
         <div
@@ -426,21 +474,21 @@ defineExpose({
         </div>
       </div>
     </div>
-    <div
-      v-if="Object.keys(customAttrsDisplay).length > 0"
-      class="flex flex-col w-full gap-3 p-4 rounded-lg bg-n-alpha-black2"
-    >
+    <div class="flex flex-col w-full gap-3 p-4 rounded-lg bg-n-alpha-black2">
       <span class="text-base font-semibold text-n-slate-12">
         {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.TITLE') }}
       </span>
-      <div class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
+      <div
+        v-if="Object.keys(customAttrsDisplay).length > 0"
+        class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2"
+      >
         <template v-for="(value, key) in customAttrsDisplay" :key="key">
           <div class="flex flex-col items-start gap-2">
             <span class="text-sm font-medium text-n-slate-12">{{ key }}</span>
             <div class="flex items-center w-full gap-2">
               <Input
                 v-model="state.customAttributes[key]"
-                :placeholder="'Masukkan ' + key + ' Anda'"
+                :placeholder="t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.VALUE_WITH_KEY', { key })"
                 class="flex-1"
                 @input="emit('update', state)"
               />
@@ -467,7 +515,7 @@ defineExpose({
               <button
                 type="button"
                 class="px-2 py-0.5 text-xs rounded bg-n-alpha-black2 text-n-slate-12 hover:bg-n-ruby-4 hover:text-n-ruby-11"
-                @click="removeDefinition(key)"
+                @click="requestRemoveDefinition(key)"
               >
                 {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.DELETE_ALL') }}
               </button>
@@ -482,15 +530,51 @@ defineExpose({
           </div>
         </template>
       </div>
-    </div>
-    <div class="flex flex-col items-start gap-3">
-      <span
-        v-if="Object.keys(customAttrsDisplay).length === 0"
-        class="py-1 text-sm font-medium text-n-slate-12"
+      <Transition
+        enter-active-class="transition-all duration-200 ease-out"
+        enter-from-class="opacity-0 -translate-y-1"
+        enter-to-class="opacity-100 translate-y-0"
+        leave-active-class="transition-all duration-150 ease-in"
+        leave-from-class="opacity-100 translate-y-0"
+        leave-to-class="opacity-0 -translate-y-1"
       >
-        {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.TITLE') }}
-      </span>
-      <div class="flex items-end gap-2 w-full">
+        <div
+          v-if="keyToDeleteGlobally"
+          class="flex flex-col gap-2 p-3 rounded-lg bg-n-ruby-3 ring-1 ring-n-ruby-7"
+        >
+          <div class="flex items-start gap-2">
+            <Icon icon="i-lucide-triangle-alert" class="size-4 flex-shrink-0 text-n-ruby-11 mt-0.5" />
+            <p class="text-sm text-n-ruby-12">
+              {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.DELETE_ALL_CONFIRM.DESCRIPTION', { key: keyToDeleteGlobally }) }}
+            </p>
+          </div>
+          <div class="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              class="px-3 py-1 text-xs rounded-md border border-n-weak bg-n-solid-1 text-n-slate-12 hover:bg-n-alpha-2 transition-colors"
+              @click="cancelRemoveDefinition"
+            >
+              {{ t('DIALOG.BUTTONS.CANCEL') }}
+            </button>
+            <button
+              type="button"
+              class="px-3 py-1 text-xs rounded-md bg-n-ruby-9 text-white hover:bg-n-ruby-10 transition-colors"
+              @click="confirmRemoveDefinition"
+            >
+              {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.DELETE_ALL_CONFIRM.CONFIRM') }}
+            </button>
+          </div>
+        </div>
+      </Transition>
+      <div
+        v-if="Object.keys(customAttrsDisplay).length > 0"
+        class="border-t border-n-weak"
+      />
+      <div class="flex flex-col gap-1.5 w-full">
+      <div
+        class="flex items-start gap-2 w-full rounded-xl transition-all duration-300"
+        :class="hasPendingAttr ? 'bg-n-amber-3 dark:bg-n-amber-2 ring-1 ring-n-amber-8 p-2.5' : ''"
+      >
         <!-- Key dropdown -->
         <div class="flex flex-col gap-1 flex-1" data-key-dropdown>
           <span class="text-xs text-n-slate-11">
@@ -501,56 +585,73 @@ defineExpose({
               type="button"
               class="h-8 w-full px-2 text-sm border border-n-weak rounded-lg bg-n-alpha-black2 text-left flex items-center justify-between gap-1 focus:outline-none focus:border-n-brand"
               :class="newCustomAttrKey ? 'text-n-slate-12' : 'text-n-slate-10'"
-              @click.stop="showKeyDropdown = !showKeyDropdown"
+              @click.stop="openDropdown"
             >
               <span class="truncate">{{ newCustomAttrKey || t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.KEY_PLACEHOLDER') }}</span>
               <Icon icon="i-lucide-chevron-down" class="size-3 flex-shrink-0 text-n-slate-10" />
             </button>
             <div
               v-if="showKeyDropdown"
-              class="absolute top-full left-0 mt-1 w-full min-w-[160px] bg-n-solid-1 border border-n-weak rounded-lg shadow-lg z-50 overflow-hidden"
+              class="absolute top-full left-0 mt-1 w-full min-w-[180px] bg-n-solid-1 border border-n-weak rounded-lg shadow-lg z-50 overflow-hidden"
             >
+              <!-- Search / filter input -->
+              <div class="p-2 border-b border-n-weak">
+                <input
+                  ref="keySearchInputRef"
+                  v-model="keySearchInput"
+                  type="text"
+                  :placeholder="t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.SEARCH_PLACEHOLDER')"
+                  class="h-7 w-full px-2 text-sm border border-n-weak rounded-md bg-n-alpha-black2 text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:border-n-brand"
+                  @click.stop
+                />
+              </div>
+              <!-- Existing filtered options -->
               <div class="max-h-40 overflow-y-auto">
                 <button
-                  v-for="r in availableAttributeKeys"
+                  v-for="r in filteredAttributeKeys"
                   :key="r.key"
                   type="button"
                   class="w-full px-3 py-1.5 text-sm text-left text-n-slate-12 hover:bg-n-alpha-2 flex items-center justify-between gap-2"
                   @click.stop="selectExistingKey(r)"
                 >
                   <span class="truncate">{{ r.key }}</span>
-                  <span class="text-xs text-n-slate-10 flex-shrink-0">{{ r.data_type }}</span>
+                  <span class="text-xs text-n-slate-10 flex-shrink-0">{{ dataTypeOptions.find(d => d.value === r.data_type)?.label ?? r.data_type }}</span>
                 </button>
                 <p
-                  v-if="!availableAttributeKeys.length"
+                  v-if="!filteredAttributeKeys.length && !canCreateNew"
                   class="px-3 py-2 text-xs text-n-slate-10"
                 >
                   {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.NO_AVAILABLE_KEYS') }}
                 </p>
               </div>
-              <div class="border-t border-n-weak p-2 flex flex-col gap-1.5">
-                <input
-                  v-model="newKeyInput"
-                  type="text"
-                  :placeholder="t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.NEW_KEY_PLACEHOLDER')"
-                  class="h-7 w-full px-2 text-sm border border-n-weak rounded-md bg-n-alpha-black2 text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:border-n-brand"
-                  @click.stop
-                  @keyup.enter="selectNewKey"
-                />
-                <div class="flex gap-1" @click.stop>
+              <!-- Create new option — only shown when typed text doesn't match existing -->
+              <div
+                v-if="canCreateNew"
+                class="border-t border-n-weak p-2 flex flex-col gap-1.5"
+                @click.stop
+              >
+                <div class="flex gap-1">
                   <button
-                    v-for="dt in ['text', 'number', 'date']"
-                    :key="dt"
+                    v-for="dt in dataTypeOptions"
+                    :key="dt.value"
                     type="button"
-                    class="flex-1 py-0.5 text-xs rounded border transition-colors"
-                    :class="newCustomAttrDataType === dt
+                    class="flex-1 py-1 text-xs rounded border transition-colors"
+                    :class="newCustomAttrDataType === dt.value
                       ? 'bg-n-brand text-white border-n-brand'
                       : 'border-n-weak text-n-slate-11 hover:bg-n-alpha-2'"
-                    @click="setDataType(dt)"
+                    @click="setDataType(dt.value)"
                   >
-                    {{ dt }}
+                    {{ dt.label }}
                   </button>
                 </div>
+                <button
+                  type="button"
+                  class="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md hover:bg-n-alpha-2 text-n-brand text-left"
+                  @click.stop="selectNewKey"
+                >
+                  <Icon icon="i-lucide-plus" class="size-3.5 flex-shrink-0" />
+                  <span class="truncate">{{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.CREATE_NEW', { key: keySearchInput }) }}</span>
+                </button>
               </div>
             </div>
           </div>
@@ -575,9 +676,31 @@ defineExpose({
           />
         </div>
         <!-- Add button -->
-        <Button size="sm" class="mb-0.5" @click="addCustomAttr">
+        <Button
+          size="sm"
+          class="mt-5 transition-all duration-200"
+          :amber="hasPendingAttr"
+          @click="addCustomAttr"
+        >
           <Icon icon="i-lucide-plus" class="size-4" />
         </Button>
+      </div>
+      <Transition
+        enter-active-class="transition-all duration-200 ease-out"
+        enter-from-class="opacity-0 -translate-y-1"
+        enter-to-class="opacity-100 translate-y-0"
+        leave-active-class="transition-all duration-150 ease-in"
+        leave-from-class="opacity-100 translate-y-0"
+        leave-to-class="opacity-0 -translate-y-1"
+      >
+        <p
+          v-if="hasPendingAttr"
+          class="flex items-center gap-1.5 text-xs text-n-amber-11 px-1"
+        >
+          <Icon icon="i-lucide-circle-alert" class="size-3 flex-shrink-0" />
+          {{ t('CONTACTS_LAYOUT.CARD.CUSTOM_ATTRIBUTES.PENDING_HINT') }}
+        </p>
+      </Transition>
       </div>
     </div>
   </div>

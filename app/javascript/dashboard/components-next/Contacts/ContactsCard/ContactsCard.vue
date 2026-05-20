@@ -78,7 +78,8 @@ const handleFormUpdate = updatedData => {
   Object.assign(contactData.value, updatedData);
 };
 
-const handleUpdateContact = () => {
+const handleUpdateContact = async () => {
+  await contactsFormRef.value?.flushPendingAttr?.();
   emit('updateContact', contactData.value);
 };
 

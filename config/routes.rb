@@ -254,6 +254,7 @@ Rails.application.routes.draw do
               post :custom_attributes
               get :attachments
               post :copilot
+              post :generate_summary
             end
           end
 

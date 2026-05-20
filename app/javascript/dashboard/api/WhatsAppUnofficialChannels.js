@@ -36,6 +36,14 @@ class WhatsAppUnofficialChannels extends ApiClient {
   getGroups(inboxId) {
     return axios.get(`${this.baseUrl()}/inboxes/${inboxId}/whatsapp/groups`);
   }
+
+  getSettings(inboxId) {
+    return axios.get(`${this.url}/${inboxId}/get_settings`);
+  }
+
+  updateSettings(inboxId, settings) {
+    return axios.patch(`${this.url}/${inboxId}/update_settings`, settings);
+  }
 }
 
 export default new WhatsAppUnofficialChannels();

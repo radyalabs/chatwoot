@@ -4,8 +4,12 @@ import { createConsumer } from '@rails/actioncable';
 import { useAlert } from 'dashboard/composables';
 import { mapGetters } from 'vuex';
 import { useI18n } from 'vue-i18n';
+import Switch from 'dashboard/components/ui/Switch.vue';
 
 export default {
+  components: {
+    Switch,
+  },
   props: {
     inboxId: {
       type: [Number, String],
@@ -56,6 +60,8 @@ export default {
       qrDuration: 60,
       qrCountdown: 60,
       statusPollingTimer: null,
+      autoMarkRead: false,
+      isUpdatingSettings: false,
     };
   },
   computed: {
@@ -130,6 +136,7 @@ export default {
   },
   async mounted() {
     await this.checkStatus(true);
+    await this.loadSettings();
     this.setupWebSocketSubscription();
     if (this.autoRefresh) {
       this.startAutoRefresh();
@@ -488,6 +495,31 @@ export default {
     async forceRefresh() {
       await this.checkStatus(true);
     },
+
+    async loadSettings() {
+      try {
+        const response = await WhatsAppUnofficialChannels.getSettings(this.inboxId);
+        this.autoMarkRead = response.data?.auto_mark_read !== false;
+      } catch (e) {
+        this.autoMarkRead = false;
+      }
+    },
+
+    async toggleAutoMarkRead() {
+      this.isUpdatingSettings = true;
+      const newValue = this.autoMarkRead;
+      try {
+        await WhatsAppUnofficialChannels.updateSettings(this.inboxId, {
+          auto_mark_read: newValue
+        });
+        useAlert(this.t('INBOX_MGMT.WHATSAPP_STATUS.SETTINGS.SAVED'));
+      } catch (e) {
+        this.autoMarkRead = !newValue;
+        useAlert(this.t('INBOX_MGMT.WHATSAPP_STATUS.SETTINGS.ERROR'));
+      } finally {
+        this.isUpdatingSettings = false;
+      }
+    },
   },
 };
 </script>
@@ -772,6 +804,35 @@ export default {
       <p class="text-sm text-red-700 dark:text-red-300">
         {{ t('INBOX_MGMT.WHATSAPP_STATUS.MESSAGES.DISCONNECTED_GUIDE') }}
       </p>
+    </div>
+    <!-- Auto Mark Read Toggle -->
+    <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-900 dark:text-slate-100">
+            {{ t('INBOX_MGMT.WHATSAPP_STATUS.SETTINGS.AUTO_MARK_READ') }}
+          </p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            {{ t('INBOX_MGMT.WHATSAPP_STATUS.SETTINGS.AUTO_MARK_READ_DESC') }}
+          </p>
+        </div>
+        
+        <div class="flex items-center gap-3">
+          <span class="text-sm text-slate-700 dark:text-slate-300">
+            {{
+              autoMarkRead
+                ? t('INBOX_MGMT.STATUS.ACTIVE')
+                : t('INBOX_MGMT.STATUS.INACTIVE')
+            }}
+          </span>
+          <Switch
+            :model-value="autoMarkRead"
+            :disabled="isUpdatingSettings"
+            color="#389947"
+            @input="newStatus => { autoMarkRead = newStatus; toggleAutoMarkRead(); }"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </template>

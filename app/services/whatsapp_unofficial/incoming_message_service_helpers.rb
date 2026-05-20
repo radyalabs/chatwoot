@@ -82,14 +82,20 @@ module WhatsappUnofficial::IncomingMessageServiceHelpers
   def message_content
     @message_content ||= if payload[:body].present?
                            payload[:body]
-                         elsif payload[:image].present? && payload[:image][:caption].present?
-                           payload[:image][:caption]
+                         elsif payload[:image].present?
+                           image = payload[:image]
+                           if image.is_a?(Hash)
+                             image[:caption].presence || ''
+                           else
+                             ''
+                           end
                          else
                            ''
                          end
   end
 
   def message_params?
+    return true if payload[:image].present?
     %i[image document video audio video_note contact location].any? { |type| payload[type].present? }
   end
 
@@ -101,10 +107,17 @@ module WhatsappUnofficial::IncomingMessageServiceHelpers
   end
 
   def file
-    @file ||= payload[:image].presence ||
-              payload[:document].presence ||
-              payload[:video].presence ||
-              payload[:audio].presence
+    @file ||= begin
+      image = payload[:image]
+      if image.is_a?(String)
+        { path: image }
+      else
+        image.presence ||
+          payload[:document].presence ||
+          payload[:video].presence ||
+          payload[:audio].presence
+      end
+    end
   end
 
   def location

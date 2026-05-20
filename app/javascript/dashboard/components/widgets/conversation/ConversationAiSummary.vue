@@ -23,13 +23,21 @@ export default {
     },
     formattedSummary() {
       if (!this.summary) return [];
-      return this.summary
-        .split(/\n{2,}(?=\*\*)/)
-        .map(part => {
-          const match = part.match(/^\*\*(.+?)\*\*\n+([\s\S]+)/);
-          return match ? { title: match[1].trim(), content: match[2].trim() } : null;
-        })
-        .filter(Boolean);
+      const sections = [];
+      let match;
+      // Bold headers: **Header** (single or double newline between sections)
+      const boldPattern = /\*\*(.+?)\*\*\s*\n+([\s\S]+?)(?=\n+\*\*|$)/g;
+      while ((match = boldPattern.exec(this.summary)) !== null) {
+        sections.push({ title: match[1].trim(), content: match[2].trim() });
+      }
+      // Colon headers fallback: Header:\n content
+      if (!sections.length) {
+        const colonPattern = /^(.+?):\s*\n+([\s\S]+?)(?=\n+\S[^\n]*:\s*\n|$)/gm;
+        while ((match = colonPattern.exec(this.summary)) !== null) {
+          sections.push({ title: match[1].trim(), content: match[2].trim() });
+        }
+      }
+      return sections;
     },
   },
 

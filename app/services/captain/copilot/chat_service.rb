@@ -1,4 +1,4 @@
-class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
+class Captain::Copilot::ChatService
   include SwitchLocale
   include ResponseFormatChatHelper
 
@@ -72,7 +72,7 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
   end
 
   def send_reply_failure(reason)
-    Rails.logger.error("Bot failure: #{reason}")
+    Rails.logger.warn("Bot failure: #{reason}")
     response = {
       response: reason,
       is_handover: false,
@@ -99,6 +99,8 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
   end
 
   def end_state_processing(response)
+    return unless @context.ai_agent
+
     attrs = {
       conversation_id: @context.conversation.id,
       inbox_id: @context.inbox_id,
@@ -137,7 +139,7 @@ class Captain::Copilot::ChatService # rubocop:disable Layout/EndOfLine
       inbox_id: @context.conversation.inbox_id,
       conversation_id: @context.conversation.id,
       content_type: 0,
-      status: 0,
+      status: 0
     }
 
     attrs[:sender_id] = @context.ai_agent&.id

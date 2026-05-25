@@ -28,7 +28,7 @@ class Api::V1::Accounts::InboxBotMembersController < Api::V1::Accounts::BaseCont
         AgentBotInbox.find_or_create_by!(
           inbox_id: @inbox.id,
           ai_agent_id: bot_id,
-          status: 1,
+          status: :active,
           account_id: Current.account.id
         )
       end

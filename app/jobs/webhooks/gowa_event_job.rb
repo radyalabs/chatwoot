@@ -6,7 +6,7 @@ class Webhooks::GowaEventJob < ApplicationJob
     message.edited
   ].freeze
 
-  def perform(params) # rubocop:disable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
+  def perform(params)
     event = params['event']
     return unless ALLOWED_EVENTS.include?(event)
     return if should_skip_processing?(params)
@@ -15,16 +15,14 @@ class Webhooks::GowaEventJob < ApplicationJob
     return if channel.blank?
     return unless channel_available?(channel)
 
+    Rails.logger.info "Processing WhatsApp Go event: #{params.inspect}"
+
     case event
     when 'message'
       WhatsappUnofficial::IncomingMessageService.new(inbox: channel.inbox, params: params).perform
     when 'message.edited'
       # WhatsappUnofficial::UpdateMessageService.new(inbox: channel.inbox, params: data).perform
     end
-  rescue StandardError => e
-    Rails.logger.error("[GowaEventJob] Unhandled error processing event: #{e.class} - #{e.message}")
-    Rails.logger.error(e.backtrace&.first(5)&.join("\n"))
-    raise
   end
 
   private

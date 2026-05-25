@@ -52,7 +52,7 @@ class WhatsappUnofficial::IncomingMessageService
   end
 
   def attach_files
-    return if file[:media_path].blank?
+    return if media_path.blank?
 
     attachment_file = download_attachment_file
     return if attachment_file.blank?
@@ -135,8 +135,15 @@ class WhatsappUnofficial::IncomingMessageService
   end
 
   def download_attachment_file
-    return if file[:media_path].blank?
+    return if media_path.blank?
 
-    Down.download("#{ENV.fetch('GOWA_API_URL', 'https://gowa.jangkau.ai/')}/#{file[:media_path]}")
+    Down.download("#{ENV.fetch('GOWA_API_URL', 'https://gowa.jangkau.ai/')}/#{media_path}")
+  end
+
+  def media_path
+    return file[:media_path] || file['media_path'] if file.is_a?(Hash)
+    return file if file.is_a?(String)
+
+    nil
   end
 end

@@ -82,7 +82,7 @@ module WhatsappUnofficial::IncomingMessageServiceHelpers
   def message_content
     @message_content ||= if payload[:body].present?
                            payload[:body]
-                         elsif payload[:image].present? && payload[:image][:caption].present?
+                         elsif payload[:image].is_a?(Hash) && payload[:image][:caption].present?
                            payload[:image][:caption]
                          else
                            ''

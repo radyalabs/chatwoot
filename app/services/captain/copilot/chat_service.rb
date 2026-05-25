@@ -181,7 +181,7 @@ class Captain::Copilot::ChatService
   def send_reply(response, additional_attributes: {})
     message_content = response[:is_handover] ? handover_processing(response[:response]) : response[:response]
 
-    end_state_processing(response) unless response[:is_handover]
+    end_state_processing(response) unless response[:is_handover] || response[:is_failure]
 
     conversion_processing(response)
 
@@ -197,7 +197,8 @@ class Captain::Copilot::ChatService
       response: reason,
       is_handover: false,
       is_end_state: false,
-      has_domain_change: false
+      has_domain_change: false,
+      is_failure: true
     }
     send_reply(response, additional_attributes: { message_type: 3 })
   end

@@ -17,6 +17,8 @@ class Webhooks::GowaEventJob < ApplicationJob
     return if channel.blank?
     return unless channel_available?(channel)
 
+    Rails.logger.info "Processing WhatsApp Go event: #{params.inspect}"
+
     case event
     when 'message'
       WhatsappUnofficial::IncomingMessageService.new(inbox: channel.inbox, params: params).perform
@@ -35,10 +37,6 @@ class Webhooks::GowaEventJob < ApplicationJob
     when 'message.edited'
       # WhatsappUnofficial::UpdateMessageService.new(inbox: channel.inbox, params: data).perform
     end
-  rescue StandardError => e
-    Rails.logger.error("[GowaEventJob] Unhandled error processing event: #{e.class} - #{e.message}")
-    Rails.logger.error(e.backtrace&.first(5)&.join("\n"))
-    raise
   end
 
   private

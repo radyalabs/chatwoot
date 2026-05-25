@@ -15,7 +15,7 @@ class Captain::Copilot::MessageContext
   def agent_bot_inbox
     @agent_bot_inbox ||= AgentBotInbox
                          .where.not(ai_agent_id: nil)
-                         .find_by(status: :active, inbox_id: @inbox_id)
+                         .find_by(status: :inactive, inbox_id: @inbox_id)
   end
 
   def inbox

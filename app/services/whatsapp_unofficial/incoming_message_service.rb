@@ -52,9 +52,12 @@ class WhatsappUnofficial::IncomingMessageService
   end
 
   def attach_files
-    return if file[:media_path].blank?
+    media_path = file[:media_path] || file[:path]
+    Rails.logger.info("[ATTACH DEBUG] file=#{file.inspect} media_path=#{media_path.inspect}")
+    return if media_path.blank?
 
     attachment_file = download_attachment_file
+    Rails.logger.info("[ATTACH DEBUG] attachment_file=#{attachment_file.inspect}")
     return if attachment_file.blank?
 
     @message.attachments.new(
@@ -134,9 +137,10 @@ class WhatsappUnofficial::IncomingMessageService
     content_type&.start_with?('image/') && content_type&.exclude?('svg')
   end
 
-  def download_attachment_file
-    return if file[:media_path].blank?
+  def download_attachment_file(media_path = nil)
+    path = media_path || file[:media_path] || file[:path]
+    return if path.blank?
 
-    Down.download("#{ENV.fetch('GOWA_API_URL', 'https://gowa.jangkau.ai/')}/#{file[:media_path]}")
+    Down.download("#{ENV.fetch('GOWA_API_URL', 'https://gowa.jangkau.ai/')}/#{path}")
   end
 end

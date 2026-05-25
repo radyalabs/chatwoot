@@ -1,5 +1,6 @@
-class Webhooks::GowaEventJob < ApplicationJob
+class Webhooks::GowaEventJob < MutexApplicationJob
   queue_as :default
+  retry_on LockAcquisitionError, wait: 1.second, attempts: 8
 
   ALLOWED_EVENTS = %w[
     message
@@ -7,6 +8,14 @@ class Webhooks::GowaEventJob < ApplicationJob
   ].freeze
 
   def perform(params)
+    with_lock(lock_key(params)) do
+      process_event(params)
+    end
+  end
+
+  private
+
+  def process_event(params)
     event = params['event']
     return unless ALLOWED_EVENTS.include?(event)
     return if should_skip_processing?(params)
@@ -24,8 +33,6 @@ class Webhooks::GowaEventJob < ApplicationJob
       # WhatsappUnofficial::UpdateMessageService.new(inbox: channel.inbox, params: data).perform
     end
   end
-
-  private
 
   def find_channel_by_phone_number(params)
     phone_number = params['device_id'].split('@').first
@@ -47,5 +54,13 @@ class Webhooks::GowaEventJob < ApplicationJob
 
   def channel_available?(channel)
     channel.inbox.channel_status
+  end
+
+  def lock_key(params)
+    format(
+      ::Redis::Alfred::GOWA_MESSAGE_MUTEX,
+      device_id: params['device_id'],
+      sender_id: params.dig('payload', 'from')
+    )
   end
 end

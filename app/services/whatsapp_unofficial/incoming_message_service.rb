@@ -9,13 +9,18 @@ class WhatsappUnofficial::IncomingMessageService
     set_contact
     set_conversation
 
-    @message = @conversation.messages.build(
+    @message = @conversation.messages.find_or_initialize_by(
+      source_id: payload[:id].to_s
+    )
+
+    return unless @message.new_record?
+
+    @message.assign_attributes(
       content: message_content,
       account_id: @inbox.account_id,
       inbox_id: @inbox.id,
       message_type: :incoming,
       sender: @contact,
-      source_id: payload[:id].to_s,
       additional_attributes: additional_attributes,
       content_attributes: gowa_reply_content_attributes
     )

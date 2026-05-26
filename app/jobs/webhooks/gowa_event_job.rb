@@ -8,23 +8,23 @@ class Webhooks::GowaEventJob < MutexApplicationJob
   ].freeze
 
   def perform(params)
+    event = params['event']
+    return unless ALLOWED_EVENTS.include?(event)
+    return if should_skip_processing?(params)
+
+    channel = find_channel(params)
+    return if channel.blank?
+
     with_lock(lock_key(params)) do
-      process_event(params)
+      process_event(params, event, channel)
     end
   end
 
   private
 
-  def process_event(params)
-    event = params['event']
-    return unless ALLOWED_EVENTS.include?(event)
-    return if should_skip_processing?(params)
-
-    channel = find_channel_by_phone_number(params)
-    return if channel.blank?
-    return unless channel_available?(channel)
-
+  def process_event(params, event, channel)
     Rails.logger.info "Processing WhatsApp Go event: #{params.inspect}"
+    return unless channel_available?(channel)
 
     case event
     when 'message'
@@ -34,7 +34,7 @@ class Webhooks::GowaEventJob < MutexApplicationJob
     end
   end
 
-  def find_channel_by_phone_number(params)
+  def find_channel(params)
     phone_number = params['device_id'].split('@').first
     Channel::WhatsappUnofficial.find_by(phone_number: phone_number)
   end

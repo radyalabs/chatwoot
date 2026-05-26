@@ -11,6 +11,7 @@
 #  channel_status                :boolean          default(TRUE)
 #  channel_type                  :string
 #  csat_survey_enabled           :boolean          default(FALSE)
+#  deleted_at                    :datetime
 #  email_address                 :string
 #  enable_auto_assignment        :boolean          default(TRUE)
 #  enable_email_collect          :boolean          default(TRUE)
@@ -33,6 +34,7 @@
 #  index_inboxes_on_account_id                   (account_id)
 #  index_inboxes_on_channel_id_and_channel_type  (channel_id,channel_type)
 #  index_inboxes_on_channel_status               (channel_status)
+#  index_inboxes_on_deleted_at                   (deleted_at)
 #  index_inboxes_on_portal_id                    (portal_id)
 #
 # Foreign Keys
@@ -56,19 +58,21 @@ class Inbox < ApplicationRecord
   validates :greeting_message, length: { maximum: Limits::GREETING_MESSAGE_MAX_LENGTH }
   validate :ensure_valid_max_assignment_limit
 
+  default_scope { where(deleted_at: nil) }
+
   belongs_to :account
   belongs_to :portal, optional: true
 
   belongs_to :channel, polymorphic: true, dependent: :destroy
 
   has_many :campaigns, dependent: :destroy_async
-  has_many :contact_inboxes, dependent: :destroy_async
+  has_many :contact_inboxes
   has_many :contacts, through: :contact_inboxes
 
   has_many :inbox_members, dependent: :destroy_async
   has_many :members, through: :inbox_members, source: :user
-  has_many :conversations, dependent: :destroy_async
-  has_many :messages, dependent: :destroy_async
+  has_many :conversations
+  has_many :messages
   has_one :agent_bot_inbox, -> { order(created_at: :asc) }, class_name: 'AgentBotInbox'
   has_many :agent_bot_inboxes, class_name: 'AgentBotInbox', dependent: :destroy_async
 
@@ -81,8 +85,6 @@ class Inbox < ApplicationRecord
   has_many :hooks, dependent: :destroy_async, class_name: 'Integrations::Hook'
 
   enum sender_name_type: { friendly: 0, professional: 1 }
-
-  after_destroy :delete_round_robin_agents
 
   after_create_commit :dispatch_create_event
   after_update_commit :dispatch_update_event
@@ -172,6 +174,15 @@ class Inbox < ApplicationRecord
 
   def member_ids_with_assignment_capacity
     members.ids
+  end
+
+  def soft_delete!
+    update(deleted_at: Time.current)
+    delete_round_robin_agents
+  end
+
+  def restore!
+    update(deleted_at: nil)
   end
 
   private

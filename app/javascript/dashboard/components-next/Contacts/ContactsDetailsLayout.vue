@@ -98,15 +98,15 @@ const toggleSidebar = () => {
       class="flex h-full transition-all duration-300"
       :class="isSidebarOpen ? 'min-w-[200px] w-full max-w-[440px]' : 'flex-shrink-0'"
     >
-      <button
+      <woot-button
         v-tooltip="isSidebarOpen ? 'Sembunyikan panel' : 'Tampilkan panel'"
-        class="flex-shrink-0 self-start mt-20 flex items-center justify-center w-5 h-9 border border-r-0 border-n-weak bg-n-solid-1 rounded-l-lg hover:bg-n-alpha-2 transition-colors"
+        variant="smooth"
+        size="tiny"
+        color-scheme="secondary"
+        class="flex-shrink-0 self-start mt-20 box-border bg-white border border-r-0 border-solid rounded-l-lg rtl:rotate-180 border-n-weak"
+        :icon="isSidebarOpen ? 'arrow-chevron-right' : 'arrow-chevron-left'"
         @click="toggleSidebar"
-      >
-        <span class="text-sm font-semibold leading-none text-n-slate-11 select-none">
-          {{ isSidebarOpen ? '›' : '‹' }}
-        </span>
-      </button>
+      />
       <div
         class="h-full overflow-y-auto transition-all duration-300 border-l border-n-weak bg-n-solid-2"
         :class="isSidebarOpen ? 'flex-1 py-6' : 'w-0 overflow-hidden'"

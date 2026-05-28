@@ -244,9 +244,9 @@
     },
     "UPLOAD_MAX_REACHED": "File too large. Maximum size allowed is 5MB.",
     "AI_SUMMARY": {
-      "GENERATE_BUTTON": "View AI Summary",
+      "GENERATE_BUTTON": "Generate Summary",
       "LOADING": "Generating summary...",
-      "TITLE": "AI Summary",
+      "TITLE": "Conversation Summary",
       "COPY": "Copy summary",
       "CLOSE": "Close"
     }

@@ -232,9 +232,9 @@
     },
     "UPLOAD_MAX_REACHED": "File terlalu besar. Maksimal ukuran file adalah 20MB.",
     "AI_SUMMARY": {
-      "GENERATE_BUTTON": "Lihat Ringkasan AI",
+      "GENERATE_BUTTON": "Buat Ringkasan",
       "LOADING": "Sedang membuat ringkasan...",
-      "TITLE": "Ringkasan AI",
+      "TITLE": "Ringkasan Percakapan",
       "COPY": "Salin ringkasan",
       "CLOSE": "Tutup"
     }

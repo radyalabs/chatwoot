@@ -13,6 +13,7 @@ import ConversationInfo from './ConversationInfo.vue';
 import CustomAttributes from './customAttributes/CustomAttributes.vue';
 import Draggable from 'vuedraggable';
 import MacrosList from './Macros/List.vue';
+import ConversationAiSummary from 'dashboard/components/widgets/conversation/ConversationAiSummary.vue';
 
 const props = defineProps({
   conversationId: {
@@ -103,16 +104,20 @@ onMounted(() => {
       @toggle-panel="onPanelToggle"
     />
     <div class="list-group pb-8">
-      <Draggable
-        :list="conversationSidebarItems"
-        animation="200"
-        ghost-class="ghost"
-        handle=".drag-handle"
-        item-key="name"
-        class="flex flex-col gap-3"
-        @start="dragging = true"
-        @end="onDragEnd"
-      >
+      <div class="flex flex-col gap-3 pt-3">
+        <div class="px-2">
+          <ConversationAiSummary />
+        </div>
+        <Draggable
+          :list="conversationSidebarItems"
+          animation="200"
+          ghost-class="ghost"
+          handle=".drag-handle"
+          item-key="name"
+          class="flex flex-col gap-3"
+          @start="dragging = true"
+          @end="onDragEnd"
+        >
         <template #item="{ element }">
           <div :key="element.name" class="px-2">
             <div
@@ -223,6 +228,7 @@ onMounted(() => {
           </div>
         </template>
       </Draggable>
+      </div>
     </div>
   </div>
 </template>

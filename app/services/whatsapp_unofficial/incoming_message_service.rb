@@ -146,7 +146,7 @@ class WhatsappUnofficial::IncomingMessageService
   end
 
   def media_path
-    return file[:media_path] || file['media_path'] if file.is_a?(Hash)
+    return file[:media_path] || file['media_path'] || file[:path] || file['path'] if file.is_a?(Hash)
     return file if file.is_a?(String)
 
     nil

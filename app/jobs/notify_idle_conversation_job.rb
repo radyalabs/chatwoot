@@ -47,6 +47,7 @@ class NotifyIdleConversationJob < ApplicationJob
     handle_orphaned_conversation(idle_conversation) && return if orphaned?(idle_conversation)
     return if (message = generate_message(idle_conversation)).nil?
 
+    increment_ai_usage(idle_conversation)
     create_message(message, conversation_attributes(idle_conversation))
     idle_conversation.mark_as_sent!
     idle_conversation.mark_as_conversation_resolved! if idle_conversation.completed?
@@ -95,6 +96,18 @@ class NotifyIdleConversationJob < ApplicationJob
       inbox_id: idle_conversation.inbox_id,
       conversation_id: idle_conversation.conversation_id
     }
+  end
+
+  def increment_ai_usage(idle_conversation)
+    subscription = Subscription.find_by(account_id: idle_conversation.account_id, status: 'active')
+    return unless subscription
+
+    usage = SubscriptionUsage.find_or_create_by(subscription_id: subscription.id)
+    return unless usage
+
+    usage.increment_ai_responses
+  rescue StandardError => e
+    Rails.logger.error "[NotifyIdleConversationJob] Failed to increment AI usage for idle_conversation #{idle_conversation.id}: #{e.message}"
   end
 
   def idle_conversations

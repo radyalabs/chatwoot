@@ -9,7 +9,6 @@ export default {
 
   data() {
     return {
-      state: 'idle', // idle | loading | loaded
       isOpen: true,
     };
   },
@@ -24,16 +23,23 @@ export default {
     isAssigned() {
       return !!this.currentChat?.meta?.assignee;
     },
+    isGenerating() {
+      const generating = this.$store.state.conversations.aiSummaryGenerating;
+      return !!generating[this.currentChat?.id];
+    },
+    summaryState() {
+      if (this.isGenerating) return 'loading';
+      if (this.summary) return 'loaded';
+      return 'idle';
+    },
     formattedSummary() {
       if (!this.summary) return [];
       const sections = [];
       let match;
-      // Bold headers: **Header** (single or double newline between sections)
       const boldPattern = /\*\*(.+?)\*\*\s*\n+([\s\S]+?)(?=\n+\*\*|$)/g;
       while ((match = boldPattern.exec(this.summary)) !== null) {
         sections.push({ title: match[1].trim(), content: match[2].trim() });
       }
-      // Colon headers fallback: Header:\n content
       if (!sections.length) {
         const colonPattern = /^(.+?):\s*\n+([\s\S]+?)(?=\n+\S[^\n]*:\s*\n|$)/gm;
         while ((match = colonPattern.exec(this.summary)) !== null) {
@@ -46,27 +52,15 @@ export default {
 
   watch: {
     'currentChat.id'() {
-      this.state = this.summary ? 'loaded' : 'idle';
       this.isOpen = true;
     },
   },
 
-  mounted() {
-    this.state = this.summary ? 'loaded' : 'idle';
-  },
-
   methods: {
-    async generateSummary() {
-      this.state = 'loading';
-      try {
-        await this.$store.dispatch('generateAiSummary', {
-          conversationId: this.currentChat.id,
-        });
-        this.state = 'loaded';
-        this.isOpen = true;
-      } catch {
-        this.state = 'idle';
-      }
+    generateSummary() {
+      this.$store.dispatch('generateAiSummary', {
+        conversationId: this.currentChat.id,
+      });
     },
     copySummary() {
       if (this.summary) {
@@ -84,7 +78,7 @@ export default {
     :is-open="isOpen"
     @toggle="isOpen = !isOpen"
   >
-    <template v-if="state === 'loaded'" #button>
+    <template v-if="summaryState === 'loaded'" #button>
       <button
         class="p-1 mr-1 text-n-slate-500 hover:text-n-slate-800 rounded transition-colors"
         :title="$t('CONVERSATION.AI_SUMMARY.COPY')"
@@ -96,7 +90,7 @@ export default {
 
     <!-- Idle -->
     <button
-      v-if="state === 'idle'"
+      v-if="summaryState === 'idle'"
       class="flex items-center gap-2 w-full px-3 py-2 text-sm font-medium text-n-blue-text bg-n-blue-subtle border border-n-blue rounded-lg hover:bg-n-blue-light transition-colors"
       @click="generateSummary"
     >
@@ -106,7 +100,7 @@ export default {
 
     <!-- Loading -->
     <div
-      v-else-if="state === 'loading'"
+      v-else-if="summaryState === 'loading'"
       class="flex items-center gap-2 py-2 text-sm text-n-slate-600"
     >
       <span class="i-lucide-loader-circle animate-spin size-4" />
@@ -114,7 +108,7 @@ export default {
     </div>
 
     <!-- Loaded -->
-    <div v-else-if="state === 'loaded'" class="text-sm space-y-3">
+    <div v-else-if="summaryState === 'loaded'" class="text-sm space-y-3">
       <template v-if="formattedSummary.length">
         <div
           v-for="section in formattedSummary"

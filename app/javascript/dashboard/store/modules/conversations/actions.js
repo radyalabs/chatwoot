@@ -493,14 +493,19 @@ const actions = {
   },
 
   async generateAiSummary({ commit }, { conversationId }) {
-    const response = await ConversationApi.generateSummary(conversationId);
-    const { summary, generated_at: generatedAt } = response.data;
-    commit(types.UPDATE_CONVERSATION_AI_SUMMARY, {
-      conversationId,
-      aiSummary: summary,
-      generatedAt,
-    });
-    return summary;
+    commit(types.SET_AI_SUMMARY_GENERATING, { conversationId, value: true });
+    try {
+      const response = await ConversationApi.generateSummary(conversationId);
+      const { summary, generated_at: generatedAt } = response.data;
+      commit(types.UPDATE_CONVERSATION_AI_SUMMARY, {
+        conversationId,
+        aiSummary: summary,
+        generatedAt,
+      });
+      return summary;
+    } finally {
+      commit(types.SET_AI_SUMMARY_GENERATING, { conversationId, value: false });
+    }
   },
 
   ...messageReadActions,

@@ -21,6 +21,7 @@ const state = {
   conversationLastSeen: null,
   syncConversationsMessages: {},
   conversationFilters: {},
+  aiSummaryGenerating: {},
 };
 
 // mutations
@@ -316,6 +317,9 @@ export const mutations = {
   },
   [types.UPDATE_CHAT_LIST_FILTERS](_state, data) {
     _state.conversationFilters = { ..._state.conversationFilters, ...data };
+  },
+  [types.SET_AI_SUMMARY_GENERATING](_state, { conversationId, value }) {
+    _state.aiSummaryGenerating = { ..._state.aiSummaryGenerating, [conversationId]: value };
   },
 };
 

@@ -2,6 +2,8 @@ class Captain::Copilot::ChatService
   include SwitchLocale
   include ResponseFormatChatHelper
 
+  AI_SUPPORTED_ATTACHMENT_TYPES = %w[image].freeze
+
   def initialize(message)
     @message = message
     @context = Captain::Copilot::MessageContext.new(message)
@@ -18,12 +20,25 @@ class Captain::Copilot::ChatService
       return unless @context.agent_bot_inbox
       return unless @context.ai_agent
       return unless @context.bot_available?
+      return unless meaningful_for_ai?
 
       send_messages
     end
   end
 
   private
+
+  def meaningful_for_ai?
+    return true if @message.content.present?
+    return true if @message.attachments.any? { |att| AI_SUPPORTED_ATTACHMENT_TYPES.include?(att.file_type) }
+
+    Rails.logger.info(
+      "[ChatService] Skipping AI request — no text or image content | " \
+      "message_id=#{@message.id} | " \
+      "attachment_types=#{@message.attachments.map(&:file_type)}"
+    )
+    false
+  end
 
   def pre_check_failure_reason
     return I18n.t('subscriptions.limit_reached') unless @context.subscription

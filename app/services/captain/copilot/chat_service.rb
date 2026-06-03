@@ -26,7 +26,7 @@ class Captain::Copilot::ChatService
       if @combined_text.nil?
         enqueue_for_delay
       else
-        execute_ai_call
+        send_messages
       end
     end
   end
@@ -65,8 +65,8 @@ class Captain::Copilot::ChatService
     Captain::Copilot::ChatDelayJob.set(wait: 30.seconds).perform_later(conversation_id, @message.id)
   end
 
-  def execute_ai_call
-    Rails.logger.info "[DEBUG JANGKAU] Memasuki execute_ai_call untuk memanggil Jangkau API"
+  def send_messages
+    Rails.logger.info "[DEBUG JANGKAU] Memasuki send_messages untuk memanggil Jangkau API"
     
     send_message = Captain::Llm::AssistantChatService.new(
       @combined_text,
@@ -104,49 +104,6 @@ class Captain::Copilot::ChatService
 
     nil
   end
-
-  # def send_messages
-  #   # Cache before API call to avoid race condition — new messages arriving
-  #   # during the request would change the count and skip greeting images
-  #   is_welcome = welcome_message?
-
-  #   send_message = Captain::Llm::AssistantChatService.new(
-  #     @message,
-  #     @context.conversation,
-  #     @context.ai_agent,
-  #     @current_account.id
-  #   ).perform
-
-  #   return send_reply_failure(I18n.t('conversations.bot.failure')) unless send_message.success?
-
-  #   @context.usage.increment_ai_responses
-  #   response = send_message.parsed_response
-  #   parsed = parsed_response(response, is_custom_agent: @context.ai_agent.custom_agent?)
-
-  #   if is_welcome
-  #     sent = send_greeting_images(caption: parsed[:response])
-
-  #     unless sent
-  #       send_reply(
-  #         parsed,
-  #         additional_attributes: {
-  #           message_type: 1,
-  #           sender_type: 'AiAgent',
-  #           attachments: parsed[:attachments]
-  #         }
-  #       )
-  #     end
-  #   else
-  #     send_reply(
-  #       parsed,
-  #       additional_attributes: {
-  #         message_type: 1,
-  #         sender_type: 'AiAgent',
-  #         attachments: parsed[:attachments]
-  #       }
-  #     )
-  #   end
-  # end
 
   def welcome_message?
     greeting_config = @context.ai_agent&.display_flow_data&.dig('greeting_config')

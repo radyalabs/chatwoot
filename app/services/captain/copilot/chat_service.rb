@@ -4,8 +4,9 @@ class Captain::Copilot::ChatService
 
   AI_SUPPORTED_ATTACHMENT_TYPES = %w[image].freeze
 
-  def initialize(message)
+  def initialize(message, combined_text = nil)
     @message = message
+    @combined_text = combined_text
     @context = Captain::Copilot::MessageContext.new(message)
     @current_account = @context.account
   end
@@ -22,7 +23,11 @@ class Captain::Copilot::ChatService
       return unless @context.bot_available?
       return unless meaningful_for_ai?
 
-      send_messages
+      if @combined_text.nil?
+        enqueue_for_delay
+      else
+        send_messages
+      end
     end
   end
 
@@ -40,6 +45,57 @@ class Captain::Copilot::ChatService
     false
   end
 
+  def enqueue_for_delay
+    conversation_id = @context.conversation.id
+
+    if welcome_message?
+      send_greeting_images(caption: nil)
+    end
+
+    buffer_key = "jangkau:chat_buffer:#{conversation_id}"
+    timer_key  = "jangkau:chat_timer:#{conversation_id}"
+
+    Sidekiq.redis do |redis|
+      redis.rpush(buffer_key, @message.content.to_s)
+      redis.set(timer_key, Time.current.to_i + 30)
+    end
+
+    Rails.logger.info "[BOT] Pesan ditahan (Debounce 30s) untuk conversation #{conversation_id}"
+
+    Captain::Copilot::ChatDelayJob.set(wait: 30.seconds).perform_later(conversation_id, @message.id)
+  end
+
+  def send_messages
+    Rails.logger.info "[DEBUG JANGKAU] Memasuki send_messages untuk memanggil Jangkau API"
+    
+    send_message = Captain::Llm::AssistantChatService.new(
+      @combined_text,
+      @context.conversation,
+      @context.ai_agent,
+      @current_account.id
+    ).perform
+
+    unless send_message.success?
+      Rails.logger.error "[DEBUG JANGKAU] Gagal mendapat respons sukses dari AI!"
+      return send_reply_failure(I18n.t('conversations.bot.failure')) 
+    end
+
+    Rails.logger.info "[DEBUG JANGKAU] Respons sukses diterima dari AI, menyiapkan balasan..."
+
+    @context.usage.increment_ai_responses
+    response = send_message.parsed_response
+    parsed = parsed_response(response, is_custom_agent: @context.ai_agent.custom_agent?)
+
+    send_reply(
+      parsed,
+      additional_attributes: {
+        message_type: 1,
+        sender_type: 'AiAgent',
+        attachments: parsed[:attachments]
+      }
+    )
+  end
+
   def pre_check_failure_reason
     return I18n.t('subscriptions.limit_reached') unless @context.subscription
     return I18n.t('subscriptions.limit_reached') unless @context.usage
@@ -47,49 +103,6 @@ class Captain::Copilot::ChatService
     return I18n.t('subscriptions.limit_reached') if @context.usage.exceeded_limits?
 
     nil
-  end
-
-  def send_messages
-    # Cache before API call to avoid race condition — new messages arriving
-    # during the request would change the count and skip greeting images
-    is_welcome = welcome_message?
-
-    send_message = Captain::Llm::AssistantChatService.new(
-      @message,
-      @context.conversation,
-      @context.ai_agent,
-      @current_account.id
-    ).perform
-
-    return send_reply_failure(I18n.t('conversations.bot.failure')) unless send_message.success?
-
-    @context.usage.increment_ai_responses
-    response = send_message.parsed_response
-    parsed = parsed_response(response, is_custom_agent: @context.ai_agent.custom_agent?)
-
-    if is_welcome
-      sent = send_greeting_images(caption: parsed[:response])
-
-      unless sent
-        send_reply(
-          parsed,
-          additional_attributes: {
-            message_type: 1,
-            sender_type: 'AiAgent',
-            attachments: parsed[:attachments]
-          }
-        )
-      end
-    else
-      send_reply(
-        parsed,
-        additional_attributes: {
-          message_type: 1,
-          sender_type: 'AiAgent',
-          attachments: parsed[:attachments]
-        }
-      )
-    end
   end
 
   def welcome_message?

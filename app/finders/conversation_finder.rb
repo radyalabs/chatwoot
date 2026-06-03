@@ -70,10 +70,12 @@ class ConversationFinder
   end
 
   def set_inboxes
+    inboxes_scope = @current_user.assigned_inboxes.unscope(where: :deleted_at)
+
     @inbox_ids = if params[:inbox_id]
-                   @current_user.assigned_inboxes.where(id: params[:inbox_id])
+                   inboxes_scope.where(id: params[:inbox_id])
                  else
-                   @current_user.assigned_inboxes.pluck(:id)
+                   inboxes_scope.pluck(:id)
                  end
   end
 

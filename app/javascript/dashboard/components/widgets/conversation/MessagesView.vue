@@ -12,8 +12,6 @@ import Message from './Message.vue';
 import NextMessageList from 'next/message/MessageList.vue';
 import ConversationLabelSuggestion from './conversation/LabelSuggestion.vue';
 import Banner from 'dashboard/components/ui/Banner.vue';
-import ConversationAiSummary from './ConversationAiSummary.vue';
-
 // stores and apis
 import { mapGetters } from 'vuex';
 
@@ -45,7 +43,6 @@ export default {
     ReplyBox,
     Banner,
     ConversationLabelSuggestion,
-    ConversationAiSummary,
   },
   mixins: [inboxMixin],
   props: {
@@ -129,6 +126,10 @@ export default {
     }),
     isOpen() {
       return this.currentChat?.status === wootConstants.STATUS_TYPE.OPEN;
+    },
+    aiSummaryGenerating() {
+      const generating = this.$store.state.conversations.aiSummaryGenerating;
+      return !!generating[this.currentChat?.id];
     },
     shouldShowLabelSuggestions() {
       return (
@@ -301,6 +302,11 @@ export default {
   },
 
   methods: {
+    triggerAiSummary() {
+      this.$store.dispatch('generateAiSummary', {
+        conversationId: this.currentChat.id,
+      });
+    },
     async fetchSuggestions() {
       // start empty, this ensures that the label suggestions are not shown
       this.labelSuggestions = [];
@@ -489,7 +495,6 @@ export default {
       :href-link="replyWindowLink"
       :href-link-text="replyWindowLinkText"
     />
-    <ConversationAiSummary />
     <div class="flex justify-end">
       <woot-button
         variant="smooth"
@@ -588,6 +593,31 @@ export default {
       />
     </ul>
     <div
+      v-if="currentChat?.meta?.assignee && !currentChat.ai_summary"
+      class="relative flex justify-center px-4 py-2"
+    >
+      <transition name="summary-fab">
+        <button
+          v-if="!aiSummaryGenerating"
+          class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-woot-500 rounded-full shadow-md shadow-woot-500/30 hover:bg-woot-600 hover:shadow-lg hover:shadow-woot-500/40 transition-all duration-200"
+          @click="triggerAiSummary"
+        >
+          <span class="i-lucide-sparkles size-3.5" />
+          {{ $t('CONVERSATION.AI_SUMMARY.GENERATE_BUTTON') }}
+        </button>
+        <div
+          v-else
+          class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-n-slate-600 bg-n-slate-2 border border-n-weak rounded-full shadow-md"
+        >
+          <span class="relative flex size-3.5">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-woot-500 opacity-50" />
+            <span class="relative inline-flex rounded-full size-3.5 bg-woot-500 opacity-70" />
+          </span>
+          {{ $t('CONVERSATION.AI_SUMMARY.LOADING') }}
+        </div>
+      </transition>
+    </div>
+    <div
       class="conversation-footer"
       :class="{
         'modal-mask': isPopOutReplyBox,
@@ -628,6 +658,16 @@ export default {
   .rounded-tl-calc {
     border-top-left-radius: calc(1.5rem + 1px);
   }
+}
+
+.summary-fab-enter-active,
+.summary-fab-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.summary-fab-enter-from,
+.summary-fab-leave-to {
+  opacity: 0;
+  transform: translateY(4px) scale(0.95);
 }
 </style>
 

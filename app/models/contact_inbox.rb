@@ -29,7 +29,7 @@ class ContactInbox < ApplicationRecord
   validate :valid_source_id_format?
 
   belongs_to :contact
-  belongs_to :inbox
+  belongs_to :inbox, -> { unscope(where: :deleted_at) }
 
   has_many :conversations, dependent: :destroy_async
 

@@ -119,7 +119,7 @@ class Message < ApplicationRecord
   default_scope { order(created_at: :asc) }
 
   belongs_to :account
-  belongs_to :inbox
+  belongs_to :inbox, -> { unscope(where: :deleted_at) }
   belongs_to :conversation, touch: true
   belongs_to :sender, polymorphic: true, optional: true
 

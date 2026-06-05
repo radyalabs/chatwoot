@@ -22,7 +22,7 @@ class AgentBot < ApplicationRecord
   include Avatarable
 
   has_many :agent_bot_inboxes, dependent: :destroy_async
-  has_many :inboxes, through: :agent_bot_inboxes
+  has_many :inboxes, -> { unscope(where: :deleted_at) }, through: :agent_bot_inboxes
   has_many :messages, as: :sender, dependent: :nullify
   belongs_to :account, optional: true
   enum bot_type: { webhook: 0, csml: 1 }

@@ -57,12 +57,12 @@ class Captain::Copilot::ChatService
 
     Sidekiq.redis do |redis|
       redis.rpush(buffer_key, @message.content.to_s)
-      redis.set(timer_key, Time.current.to_i + 30)
+      redis.set(timer_key, Time.current.to_i + 20)
     end
 
     Rails.logger.info "[BOT] Pesan ditahan (Debounce 30s) untuk conversation #{conversation_id}"
 
-    Captain::Copilot::ChatDelayJob.set(wait: 30.seconds).perform_later(conversation_id, @message.id)
+    Captain::Copilot::ChatDelayJob.set(wait: 20.seconds).perform_later(conversation_id, @message.id)
   end
 
   def send_messages

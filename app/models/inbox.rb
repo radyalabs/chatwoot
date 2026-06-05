@@ -179,6 +179,8 @@ class Inbox < ApplicationRecord
   def soft_delete!
     update(deleted_at: Time.current)
     delete_round_robin_agents
+    cleanup_device
+    resolve_all_conversations!
   end
 
   def restore!
@@ -209,6 +211,16 @@ class Inbox < ApplicationRecord
 
   def check_channel_type?
     ['Channel::Email', 'Channel::Api', 'Channel::WebWidget'].include?(channel_type)
+  end
+
+  def cleanup_device
+    if whatsapp_unofficial?
+      ::CleanupDeviceJob.perform_later(channel_id)
+    end
+  end
+
+  def resolve_all_conversations!
+    conversations.where.not(status: :resolved).update_all(status: :resolved)
   end
 end
 

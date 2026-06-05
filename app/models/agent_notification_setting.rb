@@ -32,7 +32,7 @@
 class AgentNotificationSetting < ApplicationRecord
   belongs_to :account
   belongs_to :ai_agent
-  belongs_to :inbox
+  belongs_to :inbox, -> { unscope(where: :deleted_at) }
 
   validates :message_type, presence: true, inclusion: { in: %w[personal group] }
   validates :receiver_address, presence: true

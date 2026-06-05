@@ -107,6 +107,9 @@ export default {
       const { inbox_id: inboxId } = this.chat;
       return this.$store.getters['inboxes/getInbox'](inboxId);
     },
+    isInboxDeleted() {
+      return this.inbox && this.inbox.name === 'Platform Sebelumnya';
+    },
     hasMultipleInboxes() {
       return this.$store.getters['inboxes/getInboxes'].length > 1;
     },
@@ -200,7 +203,7 @@ export default {
           v-if="isLinearIntegrationEnabled && isLinearFeatureEnabled"
           :conversation-id="currentChat.id"
         />
-        <MoreActions :conversation-id="currentChat.id" />
+        <MoreActions v-if="!isInboxDeleted" :conversation-id="currentChat.id" />
       </div>
     </div>
   </div>

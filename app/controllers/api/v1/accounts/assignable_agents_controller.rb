@@ -15,7 +15,7 @@ class Api::V1::Accounts::AssignableAgentsController < Api::V1::Accounts::BaseCon
   private
 
   def fetch_inboxes
-    @inboxes = Current.account.inboxes.find(permitted_params[:inbox_ids])
+    @inboxes = Current.account.inboxes.unscope(where: :deleted_at).find(permitted_params[:inbox_ids])
   end
 
   def permitted_params

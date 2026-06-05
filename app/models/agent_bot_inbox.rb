@@ -20,7 +20,7 @@ class AgentBotInbox < ApplicationRecord
   validates :ai_agent_id, presence: true
   before_validation :ensure_account_id
 
-  belongs_to :inbox
+  belongs_to :inbox, -> { unscope(where: :deleted_at) }
   belongs_to :ai_agent
   belongs_to :account
 

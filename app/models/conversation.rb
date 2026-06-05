@@ -71,6 +71,7 @@ class Conversation < ApplicationRecord
   validates :custom_attributes, jsonb_attributes_length: true
   validates :uuid, uniqueness: true
   validate :validate_referer_url
+  validate :prevent_reopen_if_inbox_deleted, on: :update, if: :status_changed?
 
   enum status: { open: 0, resolved: 1, pending: 2, snoozed: 3 }
   enum priority: { low: 0, medium: 1, high: 2, urgent: 3 }
@@ -324,6 +325,12 @@ class Conversation < ApplicationRecord
   # creating db triggers
   trigger.before(:insert).for_each(:row) do
     "NEW.display_id := nextval('conv_dpid_seq_' || NEW.account_id);"
+  end
+
+  def prevent_reopen_if_inbox_deleted
+    if !resolved? && inbox.present? && inbox.deleted_at.present?
+      errors.add(:base, 'Percakapan tidak bisa dibuka kembali karena platform telah dihapus.')
+    end
   end
 end
 

@@ -492,6 +492,16 @@
           <CustomNumberingTab :data="data" numbering-key="lead_generation" />
         </div>
 
+        <!-- Tab 7: Skills -->
+        <div v-show="activeIndex === 7" class="w-full min-w-0">
+          <SkillsTab
+            v-if="data"
+            :data="data"
+            :ai-agent-id="data.id"
+            @update:data="emit('update:data')"
+          />
+        </div>
+
       </div>
     </div>
   </div>
@@ -552,6 +562,7 @@ import remindersAPI from '../../../../api/reminders';
 import { useAlert } from 'dashboard/composables';
 import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue';
 import NotificationSettings from './notification-settings/NotificationSettings.vue';
+import SkillsTab from './lead-gen-tabs/SkillsTab.vue';
 
 const { t } = useI18n()
 
@@ -691,6 +702,12 @@ const tabs = computed(() => [
     index: 6,
     name: 'Penomoran Otomatis',
     icon: 'i-lucide-notebook-tabs',
+  },
+  {
+    key: '7',
+    index: 7,
+    name: 'Skills',
+    icon: 'i-lucide-zap',
   },
 ])
 

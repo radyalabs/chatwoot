@@ -45,8 +45,18 @@ class NotifyIdleConversationJob < ApplicationJob
 
   def idle_conversation_processor(idle_conversation)
     handle_orphaned_conversation(idle_conversation) && return if orphaned?(idle_conversation)
+
+    usage = find_usage(idle_conversation.account_id)
+    if usage_limit_reached?(usage)
+      Rails.logger.warn "[NotifyIdleConversationJob] Subscription inactive for account #{idle_conversation.account_id} — marking idle_conversation #{idle_conversation.id} as completed"
+      idle_conversation.update!(status: :completed)
+      idle_conversation.mark_as_conversation_resolved!
+      return
+    end
+
     return if (message = generate_message(idle_conversation)).nil?
 
+    usage.increment_ai_responses
     create_message(message, conversation_attributes(idle_conversation))
     idle_conversation.mark_as_sent!
     idle_conversation.mark_as_conversation_resolved! if idle_conversation.completed?
@@ -95,6 +105,27 @@ class NotifyIdleConversationJob < ApplicationJob
       inbox_id: idle_conversation.inbox_id,
       conversation_id: idle_conversation.conversation_id
     }
+  end
+
+  def find_usage(account_id)
+    subscription = Subscription.active.find_by(account_id: account_id)
+    return nil unless subscription
+
+    SubscriptionUsage.find_or_create_by(subscription_id: subscription.id)
+  rescue StandardError => e
+    Rails.logger.error "[NotifyIdleConversationJob] Error finding usage for account #{account_id}: #{e.message}"
+    nil
+  end
+
+  def usage_limit_reached?(usage)
+    return true if usage.nil?
+
+    if usage.exceeded_limits?
+      Rails.logger.warn "[NotifyIdleConversationJob] Skipping idle message — usage limit reached (subscription_id=#{usage.subscription_id})"
+      return true
+    end
+
+    false
   end
 
   def idle_conversations

@@ -220,7 +220,7 @@ class Inbox < ApplicationRecord
   end
 
   def resolve_all_conversations!
-    conversations.where.not(status: :resolved).update_all(status: :resolved)
+    conversations.where.not(status: :resolved).update_all(status: :resolved, assignee_id: nil)
   end
 end
 

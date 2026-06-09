@@ -160,14 +160,18 @@ module WhatsappUnofficial::IncomingMessageServiceHelpers
     return nil unless message_has_reaction?
 
     reaction = payload[:reaction]
-    if reaction.is_a?(Hash)
-      {
-        text: reaction[:text] || reaction['text'],
-        message_id: reaction[:message_id] || reaction['message_id'] || reaction[:id] || reaction['id']
-      }
-    else
-      { text: reaction.to_s }
-    end
+    data = if reaction.is_a?(Hash)
+             {
+               text: reaction[:text] || reaction['text'],
+               message_id: reaction[:message_id] || reaction['message_id'] || reaction[:id] || reaction['id']
+             }
+           else
+             { text: reaction.to_s }
+           end
+
+    reacted_id = payload[:reacted_message_id] || payload[:reactedMessageId]
+    data[:reacted_message_id] = reacted_id if reacted_id.present?
+    data
   end
 
   def location

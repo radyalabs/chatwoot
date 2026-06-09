@@ -7,6 +7,7 @@ class Webhooks::GowaEventJob < MutexApplicationJob
   ALLOWED_EVENTS = %w[
     message
     message.edited
+    message.reaction
   ].freeze
 
   def perform(params)
@@ -43,6 +44,8 @@ class Webhooks::GowaEventJob < MutexApplicationJob
       end
 
       send_expired_auto_reply(channel, params) unless account_subscription_active?(channel)
+    when 'message.reaction'
+      WhatsappUnofficial::IncomingMessageService.new(inbox: channel.inbox, params: params).perform
     when 'message.edited'
       # WhatsappUnofficial::UpdateMessageService.new(inbox: channel.inbox, params: data).perform
     end

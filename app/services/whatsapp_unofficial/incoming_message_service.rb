@@ -84,8 +84,13 @@ class WhatsappUnofficial::IncomingMessageService
     reaction = reaction_data
     return unless reaction
 
-    @message.content = "Reaksi #{reaction[:text]}"
+    reacted_id = reaction[:reacted_message_id]
+    reacted_msg = @conversation.messages.find_by(source_id: reacted_id) if reacted_id.present?
+    reacted_preview = reacted_msg&.content&.truncate(50) if reacted_msg
+
+    @message.content = "Reaksi #{reaction[:text]}#{" ke: #{reacted_preview}" if reacted_preview}"
     @message.content_attributes[:reaction] = reaction
+    @message.content_attributes[:reacted_message_source_id] = reacted_id if reacted_id.present?
   end
 
   def process_message_attachments

@@ -6,6 +6,7 @@ class Webhooks::WhatsappUnofficialEventsJob < ApplicationJob
   ALLOWED_EVENTS = %w[
     message
     message.edited
+    message.reaction
   ].freeze
 
   def perform(params = {})

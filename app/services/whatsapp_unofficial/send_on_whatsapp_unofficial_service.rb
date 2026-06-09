@@ -17,11 +17,18 @@ class WhatsappUnofficial::SendOnWhatsappUnofficialService < Base::SendOnChannelS
 
   def message_params
     {
-      phone_number: contact_inbox.source_id,
+      phone_number: reply_phone_number,
       content: message.content,
       attachments: attachments,
       link: link(message)
     }
+  end
+
+  def reply_phone_number
+    group_chat_id = message.conversation.additional_attributes&.dig('group_chat_id')
+    return group_chat_id if group_chat_id.present?
+
+    contact_inbox.source_id
   end
 
   def attachments

@@ -62,6 +62,13 @@ export default {
       statusPollingTimer: null,
       autoMarkRead: false,
       isUpdatingSettings: false,
+      // Group management
+      groupEnabled: false,
+      availableGroups: [],
+      monitoredGroups: [],
+      isLoadingGroups: false,
+      isUpdatingGroups: false,
+      showGroupSection: false,
     };
   },
   computed: {
@@ -137,6 +144,7 @@ export default {
   async mounted() {
     await this.checkStatus(true);
     await this.loadSettings();
+    await this.loadGroupSettings();
     this.setupWebSocketSubscription();
     if (this.autoRefresh) {
       this.startAutoRefresh();
@@ -500,8 +508,11 @@ export default {
       try {
         const response = await WhatsAppUnofficialChannels.getSettings(this.inboxId);
         this.autoMarkRead = response.data?.auto_mark_read !== false;
+        this.groupEnabled = response.data?.group_enabled === true;
+        this.monitoredGroups = response.data?.monitored_groups || [];
       } catch (e) {
         this.autoMarkRead = false;
+        this.groupEnabled = false;
       }
     },
 
@@ -518,6 +529,74 @@ export default {
         useAlert(this.t('INBOX_MGMT.WHATSAPP_STATUS.SETTINGS.ERROR'));
       } finally {
         this.isUpdatingSettings = false;
+      }
+    },
+
+    async loadGroupSettings() {
+      this.isLoadingGroups = true;
+      try {
+        const [groupsRes, settingsRes] = await Promise.all([
+          WhatsAppUnofficialChannels.getGroups(this.inboxId),
+          WhatsAppUnofficialChannels.getSettings(this.inboxId),
+        ]);
+        this.availableGroups = groupsRes.data?.payload || [];
+        this.groupEnabled = settingsRes.data?.group_enabled === true;
+        this.monitoredGroups = settingsRes.data?.monitored_groups || [];
+      } catch (e) {
+        this.availableGroups = [];
+      } finally {
+        this.isLoadingGroups = false;
+      }
+    },
+
+    async toggleGroupEnabled() {
+      this.isUpdatingGroups = true;
+      const newValue = !this.groupEnabled;
+      try {
+        await WhatsAppUnofficialChannels.updateSettings(this.inboxId, {
+          group_enabled: newValue,
+        });
+        this.groupEnabled = newValue;
+        if (newValue) {
+          await this.loadGroupSettings();
+        }
+        useAlert(
+          newValue
+            ? 'Pemantauan grup diaktifkan'
+            : 'Pemantauan grup dinonaktifkan'
+        );
+      } catch (e) {
+        useAlert('Gagal mengubah pengaturan grup');
+      } finally {
+        this.isUpdatingGroups = false;
+      }
+    },
+
+    isGroupMonitored(groupJid) {
+      return this.monitoredGroups.some(g => g.jid === groupJid);
+    },
+
+    async toggleMonitoredGroup(group) {
+      const idx = this.monitoredGroups.findIndex(g => g.jid === group.jid);
+      if (idx >= 0) {
+        this.monitoredGroups.splice(idx, 1);
+      } else {
+        this.monitoredGroups.push({ jid: group.jid, name: group.name });
+      }
+      await this.saveMonitoredGroups();
+    },
+
+    async saveMonitoredGroups() {
+      this.isUpdatingGroups = true;
+      try {
+        await WhatsAppUnofficialChannels.updateSettings(this.inboxId, {
+          monitored_groups: this.monitoredGroups,
+        });
+        useAlert('Daftar grup yang dipantau diperbarui');
+      } catch (e) {
+        useAlert('Gagal menyimpan daftar grup');
+      } finally {
+        this.isUpdatingGroups = false;
       }
     },
   },
@@ -832,6 +911,70 @@ export default {
             @input="newStatus => { autoMarkRead = newStatus; toggleAutoMarkRead(); }"
           />
         </div>
+      </div>
+    </div>
+
+    <!-- Group Chat Management -->
+    <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <p class="text-sm font-medium text-gray-900 dark:text-slate-100">
+            Pantau Grup WhatsApp
+          </p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            Aktifkan untuk membaca dan merespon pesan dari grup
+          </p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-sm text-slate-700 dark:text-slate-300">
+            {{ groupEnabled ? 'Aktif' : 'Nonaktif' }}
+          </span>
+          <Switch
+            :model-value="groupEnabled"
+            :disabled="isUpdatingGroups"
+            color="#389947"
+            @input="toggleGroupEnabled"
+          />
+        </div>
+      </div>
+
+      <!-- Group List (only show when enabled) -->
+      <div v-if="groupEnabled" class="mt-2">
+        <div v-if="isLoadingGroups" class="flex items-center space-x-2 py-2">
+          <div class="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+          <span class="text-sm text-gray-500">Memuat daftar grup...</span>
+        </div>
+
+        <div v-else-if="availableGroups.length === 0" class="py-2">
+          <p class="text-sm text-amber-600 dark:text-amber-400">
+            Tidak ada grup yang tersedia. Pastikan nomor WhatsApp sudah terdaftar di grup.
+          </p>
+        </div>
+
+        <div v-else class="space-y-1 max-h-48 overflow-y-auto">
+          <div
+            v-for="group in availableGroups"
+            :key="group.jid"
+            class="flex items-center justify-between py-1.5 px-2 rounded hover:bg-slate-50 dark:hover:bg-slate-700/50"
+          >
+            <span class="text-sm text-gray-700 dark:text-slate-300 truncate flex-1">
+              {{ group.name || group.jid }}
+            </span>
+            <label class="flex items-center cursor-pointer ml-2">
+              <input
+                type="checkbox"
+                :checked="isGroupMonitored(group.jid)"
+                :disabled="isUpdatingGroups"
+                class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                @change="toggleMonitoredGroup(group)"
+              />
+            </label>
+          </div>
+        </div>
+
+        <p v-if="availableGroups.length > 0" class="text-xs text-gray-400 mt-1">
+          Centang grup yang ingin dipantau. Bot hanya akan merespon jika disebut (@nomor_bot) di grup tersebut.
+        </p>
       </div>
     </div>
   </div>

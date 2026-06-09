@@ -22,10 +22,11 @@ class WhatsappUnofficial::IncomingMessageService
       message_type: :incoming,
       sender: @contact,
       additional_attributes: additional_attributes,
-      content_attributes: gowa_reply_content_attributes
+      content_attributes: message_content_attributes
     )
 
-    process_message_attachments if message_params?
+    process_message_attachments if message_params? || payload[:sticker].present?
+    process_reaction if message_has_reaction?
     @message.save!
   end
 
@@ -43,11 +44,47 @@ class WhatsappUnofficial::IncomingMessageService
   end
 
   def set_conversation
-    @conversation = @contact.conversations.where(inbox: inbox).last
+    if group_message?
+      @conversation = @inbox.conversations
+        .where("additional_attributes->>'group_chat_id' = ?", chat_id)
+        .last
 
-    return unless @conversation.blank? || @conversation.resolved?
+      return if @conversation.present?
 
-    @conversation = Conversation.create!(conversation_params)
+      @conversation = Conversation.create!(
+        conversation_params.merge(
+          additional_attributes: {
+            group_chat_id: chat_id,
+            group_name: payload[:chat_name]
+          }
+        )
+      )
+    else
+      @conversation = @contact.conversations.where(inbox: inbox).last
+
+      return unless @conversation.blank? || @conversation.resolved?
+
+      @conversation = Conversation.create!(conversation_params)
+    end
+  end
+
+  def message_content_attributes
+    attrs = gowa_reply_content_attributes
+    if group_message?
+      attrs[:group_chat_id] = chat_id
+      attrs[:group_name] = payload[:chat_name]
+      mentioned = mentioned_jids
+      attrs[:mentioned_jids] = mentioned if mentioned.any?
+    end
+    attrs
+  end
+
+  def process_reaction
+    reaction = reaction_data
+    return unless reaction
+
+    @message.content = "Reaksi #{reaction[:text]}"
+    @message.content_attributes[:reaction] = reaction
   end
 
   def process_message_attachments

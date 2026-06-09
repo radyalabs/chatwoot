@@ -57,7 +57,9 @@ class Api::V1::Accounts::Channels::WhatsappUnofficialChannelsController < Api::V
   def get_settings
     channel = find_channel_by_inbox
     render json: {
-      auto_mark_read: channel.provider_config&.dig('auto_mark_read') == true
+      auto_mark_read: channel.provider_config&.dig('auto_mark_read') == true,
+      group_enabled: channel.group_enabled?,
+      monitored_groups: channel.monitored_groups
     }
   rescue ActiveRecord::RecordNotFound
     render json: { error: 'Channel not found' }, status: :not_found
@@ -66,9 +68,24 @@ class Api::V1::Accounts::Channels::WhatsappUnofficialChannelsController < Api::V
   def update_settings
     channel = find_channel_by_inbox
     provider_config = channel.provider_config || {}
-    provider_config['auto_mark_read'] = ActiveModel::Type::Boolean.new.cast(params[:auto_mark_read])
+
+    provider_config['auto_mark_read'] = ActiveModel::Type::Boolean.new.cast(params[:auto_mark_read]) if params.key?(:auto_mark_read)
+
+    if params.key?(:group_enabled)
+      provider_config['group_enabled'] = ActiveModel::Type::Boolean.new.cast(params[:group_enabled])
+    end
+
+    if params.key?(:monitored_groups)
+      provider_config['monitored_groups'] = params[:monitored_groups].is_a?(Array) ? params[:monitored_groups] : []
+    end
+
     channel.update!(provider_config: provider_config)
-    render json: { success: true, auto_mark_read: provider_config['auto_mark_read'] }
+    render json: {
+      success: true,
+      auto_mark_read: provider_config['auto_mark_read'],
+      group_enabled: provider_config['group_enabled'],
+      monitored_groups: provider_config['monitored_groups']
+    }
   rescue ActiveRecord::RecordNotFound
     render json: { error: 'Channel not found' }, status: :not_found
   rescue StandardError => e

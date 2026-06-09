@@ -22,6 +22,7 @@ class Captain::Copilot::ChatService
       return unless @context.ai_agent
       return unless @context.bot_available?
       return unless meaningful_for_ai?
+      return if group_message_without_mention?
 
       if @combined_text.nil?
         enqueue_for_delay
@@ -43,6 +44,50 @@ class Captain::Copilot::ChatService
       "attachment_types=#{@message.attachments.map(&:file_type)}"
     )
     false
+  end
+
+  def group_message_without_mention?
+    return false unless group_conversation?
+
+    unless bot_mentioned?
+      Rails.logger.info "[ChatService] Skipping AI — group message without bot mention | conversation_id=#{@context.conversation.id}"
+      return true
+    end
+
+    false
+  end
+
+  def group_conversation?
+    @message.conversation.additional_attributes&.dig('group_chat_id').present?
+  end
+
+  def bot_mentioned?
+    content_body = @message.content.to_s.downcase
+    channel = @context.inbox.channel
+    return false unless channel.respond_to?(:bot_jid)
+
+    bot_phone = channel.phone_number.to_s.gsub(/\D/, '')
+
+    return true if content_body.include?("@#{bot_phone}")
+
+    mentioned = @message.content_attributes&.dig('mentioned_jids') || []
+    return true if mentioned.any? { |jid| jid.include?(bot_phone) }
+
+    reply_context = @message.content_attributes&.dig('gowa_reply', 'raw_in_reply_to_external_id')
+    return true if reply_context.present? && bot_message_replied_to?
+
+    false
+  end
+
+  def bot_message_replied_to?
+    reply_id = @message.content_attributes&.dig('in_reply_to_external_id') ||
+               @message.content_attributes&.dig('gowa_reply', 'raw_in_reply_to_external_id')
+    return false unless reply_id
+
+    bot_messages = @message.conversation.messages
+                           .where.not(sender_type: 'Contact')
+                           .where(source_id: reply_id)
+    bot_messages.any?
   end
 
   def enqueue_for_delay
@@ -67,9 +112,12 @@ class Captain::Copilot::ChatService
 
   def send_messages
     Rails.logger.info "[DEBUG JANGKAU] Memasuki send_messages untuk memanggil Jangkau API"
-    
+
+    enriched_text = enrich_with_group_context
+    Rails.logger.info "[GROUP_CONTEXT] enriched=#{enriched_text != @combined_text}"
+
     send_message = Captain::Llm::AssistantChatService.new(
-      @combined_text,
+      enriched_text,
       @context.conversation,
       @context.ai_agent,
       @current_account.id
@@ -204,6 +252,20 @@ class Captain::Copilot::ChatService
         content_type: blob.content_type.to_s.encode('UTF-8', invalid: :replace, undef: :replace, replace: '')
       }
     )
+  end
+
+  def enrich_with_group_context
+    return @combined_text unless GroupContextService.new(@message, @combined_text).group_summary_request?
+
+    enriched = GroupContextService.new(@message, @combined_text).enrich_message
+    return @combined_text if enriched == check_original_text
+
+    Rails.logger.info "[GROUP_CONTEXT] Group context injected for message #{@message.id}"
+    enriched
+  end
+
+  def check_original_text
+    @combined_text.presence || @message.content.to_s
   end
 
   def send_reply(response, additional_attributes: {})

@@ -92,7 +92,13 @@ export const getters = {
     const [inbox] = $state.records.filter(
       record => record.id === Number(inboxId)
     );
-    return inbox || {};
+    return inbox || {
+      id: Number(inboxId),
+      name: 'Platform Sebelumnya',
+      channel_type: 'Channel::Unknown',
+      avatar_url: '',
+      phone_number: ''
+    };
   },
   getInboxById: $state => inboxId => {
     const [inbox] = $state.records.filter(

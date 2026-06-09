@@ -201,6 +201,11 @@ export default {
     inbox() {
       return this.$store.getters['inboxes/getInbox'](this.inboxId);
     },
+    isInboxDeleted() {
+      const inboxId = this.currentChat.inbox_id;
+      const inbox = this.$store.getters['inboxes/getInbox'](inboxId);
+      return inbox && inbox.name === 'Platform Sebelumnya';
+    },
     messagePlaceHolder() {
       const isSubscriptionActive = this.isSubscriptionActive
       const isPrivate = this.isPrivate
@@ -1120,7 +1125,11 @@ export default {
     :action-button-label="$t('CONVERSATION.ASSIGN_TO_ME')"
     @primary-action="onClickSelfAssign"
   />
-  <div ref="replyEditor" class="reply-box" :class="replyBoxClass">
+  <div v-if="isInboxDeleted" class="p-4 mx-4 mb-4 text-center rounded-md text-slate-500 bg-slate-50 dark:text-slate-400 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50">
+    <fluent-icon icon="info" class="mr-2 align-middle" />
+    <span>Anda tidak dapat membalas percakapan ini karena platform telah dihapus.</span>
+  </div>
+  <div v-else ref="replyEditor" class="reply-box" :class="replyBoxClass">
     <ReplyTopPanel
       :mode="replyType"
       :is-message-length-reaching-threshold="isMessageLengthReachingThreshold"

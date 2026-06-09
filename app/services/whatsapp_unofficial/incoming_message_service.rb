@@ -22,10 +22,11 @@ class WhatsappUnofficial::IncomingMessageService
       message_type: :incoming,
       sender: @contact,
       additional_attributes: additional_attributes,
-      content_attributes: gowa_reply_content_attributes
+      content_attributes: message_content_attributes
     )
 
-    process_message_attachments if message_params?
+    process_message_attachments if message_params? || payload[:sticker].present?
+    process_reaction if message_has_reaction?
     transcribe_voice_note
     @message.save!
   end
@@ -44,11 +45,47 @@ class WhatsappUnofficial::IncomingMessageService
   end
 
   def set_conversation
-    @conversation = @contact.conversations.where(inbox: inbox).last
+    if group_message?
+      @conversation = @inbox.conversations
+                            .where("additional_attributes->>'group_chat_id' = ?", chat_id)
+                            .last
 
-    return unless @conversation.blank? || @conversation.resolved?
+      return if @conversation.present?
 
-    @conversation = Conversation.create!(conversation_params)
+      @conversation = Conversation.create!(
+        conversation_params.merge(
+          additional_attributes: {
+            group_chat_id: chat_id,
+            group_name: payload[:chat_name]
+          }
+        )
+      )
+    else
+      @conversation = @contact.conversations.where(inbox: inbox).last
+
+      return unless @conversation.blank? || @conversation.resolved?
+
+      @conversation = Conversation.create!(conversation_params)
+    end
+  end
+
+  def message_content_attributes
+    attrs = gowa_reply_content_attributes
+    if group_message?
+      attrs[:group_chat_id] = chat_id
+      attrs[:group_name] = payload[:chat_name]
+      mentioned = mentioned_jids
+      attrs[:mentioned_jids] = mentioned if mentioned.any?
+    end
+    attrs
+  end
+
+  def process_reaction
+    reaction = reaction_data
+    return unless reaction
+
+    @message.content = "Reaksi #{reaction[:text]}"
+    @message.content_attributes[:reaction] = reaction
   end
 
   def process_message_attachments
@@ -65,10 +102,10 @@ class WhatsappUnofficial::IncomingMessageService
     return if attachment_file.blank?
 
     detected_type = file_content_type
-    
+
     if detected_type == :audio
       Rails.logger.info(
-        "[VOICE][CHATWOOT] Incoming voice note from WhatsApp | " \
+        '[VOICE][CHATWOOT] Incoming voice note from WhatsApp | ' \
         "media_path=#{media_path} | " \
         "content_type=#{attachment_file.content_type} | " \
         "filename=#{attachment_file.original_filename} | " \
@@ -76,7 +113,7 @@ class WhatsappUnofficial::IncomingMessageService
       )
       @downloaded_audio_file = attachment_file
       @downloaded_audio_filename = attachment_file.original_filename
-      return 
+      return
     end
 
     @message.attachments.new(
@@ -94,7 +131,7 @@ class WhatsappUnofficial::IncomingMessageService
     return unless @downloaded_audio_file
 
     Rails.logger.info(
-      "[VOICE][TRANSCRIBE] Transcribing voice note | " \
+      '[VOICE][TRANSCRIBE] Transcribing voice note | ' \
       "filename=#{@downloaded_audio_filename} | " \
       "current_content=#{@message.content.inspect}"
     )
@@ -106,21 +143,21 @@ class WhatsappUnofficial::IncomingMessageService
     )
 
     if transcribed_text.present?
-      if @message.content.present?
-        @message.content = "#{@message.content}\n\n[Voice message]: #{transcribed_text}"
-      else
-        @message.content = transcribed_text
-      end
+      @message.content = if @message.content.present?
+                           "#{@message.content}\n\n[Voice message]: #{transcribed_text}"
+                         else
+                           transcribed_text
+                         end
 
       Rails.logger.info(
-        "[VOICE][TRANSCRIBE] Voice note transcribed successfully | " \
+        '[VOICE][TRANSCRIBE] Voice note transcribed successfully | ' \
         "message_id=#{@message.id || 'new'} | " \
         "text_length=#{transcribed_text.length} | " \
         "preview=#{transcribed_text[0..100].inspect}"
       )
     else
       Rails.logger.warn(
-        "[VOICE][TRANSCRIBE][ERROR] Voice note transcription returned empty | " \
+        '[VOICE][TRANSCRIBE][ERROR] Voice note transcription returned empty | ' \
         "filename=#{@downloaded_audio_filename} | " \
         "sender=#{sender_phone}"
       )
@@ -128,7 +165,7 @@ class WhatsappUnofficial::IncomingMessageService
     end
   rescue StandardError => e
     Rails.logger.error(
-      "[VOICE][TRANSCRIBE][ERROR] Failed to transcribe voice note | " \
+      '[VOICE][TRANSCRIBE][ERROR] Failed to transcribe voice note | ' \
       "error=#{e.class}: #{e.message}"
     )
     @message.content = '[Voice message - transcription failed]' if @message.content.blank?

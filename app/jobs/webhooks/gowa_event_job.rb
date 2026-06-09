@@ -12,10 +12,10 @@ class Webhooks::GowaEventJob < MutexApplicationJob
   def perform(params)
     event = params['event']
     return unless ALLOWED_EVENTS.include?(event)
-    return if should_skip_processing?(params)
 
     channel = find_channel(params)
     return if channel.blank?
+    return if should_skip_processing?(params, channel)
 
     with_lock(lock_key(params)) do
       process_event(params, event, channel)
@@ -53,17 +53,36 @@ class Webhooks::GowaEventJob < MutexApplicationJob
     Channel::WhatsappUnofficial.find_by(phone_number: phone_number)
   end
 
-  def should_skip_processing?(params)
+  def should_skip_processing?(params, channel)
     payload = params['payload'] || {}
     return true if payload.empty?
-    return true if payload['from'] == params['device_id']
-    return true if group_chat?(payload)
+    return true if self_message?(payload, params, channel)
+
+    if group_chat?(payload)
+      return true unless channel.group_enabled?
+      return true unless group_in_monitored_list?(payload, channel)
+    end
 
     false
   end
 
+  def self_message?(payload, params, channel)
+    return true if payload['from'] == params['device_id']
+
+    phone = channel.phone_number.to_s.gsub(/\D/, '')
+    sender = payload['from'].to_s.split('@').first
+    sender == phone
+  end
+
   def group_chat?(payload)
     payload['chat_id'].to_s.end_with?('@g.us')
+  end
+
+  def group_in_monitored_list?(payload, channel)
+    monitored = channel.monitored_groups
+    return true if monitored.blank?
+
+    monitored.any? { |g| g['jid'] == payload['chat_id'] }
   end
 
   def channel_available?(channel)

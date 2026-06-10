@@ -23,10 +23,13 @@ class Captain::Copilot::ChatService
       return unless @context.bot_available?
       return unless meaningful_for_ai?
 
-      if @combined_text.nil?
+      if @combined_text.present?
+        execute_ai_call(payload: @combined_text)
+      elsif delay_enabled?
         enqueue_for_delay
       else
-        send_messages
+        send_greeting_images(caption: nil) if welcome_message?
+        execute_ai_call(payload: @message)
       end
     end
   end
@@ -47,22 +50,20 @@ class Captain::Copilot::ChatService
 
   def enqueue_for_delay
     conversation_id = @context.conversation.id
-
-    if welcome_message?
-      send_greeting_images(caption: nil)
-    end
+    send_greeting_images(caption: nil) if welcome_message?
 
     buffer_key = "jangkau:chat_buffer:#{conversation_id}"
     timer_key  = "jangkau:chat_timer:#{conversation_id}"
+    
+    fixed_delay_time = 15
 
     Sidekiq.redis do |redis|
       redis.rpush(buffer_key, @message.content.to_s)
-      redis.set(timer_key, Time.current.to_i + 20)
+      redis.set(timer_key, Time.current.to_i + fixed_delay_time)
     end
 
-    Rails.logger.info "[BOT] Pesan ditahan (Debounce 30s) untuk conversation #{conversation_id}"
-
-    Captain::Copilot::ChatDelayJob.set(wait: 20.seconds).perform_later(conversation_id, @message.id)
+    Rails.logger.info "[BOT] Pesan ditahan (#{fixed_delay_time}s) untuk Conv: #{conversation_id}"
+    Captain::Copilot::ChatDelayJob.set(wait: fixed_delay_time.seconds).perform_later(conversation_id, @message.id)
   end
 
   def send_messages
@@ -309,5 +310,10 @@ class Captain::Copilot::ChatService
         content
       )
     end
+  end
+
+  def delay_enabled?
+    @context.ai_agent.flow_data&.dig('delay_enabled') == true || 
+    @context.ai_agent.flow_data&.dig('delay_enabled') == 'true'
   end
 end

@@ -777,6 +777,10 @@
       "WARN_MIN_VALUE": "Nomor berikutnya harus minimal 1.",
       "SAVE_ERROR": "Gagal menyimpan konfigurasi penomoran."
     },
+    "DELAY": {
+      "TITLE": "Tunda Balasan Bot",
+      "DESC": "Menahan pesan masuk agar AI dapat membaca seluruh obrolan pelanggan sebelum membalas."
+    },
     "REMINDER": {
       "ENABLED": "Aktif",
       "DISABLED": "Nonaktif",

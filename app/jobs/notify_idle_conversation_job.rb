@@ -45,13 +45,12 @@ class NotifyIdleConversationJob < ApplicationJob
 
   def idle_conversation_processor(idle_conversation)
     handle_orphaned_conversation(idle_conversation) && return if orphaned?(idle_conversation)
+    return complete_and_resolve(idle_conversation) unless channel_active?(idle_conversation)
 
     usage = find_usage(idle_conversation.account_id)
     if usage_limit_reached?(usage)
       Rails.logger.warn "[NotifyIdleConversationJob] Subscription inactive for account #{idle_conversation.account_id} — marking idle_conversation #{idle_conversation.id} as completed"
-      idle_conversation.update!(status: :completed)
-      idle_conversation.mark_as_conversation_resolved!
-      return
+      return complete_and_resolve(idle_conversation)
     end
 
     return if (message = generate_message(idle_conversation)).nil?
@@ -60,6 +59,15 @@ class NotifyIdleConversationJob < ApplicationJob
     create_message(message, conversation_attributes(idle_conversation))
     idle_conversation.mark_as_sent!
     idle_conversation.mark_as_conversation_resolved! if idle_conversation.completed?
+  end
+
+  def complete_and_resolve(idle_conversation)
+    idle_conversation.update!(status: :completed)
+    idle_conversation.mark_as_conversation_resolved!
+  end
+
+  def channel_active?(idle_conversation)
+    idle_conversation.conversation.inbox.channel_status
   end
 
   def orphaned?(idle_conversation)

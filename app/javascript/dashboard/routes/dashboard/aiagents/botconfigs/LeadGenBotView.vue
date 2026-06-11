@@ -254,7 +254,7 @@
                   </div>
                   
                   <label class="inline-flex items-center cursor-pointer">
-                    <input type="checkbox" v-model="isDelayEnabled" class="sr-only peer" :disabled="isSaving">
+                    <input type="checkbox" v-model="isDelayEnabled" @change="saveSettings" class="sr-only peer" :disabled="isSaving">
                     <div class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
                     </div>
                   </label>
@@ -878,6 +878,8 @@ function loadSavedConfiguration() {
       const agentData = flowData.agents_config[agentIndex];
       const config = agentData.configurations;
 
+      isDelayEnabled.value = config?.delay_enabled || false;
+
       if (agentData.temperature !== undefined) {
         creativityLevel.value = agentData.temperature;
       }
@@ -911,8 +913,8 @@ async function saveSettings() {
       flowData.agents_config[agentIndex].configurations = {};
     }
 
-    flowData.delay_enabled = isDelayEnabled.value;
-    displayFlowData.delay_enabled = isDelayEnabled.value;
+    flowData.agents_config[agentIndex].configurations.delay_enabled = isDelayEnabled.value;
+    displayFlowData.agents_config[agentIndex].configurations.delay_enabled = isDelayEnabled.value;
 
     flowData.agents_config[agentIndex].temperature = creativityLevel.value;
     displayFlowData.agents_config[agentIndex].temperature = creativityLevel.value;

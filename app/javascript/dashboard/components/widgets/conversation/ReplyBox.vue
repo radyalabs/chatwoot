@@ -476,7 +476,10 @@ export default {
     );
     emitter.on(BUS_EVENTS.INSERT_INTO_NORMAL_EDITOR, this.addIntoEditor);
 
-    this.$store.dispatch('myActiveSubscription');
+    this.$store.dispatch(
+      'myActiveSubscription',
+      this.currentUser?.account_id
+    );
   },
   unmounted() {
     document.removeEventListener('paste', this.onPaste);

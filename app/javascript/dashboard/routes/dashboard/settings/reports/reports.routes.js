@@ -193,7 +193,10 @@ export default {
 
           if (!subscription || !subscription.plan_name) {
              try {
-                await store.dispatch('myActiveSubscription');
+                await store.dispatch(
+                  'myActiveSubscription',
+                  routeAccountId
+                );
                 subscription = store.state.billing?.billing?.myActiveSubscription;
              } catch (e) {}
           }

@@ -555,6 +555,8 @@ import NotificationSettings from './notification-settings/NotificationSettings.v
 
 const { t } = useI18n()
 
+const notificationTimer = ref(null);
+
 const props = defineProps({
   data: {
     type: Object,
@@ -754,9 +756,13 @@ watch(
 );
 
 function showNotification(message, type = 'success') {
+  if (notificationTimer.value) {
+    clearTimeout(notificationTimer.value);
+  }
   notification.value = { message, type };
-  setTimeout(() => {
+  notificationTimer.value = setTimeout(() => {
     notification.value = null;
+    notificationTimer.value = null;
   }, 3000);
 }
 
@@ -991,45 +997,6 @@ const insertVariable = (variableValue) => {
   }
 };
 
-// Helper function to split text into chunks
-function splitTextIntoChunks(text, maxChunkSize = 19000) {
-  if (!text) return [];
-  
-  // Jika text bukan string (misal Object atau Number), paksa ubah jadi String
-  if (typeof text !== 'string') {
-    // Jika object/array, gunakan JSON.stringify agar datanya terbaca rapi
-    if (typeof text === 'object') {
-      text = JSON.stringify(text, null, 2); 
-    } else {
-      text = String(text);
-    }
-  }
-
-  const chunks = [];
-  let currentChunk = '';
-  const lines = text.split('\n');
-  
-  for (const line of lines) {
-    if (currentChunk.length + line.length + 1 > maxChunkSize) {
-      if (currentChunk.trim()) {
-        chunks.push(currentChunk.trim());
-        currentChunk = line;
-      } else {
-        chunks.push(line.substring(0, maxChunkSize - 100) + '...[truncated]');
-        currentChunk = '';
-      }
-    } else {
-      currentChunk += (currentChunk ? '\n' : '') + line;
-    }
-  }
-  
-  if (currentChunk.trim()) {
-    chunks.push(currentChunk.trim());
-  }
-  
-  return chunks;
-}
-
 async function syncProductColumns() {
   try {
     syncingColumns.value = true;
@@ -1043,78 +1010,15 @@ async function syncProductColumns() {
       collection_name: collectionName.value,
     };
     
-    const syncDataResponse = await googleSheetsExportAPI.syncSpreadsheet(payload);
+    await googleSheetsExportAPI.syncSpreadsheet(payload);
     
-    // Get existing knowledge sources
-    let knowledgeSources = [];
-    try {
-      const knowledgeResponse = await aiAgents.getKnowledgeSources(props.data.id);
-      knowledgeSources = knowledgeResponse.data?.knowledge_source_texts || [];
-    } catch (error) {
-      knowledgeSources = [];
-    }
-    
-    // Find and delete all knowledge sources with tab = 4 (product catalog for leadgen)
-    let existingKnowledgeTab4 = knowledgeSources.filter(k => k.tab === 4);
-    
-    for (const knowledge of existingKnowledgeTab4) {
-      try {
-        await aiAgents.deleteKnowledgeText(
-          props.data.id,
-          knowledge.id,
-          collectionName.value
-        );
-      } catch (error) {
-        console.warn('Failed to delete existing knowledge:', error);
-      }
-    }
-    
-    // Split content into chunks
-    let rawData = syncDataResponse.data.data;
+    showNotification(t('AGENT_MGMT.LEADGENBOT.CATALOG.SYNC_SUCCESS'), 'success');
 
-    console.log('Tipe data rawData:', typeof rawData); 
-    console.log('Isi rawData:', rawData);
-
-    if (rawData && typeof rawData === 'object') {
-        rawData = JSON.stringify(rawData, null, 2);
-    }
-
-    const chunks = splitTextIntoChunks(rawData, 19000);
-    
-    console.log(`Splitting product data into ${chunks.length} chunks`);
-    
-    // Create knowledge sources for each chunk
-    for (let i = 0; i < chunks.length; i++) {
-      const chunkText = chunks.length > 1 
-        ? `[Product Catalog - Part ${i + 1}/${chunks.length}]\n\n${chunks[i]}`
-        : chunks[i];
-      
-      try {
-        const createRequest = {
-          id: null,
-          tab: 4,
-          text: chunkText,
-          collection_name: collectionName.value
-        };
-        await aiAgents.addKnowledgeText(props.data.id, createRequest);
-        
-        if (i < chunks.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-      } catch (error) {
-        console.error(`Failed to create knowledge chunk ${i + 1}:`, error);
-        showNotification(`Failed to save chunk ${i + 1}`, 'error');
-      }
-    }
-    
-    const message = chunks.length > 1 
-      ? `${t('AGENT_MGMT.LEADGENBOT.CATALOG.SYNC_SUCCESS')} (${chunks.length} chunks)`
-      : t('AGENT_MGMT.LEADGENBOT.CATALOG.SYNC_SUCCESS');
-    
-    showNotification(message, 'success');
   } catch (error) {
     console.error('Sync error:', error);
-    showNotification(t('AGENT_MGMT.LEADGENBOT.CATALOG.SYNC_ERROR'), 'error');
+    
+    const errorMessage = error.response?.data?.error || t('AGENT_MGMT.LEADGENBOT.CATALOG.SYNC_ERROR');
+    showNotification(errorMessage, 'error');
   } finally {
     syncingColumns.value = false;
   }

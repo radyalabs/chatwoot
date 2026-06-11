@@ -1,4 +1,6 @@
 class Webhooks::GowaEventJob < ApplicationJob
+  include WebhookExpiryHandler
+
   queue_as :default
 
   ALLOWED_EVENTS = %w[
@@ -18,6 +20,7 @@ class Webhooks::GowaEventJob < ApplicationJob
     case event
     when 'message'
       WhatsappUnofficial::IncomingMessageService.new(inbox: channel.inbox, params: params).perform
+      send_expired_auto_reply(channel, params) unless account_subscription_active?(channel)
     when 'message.edited'
       # WhatsappUnofficial::UpdateMessageService.new(inbox: channel.inbox, params: data).perform
     end

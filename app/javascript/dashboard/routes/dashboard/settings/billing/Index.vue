@@ -53,8 +53,13 @@ const topupType = ref(null);
 const currentPackage = ref({});
 const plans = ref([]);
 const custom_plans = ref([]);
+const subscriptionLoading = ref(true);
 const activeSubscription = computed(() => store.state.billing.billing.latestSubscription)
-const isSubscriptionActive = computed(() => activeSubscription.value ? activeSubscription.value.status === 'active' : undefined)
+const isSubscriptionActive = computed(() =>
+  activeSubscription.value?.id
+    ? new Date(activeSubscription.value.ends_at) > new Date()
+    : undefined
+);
 const subscriptionHistories = ref([]);
 const planIcon = computed(() => {
   const planName = activeSubscription.value?.plan_name?.toString()
@@ -123,6 +128,8 @@ onMounted(async () => {
       await store.dispatch('getLatestSubscription')
     } catch (error) {
       console.error('Gagal mengambil data active subscription:', error);
+    } finally {
+      subscriptionLoading.value = false;
     }
   })()
 
@@ -387,10 +394,15 @@ function scrollToPackage() {
     <InvoiceModal :data="invoiceData" />
   </Modal2>
 
-  <div class="billing-page p-4 w-full">
+  <!-- Full-page loading spinner while subscription data loads -->
+  <div v-if="subscriptionLoading" class="flex items-center justify-center w-full h-full">
+    <woot-loading-state :message="$t('BILLING.LOADING')" />
+  </div>
+
+  <div v-else class="billing-page p-4 w-full">
     <div
       class="bg-white dark:!bg-[#1D1E24] border border-[#0000001A] rounded-lg p-5 flex flex-col gap-4 mb-8"
-      v-if="activeSubscription">
+      v-if="activeSubscription?.id">
       <div class="flex flex-col lg:flex-row">
         <div class="flex-1">
           <span class="font-bold !text-black-700 dark:!text-white">{{ $t('PAYMENT.STATUS_SUBS') }}</span>
@@ -409,7 +421,7 @@ function scrollToPackage() {
           <div class="flex flex-col flex-1 min-w-0">
             <div class="flex flex-row gap-2">
               <span class="text-[#2F9428] font-bold text-lg">{{ activeSubscription?.plan_name ?? 'N/A' }}</span>
-              <div v-if="isSubscriptionActive && !isSubscriptionActive" class="py-1 px-2 text-sm bg-red-400 rounded text-white">
+              <div v-if="isSubscriptionActive === false" class="py-1 px-2 text-sm bg-red-400 rounded text-white">
                 <span>{{ $t('PAYMENT.EXPIRED_LABEL') }}</span>
                 <span class="underline cursor-pointer" @click="scrollToPackage">
                   {{ $t('PAYMENT.EXPIRED_LABEL_BUY_NOW') }}

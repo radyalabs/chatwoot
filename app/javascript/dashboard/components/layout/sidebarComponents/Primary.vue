@@ -8,6 +8,7 @@ import wootConstants from 'dashboard/constants/globals';
 import { frontendURL } from 'dashboard/helper/URLHelper';
 import { ACCOUNT_EVENTS } from '../../../helper/AnalyticsHelper/events';
 import { useTrack } from 'dashboard/composables';
+import { mapGetters } from 'vuex';
 
 export default {
   components: {
@@ -52,6 +53,9 @@ export default {
     };
   },
   computed: {
+    ...mapGetters({
+      isSubscriptionActive: 'isSubscriptionActive',
+    }),
     appVersion() {
       return window.globalConfig.APP_VERSION;
     },
@@ -128,6 +132,7 @@ export default {
             :icon-fill-rule="menuItem.iconFillRule"
             :icon-clip-rule="menuItem.iconClipRule"
             :is-child-menu-active="menuItem.key === activeMenuItem"
+            :disabled="!isSubscriptionActive && !menuItem.availableWhenExpired"
           />
         </div>
       </div>

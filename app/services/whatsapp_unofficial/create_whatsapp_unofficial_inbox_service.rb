@@ -57,7 +57,7 @@ class WhatsappUnofficial::CreateWhatsappUnofficialInboxService
 
   def setup_device_sync_with_timeout
     # Try sync setup first with 10 second timeout
-    Timeout.timeout(10) do
+    Timeout.timeout(30) do
       @channel.create_device_with_retry(max_retries: 1)
       Rails.logger.info "Device setup completed synchronously for phone #{@channel.phone_number}"
     end

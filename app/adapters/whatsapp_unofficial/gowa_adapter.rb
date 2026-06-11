@@ -94,22 +94,23 @@ module WhatsappUnofficial
 
         { device_id: device_id }
       rescue StandardError => e
-        # Handle "device already exists" error by reusing the existing device
+        # Handle "device already exists" error by cleanly recreating it
         if e.message.include?('already exists')
-          log_info "Device #{custom_device_id} already exists in GOWA, reusing it"
-          channel.update!(device_id: custom_device_id)
-
-          # Logout any existing session so a fresh QR scan is required
-          # This ensures channel recreation always requires re-authentication
-          log_info "Logging out existing session for device #{custom_device_id} to require fresh QR scan"
+          log_info "Device #{custom_device_id} already exists in GOWA. Deleting and recreating..."
+          
           begin
             gowa_service.logout_device(device_id: custom_device_id)
-            log_info "Existing session logged out successfully"
-          rescue StandardError => logout_error
-            log_warn "Logout failed (may not have been logged in): #{logout_error.message}"
+            gowa_service.delete_device(device_id: custom_device_id)
+          rescue StandardError => cleanup_error
+            log_warn "Cleanup failed (aman diabaikan): #{cleanup_error.message}"
           end
 
-          { device_id: custom_device_id, reused: true }
+          result = gowa_service.create_device(device_id: custom_device_id)
+          
+          channel.update!(device_id: custom_device_id)
+          log_info "Device recreated successfully"
+
+          { device_id: custom_device_id, reused: false }
         else
           raise e
         end

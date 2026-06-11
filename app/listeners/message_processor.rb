@@ -142,26 +142,4 @@ module MessageProcessor
     User.find_by(id: agent_id)
   end
 
-  def self.increment_mau_usage(conversation)
-    subscription = Subscription.find_by(account_id: conversation.account_id)
-    usage = SubscriptionUsage.find_or_create_by(subscription_id: subscription.id)
-    unless usage
-      Rails.logger.warn("⚠️ No subscription or usage found for account #{account_id}")
-      return
-    end
-    if usage.exceeded_limits?
-      Rails.logger.warn("MAU limit reached for subscription #{usage.subscription_id}")
-    else
-      usage.increment_mau
-      if subscription.max_mau + subscription.additional_mau - 10 == usage.mau_count
-        accountuser = AccountUser.find_by(account_id: conversation.account_id)
-        user = User.find_by(id: accountuser.user_id)
-
-        SubscriptionNotifierMailer.mau_limit_warning(user, usage.mau_count, subscription.max_mau).deliver_later
-
-        Rails.logger.warn("Sent MAU warning email to #{user.email} for account #{conversation.account_id}")
-      end
-
-    end
-  end
 end

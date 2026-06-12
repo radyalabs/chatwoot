@@ -4,9 +4,7 @@ import {
   nextTick,
   reactive,
   ref,
-  useTemplateRef,
   watch,
-  watchEffect,
 } from 'vue';
 import Input from 'dashboard/components-next/input/Input.vue';
 import TextArea from 'dashboard/components-next/textarea/TextArea.vue';
@@ -19,7 +17,12 @@ import captainTranslator from '../../../api/captainTranslator';
 import MarkdownIt from 'markdown-it';
 import { useRoute } from 'vue-router';
 
-const md = new MarkdownIt();
+const md = new MarkdownIt({ linkify: true });
+md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
+  tokens[idx].attrSet('target', '_blank');
+  tokens[idx].attrSet('rel', 'noopener noreferrer');
+  return self.renderToken(tokens, idx, options);
+};
 const route = useRoute();
 
 const props = defineProps({
@@ -51,6 +54,11 @@ const sessionId = ref(crypto.randomUUID());
 const loadingChat = ref(false);
 const chatContainer = ref(null);
 
+// Variables for attachment feature in Chat Preview
+const pendingAttachments = ref([]);
+const fileInput = ref(null);
+const failedImages = ref(new Set());
+
 const state = reactive({
   name: '',
   description: '',
@@ -59,11 +67,12 @@ const state = reactive({
   welcoming_message: '',
   routing_conditions: '',
   enable_handover: true,
-  has_website: '', // 'yes' or 'no'
+  has_website: '',
   website_url: '',
   full_prompt: '',
   temperature: '',
 });
+
 const rules = {
   name: { required },
   description: {},
@@ -85,13 +94,11 @@ watch(
     if (!v) return;
 
     chatflowId.value = v?.chat_flow_id;
-
     state.name = v.name || '';
 
-    const flowData = v.display_flow_data;
-    console.log('flowData:', flowData);
+    const flowData = v.display_flow_data || {};
+
     if (flowData?.agents_config) {
-      // Initialize enable_handover from the first agent's configurations if present
       const firstAgent = flowData.agents_config[0];
       state.enable_handover =
         firstAgent?.configurations?.enable_handover ?? true;
@@ -124,7 +131,7 @@ async function translateToEnglish(text) {
     return response.data.translated_text;
   } catch (error) {
     console.error('Translation error:', error);
-    return text; // Return original text if translation fails
+    return text;
   }
 }
 
@@ -139,7 +146,6 @@ async function submit() {
 
     const agentId = props.data.id;
 
-    // Translate bot_prompt fields to English
     const [
       translatedInstructions,
       translatedPersona,
@@ -152,7 +158,6 @@ async function submit() {
       translateToEnglish(state.business_info),
     ]);
 
-    // flow_data: Build from existing flow_data (already translated), then update with new translations
     const flowData = JSON.parse(JSON.stringify(props.data.flow_data || {}));
     flowData.agents_config?.forEach(agent_config => {
       if (agent_config.bot_prompt) {
@@ -167,7 +172,6 @@ async function submit() {
       agent_config.configurations.enable_handover = !!state.enable_handover;
     });
 
-    // display_flow_data: original user input (for display)
     const displayFlowData = JSON.parse(
       JSON.stringify(props.data.display_flow_data || {})
     );
@@ -191,10 +195,8 @@ async function submit() {
 
     await aiAgents.updateAgent(props.data.id, payload);
 
-    // Refresh agent data to get latest chat_flow_id
     const detailAgent = await aiAgents.detailAgent(agentId).then(v => v?.data);
 
-    // ✅ Emit updated data to parent so props.data gets refreshed
     emit('update:data', detailAgent);
 
     chatflowId.value = undefined;
@@ -231,30 +233,104 @@ function renderMarkdown(text) {
   return md.render(text);
 }
 
-async function chat() {
-  if (loadingChat.value || !chatInput.value.trim()) return;
+// Function handling images and errors in Chat Preview
+function toDirectImageUrl(url) {
+  if (!url) return url;
+  try {
+    const parsed = new URL(url);
+    if (
+      parsed.hostname === 'drive.google.com' &&
+      parsed.pathname === '/uc' &&
+      parsed.searchParams.get('id')
+    ) {
+      const fileId = parsed.searchParams.get('id');
+      return `https://lh3.googleusercontent.com/d/${encodeURIComponent(fileId)}=s1000`;
+    }
+    return url;
+  } catch {
+    return url;
+  }
+}
 
+function onImageError(url) {
+  failedImages.value = new Set([...failedImages.value, url]);
+}
+
+// Function handling attachment uploads in Chat Preview
+function onFileSelected(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    pendingAttachments.value.push({
+      file,
+      preview: e.target.result,
+      name: file.name,
+    });
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+function removeAttachment(index) {
+  pendingAttachments.value.splice(index, 1);
+}
+
+// Chat Function utilizing FormData for Attachments
+async function chat() {
   const question = chatInput.value.trim();
+  const attachments = [...pendingAttachments.value];
+  if (loadingChat.value || (!question && !attachments.length)) return;
+
   messages.value.push({
     role: 'user',
     content: question,
+    attachments: attachments.map(a => ({
+      data_url: a.preview,
+      filename: a.name,
+      file_type: a.file.type,
+    })),
   });
   chatInput.value = '';
+  pendingAttachments.value = [];
   scrollToBottom();
 
   try {
     loadingChat.value = true;
-    const res = await aiAgents.chat(props.data.id, {
-      question,
-      session_id: sessionId.value,
+
+    const formData = new FormData();
+    formData.append('question', question);
+    formData.append('session_id', sessionId.value);
+    attachments.forEach(att => {
+      formData.append('attachments[]', att.file);
     });
+
+    const res = await aiAgents.chat(props.data.id, formData);
+
+    const resAttachments = res.data.attachments || [];
+
+    let responseText = res.data.response;
+    if (resAttachments.length > 0) {
+      responseText = responseText
+        .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+    }
 
     messages.value.push({
       role: 'assistant',
-      content: res.data.response,
+      content: responseText,
+    });
+    resAttachments.forEach(att => {
+      messages.value.push({
+        role: 'assistant',
+        content: att.title || '',
+        imageUrl: toDirectImageUrl(att.url) || att.data_url || null,
+      });
     });
     scrollToBottom();
   } catch (error) {
+    console.error('Chat error:', error);
     messages.value.push({
       role: 'assistant',
       content: 'Maaf, terjadi kesalahan saat memproses pertanyaan Anda.',
@@ -265,6 +341,13 @@ async function chat() {
   }
 }
 
+function handleChatKeydown(event) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    chat();
+  }
+}
+
 function resetChat() {
   messages.value = [];
   sessionId.value = crypto.randomUUID();
@@ -272,7 +355,7 @@ function resetChat() {
 </script>
 
 <template>
-  <div class="flex flex-col lg:flex-row justify-stretch gap-4">
+  <div class="flex flex-col lg:flex-row items-start gap-4">
     <form class="lg:flex-1 lg:min-w-0" @submit.prevent="() => submit()">
       <div class="flex flex-col space-y-3">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -287,14 +370,6 @@ function resetChat() {
               :placeholder="t('AGENT_MGMT.FORM_CREATE.AI_AGENT_NAME')"
             />
           </div>
-          <!-- <div>
-            <label for="description">{{ t('AGENT_MGMT.FORM_CREATE.AI_AGENT_DESC') }}</label>
-            <Input
-              id="description"
-              v-model="state.description"
-              :placeholder="t('AGENT_MGMT.FORM_CREATE.AI_AGENT_DESC')"
-            />
-          </div> -->
         </div>
 
         <!-- Instruction Field -->
@@ -315,7 +390,6 @@ function resetChat() {
           />
         </div>
 
-        <!-- Only show these fields if NOT a custom agent -->
         <template v-if="!isCustomAgent">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -358,52 +432,54 @@ function resetChat() {
             </div>
           </div>
 
-          <div class="mb-6">
-            <label class="block font-medium mb-2">{{
-              t('AGENT_MGMT.FORM_CREATE.ENABLE_HANDOVER')
-            }}</label>
-            <p class="text-sm text-gray-500 mb-3">
-              {{ t('AGENT_MGMT.FORM_CREATE.HANDOVER_INSTRUCTION') }}
-            </p>
-            <label class="inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                v-model="state.enable_handover"
-                :disabled="isDebugMode || loadingSave"
-                class="sr-only peer"
-              />
-              <div
-                class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"
-              ></div>
-              <span class="ml-3 text-sm text-slate-700 dark:text-slate-300">
-                {{ state.enable_handover ? 'Aktif' : 'Tidak Aktif' }}
-              </span>
-            </label>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-4">
+            <div v-if="!isCustomAgent">
+              <div class="mb-4">
+                <label class="block font-medium mb-2">{{
+                  t('AGENT_MGMT.FORM_CREATE.ENABLE_HANDOVER')
+                }}</label>
+                <label class="inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    v-model="state.enable_handover"
+                    :disabled="isDebugMode || loadingSave"
+                    class="sr-only peer"
+                  />
+                  <div
+                    class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"
+                  ></div>
+                  <span class="ml-3 text-sm text-slate-700 dark:text-slate-300">
+                    {{ state.enable_handover ? 'Aktif' : 'Tidak Aktif' }}
+                  </span>
+                </label>
+                <p class="text-xs text-gray-500 mt-1">
+                  {{ t('AGENT_MGMT.FORM_CREATE.HANDOVER_INSTRUCTION') }}
+                </p>
+              </div>
+
+              <div v-if="state.enable_handover">
+                <label for="routing_conditions">{{
+                  t('AGENT_MGMT.FORM_CREATE.ROUTING_CONDITION')
+                }}</label>
+                <TextArea
+                  id="routing_conditions"
+                  v-model="state.routing_conditions"
+                  :disabled="isDebugMode || loadingSave"
+                  custom-text-area-wrapper-class=""
+                  custom-text-area-class="!outline-none"
+                  :placeholder="
+                    t('AGENT_MGMT.FORM_CREATE.ROUTING_CONDITION_PLACEHOLDER')
+                  "
+                  auto-height
+                  min-height="80px"
+                  max-height="300px"
+                />
+              </div>
+            </div>
           </div>
 
-          <div v-if="state.enable_handover">
-            <label for="routing_conditions">{{
-              t('AGENT_MGMT.FORM_CREATE.ROUTING_CONDITION')
-            }}</label>
-            <TextArea
-              id="routing_conditions"
-              v-model="state.routing_conditions"
-              :disabled="isDebugMode || loadingSave"
-              custom-text-area-wrapper-class=""
-              custom-text-area-class="!outline-none"
-              :placeholder="
-                t('AGENT_MGMT.FORM_CREATE.ROUTING_CONDITION_PLACEHOLDER')
-              "
-              auto-height
-              min-height="80px"
-              max-height="300px"
-            />
-          </div>
-
-          <!-- Debug Mode Fields -->
           <template v-if="isDebugMode">
             <hr class="my-4 border-slate-200 dark:border-slate-700" />
-
             <div>
               <label for="full_prompt">Full Prompt</label>
               <TextArea
@@ -417,7 +493,6 @@ function resetChat() {
                 max-height="300px"
               />
             </div>
-
             <div>
               <label for="temperature">Temperature</label>
               <Input
@@ -428,63 +503,44 @@ function resetChat() {
             </div>
           </template>
         </template>
+
         <button
           v-if="!isCustomAgent"
           class="button self-start"
           type="submit"
           :disabled="loadingSave"
         >
-          <span v-if="loadingSave" class="mt-4 mb-4 spinner" />
+          <span v-if="loadingSave" class="spinner" />
           <span v-else>{{ t('AGENT_MGMT.FORM_CREATE.SUBMIT') }}</span>
         </button>
       </div>
     </form>
-    <!-- Chat Preview Section -->
-    <div class="h-[600px] w-full lg:h-[500px] lg:w-[350px]">
-      <div
-        class="w-full rounded-xl dark:bg-black-900/80 shadow-lg dark:shadow-slate-700 overflow-hidden flex flex-col h-full"
-      >
+
+    <!-- Chat Preview Section Updated with Production Container Height -->
+    <div class="h-[600px] w-full lg:h-[500px] lg:w-[350px] lg:sticky lg:top-4">
+      <div class="w-full rounded-xl dark:bg-black-900/80 shadow-lg dark:shadow-slate-700 overflow-hidden flex flex-col h-full">
         <div class="bg-green-600 px-4 py-2 flex justify-end items-center">
           <button
             @click="resetChat"
             class="text-white hover:text-gray-200 flex items-center space-x-1"
           >
-            <svg
-              class="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </button>
         </div>
-        <div
-          ref="chatContainer"
-          class="flex-1 flex flex-col space-y-4 p-4 overflow-y-auto"
-        >
+        
+        <div ref="chatContainer" class="flex-1 flex flex-col space-y-4 p-4 overflow-y-auto">
           <div class="flex justify-start">
-            <div
-              class="bg-slate-50 dark:bg-slate-800 px-4 py-3 rounded-lg text-sm max-w-[90%]"
-            >
-              <span class="text-[#000000] dark:text-white"
-                >Hai! Ada yang bisa saya bantu?</span
-              >
+            <div class="bg-slate-50 dark:bg-slate-800 px-4 py-3 rounded-lg text-sm max-w-[90%]">
+              <span class="text-[#000000] dark:text-white">Hai! Ada yang bisa saya bantu?</span>
             </div>
           </div>
+          
           <div
             v-for="(message, index) in messages"
             :key="index"
-            :class="
-              message.role === 'user'
-                ? 'flex justify-end'
-                : 'flex justify-start'
-            "
+            :class="message.role === 'user' ? 'flex justify-end' : 'flex justify-start'"
           >
             <div
               :class="[
@@ -493,48 +549,156 @@ function resetChat() {
                   ? 'bg-green-600 text-white'
                   : 'bg-slate-50 dark:bg-slate-800 text-[#000000] dark:text-white',
               ]"
-              v-html="
-                message.role === 'user'
-                  ? message.content.replace(/\n/g, '<br>')
-                  : renderMarkdown(message.content)
-              "
-            ></div>
+            >
+              <template v-if="message.imageUrl">
+                <img
+                  v-if="!failedImages.has(message.imageUrl)"
+                  :src="message.imageUrl"
+                  :alt="message.content || 'attachment'"
+                  class="max-w-full rounded-lg my-2"
+                  @error="onImageError(message.imageUrl)"
+                />
+                <a
+                  v-else
+                  :href="message.imageUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-blue-500 underline break-all"
+                >
+                  {{ message.imageUrl }}
+                </a>
+              </template>
+              
+              <template v-if="message.attachments?.length">
+                <img
+                  v-for="(att, ai) in message.attachments"
+                  :key="ai"
+                  :src="att.data_url"
+                  :alt="att.filename || 'attachment'"
+                  class="max-w-full rounded-lg my-2"
+                />
+              </template>
+              
+              <div
+                v-if="message.content"
+                v-dompurify-html="renderMarkdown(message.content)"
+                class="chat-message-content"
+              />
+            </div>
           </div>
         </div>
+
+        <!-- Pending attachments preview -->
+        <div v-if="pendingAttachments.length" class="flex gap-2 px-4 pt-2 flex-wrap">
+          <div v-for="(att, i) in pendingAttachments" :key="i" class="relative">
+            <img
+              :src="att.preview"
+              :alt="att.name"
+              class="w-16 h-16 object-cover rounded-lg border border-slate-200 dark:border-slate-600"
+            />
+            <button
+              type="button"
+              class="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center leading-none hover:bg-red-600"
+              @click="removeAttachment(i)"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
         <form class="flex items-end p-4" @submit.prevent="chat">
-          <TextArea
-            v-model="chatInput"
-            class="w-full"
-            placeholder="Type your question"
-            auto-height
-            min-height="20px"
-            max-height="120px"
-            custom-text-area-class="resize-none"
-            :rows="1"
+          <input
+            ref="fileInput"
+            type="file"
+            accept="image/*"
+            class="hidden"
+            @change="onFileSelected"
           />
+          <button
+            type="button"
+            class="mr-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 self-end mb-1"
+            @click="fileInput.click()"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
+            </svg>
+          </button>
+          
+          <div class="flex-1" @keydown="handleChatKeydown">
+            <TextArea
+              v-model="chatInput"
+              class="w-full"
+              placeholder="Enter to send, Shift+Enter for new line"
+              auto-height
+              min-height="20px"
+              max-height="120px"
+              custom-text-area-class="resize-none"
+              :rows="1"
+            />
+          </div>
+          
           <button
             class="ml-3 bg-green-600 text-white p-2 rounded-lg hover:bg-green-700 relative self-end mb-1"
             type="submit"
             :disabled="loadingChat"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="w-5 h-5"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M4.5 12l15-6-6 15-2.25-6-6.75-3z"
-              />
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12l15-6-6 15-2.25-6-6.75-3z" />
             </svg>
           </button>
         </form>
       </div>
     </div>
-    <!-- Chat Preview Section -->
   </div>
 </template>
+
+<style scoped>
+.chat-message-content :deep(ul),
+.chat-message-content :deep(ol) {
+  padding-left: 1.5em;
+  margin: 0.25em 0;
+}
+
+.chat-message-content :deep(ul) {
+  list-style-type: disc;
+}
+
+.chat-message-content :deep(ol) {
+  list-style-type: decimal;
+}
+
+.chat-message-content :deep(li) {
+  margin-bottom: 0.25em;
+}
+
+.chat-message-content :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.chat-message-content :deep(img) {
+  max-width: 100%;
+  border-radius: 0.5rem;
+  margin: 0.5em 0;
+}
+
+.chat-message-content {
+  overflow-wrap: break-word;
+}
+
+.chat-message-content :deep(a) {
+  word-break: break-all;
+}
+
+.chat-message-content :deep(a:hover) {
+  color: #3ecf8e; /* blue-700 */
+}
+
+.bg-green-600 .chat-message-content :deep(a) {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.bg-green-600 .chat-message-content :deep(a:hover) {
+  color: #c8f2de; /* green-200 */
+}
+</style>

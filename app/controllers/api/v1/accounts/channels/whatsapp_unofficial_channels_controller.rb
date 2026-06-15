@@ -44,7 +44,16 @@ class Api::V1::Accounts::Channels::WhatsappUnofficialChannelsController < Api::V
   def qr_code
     channel = Current.account.channel_whatsapp_unofficials.find(params[:id])
     
-    qr_data = channel.qr_code
+    qr_data = nil
+
+    15.times do
+      qr_data = channel.qr_code
+      
+      break if qr_data.present?
+      
+      sleep 2
+    end
+
     if qr_data
       render json: { qr_code: qr_data }
     else

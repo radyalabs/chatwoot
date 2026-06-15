@@ -87,16 +87,16 @@ const primaryMenuItems = accountId => [
   //   toState: frontendURL(`accounts/${accountId}/portals/portal_articles_index`),
   //   toStateName: 'portals_index',
   // },
-  {
-    icon: 'flash-on',
-    label: 'QUICK_REPLY',
-    hasSubMenu: false,
-    meta: {
-      permissions: ['administrator'],
-    },
-    toState: frontendURL(`accounts/${accountId}/quick-replies`),
-    toStateName: 'quick_reply_manage',
-  },
+  // {
+  //   icon: 'flash-on',
+  //   label: 'QUICK_REPLY',
+  //   hasSubMenu: false,
+  //   meta: {
+  //     permissions: ['administrator'],
+  //   },
+  //   toState: frontendURL(`accounts/${accountId}/quick-replies`),
+  //   toStateName: 'quick_reply_manage',
+  // },
   {
     icon: 'key',
     label: 'AUDIT_LOGS',

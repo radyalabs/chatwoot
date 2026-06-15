@@ -78,6 +78,7 @@ class Captain::Copilot::ChatService
     buffer_key = "jangkau:chat_buffer:#{conversation_id}"
     timer_key  = "jangkau:chat_timer:#{conversation_id}"
     lock_key   = "jangkau:chat_lock:#{conversation_id}"
+    last_msg_key = "jangkau:chat_last_msg:#{conversation_id}"
     
     fixed_delay_time = 15
 
@@ -87,6 +88,8 @@ class Captain::Copilot::ChatService
 
       execute_at = Time.current.to_i + fixed_delay_time
       redis.set(timer_key, execute_at)
+
+      redis.set(last_msg_key, @message.id, ex: fixed_delay_time + 60)
 
       is_first = redis.set(lock_key, "1", nx: true, ex: fixed_delay_time + 10)
 

@@ -34,13 +34,20 @@ module Captain
         end
 
         if last_message_id.zero?
-          Rails.logger.warn "[BOT] last_msg_key missing for Conv: #{conversation_id}, using first buffered message as fallback"
+          Rails.logger.warn "[BOT] last_msg_key missing for Conv: #{conversation_id}, falling back to latest incoming message"
+          fallback = Message.where(conversation_id: conversation_id, message_type: :incoming, private: false)
+                            .order(id: :desc)
+                            .first
+          if fallback
+            last_message_id = fallback.id
+            Rails.logger.info "[BOT] Fallback resolved to message #{last_message_id} for Conv: #{conversation_id}"
+          end
         end
 
         message = Message.find_by(id: last_message_id)
 
         unless message
-          Rails.logger.error "[JANGKAU] Message not found: #{last_message_id}"
+          Rails.logger.error "[JANGKAU] Message not found: #{last_message_id} for Conv: #{conversation_id}"
           return
         end
 

@@ -15,7 +15,11 @@ module Captain
         if execute_at.zero?
           Rails.logger.warn "[BOT] Timer key missing/expired for Conv: #{conversation_id}, proceeding with buffer flush"
         elsif Time.current.to_i < (execute_at - 2)
-          Rails.logger.info "[BOT] Job fired too early for Conv: #{conversation_id}, bailing"
+          wait_seconds = [execute_at - Time.current.to_i, 1].max
+          Rails.logger.info "[BOT] Job fired too early for Conv: #{conversation_id}, rescheduling in #{wait_seconds}s (target: #{execute_at})"
+          Captain::Copilot::ChatDelayJob
+            .set(wait: wait_seconds.seconds)
+            .perform_later(conversation_id, _last_message_id)
           return
         end
 

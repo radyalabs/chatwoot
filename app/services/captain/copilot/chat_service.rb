@@ -13,36 +13,49 @@ class Captain::Copilot::ChatService
 
   def perform
     switch_locale_using_account_locale do
+      Rails.logger.info "[ChatService] >>> PERFORM msg_id=#{@message.id} conv=#{@context.conversation.id} combined=#{@combined_text.present?} sender=#{@message.sender_type} content=#{@message.content&.first(50).inspect}"
+
       unless @context.active_conversation
-        Rails.logger.info "[ChatService] Skipped: no active conversation | msg_id=#{@message.id}"
+        Rails.logger.warn "[ChatService] SKIPPED: no active conversation (assignee may be set) | msg_id=#{@message.id} conv_id=#{@context.conversation.id} assignee_id=#{@context.conversation.reload.assignee_id}"
         return
       end
 
       failure_reason = pre_check_failure_reason
-      return send_reply_failure(failure_reason) if failure_reason
+      if failure_reason
+        Rails.logger.warn "[ChatService] SKIPPED: pre_check failure | msg_id=#{@message.id} reason=#{failure_reason}"
+        return send_reply_failure(failure_reason)
+      end
 
       unless @context.agent_bot_inbox
-        Rails.logger.info "[ChatService] Skipped: no agent_bot_inbox | msg_id=#{@message.id} | inbox_id=#{@context.inbox_id}"
+        Rails.logger.warn "[ChatService] SKIPPED: no agent_bot_inbox | msg_id=#{@message.id} inbox_id=#{@context.inbox_id}"
         return
       end
 
       unless @context.ai_agent
-        Rails.logger.info "[ChatService] Skipped: no ai_agent | msg_id=#{@message.id}"
+        Rails.logger.warn "[ChatService] SKIPPED: no ai_agent | msg_id=#{@message.id}"
         return
       end
 
       unless @context.bot_available?
-        Rails.logger.info "[ChatService] Skipped: bot not available (outside working hours) | msg_id=#{@message.id}"
+        Rails.logger.warn "[ChatService] SKIPPED: bot not available | msg_id=#{@message.id}"
         return
       end
 
-      return unless meaningful_for_ai?
+      unless meaningful_for_ai?
+        Rails.logger.info "[ChatService] SKIPPED: not meaningful for AI | msg_id=#{@message.id}"
+        return
+      end
 
       is_welcome = welcome_message?
+      delay = delay_enabled?
+
+      Rails.logger.info "[ChatService] ROUTING msg_id=#{@message.id} is_welcome=#{is_welcome} delay_enabled=#{delay} combined=#{@combined_text.present?}"
+
+      clear_pending_idle_conversation unless @combined_text.present?
 
       if @combined_text.present?
         send_messages(payload: @combined_text, is_welcome: false)
-      elsif delay_enabled? && !is_welcome
+      elsif delay && !is_welcome
         enqueue_for_delay
       else
         send_messages(payload: @message, is_welcome: is_welcome)
@@ -79,19 +92,19 @@ class Captain::Copilot::ChatService
     timer_key  = "jangkau:chat_timer:#{conversation_id}"
     lock_key   = "jangkau:chat_lock:#{conversation_id}"
     last_msg_key = "jangkau:chat_last_msg:#{conversation_id}"
-    
+
     fixed_delay_time = 15
+    ttl = fixed_delay_time + 120
 
     Sidekiq.redis do |redis|
       redis.rpush(buffer_key, @message.content.to_s)
-      redis.expire(buffer_key, fixed_delay_time + 60)
+      redis.expire(buffer_key, ttl)
 
       execute_at = Time.current.to_i + fixed_delay_time
-      redis.set(timer_key, execute_at)
+      redis.set(timer_key, execute_at, ex: ttl)
+      redis.set(last_msg_key, @message.id, ex: ttl)
 
-      redis.set(last_msg_key, @message.id, ex: fixed_delay_time + 60)
-
-      is_first = redis.set(lock_key, "1", nx: true, ex: fixed_delay_time + 10)
+      is_first = redis.set(lock_key, "1", nx: true, ex: ttl)
 
       if is_first
         Rails.logger.info "[BOT] First bubble, enqueuing delay job for Conv: #{conversation_id}"
@@ -99,7 +112,7 @@ class Captain::Copilot::ChatService
           .set(wait: fixed_delay_time.seconds)
           .perform_later(conversation_id, @message.id)
       else
-        Rails.logger.info "[BOT] Subsequent bubble buffered for Conv: #{conversation_id}"
+        Rails.logger.info "[BOT] Subsequent bubble buffered for Conv: #{conversation_id}, timer extended to #{execute_at}"
       end
     end
   end
@@ -300,6 +313,10 @@ class Captain::Copilot::ChatService
     }
 
     ::Conversations::AddIdleConversationJob.perform_later(response, attrs)
+  end
+
+  def clear_pending_idle_conversation
+    IdleConversation.where(conversation_id: @context.conversation.id, status: :idle).destroy_all
   end
 
   def send_log_reply(is_handover: false)

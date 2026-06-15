@@ -17,6 +17,7 @@
 :queues:
   - critical
   - send_reply_with_attachments
+  - chat_delay
   - high
   - medium
   - default

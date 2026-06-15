@@ -13,25 +13,53 @@ class Captain::Copilot::ChatService
 
   def perform
     switch_locale_using_account_locale do
-      return unless @context.active_conversation
+      unless @context.active_conversation
+        Rails.logger.info "[ChatService] Skipped: no active conversation | msg_id=#{@message.id}"
+        return
+      end
 
       failure_reason = pre_check_failure_reason
       return send_reply_failure(failure_reason) if failure_reason
 
-      return unless @context.agent_bot_inbox
-      return unless @context.ai_agent
-      return unless @context.bot_available?
+      unless @context.agent_bot_inbox
+        Rails.logger.info "[ChatService] Skipped: no agent_bot_inbox | msg_id=#{@message.id} | inbox_id=#{@context.inbox_id}"
+        return
+      end
+
+      unless @context.ai_agent
+        Rails.logger.info "[ChatService] Skipped: no ai_agent | msg_id=#{@message.id}"
+        return
+      end
+
+      unless @context.bot_available?
+        Rails.logger.info "[ChatService] Skipped: bot not available (outside working hours) | msg_id=#{@message.id}"
+        return
+      end
+
       return unless meaningful_for_ai?
 
-      if @combined_text.nil?
+      is_welcome = welcome_message?
+
+      if @combined_text.present?
+        send_messages(payload: @combined_text, is_welcome: false)
+      elsif delay_enabled? && !is_welcome
         enqueue_for_delay
       else
-        send_messages
+        send_messages(payload: @message, is_welcome: is_welcome)
       end
     end
   end
 
   private
+
+  def delay_enabled?
+    agents_config = @context.ai_agent.flow_data&.dig('agents_config') || []
+    
+    agents_config.any? do |agent|
+      agent&.dig('configurations', 'delay_enabled') == true || 
+      agent&.dig('configurations', 'delay_enabled') == 'true'
+    end
+  end
 
   def meaningful_for_ai?
     return true if @message.content.present?
@@ -47,32 +75,44 @@ class Captain::Copilot::ChatService
 
   def enqueue_for_delay
     conversation_id = @context.conversation.id
-
-    if welcome_message?
-      send_greeting_images(caption: nil)
-    end
-
     buffer_key = "jangkau:chat_buffer:#{conversation_id}"
     timer_key  = "jangkau:chat_timer:#{conversation_id}"
+    lock_key   = "jangkau:chat_lock:#{conversation_id}"
+    
+    fixed_delay_time = 15
 
     Sidekiq.redis do |redis|
       redis.rpush(buffer_key, @message.content.to_s)
-      redis.set(timer_key, Time.current.to_i + 20)
+      redis.expire(buffer_key, fixed_delay_time + 60)
+
+      execute_at = Time.current.to_i + fixed_delay_time
+      redis.set(timer_key, execute_at)
+
+      is_first = redis.set(lock_key, "1", nx: true, ex: fixed_delay_time + 10)
+
+      if is_first
+        Rails.logger.info "[BOT] First bubble, enqueuing delay job for Conv: #{conversation_id}"
+        Captain::Copilot::ChatDelayJob
+          .set(wait: fixed_delay_time.seconds)
+          .perform_later(conversation_id, @message.id)
+      else
+        Rails.logger.info "[BOT] Subsequent bubble buffered for Conv: #{conversation_id}"
+      end
     end
-
-    Rails.logger.info "[BOT] Pesan ditahan (Debounce 30s) untuk conversation #{conversation_id}"
-
-    Captain::Copilot::ChatDelayJob.set(wait: 20.seconds).perform_later(conversation_id, @message.id)
   end
 
-  def send_messages
-    Rails.logger.info "[DEBUG JANGKAU] Memasuki send_messages untuk memanggil Jangkau API"
-    
+  def send_messages(payload:, is_welcome: false)
+    Rails.logger.info "[DEBUG JANGKAU] Memasuki execute_ai_call untuk memanggil AI API"
+
+    actual_payload = @combined_text.present? ? @message : payload
+    combined_text_arg = @combined_text.present? ? @combined_text : nil
+
     send_message = Captain::Llm::AssistantChatService.new(
-      @combined_text,
+      actual_payload,
       @context.conversation,
       @context.ai_agent,
-      @current_account.id
+      @current_account.id,
+      combined_text: combined_text_arg
     ).perform
 
     unless send_message.success?
@@ -80,20 +120,19 @@ class Captain::Copilot::ChatService
       return send_reply_failure(I18n.t('conversations.bot.failure')) 
     end
 
-    Rails.logger.info "[DEBUG JANGKAU] Respons sukses diterima dari AI, menyiapkan balasan..."
-
     @context.usage.increment_ai_responses
     response = send_message.parsed_response
     parsed = parsed_response(response, is_custom_agent: @context.ai_agent.custom_agent?)
 
-    send_reply(
-      parsed,
-      additional_attributes: {
-        message_type: 1,
-        sender_type: 'AiAgent',
-        attachments: parsed[:attachments]
-      }
-    )
+    if is_welcome
+      sent = send_greeting_images(caption: parsed[:response])
+      
+      unless sent
+        send_reply(parsed, additional_attributes: { message_type: 1, sender_type: 'AiAgent', attachments: parsed[:attachments] })
+      end
+    else
+      send_reply(parsed, additional_attributes: { message_type: 1, sender_type: 'AiAgent', attachments: parsed[:attachments] })
+    end
   end
 
   def pre_check_failure_reason
@@ -278,8 +317,7 @@ class Captain::Copilot::ChatService
     User.find_by(id: agent_id)
   end
 
-  def message_created(content, additional_attributes) # rubocop:disable Metrics/MethodLength
-    # Extract image_urls before merging (it's not a Message attribute)
+  def message_created(content, additional_attributes) 
     attachments = additional_attributes&.delete(:attachments)
 
     attrs = {

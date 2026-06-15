@@ -772,6 +772,10 @@
       "WARN_MIN_VALUE": "The next number must be at least 1.",
       "SAVE_ERROR": "Failed to save numbering configuration."
     },
+    "DELAY": {
+      "TITLE": "Delay Incoming Message",
+      "DESC": "Hold incoming messages so that the AI can read the entire customer chat before replying."
+    },
     "REMINDER": {
       "ENABLED": "Active",
       "DISABLED": "Inactive",

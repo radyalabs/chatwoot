@@ -75,6 +75,9 @@ const followUpTimeOptions = computed(() => [
 
 // temperature bot
 const creativityLevel = ref(0.3);
+
+// delay message toggle
+const isDelayEnabled = ref(false);
 const creativityOptions = computed(() => [
   { label: t('AGENT_MGMT.CREATIVITY.DETERMINISTIC'), value: 0 },
   { label: t('AGENT_MGMT.CREATIVITY.CONSERVATIVE'), value: 0.1 },
@@ -153,6 +156,9 @@ function loadSavedConfiguration() {
       if (agentData.temperature !== undefined) {
         creativityLevel.value = agentData.temperature;
       }
+
+      // Delay message toggle
+      isDelayEnabled.value = config?.delay_enabled === true || config?.delay_enabled === 'true';
 
       // Load konfigurasi umum
       if (config?.minimum_duration) {
@@ -486,6 +492,9 @@ async function save() {
 
     flowData.agents_config[agent_index].temperature = creativityLevel.value;
     displayFlowData.agents_config[agent_index].temperature = creativityLevel.value;
+
+    flowData.agents_config[agent_index].configurations.delay_enabled = isDelayEnabled.value;
+    displayFlowData.agents_config[agent_index].configurations.delay_enabled = isDelayEnabled.value;
 
     flowData.agents_config[agent_index].configurations.minimum_duration =
       configData.minDuration;
@@ -926,6 +935,28 @@ onMounted(async () => {
                       </div>
                     </div>
                   </div>
+                  <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
+                    <div class="flex items-center justify-between p-6">
+                      <div class="flex items-center">
+                        <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
+                            <path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 class="font-medium text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.DELAY.TITLE') }}</h3>
+                          <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.DELAY.DESC') }}</p>
+                        </div>
+                      </div>
+
+                      <label class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" v-model="isDelayEnabled" class="sr-only peer" :disabled="isSaving">
+                        <div class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
                   <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
                     <div class="flex items-start justify-between p-6">
                       <div class="flex items-center">

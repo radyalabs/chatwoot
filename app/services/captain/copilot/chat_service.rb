@@ -88,31 +88,18 @@ class Captain::Copilot::ChatService
 
   def enqueue_for_delay
     conversation_id = @context.conversation.id
-    buffer_key = "jangkau:chat_buffer:#{conversation_id}"
-    timer_key  = "jangkau:chat_timer:#{conversation_id}"
-    lock_key   = "jangkau:chat_lock:#{conversation_id}"
-    last_msg_key = "jangkau:chat_last_msg:#{conversation_id}"
-
-    fixed_delay_time = 5
-    ttl = fixed_delay_time + 595
+    lock_key = "jangkau:chat_lock:#{conversation_id}"
 
     Sidekiq.redis do |redis|
-      redis.rpush(buffer_key, @message.content.to_s)
-      redis.expire(buffer_key, ttl)
-
-      execute_at = Time.current.to_i + fixed_delay_time
-      redis.set(timer_key, execute_at, ex: ttl)
-      redis.set(last_msg_key, @message.id, ex: ttl)
-
-      is_first = redis.set(lock_key, "1", nx: true, ex: ttl)
+      is_first = redis.set(lock_key, "1", nx: true, ex: 600)
 
       if is_first
         Rails.logger.info "[BOT] First bubble, enqueuing delay job for Conv: #{conversation_id}"
         Captain::Copilot::ChatDelayJob
-          .set(wait: fixed_delay_time.seconds)
-          .perform_later(conversation_id, @message.id)
+          .set(wait: 8.seconds)
+          .perform_later(conversation_id)
       else
-        Rails.logger.info "[BOT] Subsequent bubble buffered for Conv: #{conversation_id}, timer extended to #{execute_at}"
+        Rails.logger.info "[BOT] Subsequent bubble buffered for Conv: #{conversation_id}"
       end
     end
   end

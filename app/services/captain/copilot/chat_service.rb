@@ -93,8 +93,8 @@ class Captain::Copilot::ChatService
     lock_key   = "jangkau:chat_lock:#{conversation_id}"
     last_msg_key = "jangkau:chat_last_msg:#{conversation_id}"
 
-    fixed_delay_time = 15
-    ttl = fixed_delay_time + 120
+    fixed_delay_time = 5
+    ttl = fixed_delay_time + 595
 
     Sidekiq.redis do |redis|
       redis.rpush(buffer_key, @message.content.to_s)

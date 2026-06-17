@@ -8,9 +8,14 @@ class Captain::Copilot::ChatServiceJob < ApplicationJob
   retry_on ActiveStorage::FileNotFoundError, wait: 5.seconds, attempts: MAX_RETRIES
 
   def perform(message_id)
+    Rails.logger.info "[ChatServiceJob] >>> START message_id=#{message_id}"
     message = load_message_with_attachments(message_id)
-    return unless message
+    unless message
+      Rails.logger.warn "[ChatServiceJob] Message not found in DB: #{message_id}"
+      return
+    end
 
+    Rails.logger.info "[ChatServiceJob] Loaded msg_id=#{message_id} conv=#{message.conversation_id} sender=#{message.sender_type}"
     wait_for_attachment_blobs(message)
 
     Captain::Copilot::ChatService.new(message).perform

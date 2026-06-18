@@ -11,6 +11,8 @@ import TextArea from 'dashboard/components-next/textarea/TextArea.vue';
 import { required } from '@vuelidate/validators';
 import useVuelidate from '@vuelidate/core';
 import { useAlert } from 'dashboard/composables';
+import { useFileUpload } from 'dashboard/composables/useFileUpload';
+import { useMapGetter } from 'dashboard/composables/store';
 import { useI18n } from 'vue-i18n';
 import aiAgents from '../../../api/aiAgents';
 import captainTranslator from '../../../api/captainTranslator';
@@ -67,6 +69,8 @@ const state = reactive({
   welcoming_message: '',
   routing_conditions: '',
   enable_handover: true,
+  greeting_enabled: false,
+  greeting_message: '',
   has_website: '',
   website_url: '',
   full_prompt: '',
@@ -151,6 +155,7 @@ function openImagePreview(src) {
 function closeImagePreview() {
   previewImageSrc.value = '';
 }
+
 const rules = {
   name: { required },
   description: {},
@@ -211,8 +216,6 @@ watch(
       });
     }
 
-    console.log('flowData:', flowData);
-
     if (flowData?.agents_config) {
       const firstAgent = flowData.agents_config[0];
       state.enable_handover =
@@ -238,7 +241,6 @@ const captainTranslatorEnabled =
 
 async function translateToEnglish(text) {
   if (!text || text.trim() === '') return text;
-  console.log('Captain Translator Enabled:', captainTranslatorEnabled);
   if (captainTranslatorEnabled !== 'true') return text;
 
   try {
@@ -303,6 +305,17 @@ async function submit() {
       agent_config.configurations.enable_handover = !!state.enable_handover;
     });
 
+    const greetingImages = greetingAttachments.value
+      .map(a => a.blobSignedId || a.rawValue)
+      .filter(Boolean);
+    const greetingConfig = {
+      enabled: state.greeting_enabled,
+      message: state.greeting_message,
+      images: greetingImages,
+    };
+    flowData.greeting_config = greetingConfig;
+    displayFlowData.greeting_config = greetingConfig;
+
     const payload = {
       flow_data: flowData,
       display_flow_data: displayFlowData,
@@ -322,14 +335,6 @@ async function submit() {
     useAlert('Berhasil disimpan');
   } catch (error) {
     console.error('Error updating agent:', error);
-    if (error.response) {
-      console.error('Response data:', error.response.data);
-      console.error('Status code:', error.response.status);
-    } else if (error.request) {
-      console.error('No response received:', error.request);
-    } else {
-      console.error('Error:', error.message);
-    }
     useAlert('Gagal menyimpan data. Cek konsol untuk detail.', 'alert-danger');
   } finally {
     loadingSave.value = false;
@@ -487,7 +492,6 @@ function resetChat() {
           </div>
         </div>
 
-        <!-- Instruction Field -->
         <div>
           <label for="instruction">{{
             t('AGENT_MGMT.FORM_CREATE.INSTRUCTION')
@@ -591,7 +595,30 @@ function resetChat() {
                 />
               </div>
             </div>
-          </div>
+
+            <div>
+              <div class="mb-4">
+                <label class="block font-medium mb-2">{{
+                  t('AGENT_MGMT.FORM_CREATE.ENABLE_GREETING')
+                }}</label>
+                <label class="inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    v-model="state.greeting_enabled"
+                    :disabled="isDebugMode || loadingSave"
+                    class="sr-only peer"
+                  />
+                  <div
+                    class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"
+                  ></div>
+                  <span class="ml-3 text-sm text-slate-700 dark:text-slate-300">
+                    {{ state.greeting_enabled ? t('AGENT_MGMT.FORM_CREATE.GREETING_ACTIVE') : t('AGENT_MGMT.FORM_CREATE.GREETING_INACTIVE') }}
+                  </span>
+                </label>
+                <p class="text-xs text-gray-500 mt-1">
+                  {{ t('AGENT_MGMT.FORM_CREATE.GREETING_INSTRUCTION') }}
+                </p>
+              </div>
 
               <div v-if="state.greeting_enabled" class="space-y-4">
                 <div>
@@ -624,34 +651,16 @@ function resetChat() {
                         :disabled="isDebugMode || loadingSave || greetingAttachments.length >= 1"
                         @click="greetingImageInput?.click()"
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          class="w-4 h-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          stroke-width="2"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                          />
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                         </svg>
                         {{ t('AGENT_MGMT.FORM_CREATE.ATTACH_IMAGE') }}
                       </button>
                     </div>
                   </div>
 
-                  <div
-                    v-if="greetingAttachments.length > 0"
-                    class="mt-3 flex flex-wrap gap-3"
-                  >
-                    <div
-                      v-for="(attachment, index) in greetingAttachments"
-                      :key="index"
-                      class="relative group/image w-[72px] h-[72px]"
-                    >
+                  <div v-if="greetingAttachments.length > 0" class="mt-3 flex flex-wrap gap-3">
+                    <div v-for="(attachment, index) in greetingAttachments" :key="index" class="relative group/image w-[72px] h-[72px]">
                       <img
                         v-if="attachment.thumb"
                         :src="attachment.thumb"
@@ -659,13 +668,8 @@ function resetChat() {
                         :class="{ 'opacity-50': attachment.uploading }"
                         @click="openImagePreview(attachment.thumb)"
                       />
-                      <div
-                        v-if="attachment.uploading"
-                        class="absolute inset-0 flex items-center justify-center"
-                      >
-                        <div
-                          class="w-6 h-6 border-2 border-woot-500 border-t-transparent rounded-full animate-spin"
-                        />
+                      <div v-if="attachment.uploading" class="absolute inset-0 flex items-center justify-center">
+                        <div class="w-6 h-6 border-2 border-woot-500 border-t-transparent rounded-full animate-spin" />
                       </div>
                       <button
                         v-else
@@ -675,12 +679,11 @@ function resetChat() {
                         class="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors shadow-sm"
                         @click.stop="removeGreetingImage(index)"
                       >
-                        <span class="text-xs font-bold leading-none">&times;</span>
+                        <span class="text-xs font-bold leading-none">×</span>
                       </button>
                     </div>
                   </div>
 
-                  <!-- Image Lightbox -->
                   <Teleport to="body">
                     <div
                       v-if="previewImageSrc"
@@ -694,25 +697,11 @@ function resetChat() {
                           class="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
                           @click="closeImagePreview"
                         >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="w-6 h-6"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width="2"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              d="M6 18L18 6M6 6l12 12"
-                            />
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                           </svg>
                         </button>
-                        <img
-                          :src="previewImageSrc"
-                          class="max-w-[90vw] max-h-[85vh] object-contain rounded-lg shadow-2xl"
-                        />
+                        <img :src="previewImageSrc" class="max-w-[90vw] max-h-[85vh] object-contain rounded-lg shadow-2xl" />
                       </div>
                     </div>
                   </Teleport>
@@ -721,7 +710,6 @@ function resetChat() {
             </div>
           </div>
 
-          <!-- Debug Mode Fields -->
           <template v-if="isDebugMode">
             <hr class="my-4 border-slate-200 dark:border-slate-700" />
             <div>
@@ -759,11 +747,9 @@ function resetChat() {
         </button>
       </div>
     </form>
-    <!-- Chat Preview Section -->
+
     <div class="h-[800px] w-full lg:h-[650px] lg:w-[350px] lg:sticky lg:top-4">
-      <div
-        class="w-full rounded-xl dark:bg-black-900/80 shadow-lg dark:shadow-slate-700 overflow-hidden flex flex-col h-full"
-      >
+      <div class="w-full rounded-xl dark:bg-black-900/80 shadow-lg dark:shadow-slate-700 overflow-hidden flex flex-col h-full">
         <div class="bg-green-600 px-4 py-2 flex justify-end items-center">
           <button
             @click="resetChat"
@@ -833,7 +819,6 @@ function resetChat() {
           </div>
         </div>
 
-        <!-- Pending attachments preview -->
         <div v-if="pendingAttachments.length" class="flex gap-2 px-4 pt-2 flex-wrap">
           <div v-for="(att, i) in pendingAttachments" :key="i" class="relative">
             <img

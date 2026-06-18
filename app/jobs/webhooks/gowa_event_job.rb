@@ -39,8 +39,6 @@ class Webhooks::GowaEventJob < MutexApplicationJob
           message: message
         ).perform
       end
-
-      send_expired_auto_reply(channel, params) unless account_subscription_active?(channel)
     when 'message.edited'
       # WhatsappUnofficial::UpdateMessageService.new(inbox: channel.inbox, params: data).perform
     end

@@ -33,7 +33,7 @@ class Captain::Copilot::ChatService
     return true if @message.attachments.any? { |att| AI_SUPPORTED_ATTACHMENT_TYPES.include?(att.file_type) }
 
     Rails.logger.info(
-      '[ChatService] Skipping AI request — no text or image content | ' \
+      "[ChatService] Skipping AI request — no text or image content | " \
       "message_id=#{@message.id} | " \
       "attachment_types=#{@message.attachments.map(&:file_type)}"
     )
@@ -50,6 +50,10 @@ class Captain::Copilot::ChatService
   end
 
   def send_messages
+    # Cache before API call to avoid race condition — new messages arriving
+    # during the request would change the count and skip greeting images
+    is_welcome = welcome_message?
+
     send_message = Captain::Llm::AssistantChatService.new(
       @message,
       @context.conversation,
@@ -288,7 +292,8 @@ class Captain::Copilot::ChatService
       Captain::Copilot::AttachMessageImageJob.perform_later(
         attrs,
         attachment,
-        idx + 1
+        idx + 1,
+        content
       )
     end
   end

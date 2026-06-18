@@ -593,7 +593,17 @@
       "CUSTOM_FLOW_LINK": "Link Bot",
       "CUSTOM_FLOW_LINK_PLACEHOLDER": "Masukkan link endpoint Bot Anda...",
       "ENABLE_HANDOVER": "Aktifkan Pengalihan",
-      "HANDOVER_INSTRUCTION": "Saat diaktifkan, Bot AI akan meneruskan chat ke agen manusia berdasarkan kondisi pengalihan yang ditentukan."
+      "HANDOVER_INSTRUCTION": "Saat diaktifkan, Bot AI akan meneruskan chat ke agen manusia berdasarkan kondisi pengalihan yang ditentukan.",
+      "ENABLE_GREETING": "Aktifkan Pesan Sambutan",
+      "GREETING_ACTIVE": "Aktif",
+      "GREETING_INACTIVE": "Tidak Aktif",
+      "GREETING_INSTRUCTION": "Saat diaktifkan, Bot AI akan menggunakan kondisi berikut sebagai panduan untuk menghasilkan pesan sambutan yang dinamis saat pelanggan pertama kali memulai percakapan",
+      "GREETING_CONDITION": "Kondisi Pesan Sambutan",
+      "GREETING_CONDITION_PLACEHOLDER": "Tuliskan kondisi atau instruksi untuk pesan sambutan. Contoh: Sambut pelanggan dengan ramah, tawarkan promo terbaru, dan tanyakan kebutuhan mereka.",
+      "ATTACH_IMAGE": "Lampirkan Gambar",
+      "IMAGE_ONLY_ALLOWED": "Hanya file gambar yang diperbolehkan",
+      "IMAGE_SIZE_LIMIT": "Ukuran file maksimal 5MB",
+      "DELETE_IMAGE": "Hapus gambar"
     },
     "TEXT_KNOWLEDGE_PLACEHOLDER": "Tulis informasi penting tentang bisnis, produk, layanan, atau kebijakan Anda di sini.<br><br>Contoh: Toko kami buka setiap hari Senin-Sabtu, pukul 08.00-17.00 WIB. Untuk pengembalian barang, pelanggan wajib menyertakan bukti transaksi dalam 7 hari.",
     "QUESTION_LABEL": "Pertanyaan",

@@ -3,6 +3,10 @@ require 'httparty'
 class Captain::Llm::BaseJangkauService
   include HTTParty
   base_uri ENV.fetch('JANGKAU_AGENT_API_URL', 'https://agent.jangkau.ai/')
+  
+  default_timeout 30
+  open_timeout 5
+  read_timeout 25
 
   def initialize(account_id, ai_agent, conversation, message, preview_attachments: [], combined_text: nil)
     @conversation = conversation

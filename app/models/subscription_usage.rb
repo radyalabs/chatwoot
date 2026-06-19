@@ -2,15 +2,17 @@
 #
 # Table name: subscription_usage
 #
-#  id                           :bigint           not null, primary key
-#  additional_ai_response_count :integer          default(0), not null
-#  additional_mau_count         :integer          default(0), not null
-#  ai_responses_count           :integer          default(0)
-#  last_reset_at                :datetime
-#  mau_count                    :integer          default(0)
-#  created_at                   :datetime         not null
-#  updated_at                   :datetime         not null
-#  subscription_id              :bigint           not null
+#  id                                :bigint           not null, primary key
+#  additional_ai_response_count      :integer          default(0), not null
+#  additional_mau_count              :integer          default(0), not null
+#  ai_responses_count                :integer          default(0)
+#  last_notify_ai_response_threshold :integer          default(0), not null
+#  last_notify_mau_threshold         :integer          default(0), not null
+#  last_reset_at                     :datetime
+#  mau_count                         :integer          default(0)
+#  created_at                        :datetime         not null
+#  updated_at                        :datetime         not null
+#  subscription_id                   :bigint           not null
 #
 # Indexes
 #

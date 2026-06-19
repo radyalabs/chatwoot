@@ -4,11 +4,12 @@ class Captain::Llm::BaseJangkauService
   include HTTParty
   base_uri ENV.fetch('JANGKAU_AGENT_API_URL', 'https://agent.jangkau.ai/')
 
-  def initialize(account_id, ai_agent, conversation, message)
+  def initialize(account_id, ai_agent, conversation, message, preview_attachments: [])
     @conversation = conversation
     @account_id = account_id
     @ai_agent = ai_agent
     @message = message
+    @preview_attachments = preview_attachments
     @question, @additional_attributes = extract_message_data
   end
 
@@ -22,14 +23,30 @@ class Captain::Llm::BaseJangkauService
     Rails.logger.info '[generate_response] Generating response for Jangkau AI Agent'
     Rails.logger.info "[generate_response] request_body=#{request_body.to_json}"
 
-    # endpoint = feature_enabled_for_ai_agent? ? '/v2/chat/completion/' : '/v2/chat/override/'
-    endpoint = '/v2/chat/completion/'
+    endpoint = if first_message?(@conversation) && welcome_enabled?(@ai_agent)
+                 '/v2/chat/welcome/'
+               else
+                 '/v2/chat/completion/'
+               end
+
+    Rails.logger.info "[generate_response] Using endpoint: #{endpoint}"
 
     response = self.class.post(
       endpoint,
       body: request_body.to_json,
       headers: headers
     )
+
+    # Fallback: if welcome endpoint fails or returns empty, retry with completion endpoint
+    if endpoint == '/v2/chat/welcome/' && (!response.success? || response.parsed_response.blank?)
+      Rails.logger.warn "[generate_response] Welcome endpoint failed (#{response.code}), falling back to /v2/chat/completion/"
+      response = self.class.post(
+        '/v2/chat/completion/',
+        body: request_body.to_json,
+        headers: headers
+      )
+    end
+
     Rails.logger.info '[generate_response] Received Jangkau response'
     response
   rescue StandardError => e
@@ -37,12 +54,12 @@ class Captain::Llm::BaseJangkauService
     raise "Failed to generate response: #{e.message}"
   end
 
-  def feature_enabled_for_ai_agent?
-    enabled_ai_agents = ENV.fetch('FEATURE_FLAG_NEW_JANGKAU_ENDPOINT', '')
-                           .split(',')
-                           .map(&:strip)
+  def first_message?(conversation)
+    conversation.messages.incoming.where(private: false).count == 1
+  end
 
-    enabled_ai_agents.include?(@ai_agent.id.to_s)
+  def welcome_enabled?(ai_agent)
+    ai_agent.display_flow_data&.dig('greeting_config', 'enabled') == true
   end
 
   def request_body
@@ -54,6 +71,8 @@ class Captain::Llm::BaseJangkauService
   end
 
   def formatted_attachments
+    return @preview_attachments if @preview_attachments.present?
+
     last_message_attachments.map do |att|
       {
         key: att.file.key,

@@ -114,7 +114,22 @@ class AiAgent < ApplicationRecord
   end
 
   def as_detailed_json
-    as_json(json_options).transform_keys { |key| map_key(key) }
+    result = as_json(json_options).transform_keys { |key| map_key(key) }
+    result['greeting_image_urls'] = greeting_image_urls
+    result
+  end
+
+  def greeting_image_urls
+    images = display_flow_data&.dig('greeting_config', 'images') || []
+    images.filter_map do |val|
+      next if val.blank?
+      next if val.start_with?('data:') # legacy base64, frontend uses directly
+
+      blob = ActiveStorage::Blob.find_signed(val)
+      Rails.application.routes.url_helpers.rails_blob_url(blob, host: ENV.fetch('FRONTEND_URL', 'http://localhost:3000'))
+    rescue ActiveSupport::MessageVerifier::InvalidSignature, ActiveRecord::RecordNotFound
+      nil
+    end
   end
 
   def timezone_object

@@ -16,6 +16,7 @@ import { checkFileSizeLimit } from 'shared/helpers/FileHelper';
  * @param {Function} options.attachFile - Callback function to handle file attachment
  * @param {Function} options.updateAttachment - Callback to update attachment when upload completes (tempId, blob) => void
  * @param {Function} options.removeAttachment - Callback to remove attachment on error (tempId) => void
+ * @param {string} [options.uploadUrl] - Optional custom upload URL (overrides conversation-scoped default)
  * @returns {Object} File upload methods and utilities
  */
 export const useFileUpload = ({
@@ -23,6 +24,7 @@ export const useFileUpload = ({
   attachFile,
   updateAttachment,
   removeAttachment,
+  uploadUrl,
 }) => {
   const { t } = useI18n();
 
@@ -47,9 +49,12 @@ export const useFileUpload = ({
       // Immediately attach the file with uploading state so the UI shows it
       attachFile({ file, uploading: true, tempId });
 
-      const upload = new DirectUpload(
+      const url =
+        uploadUrl ||
+        `/api/v1/accounts/${accountId.value}/conversations/${currentChat.value.id}/direct_uploads`;
+    const upload = new DirectUpload(
         file.file,
-        `/api/v1/accounts/${accountId.value}/conversations/${currentChat.value.id}/direct_uploads`,
+        url,
         {
           directUploadWillCreateBlobWithXHR: xhr => {
             xhr.setRequestHeader(
@@ -98,7 +103,7 @@ export const useFileUpload = ({
   };
 
   const onFileUpload = file => {
-    if (globalConfig.value.directUploadsEnabled && currentChat.value?.id) {
+    if (uploadUrl || (globalConfig.value.directUploadsEnabled && currentChat.value?.id)) {
       handleDirectFileUpload(file);
     } else {
       handleIndirectFileUpload(file);

@@ -53,6 +53,7 @@ export default {
   computed: {
     ...mapGetters({
       isFeatureEnabledonAccount: 'accounts/isFeatureEnabledonAccount',
+      isSubscriptionActive: 'isSubscriptionActive',
     }),
     contactCustomViews() {
       return this.customViews.filter(view => view.filter_type === 'contact');
@@ -242,6 +243,7 @@ export default {
 <template>
   <div
     class="flex flex-col w-48 h-full px-2 pb-8 overflow-auto text-sm bg-white border-r dark:bg-slate-900 dark:border-slate-800/50 rtl:border-r-0 rtl:border-l border-slate-50"
+    :class="{ 'opacity-50 pointer-events-none': !isSubscriptionActive }"
   >
     <AccountContext @toggle-accounts="toggleAccountModal" />
     <transition-group

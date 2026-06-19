@@ -380,7 +380,8 @@
       "ATTACH_IMAGE": "Attach Image",
       "IMAGE_ONLY_ALLOWED": "Only image files are allowed",
       "IMAGE_SIZE_LIMIT": "Maximum file size is 5MB",
-      "DELETE_IMAGE": "Delete image"
+      "DELETE_IMAGE": "Delete image",
+      "ATTACH_IMAGE_DISABLED": "Remove the existing image first to attach a new one"
     },
     "TEXT_KNOWLEDGE_PLACEHOLDER": "Enter important information about your business, products, services, or policies here.<br><br>Example: Our store is open Monday to Saturday, from 8 AM to 5 PM. For returns, customers must include a proof of purchase within 7 days.",
     "QUESTION_LABEL": "Question",

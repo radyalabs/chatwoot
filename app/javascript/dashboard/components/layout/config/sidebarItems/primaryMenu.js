@@ -125,6 +125,7 @@ const primaryMenuItems = accountId => [
     iconClipRule: 'evenodd',
     label: 'BILLING',
     hasSubMenu: false,
+    availableWhenExpired: true,
     meta: {
       permissions: ['administrator'],
     },

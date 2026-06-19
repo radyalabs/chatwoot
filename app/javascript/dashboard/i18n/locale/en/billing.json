@@ -1,5 +1,6 @@
 {
   "BILLING": {
+    "LOADING": "Loading billing information...",
     "SUBSCRIPTION_EXPIRED": "Your subscription has expired",
     "NO_TRANSACTIONS": "No transactions found",
     "PAY": "Pay",

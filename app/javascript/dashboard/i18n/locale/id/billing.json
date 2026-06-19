@@ -1,5 +1,6 @@
 {
   "BILLING": {
+    "LOADING": "Memuat informasi pembayaran...",
     "SUBSCRIPTION_EXPIRED": "Subscription Anda telah berakhir",
     "NO_TRANSACTIONS": "Tidak ada transaksi ditemukan",
     "NO_CUSTOM_PLANS": "Belum tersedia paket pilihan untuk anda",

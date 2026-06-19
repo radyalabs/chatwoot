@@ -169,7 +169,10 @@ const submit = async () => {
       useAlert(response.message || 'Langganan berhasil diaktifkan dengan voucher!');
       emit('close');
       // Optionally refresh subscription data
-      await store.dispatch('myActiveSubscription');
+      await store.dispatch(
+        'myActiveSubscription',
+        store.getters.getCurrentAccountId
+      );
       return;
     }
 

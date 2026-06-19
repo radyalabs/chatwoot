@@ -603,7 +603,8 @@
       "ATTACH_IMAGE": "Lampirkan Gambar",
       "IMAGE_ONLY_ALLOWED": "Hanya file gambar yang diperbolehkan",
       "IMAGE_SIZE_LIMIT": "Ukuran file maksimal 5MB",
-      "DELETE_IMAGE": "Hapus gambar"
+      "DELETE_IMAGE": "Hapus gambar",
+      "ATTACH_IMAGE_DISABLED": "Hapus gambar yang ada terlebih dahulu untuk melampirkan gambar baru"
     },
     "TEXT_KNOWLEDGE_PLACEHOLDER": "Tulis informasi penting tentang bisnis, produk, layanan, atau kebijakan Anda di sini.<br><br>Contoh: Toko kami buka setiap hari Senin-Sabtu, pukul 08.00-17.00 WIB. Untuk pengembalian barang, pelanggan wajib menyertakan bukti transaksi dalam 7 hari.",
     "QUESTION_LABEL": "Pertanyaan",

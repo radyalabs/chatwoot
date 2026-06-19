@@ -22,6 +22,8 @@ id:
     reset_password_success: Woot! Permintaan pengaturan ulang kata sandi berhasil. Periksa email Anda untuk mendapatkan petunjuk.
     reset_password_failure: Aduh! Kami tidak dapat menemukan pengguna dengan email yang dimasukkan.
     inbox_deletetion_response: Permintaan penghapusan kotak masuk Anda akan diproses dalam beberapa waktu.
+  subscription:
+    expired_auto_reply: "Mohon maaf, layanan chat otomatis akun ini sedang tidak aktif. Silakan hubungi admin toko untuk informasi lebih lanjut."
   errors:
     validations:
       presence: tidak boleh kosong

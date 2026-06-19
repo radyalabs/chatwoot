@@ -27,6 +27,7 @@
 #
 # Indexes
 #
+#  idx_scheduled_reminders_business_key                     (account_id,ai_agent_id,inbox_id,receiver_address,title) UNIQUE
 #  idx_scheduled_reminders_due                              (next_occurrence_at,enabled)
 #  index_scheduled_reminders_on_account_id                  (account_id)
 #  index_scheduled_reminders_on_account_id_and_ai_agent_id  (account_id,ai_agent_id)
@@ -35,9 +36,9 @@
 #
 # Foreign Keys
 #
-#  fk_rails_...  (account_id => accounts.id)
-#  fk_rails_...  (ai_agent_id => ai_agents.id)
-#  fk_rails_...  (inbox_id => inboxes.id)
+#  fk_rails_...  (account_id => accounts.id) ON DELETE => cascade
+#  fk_rails_...  (ai_agent_id => ai_agents.id) ON DELETE => cascade
+#  fk_rails_...  (inbox_id => inboxes.id) ON DELETE => cascade
 #
 class ScheduledReminder < ApplicationRecord
   belongs_to :account

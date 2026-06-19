@@ -59,6 +59,7 @@ reset_subscription_usage:
 #   class: 'NotifyUpcomingExpiryUser'
 #   queue: scheduled_jobs
 
+
 # executed every 5 minutes to send reminders
 send_reminders_job:
   cron: '*/5 * * * *'

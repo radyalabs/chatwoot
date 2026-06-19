@@ -13,6 +13,7 @@ class AgentBotListener < BaseListener
     conversation = extract_conversation_and_account(event)[0]
     inbox = conversation.inbox
     return unless connected_agent_bot_exist?(inbox)
+    return unless account_subscription_active?(conversation.account)
 
     event_name = __method__.to_s
     payload = conversation.webhook_data.merge(event: event_name)
@@ -24,6 +25,7 @@ class AgentBotListener < BaseListener
     inbox = message.inbox
     return unless connected_agent_bot_exist?(inbox)
     return unless message.webhook_sendable?
+    return unless account_subscription_active?(message.account)
 
     method_name = __method__.to_s
     process_message_event(method_name, inbox.agent_bot, message, event)
@@ -34,6 +36,7 @@ class AgentBotListener < BaseListener
     inbox = message.inbox
     return unless connected_agent_bot_exist?(inbox)
     return unless message.webhook_sendable?
+    return unless account_subscription_active?(message.account)
 
     method_name = __method__.to_s
     process_message_event(method_name, inbox.agent_bot, message, event)

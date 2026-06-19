@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_05_12_000002) do
+ActiveRecord::Schema[7.0].define(version: 2026_05_25_133236) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -219,8 +219,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_12_000002) do
     t.bigint "article_id", null: false
     t.text "term", null: false
     t.vector "embedding", limit: 1536
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.index ["embedding"], name: "index_article_embeddings_on_embedding", using: :ivfflat
   end
 
@@ -336,8 +336,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_12_000002) do
     t.bigint "assistant_id", null: false
     t.bigint "documentable_id"
     t.bigint "account_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.integer "status", default: 1, null: false
     t.string "documentable_type"
     t.index ["account_id"], name: "index_captain_assistant_responses_on_account_id"
@@ -847,9 +847,11 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_12_000002) do
     t.integer "sender_name_type", default: 0, null: false
     t.string "business_name"
     t.boolean "channel_status", default: true
+    t.datetime "deleted_at"
     t.index ["account_id"], name: "index_inboxes_on_account_id"
     t.index ["channel_id", "channel_type"], name: "index_inboxes_on_channel_id_and_channel_type"
     t.index ["channel_status"], name: "index_inboxes_on_channel_status"
+    t.index ["deleted_at"], name: "index_inboxes_on_deleted_at"
     t.index ["portal_id"], name: "index_inboxes_on_portal_id"
   end
 
@@ -1235,6 +1237,36 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_12_000002) do
     t.index ["user_id"], name: "index_reporting_events_on_user_id"
   end
 
+  create_table "scheduled_reminders", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "ai_agent_id", null: false
+    t.bigint "inbox_id", null: false
+    t.string "title", null: false
+    t.text "description"
+    t.string "receiver_channel_type", null: false
+    t.string "message_type", default: "personal", null: false
+    t.string "receiver_address", null: false
+    t.string "receiver_name"
+    t.text "message_template", null: false
+    t.datetime "scheduled_at", null: false
+    t.string "timezone", default: "UTC", null: false
+    t.jsonb "recurrence_rule"
+    t.datetime "ends_at"
+    t.integer "ends_after_count"
+    t.datetime "next_occurrence_at"
+    t.integer "occurrence_count", default: 0
+    t.datetime "last_sent_at"
+    t.boolean "enabled", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "ai_agent_id", "inbox_id", "receiver_address", "title"], name: "idx_scheduled_reminders_business_key", unique: true
+    t.index ["account_id", "ai_agent_id"], name: "index_scheduled_reminders_on_account_id_and_ai_agent_id"
+    t.index ["account_id"], name: "index_scheduled_reminders_on_account_id"
+    t.index ["ai_agent_id"], name: "index_scheduled_reminders_on_ai_agent_id"
+    t.index ["inbox_id"], name: "index_scheduled_reminders_on_inbox_id"
+    t.index ["next_occurrence_at", "enabled"], name: "idx_scheduled_reminders_due"
+  end
+
   create_table "sheet_numbering_configs", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.bigint "ai_agent_id", null: false
@@ -1375,6 +1407,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_12_000002) do
     t.datetime "updated_at", null: false
     t.integer "additional_mau_count", default: 0, null: false
     t.integer "additional_ai_response_count", default: 0, null: false
+    t.integer "last_notify_mau_threshold", default: 0, null: false
+    t.integer "last_notify_ai_response_threshold", default: 0, null: false
     t.index ["subscription_id"], name: "index_subscription_usage_on_subscription_id"
   end
 
@@ -1622,6 +1656,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_12_000002) do
   add_foreign_key "reminders", "ai_agents"
   add_foreign_key "reminders", "conversations", on_delete: :cascade
   add_foreign_key "reminders", "inboxes", on_delete: :cascade
+  add_foreign_key "scheduled_reminders", "accounts", on_delete: :cascade
+  add_foreign_key "scheduled_reminders", "ai_agents", on_delete: :cascade
+  add_foreign_key "scheduled_reminders", "inboxes", on_delete: :cascade
   add_foreign_key "sheet_numbering_configs", "accounts"
   add_foreign_key "sheet_numbering_configs", "ai_agents"
   add_foreign_key "shipping_stores", "accounts"

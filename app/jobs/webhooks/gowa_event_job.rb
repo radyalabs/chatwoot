@@ -42,6 +42,10 @@ class Webhooks::GowaEventJob < MutexApplicationJob
     when 'message.edited'
       # WhatsappUnofficial::UpdateMessageService.new(inbox: channel.inbox, params: data).perform
     end
+  rescue StandardError => e
+    Rails.logger.error("[GowaEventJob] Unhandled error processing event: #{e.class} - #{e.message}")
+    Rails.logger.error(e.backtrace&.first(5)&.join("\n"))
+    raise
   end
 
   def find_channel(params)

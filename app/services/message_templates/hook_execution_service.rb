@@ -15,7 +15,6 @@ class MessageTemplates::HookExecutionService
 
   def trigger_templates
     ::MessageTemplates::Template::OutOfOffice.new(conversation: conversation).perform if should_send_out_of_office_message?
-    ::MessageTemplates::Template::Greeting.new(conversation: conversation).perform if should_send_greeting?
     ::MessageTemplates::Template::EmailCollect.new(conversation: conversation).perform if inbox.enable_email_collect && should_send_email_collect?
     ::MessageTemplates::Template::CsatSurvey.new(conversation: conversation).perform if should_send_csat_survey?
   end
@@ -27,17 +26,6 @@ class MessageTemplates::HookExecutionService
     return false unless message.incoming?
 
     inbox.out_of_office? && conversation.messages.today.template.empty? && inbox.out_of_office_message.present?
-  end
-
-  def first_message_from_contact?
-    conversation.messages.outgoing.count.zero? && conversation.messages.template.count.zero?
-  end
-
-  def should_send_greeting?
-    # should not send if its a tweet message
-    return false if conversation.tweet?
-
-    first_message_from_contact? && inbox.greeting_enabled? && inbox.greeting_message.present?
   end
 
   def email_collect_was_sent?

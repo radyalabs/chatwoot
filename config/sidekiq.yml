@@ -15,9 +15,9 @@
 # Since queues are declared without waits, the jobs in lower ranking queues will only be processed
 # if there are no jobs in higher ranking queues.
 :queues:
+  - chat_delay
   - critical
   - send_reply_with_attachments
-  - chat_delay
   - high
   - medium
   - default

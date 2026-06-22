@@ -63,13 +63,24 @@ class Captain::Copilot::ChatService
     end
   end
 
+  # Optimized path for ChatDelayJob - skips pre-checks that were already
+  # performed when the message first arrived. This avoids double initialization
+  # overhead and redundant database queries.
+  def perform_combined
+    switch_locale_using_account_locale do
+      Rails.logger.info "[ChatService] >>> PERFORM_COMBINED msg_id=#{@message.id} conv=#{@context.conversation.id} combined_text=#{@combined_text.present?}"
+
+      send_messages(payload: @combined_text || @message, is_welcome: false)
+    end
+  end
+
   private
 
   def delay_enabled?
     agents_config = @context.ai_agent.flow_data&.dig('agents_config') || []
-    
+
     agents_config.any? do |agent|
-      agent&.dig('configurations', 'delay_enabled') == true || 
+      agent&.dig('configurations', 'delay_enabled') == true ||
       agent&.dig('configurations', 'delay_enabled') == 'true'
     end
   end
@@ -96,7 +107,7 @@ class Captain::Copilot::ChatService
       if is_first
         Rails.logger.info "[BOT] First bubble, enqueuing delay job for Conv: #{conversation_id}"
         Captain::Copilot::ChatDelayJob
-          .set(wait: 8.seconds)
+          .set(wait: 2.seconds)
           .perform_later(conversation_id)
       else
         Rails.logger.info "[BOT] Subsequent bubble buffered for Conv: #{conversation_id}"

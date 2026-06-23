@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_05_07_080040) do
+ActiveRecord::Schema[7.0].define(version: 2026_05_12_000002) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -59,7 +59,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_07_080040) do
     t.integer "status", default: 0
     t.bigint "active_subscription_id"
     t.string "subscription_status", default: "free_trial"
-    t.jsonb "internal_attributes", default: {}, null: false
     t.index ["active_subscription_id"], name: "index_accounts_on_active_subscription_id"
     t.index ["status"], name: "index_accounts_on_status"
   end
@@ -243,13 +242,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_07_080040) do
     t.string "slug", null: false
     t.integer "position"
     t.string "locale", default: "en", null: false
-    t.index ["account_id"], name: "index_articles_on_account_id"
     t.index ["associated_article_id"], name: "index_articles_on_associated_article_id"
     t.index ["author_id"], name: "index_articles_on_author_id"
-    t.index ["portal_id"], name: "index_articles_on_portal_id"
     t.index ["slug"], name: "index_articles_on_slug", unique: true
-    t.index ["status"], name: "index_articles_on_status"
-    t.index ["views"], name: "index_articles_on_views"
   end
 
   create_table "attachments", id: :serial, force: :cascade do |t|
@@ -263,7 +258,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_07_080040) do
     t.datetime "updated_at", precision: nil, null: false
     t.string "fallback_title"
     t.string "extension"
-    t.jsonb "meta", default: {}
     t.index ["account_id"], name: "index_attachments_on_account_id"
     t.index ["message_id"], name: "index_attachments_on_message_id"
   end
@@ -301,21 +295,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_07_080040) do
     t.datetime "updated_at", precision: nil, null: false
     t.boolean "active", default: true, null: false
     t.index ["account_id"], name: "index_automation_rules_on_account_id"
-  end
-
-  create_table "broadcast_campaigns", force: :cascade do |t|
-    t.bigint "account_id", null: false
-    t.bigint "inbox_id", null: false
-    t.string "target_segment", default: "all"
-    t.text "message_body", null: false
-    t.boolean "spin_text_enabled", default: false
-    t.boolean "unsubscribe_link_enabled", default: false
-    t.integer "status", default: 0
-    t.datetime "scheduled_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["account_id"], name: "index_broadcast_campaigns_on_account_id"
-    t.index ["inbox_id"], name: "index_broadcast_campaigns_on_inbox_id"
   end
 
   create_table "campaigns", force: :cascade do |t|
@@ -557,7 +536,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_07_080040) do
     t.jsonb "pre_chat_form_options", default: {}
     t.boolean "hmac_mandatory", default: false
     t.boolean "continuity_via_email", default: true, null: false
-    t.string "widget_heading"
     t.index ["hmac_token"], name: "index_channel_web_widgets_on_hmac_token", unique: true
     t.index ["website_token"], name: "index_channel_web_widgets_on_website_token", unique: true
   end
@@ -588,6 +566,16 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_07_080040) do
     t.index ["account_id"], name: "index_channel_whatsapp_unofficials_on_account_id"
     t.index ["phone_number"], name: "index_channel_whatsapp_unofficials_on_phone_number", unique: true
     t.index ["status"], name: "index_channel_whatsapp_unofficials_on_status"
+  end
+
+  create_table "contact_attribute_keys", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "key", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "data_type", default: 0, null: false
+    t.index ["account_id", "key"], name: "index_contact_attribute_keys_on_account_id_and_key", unique: true
+    t.index ["account_id"], name: "index_contact_attribute_keys_on_account_id"
   end
 
   create_table "contact_inboxes", force: :cascade do |t|
@@ -675,6 +663,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_07_080040) do
     t.boolean "is_reminded", default: false, null: false
     t.boolean "is_handover_reminded", default: false, null: false
     t.boolean "is_convert", default: false, null: false
+    t.text "ai_summary"
+    t.datetime "ai_summary_generated_at"
     t.index ["account_id", "display_id"], name: "index_conversations_on_account_id_and_display_id", unique: true
     t.index ["account_id", "id"], name: "index_conversations_on_id_and_account_id"
     t.index ["account_id", "inbox_id", "status", "assignee_id"], name: "conv_acid_inbid_stat_asgnid_idx"
@@ -805,41 +795,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_07_080040) do
     t.string "name"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
-  end
-
-  create_table "group_chat_logs", force: :cascade do |t|
-    t.bigint "account_id", null: false
-    t.bigint "group_monitored_chat_id", null: false
-    t.string "event_type", null: false
-    t.string "message_id"
-    t.string "sender_jid"
-    t.string "sender_name"
-    t.text "content"
-    t.string "replied_to_id"
-    t.text "quoted_body"
-    t.string "reaction_emoji"
-    t.string "reaction_target_id"
-    t.jsonb "raw_payload", default: {}
-    t.datetime "sent_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["account_id"], name: "index_group_chat_logs_on_account_id"
-    t.index ["event_type"], name: "index_group_chat_logs_on_event_type"
-    t.index ["group_monitored_chat_id", "message_id"], name: "index_group_chat_logs_on_group_monitored_chat_id_and_message_id"
-    t.index ["group_monitored_chat_id"], name: "index_group_chat_logs_on_group_monitored_chat_id"
-  end
-
-  create_table "group_monitored_chats", force: :cascade do |t|
-    t.bigint "account_id", null: false
-    t.bigint "inbox_id", null: false
-    t.string "group_id", null: false
-    t.string "group_name"
-    t.boolean "active", default: true
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["account_id", "group_id"], name: "index_group_monitored_chats_on_account_id_and_group_id", unique: true
-    t.index ["account_id"], name: "index_group_monitored_chats_on_account_id"
-    t.index ["inbox_id"], name: "index_group_monitored_chats_on_inbox_id"
   end
 
   create_table "idle_configs", force: :cascade do |t|
@@ -1154,6 +1109,15 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_07_080040) do
     t.string "name", null: false
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
+  end
+
+  create_table "portal_members", force: :cascade do |t|
+    t.bigint "portal_id"
+    t.bigint "user_id"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
+    t.index ["portal_id", "user_id"], name: "index_portal_members_on_portal_id_and_user_id", unique: true
+    t.index ["user_id", "portal_id"], name: "index_portal_members_on_user_id_and_portal_id", unique: true
   end
 
   create_table "portals", force: :cascade do |t|
@@ -1683,12 +1647,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_07_080040) do
   add_foreign_key "ai_agent_followups", "ai_agents"
   add_foreign_key "ai_agent_selected_labels", "ai_agents"
   add_foreign_key "ai_agent_selected_labels", "labels"
-  add_foreign_key "broadcast_campaigns", "accounts"
-  add_foreign_key "broadcast_campaigns", "inboxes"
-  add_foreign_key "group_chat_logs", "accounts"
-  add_foreign_key "group_chat_logs", "group_monitored_chats"
-  add_foreign_key "group_monitored_chats", "accounts"
-  add_foreign_key "group_monitored_chats", "inboxes"
+  add_foreign_key "contact_attribute_keys", "accounts"
   add_foreign_key "idle_configs", "accounts"
   add_foreign_key "idle_configs", "ai_agents"
   add_foreign_key "idle_conversations", "conversations", on_delete: :cascade

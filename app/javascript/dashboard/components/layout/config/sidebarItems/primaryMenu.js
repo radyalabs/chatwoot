@@ -98,6 +98,17 @@ const primaryMenuItems = accountId => [
     toStateName: 'quick_reply_manage',
   },
   {
+    icon: 'send', // Anda juga bisa mencoba 'send' atau 'mail-new' jika ikon ini tidak muncul
+    key: 'blasting',
+    label: 'BLASTING',
+    hasSubMenu: false,
+    meta: {
+      permissions: ['administrator'],
+    },
+    toState: frontendURL(`accounts/${accountId}/blasting`),
+    toStateName: 'blasting_index',
+  },
+  {
     icon: 'key',
     label: 'AUDIT_LOGS',
     hasSubMenu: false,

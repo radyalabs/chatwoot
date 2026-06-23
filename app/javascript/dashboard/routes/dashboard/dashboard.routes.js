@@ -12,6 +12,7 @@ import { routes as captainRoutes } from './captain/captain.routes';
 import AppContainer from './Dashboard.vue';
 import Suspended from './suspended/Index.vue';
 import aiAgentsRoutes from './aiagents/aiagents.routes';
+import blastingRoutes from './broadcast/blasting.routes';
 
 export default {
   routes: [
@@ -30,6 +31,7 @@ export default {
         ...helpcenterRoutes.routes,
         ...campaignsRoutes.routes,
         ...aiAgentsRoutes.routes,
+        ...blastingRoutes.routes,
       ],
     },
     {

@@ -381,6 +381,13 @@ const menuItems = computed(() => {
       ],
     },
     {
+      name: 'Blasting',
+      label: t('SIDEBAR.BLASTING'),
+      icon: 'i-lucide-send-horizonal',
+      to: accountScopedRoute('new_broadcast'),
+      activeOn: ['new_broadcast'], 
+    },
+    {
       name: 'Portals',
       label: t('SIDEBAR.HELP_CENTER.TITLE'),
       icon: 'i-lucide-library-big',

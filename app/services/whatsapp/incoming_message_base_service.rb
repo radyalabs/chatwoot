@@ -75,6 +75,7 @@ class Whatsapp::IncomingMessageBaseService
     create_message(message)
     attach_files
     attach_location if message_type == 'location'
+    transcribe_voice_note
     @message.save!
   end
 
@@ -116,15 +117,69 @@ class Whatsapp::IncomingMessageBaseService
     attachment_file = download_attachment_file(attachment_payload)
     return if attachment_file.blank?
 
+    detected_type = file_content_type(message_type)
+    if detected_type == :audio
+      Rails.logger.info(
+        "[VOICE][CHATWOOT] Incoming voice note from WhatsApp (official) | " \
+        "type=#{message_type} | " \
+        "content_type=#{attachment_file.content_type} | " \
+        "filename=#{attachment_file.original_filename}"
+      )
+      @downloaded_audio_file = attachment_file
+      @downloaded_audio_filename = attachment_file.original_filename
+    end
+
     @message.attachments.new(
       account_id: @message.account_id,
-      file_type: file_content_type(message_type),
+      file_type: detected_type,
       file: {
         io: attachment_file,
         filename: attachment_file.original_filename,
         content_type: attachment_file.content_type
       }
     )
+  end
+
+  def transcribe_voice_note
+    return unless @downloaded_audio_file
+
+    Rails.logger.info(
+      "[VOICE][TRANSCRIBE] Transcribing voice note (official WA) | " \
+      "filename=#{@downloaded_audio_filename} | " \
+      "current_content=#{@message.content.inspect}"
+    )
+
+    transcriber = Voice::GroqWhisperService.new
+    transcribed_text = transcriber.transcribe(
+      @downloaded_audio_file,
+      filename: @downloaded_audio_filename || 'audio.ogg'
+    )
+
+    if transcribed_text.present?
+      if @message.content.present?
+        @message.content = "#{@message.content}\n\n[Voice message]: #{transcribed_text}"
+      else
+        @message.content = transcribed_text
+      end
+
+      Rails.logger.info(
+        "[VOICE][TRANSCRIBE] Voice note transcribed successfully | " \
+        "text_length=#{transcribed_text.length} | " \
+        "preview=#{transcribed_text[0..100].inspect}"
+      )
+    else
+      Rails.logger.warn(
+        "[VOICE][TRANSCRIBE][ERROR] Voice note transcription returned empty | " \
+        "filename=#{@downloaded_audio_filename}"
+      )
+      @message.content = '[Voice message - transcription unavailable]' if @message.content.blank?
+    end
+  rescue StandardError => e
+    Rails.logger.error(
+      "[VOICE][TRANSCRIBE][ERROR] Failed to transcribe voice note | " \
+      "error=#{e.class}: #{e.message}"
+    )
+    @message.content = '[Voice message - transcription failed]' if @message.content.blank?
   end
 
   def attach_location

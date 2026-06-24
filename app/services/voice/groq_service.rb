@@ -1,7 +1,7 @@
 require 'net/http'
 require 'uri'
 
-class Voice::GroqWhisperService
+class GroqService
   GROQ_API_URL = 'https://api.groq.com/openai/v1/audio/transcriptions'.freeze
   SUPPORTED_FORMATS = %w[.ogg .oga .mp3 .mp4 .mpeg .mpga .m4a .wav .webm .flac].freeze
   MAX_FILE_SIZE = 25.megabytes
@@ -91,6 +91,8 @@ class Voice::GroqWhisperService
     body << "\r\n"
 
     body << "--#{boundary}--\r\n"
+
+    io.rewind if io.respond_to?(:rewind)
 
     body.force_encoding('BINARY')
   end

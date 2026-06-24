@@ -99,7 +99,7 @@ class WhatsappUnofficial::IncomingMessageService
       "current_content=#{@message.content.inspect}"
     )
 
-    transcriber = GroqService.new
+    transcriber = Voice::GroqService.new
     transcribed_text = transcriber.transcribe(
       @downloaded_audio_file,
       filename: @downloaded_audio_filename || 'audio.ogg'

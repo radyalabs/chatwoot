@@ -87,16 +87,16 @@ const primaryMenuItems = accountId => [
   //   toState: frontendURL(`accounts/${accountId}/portals/portal_articles_index`),
   //   toStateName: 'portals_index',
   // },
-  {
-    icon: 'flash-on',
-    label: 'QUICK_REPLY',
-    hasSubMenu: false,
-    meta: {
-      permissions: ['administrator'],
-    },
-    toState: frontendURL(`accounts/${accountId}/quick-replies`),
-    toStateName: 'quick_reply_manage',
-  },
+  // {
+  //   icon: 'flash-on',
+  //   label: 'QUICK_REPLY',
+  //   hasSubMenu: false,
+  //   meta: {
+  //     permissions: ['administrator'],
+  //   },
+  //   toState: frontendURL(`accounts/${accountId}/quick-replies`),
+  //   toStateName: 'quick_reply_manage',
+  // },
   {
     icon: 'send', // Anda juga bisa mencoba 'send' atau 'mail-new' jika ikon ini tidak muncul
     key: 'blasting',

@@ -156,12 +156,6 @@ const menuItems = computed(() => {
       },
     },
     {
-      name: 'Quick Reply',
-      label: t('SIDEBAR.QUICK_REPLY'), 
-      icon: 'i-lucide-reply', 
-      to: accountScopedRoute('quick_reply_manage'),
-    },
-    {
       name: 'Conversation',
       label: t('SIDEBAR.CONVERSATIONS'),
       icon: 'i-lucide-message-circle',

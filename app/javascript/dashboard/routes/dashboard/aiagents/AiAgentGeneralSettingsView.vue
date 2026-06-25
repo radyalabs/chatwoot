@@ -278,6 +278,7 @@ async function submit() {
     ]);
 
     const flowData = JSON.parse(JSON.stringify(props.data.flow_data || {}));
+    flowData.bot_name = state.name;
     flowData.agents_config?.forEach(agent_config => {
       if (agent_config.bot_prompt) {
         agent_config.bot_prompt.persona =
@@ -294,6 +295,7 @@ async function submit() {
     const displayFlowData = JSON.parse(
       JSON.stringify(props.data.display_flow_data || {})
     );
+    displayFlowData.bot_name = state.name;
     displayFlowData.agents_config?.forEach(agent_config => {
       if (agent_config.bot_prompt) {
         agent_config.bot_prompt.persona =
@@ -319,6 +321,7 @@ async function submit() {
     displayFlowData.greeting_config = greetingConfig;
 
     const payload = {
+      name: state.name,
       flow_data: flowData,
       display_flow_data: displayFlowData,
     };

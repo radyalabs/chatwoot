@@ -244,10 +244,32 @@
 
     <transition name="modal-fade">
       <div v-if="showTemplateModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-700">
-          <div class="p-5 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center"><h3 class="font-bold text-lg text-slate-800 dark:text-white">{{ $t('BROADCAST.MODAL_TPL_TITLE') }}</h3><button @click="closeTemplateModal" class="text-slate-400"><span class="i-lucide-x w-5 h-5 block"></span></button></div>
-          <div class="p-5"><label class="block text-sm font-medium mb-2">{{ $t('BROADCAST.MODAL_TPL_INPUT_LABEL') }}</label><input ref="tplInput" v-model="newTemplateName" type="text" :placeholder="$t('BROADCAST.MODAL_TPL_PLACEHOLDER')" class="w-full px-4 py-2.5 bg-slate-50 border rounded-lg" @keyup.enter="confirmSaveTemplate"></div>
-          <div class="p-4 bg-slate-50 flex justify-end gap-3"><button @click="closeTemplateModal" class="px-4 py-2 text-sm font-semibold border rounded-lg">{{ $t('BROADCAST.BTN_CANCEL') }}</button><button @click="confirmSaveTemplate" :disabled="!newTemplateName.trim()" class="px-4 py-2 text-sm font-semibold bg-green-600 text-white rounded-md">{{ $t('BROADCAST.MODAL_TPL_BTN_CONFIRM') }}</button></div>
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200 dark:border-slate-700">
+          <div class="p-5 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+            <h3 class="font-bold text-lg text-slate-800 dark:text-white">{{ $t('BROADCAST.MODAL_TPL_TITLE') }}</h3>
+            <button @click="closeTemplateModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 focus:outline-none">
+              <span class="i-lucide-x w-5 h-5 block"></span>
+            </button>
+          </div>
+          <div class="p-5">
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{{ $t('BROADCAST.MODAL_TPL_INPUT_LABEL') }}</label>
+            <input 
+              ref="tplInput" 
+              v-model="newTemplateName" 
+              type="text" 
+              :placeholder="$t('BROADCAST.MODAL_TPL_PLACEHOLDER')" 
+              class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition-shadow" 
+              @keyup.enter="confirmSaveTemplate"
+            >
+          </div>
+          <div class="p-4 bg-slate-50 dark:bg-slate-900/50 flex justify-end gap-3 border-t border-slate-200 dark:border-slate-700">
+            <button @click="closeTemplateModal" class="inline-flex justify-center rounded-lg bg-white dark:bg-transparent px-4 py-2 text-sm font-semibold text-slate-900 dark:text-slate-300 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors focus:outline-none">
+              {{ $t('BROADCAST.BTN_CANCEL') }}
+            </button>
+            <button @click="confirmSaveTemplate" :disabled="!newTemplateName.trim()" class="inline-flex w-full justify-center bg-green-600 text-white rounded-md hover:bg-green-700 px-4 py-2 text-sm font-semibold shadow-sm sm:w-auto transition-colors disabled:opacity-50 focus:outline-none">
+              {{ $t('BROADCAST.MODAL_TPL_BTN_CONFIRM') }}
+            </button>
+          </div>
         </div>
       </div>
     </transition>
@@ -323,9 +345,6 @@ export default {
         spin_text_enabled: false,
         unsubscribe_link_enabled: false,
       },
-      messageTemplates: [
-        { id: 1, name: '🎂 Birthday Greeting', content: 'Hello {{full_name}}! 🎉\n\nHappy birthday...' },
-      ],
       activeFilterPayload: null,
       estimatedContactCount: null,
       isFetchingContactCount: false,
@@ -339,7 +358,16 @@ export default {
       contactsUiFlags: 'contacts/getUIFlags',
       contactsMeta: 'contacts/getMeta',
       contactSegments: 'customViews/getContactCustomViews',
+      savedTemplates: 'broadcastTemplates/getTemplates',
     }),
+    messageTemplates() {
+      return this.savedTemplates.map(tpl => ({
+        id: tpl.id,
+        name: `${tpl.name}`,
+        content: tpl.message_body
+      }));
+    },
+
     whatsappInboxes() { return this.inboxes.filter(inbox => ['Channel::Whatsapp', 'Channel::WhatsappUnofficial', 'Channel::Api'].includes(inbox.channel_type)); },
     
     segmentOptions() {
@@ -386,6 +414,7 @@ export default {
     this.$store.dispatch('inboxes/get'); 
     this.$store.dispatch('contacts/get', { page: 1 }); 
     this.$store.dispatch('customViews/get', 1);
+    this.$store.dispatch('broadcastTemplates/get');
   },
 
   methods: {
@@ -449,12 +478,30 @@ export default {
     },
     openTemplateModal() { this.newTemplateName = ''; this.showTemplateModal = true; this.$nextTick(() => this.$refs.tplInput?.focus()); },
     closeTemplateModal() { this.showTemplateModal = false; },
-    confirmSaveTemplate() {
+    async confirmSaveTemplate() {
       const name = this.newTemplateName.trim();
       if (!name) return;
-      this.messageTemplates.push({ id: Date.now(), name: `💾 ${name}`, content: this.form.message_body });
-      if (window.bus) window.bus.$emit('new-toast-message', this.$t('BROADCAST.TEMPLATE_SAVED_TOAST', { name: name }));
-      this.closeTemplateModal();
+
+      try {
+        const payload = {
+          name: name,
+          message_body: this.form.message_body
+        };
+        
+        const newTpl = await this.$store.dispatch('broadcastTemplates/create', payload);
+        
+        if (window.bus) window.bus.$emit('new-toast-message', this.$t('BROADCAST.TEMPLATE_SAVED_TOAST', { name: name }));
+        
+        this.selectedTemplate = {
+          id: newTpl.id,
+          name: `${newTpl.name}`,
+          content: newTpl.message_body
+        };
+        
+        this.closeTemplateModal();
+      } catch (error) {
+        if (window.bus) window.bus.$emit('new-toast-message', 'Gagal menyimpan template pesan.');
+      }
     },
 
     async submitBroadcast() {
@@ -517,3 +564,4 @@ export default {
   :deep(.hide-builtin-variables label), :deep(.hide-builtin-variables .variables-container), :deep(.hide-builtin-variables .toolbar), :deep(.hide-builtin-variables .flex.gap-2) { display: none !important; }
   .preview-table-container :deep(table th:last-child), .preview-table-container :deep(table td:last-child) { display: none !important; }
 </style>
+}

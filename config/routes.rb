@@ -210,6 +210,7 @@ Rails.application.routes.draw do
           resources :custom_roles, only: [:index, :create, :show, :update, :destroy]
           resources :campaigns, only: [:index, :create, :show, :update, :destroy]
           resources :broadcast_campaigns, only: [:index, :create, :show, :update, :destroy]
+          resources :broadcast_templates, only: [:index, :create, :update, :destroy]
           resources :dashboard_apps, only: [:index, :show, :create, :update, :destroy]
           namespace :channels do
             resources :whatsapp_unofficial_channels, only: [:create] do

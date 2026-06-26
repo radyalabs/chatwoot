@@ -1648,6 +1648,14 @@
             />
           </div>
 
+          <!-- Skills Tab Content -->
+          <div v-show="activeTabIndex === 9" class="w-full">
+            <SkillsTab
+              v-if="data?.id"
+              :ai-agent-id="data.id"
+            />
+          </div>
+
         </div>
       </div>
     </div>
@@ -1726,6 +1734,7 @@ import shippingStoresAPI from '../../../../api/shippingStores';
 import { useAlert } from 'dashboard/composables';
 import CustomNumberingTab from './cs-bot-tabs/CustomNumberingTab.vue';
 import ShippingConfig from './sales-bot-tabs/ShippingConfig.vue';
+import SkillsTab from './sales-bot-tabs/SkillsTab.vue';
 import NotificationSettings from './notification-settings/NotificationSettings.vue';
 import ReminderSettings from './reminder-settings/ReminderSettings.vue';
 
@@ -2133,6 +2142,12 @@ const tabs = computed(() => [
     index: 8,
     name: t('AGENT_MGMT.REMINDER.MANAGEMENT.HEADER'),
     icon: 'i-lucide-bell',
+  },
+  {
+    key: '9',
+    index: 9,
+    name: 'Skills',
+    icon: 'i-lucide-puzzle',
   },
 ])
 const activeTabIndex = ref(0);

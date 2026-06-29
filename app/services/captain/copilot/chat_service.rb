@@ -46,6 +46,8 @@ class Captain::Copilot::ChatService
         return
       end
 
+      return if group_message_without_mention?
+
       is_welcome = welcome_message?
       delay = delay_enabled?
 
@@ -81,7 +83,7 @@ class Captain::Copilot::ChatService
 
     agents_config.any? do |agent|
       agent&.dig('configurations', 'delay_enabled') == true ||
-      agent&.dig('configurations', 'delay_enabled') == 'true'
+        agent&.dig('configurations', 'delay_enabled') == 'true'
     end
   end
 
@@ -90,11 +92,55 @@ class Captain::Copilot::ChatService
     return true if @message.attachments.any? { |att| AI_SUPPORTED_ATTACHMENT_TYPES.include?(att.file_type) }
 
     Rails.logger.info(
-      "[ChatService] Skipping AI request — no text or image content | " \
+      '[ChatService] Skipping AI request — no text or image content | ' \
       "message_id=#{@message.id} | " \
       "attachment_types=#{@message.attachments.map(&:file_type)}"
     )
     false
+  end
+
+  def group_message_without_mention?
+    return false unless group_conversation?
+
+    unless bot_mentioned?
+      Rails.logger.info "[ChatService] Skipping AI — group message without bot mention | conversation_id=#{@context.conversation.id}"
+      return true
+    end
+
+    false
+  end
+
+  def group_conversation?
+    @message.conversation.additional_attributes&.dig('group_chat_id').present?
+  end
+
+  def bot_mentioned?
+    content_body = @message.content.to_s.downcase
+    channel = @context.inbox.channel
+    return false unless channel.respond_to?(:bot_jid)
+
+    bot_phone = channel.phone_number.to_s.gsub(/\D/, '')
+
+    return true if content_body.include?("@#{bot_phone}")
+
+    mentioned = @message.content_attributes&.dig('mentioned_jids') || []
+    return true if mentioned.any? { |jid| jid.include?(bot_phone) }
+
+    reply_context = @message.content_attributes&.dig('gowa_reply', 'raw_in_reply_to_external_id')
+    return true if reply_context.present? && bot_message_replied_to?
+
+    false
+  end
+
+  def bot_message_replied_to?
+    reply_id = @message.content_attributes&.dig('in_reply_to_external_id') ||
+               @message.content_attributes&.dig('gowa_reply', 'raw_in_reply_to_external_id')
+    return false unless reply_id
+
+    bot_messages = @message.conversation.messages
+                           .where.not(sender_type: 'Contact')
+                           .where(source_id: reply_id)
+    bot_messages.any?
   end
 
   def enqueue_for_delay
@@ -102,7 +148,7 @@ class Captain::Copilot::ChatService
     lock_key = "jangkau:chat_lock:#{conversation_id}"
 
     Sidekiq.redis do |redis|
-      is_first = redis.set(lock_key, "1", nx: true, ex: 600)
+      is_first = redis.set(lock_key, '1', nx: true, ex: 600)
 
       if is_first
         Rails.logger.info "[BOT] First bubble, enqueuing delay job for Conv: #{conversation_id}"
@@ -116,10 +162,10 @@ class Captain::Copilot::ChatService
   end
 
   def send_messages(payload:, is_welcome: false)
-    Rails.logger.info "[DEBUG JANGKAU] Memasuki execute_ai_call untuk memanggil AI API"
+    Rails.logger.info '[DEBUG JANGKAU] Memasuki execute_ai_call untuk memanggil AI API'
 
     actual_payload = @combined_text.present? ? @message : payload
-    combined_text_arg = @combined_text.present? ? @combined_text : nil
+    combined_text_arg = @combined_text.presence
 
     send_message = Captain::Llm::AssistantChatService.new(
       actual_payload,
@@ -130,8 +176,8 @@ class Captain::Copilot::ChatService
     ).perform
 
     unless send_message.success?
-      Rails.logger.error "[DEBUG JANGKAU] Gagal mendapat respons sukses dari AI!"
-      return send_reply_failure(I18n.t('conversations.bot.failure')) 
+      Rails.logger.error '[DEBUG JANGKAU] Gagal mendapat respons sukses dari AI!'
+      return send_reply_failure(I18n.t('conversations.bot.failure'))
     end
 
     @context.usage.increment_ai_responses
@@ -140,10 +186,8 @@ class Captain::Copilot::ChatService
 
     if is_welcome
       sent = send_greeting_images(caption: parsed[:response])
-      
-      unless sent
-        send_reply(parsed, additional_attributes: { message_type: 1, sender_type: 'AiAgent', attachments: parsed[:attachments] })
-      end
+
+      send_reply(parsed, additional_attributes: { message_type: 1, sender_type: 'AiAgent', attachments: parsed[:attachments] }) unless sent
     else
       send_reply(parsed, additional_attributes: { message_type: 1, sender_type: 'AiAgent', attachments: parsed[:attachments] })
     end
@@ -259,6 +303,20 @@ class Captain::Copilot::ChatService
     )
   end
 
+  def enrich_with_group_context
+    return @combined_text unless GroupContextService.new(@message, @combined_text).group_summary_request?
+
+    enriched = GroupContextService.new(@message, @combined_text).enrich_message
+    return @combined_text if enriched == check_original_text
+
+    Rails.logger.info "[GROUP_CONTEXT] Group context injected for message #{@message.id}"
+    enriched
+  end
+
+  def check_original_text
+    @combined_text.presence || @message.content.to_s
+  end
+
   def send_reply(response, additional_attributes: {})
     message_content = response[:is_handover] ? handover_processing(response[:response]) : response[:response]
 
@@ -335,7 +393,7 @@ class Captain::Copilot::ChatService
     User.find_by(id: agent_id)
   end
 
-  def message_created(content, additional_attributes) 
+  def message_created(content, additional_attributes)
     attachments = additional_attributes&.delete(:attachments)
 
     attrs = {

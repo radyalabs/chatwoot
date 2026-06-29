@@ -224,6 +224,19 @@ class Channel::WhatsappUnofficial < ApplicationRecord
   # List WhatsApp groups
   delegate :list_groups, to: :adapter
 
+  # TODO: set default false jika sudah ada UI toggle group
+  def group_enabled?
+    provider_config&.dig('group_enabled') != false
+  end
+
+  def monitored_groups
+    provider_config&.dig('monitored_groups') || []
+  end
+
+  def bot_jid
+    "#{phone_number}@s.whatsapp.net"
+  end
+
   # ============================================================================
   # Inbox Management
   # ============================================================================

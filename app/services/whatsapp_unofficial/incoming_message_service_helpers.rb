@@ -94,7 +94,32 @@ module WhatsappUnofficial::IncomingMessageServiceHelpers
     %i[image document video audio video_note contact location].any? { |type| payload[type].present? }
   end
 
+  def group_message?
+    payload[:chat_id].to_s.end_with?('@g.us')
+  end
+
+  def chat_id
+    payload[:chat_id]
+  end
+
+  def mentioned_jids
+    jids = extract_mentioned_jids
+    return jids if jids.present?
+
+    extract_mentions_from_body
+  end
+
+  def mentioned_bot?(channel)
+    return false unless channel
+
+    bot_jid = channel.bot_jid
+    bot_phone = channel.phone_number.to_s.gsub(/\D/, '')
+
+    mentioned_jids.any? { |jid| jid.include?(bot_phone) || jid == bot_jid }
+  end
+
   def file_content_type
+    return :image         if payload[:sticker].present?
     return :image         if payload[:image].present?
     return :video         if payload[:video].present?
     return :audio         if payload[:audio].present?
@@ -110,9 +135,43 @@ module WhatsappUnofficial::IncomingMessageServiceHelpers
         image.presence ||
           payload[:document].presence ||
           payload[:video].presence ||
-          payload[:audio].presence
+          payload[:audio].presence ||
+          sticker_file
       end
     end
+  end
+
+  def sticker_file
+    sticker = payload[:sticker]
+    return nil unless sticker
+
+    if sticker.is_a?(Hash)
+      sticker[:path] || sticker['path'] || sticker[:media_path] || sticker['media_path']
+    elsif sticker.is_a?(String)
+      sticker
+    end
+  end
+
+  def message_has_reaction?
+    payload[:reaction].present?
+  end
+
+  def reaction_data
+    return nil unless message_has_reaction?
+
+    reaction = payload[:reaction]
+    data = if reaction.is_a?(Hash)
+             {
+               text: reaction[:text] || reaction['text'],
+               message_id: reaction[:message_id] || reaction['message_id'] || reaction[:id] || reaction['id']
+             }
+           else
+             { text: reaction.to_s }
+           end
+
+    reacted_id = payload[:reacted_message_id] || payload[:reactedMessageId]
+    data[:reacted_message_id] = reacted_id if reacted_id.present?
+    data
   end
 
   def location
@@ -181,6 +240,35 @@ module WhatsappUnofficial::IncomingMessageServiceHelpers
   end
 
   private
+
+  def extract_mentioned_jids
+    direct = dig_any(payload, [
+                       [:mentionedJid],
+                       [:mentioned_jid],
+                       [:mentionedJids],
+                       [:mentioned_jids],
+                       [:contextInfo, :mentionedJid],
+                       [:contextInfo, :mentioned_jid],
+                       [:contextInfo, :mentionedJids],
+                       [:contextInfo, :mentioned_jids],
+                       [:context, :mentionedJid],
+                       [:context, :mentioned_jid]
+                     ])
+    return [] unless direct.is_a?(Array)
+
+    direct.map(&:to_s)
+  rescue StandardError
+    []
+  end
+
+  def extract_mentions_from_body
+    body = payload[:body].to_s
+    return [] if body.blank?
+
+    body.scan(/@(\d+)/).flatten.map { |phone| "#{phone}@s.whatsapp.net" }
+  rescue StandardError
+    []
+  end
 
   def extract_in_reply_to_external_id
     candidate = dig_any(payload, REPLY_ID_CANDIDATE_PATHS)

@@ -361,6 +361,9 @@ class Captain::Copilot::ChatService
   def end_state_processing(response)
     return unless @context.ai_agent
 
+    idle_config = @context.ai_agent.idle_config
+    return if idle_config && !idle_config.enabled?
+
     attrs = {
       conversation_id: @context.conversation.id,
       inbox_id: @context.inbox_id,

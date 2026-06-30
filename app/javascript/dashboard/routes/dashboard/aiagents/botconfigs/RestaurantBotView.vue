@@ -66,7 +66,8 @@ const creativityOptions = computed(() => [
 
 // idle time
 const idleConfig = reactive({
-  duration: window.chatwootConfig?.idleConversationDuration || 30,        
+  enabled: true,
+  duration: window.chatwootConfig?.idleConversationDuration || 30,
 });
 
 // General Tab - Google Sheets Integration (centralized from parent)
@@ -337,6 +338,7 @@ async function saveGeneralSettings() {
     await Promise.all([
       aiAgents.updateAgent(props.data.id, payload),
       idleConfigsAPI.updateConfig(props.data.id, {
+        enabled: idleConfig.enabled,
         duration: idleConfig.duration
       })
     ]);
@@ -436,6 +438,7 @@ async function loadIdleConfig() {
   try {
     const response = await idleConfigsAPI.getConfig(props.data.id);
     if (response.data) {
+      idleConfig.enabled = response.data.enabled !== undefined ? response.data.enabled : true;
       idleConfig.duration = response.data.duration || 30;
     }
   } catch (error) {
@@ -719,26 +722,33 @@ onMounted(async () => {
                   </div>
                 </div>
                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
-                  <div class="flex items-center p-6">
-                    <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
-                        <circle cx="12" cy="12" r="10"/>
-                        <polyline points="12 6 12 12 16 14"/>
-                      </svg>
+                  <div class="flex items-center justify-between p-6">
+                    <div class="flex items-center">
+                      <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
+                          <circle cx="12" cy="12" r="10"/>
+                          <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 class="font-medium text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.EOBOT.IDLE_STATE') }}</h3>
+                        <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.EOBOT.IDLE_STATE_DESC') }}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 class="font-medium text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.EOBOT.IDLE_STATE') }}</h3>
-                      <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.EOBOT.IDLE_STATE_DESC') }}</p>
-                    </div>
+                    <label class="inline-flex items-center cursor-pointer">
+                      <input type="checkbox" v-model="idleConfig.enabled" class="sr-only peer" :disabled="isSaving">
+                      <div class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                    </label>
                   </div>
-                  
-                  <div class="border-t border-gray-200 dark:border-gray-700 p-6">
+
+                  <div v-if="idleConfig.enabled" class="border-t border-gray-200 dark:border-gray-700 p-6">
                     <div>
                       <label class="block text-sm font-medium mb-2 text-slate-900 dark:text-slate-25">
                         {{ $t('AGENT_MGMT.EOBOT.IDLE_TIME') }}
                       </label>
                       <select
                         v-model="idleConfig.duration"
+                        :disabled="isSaving"
                         class="text-center w-24 mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-slate-900 dark:border-slate-700 dark:text-white"
                       >
                         <option :value="5">{{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_OPTION_5_MIN') }}</option>

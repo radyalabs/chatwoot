@@ -97,6 +97,7 @@ class Account < ApplicationRecord
   has_many :reminders, dependent: :destroy_async
   has_many :reminder_configs, dependent: :destroy_async
   has_many :broadcast_campaigns, dependent: :destroy
+  has_many :broadcast_templates, dependent: :destroy_async
 
   has_one_attached :contacts_export
 

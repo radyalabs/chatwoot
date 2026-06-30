@@ -58,6 +58,7 @@ import shippingStores from './modules/shippingStores';
 import agentNotificationSettings from './modules/agentNotificationSettings';
 import scheduledReminders from './modules/scheduledReminders';
 import broadcasts from './modules/broadcasts';
+import broadcastTemplates from './modules/broadcastTemplates';
 const plugins = [];
 
 export default createStore({
@@ -120,6 +121,7 @@ export default createStore({
     agentNotificationSettings,
     scheduledReminders,
     broadcasts,
+    broadcastTemplates,
   },
   plugins,
 });

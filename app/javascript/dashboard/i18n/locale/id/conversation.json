@@ -464,7 +464,19 @@
     "DELETE_ERROR": "Gagal menghapus broadcast",
     "RECIPIENT_PREVIEW": "Preview Daftar Penerima",
     "RECIPIENT_LIST": "Daftar Penerima Pesan",
-    "TOTAL_CONTACTS": "Total: "
+    "TOTAL_CONTACTS": "Total: ",
+    "DELETE_TEMPLATE_TOOLTIP": "Hapus Template",
+    "UPDATE_TEMPLATE_BTN": "Perbarui Isi Template",
+    "SAVE_AS_NEW_BTN": "Simpan sbg Baru",
+    "MODAL_DELETE_TPL_TITLE": "Hapus Template",
+    "MODAL_DELETE_TPL_DESC_1": "Apakah Anda yakin ingin menghapus template",
+    "MODAL_DELETE_TPL_DESC_2": "? Tindakan ini tidak dapat dibatalkan.",
+    "MODAL_DELETE_TPL_BTN_CONFIRM": "Ya, Hapus",
+    "TEMPLATE_UPDATED_TOAST": "Template berhasil diperbarui!",
+    "TEMPLATE_UPDATE_ERROR": "Gagal memperbarui template.",
+    "TEMPLATE_DELETED_TOAST": "Template berhasil dihapus!",
+    "TEMPLATE_DELETE_ERROR": "Gagal menghapus template.",
+    "TEMPLATE_SAVE_ERROR": "Gagal menyimpan template pesan."
   },
   "BROADCAST_DETAIL": {
     "BACK": "Kembali ke Daftar",

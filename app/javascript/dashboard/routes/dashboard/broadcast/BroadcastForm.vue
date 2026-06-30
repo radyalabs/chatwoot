@@ -136,9 +136,22 @@
           <form @submit.prevent="submitBroadcast" class="p-8">
             <div class="mb-8 p-5 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800/50 rounded-xl">
               <label class="block text-sm font-semibold text-blue-800 dark:text-blue-300 mb-3 flex items-center gap-2"><span class="i-lucide-book-template w-5 h-5"></span>{{ $t('BROADCAST.TEMPLATE_LABEL') }}</label>
-              <multiselect v-model="selectedTemplate" :options="messageTemplates" track-by="id" label="name" :placeholder="$t('BROADCAST.TEMPLATE_PLACEHOLDER')" :searchable="true" :allow-empty="true" select-label="" deselect-label="" class="w-full uniform-dropdown template-dropdown" @select="applyTemplate">
-                <template #noResult>{{ $t('BROADCAST.TEMPLATE_NO_RESULT') }}</template>
-              </multiselect>
+              <div class="flex items-center gap-2">
+                <multiselect v-model="selectedTemplate" :options="messageTemplates" track-by="id" label="name" :placeholder="$t('BROADCAST.TEMPLATE_PLACEHOLDER')" :searchable="true" :allow-empty="true" select-label="" deselect-label="" class="w-full uniform-dropdown template-dropdown" @select="applyTemplate">
+                  <template #noResult>{{ $t('BROADCAST.TEMPLATE_NO_RESULT') }}</template>
+                  <template #noOptions>{{ $t('BROADCAST.TEMPLATE_NO_OPTIONS') || 'No templates yet' }}</template>
+                </multiselect>
+                
+                <button 
+                  v-if="isSavedTemplateSelected" 
+                  @click="showDeleteTemplateModal = true" 
+                  type="button" 
+                  class="w-[42px] h-[42px] flex items-center justify-center p-0 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 hover:text-red-700 border border-red-200 dark:bg-red-900/30 dark:border-red-800/50 dark:text-red-400 transition-colors focus:outline-none shrink-0" 
+                  :title="$t('BROADCAST.DELETE_TEMPLATE_TOOLTIP')"
+                >
+                  <span class="i-lucide-trash-2 w-5 h-5 block"></span>
+                </button>
+              </div>
             </div>
 
             <div class="mb-8">
@@ -150,15 +163,26 @@
                 <button type="button" @click="insertVariable('{{phone_number}}')" class="var-chip">{{ $t('BROADCAST.VAR_PHONE') }}</button>
               </div>
               <div class="hide-builtin-variables"><MessageEditor v-model="form.message_body" :show-variables="false" /></div>
-              <div class="mt-4 flex justify-end">
+              <div class="mt-4 flex justify-end gap-3">
+                <button 
+                  v-if="isSavedTemplateSelected" 
+                  type="button" 
+                  @click="updateSelectedTemplate" 
+                  :disabled="!form.message_body.trim() || isUpdatingTemplate" 
+                  class="inline-flex items-center justify-center space-x-2 rounded-md bg-white dark:bg-transparent px-5 py-2 text-sm font-semibold text-slate-900 dark:text-slate-300 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors focus:outline-none disabled:opacity-50"
+                >
+                  <span class="i-lucide-refresh-cw w-4 h-4" :class="{'animate-spin': isUpdatingTemplate}"></span>
+                  <span>{{ $t('BROADCAST.UPDATE_TEMPLATE_BTN') }}</span>
+                </button>
+
                 <button 
                   type="button" 
                   @click="openTemplateModal" 
                   :disabled="!form.message_body.trim()" 
-                  class="inline-flex items-center justify-center space-x-2 bg-green-600 text-white rounded-md hover:bg-green-700 px-5 py-2 text-sm font-semibold shadow-sm transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="inline-flex items-center justify-center space-x-2 bg-green-600 text-white rounded-md hover:bg-green-700 px-5 py-2 text-sm font-semibold shadow-sm transition-colors focus:outline-none disabled:opacity-50"
                 >
-                  <span class="i-lucide-save w-4 h-4"></span>
-                  <span>{{ $t('BROADCAST.SAVE_MESSAGE') }}</span>
+                  <span class="i-lucide-plus w-4 h-4"></span>
+                  <span>{{ $t('BROADCAST.SAVE_AS_NEW_BTN') }}</span>
                 </button>
               </div>
             </div>
@@ -307,6 +331,34 @@
       </div>
     </transition>
 
+    <!-- MODAL: HAPUS TEMPLATE -->
+    <transition name="modal-fade">
+      <div v-if="showDeleteTemplateModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200 dark:border-slate-700">
+          <div class="p-5 border-b border-slate-200 dark:border-slate-700 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
+              <span class="i-lucide-alert-triangle w-5 h-5 text-red-600 dark:text-red-400 block"></span>
+            </div>
+            <h3 class="font-bold text-lg text-slate-800 dark:text-white">{{ $t('BROADCAST.MODAL_DELETE_TPL_TITLE') }}</h3>
+          </div>
+          <div class="p-5">
+            <p class="text-sm text-slate-600 dark:text-slate-300">
+              {{ $t('BROADCAST.MODAL_DELETE_TPL_DESC_1') }} <span class="font-bold text-slate-800 dark:text-white">"{{ selectedTemplate?.name }}"</span> {{ $t('BROADCAST.MODAL_DELETE_TPL_DESC_2') }}
+            </p>
+          </div>
+          <div class="p-4 bg-slate-50 dark:bg-slate-900/50 flex justify-end gap-3 border-t border-slate-200 dark:border-slate-700">
+            <button @click="showDeleteTemplateModal = false" class="inline-flex justify-center rounded-lg bg-white dark:bg-transparent px-4 py-2 text-sm font-semibold text-slate-900 dark:text-slate-300 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors focus:outline-none">
+              {{ $t('BROADCAST.BTN_CANCEL') }}
+            </button>
+            <button @click="deleteSelectedTemplate" :disabled="isDeletingTemplate" class="inline-flex w-full justify-center bg-red-600 text-white rounded-md hover:bg-red-700 px-4 py-2 text-sm font-semibold shadow-sm sm:w-auto transition-colors disabled:opacity-50 focus:outline-none flex items-center gap-2">
+              <svg v-if="isDeletingTemplate" class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              <span>{{ $t('BROADCAST.MODAL_DELETE_TPL_BTN_CONFIRM') }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
   </div>
 </template>
 
@@ -348,6 +400,9 @@ export default {
       activeFilterPayload: null,
       estimatedContactCount: null,
       isFetchingContactCount: false,
+      isUpdatingTemplate: false,
+      showDeleteTemplateModal: false,
+      isDeletingTemplate: false,
     };
   },
 
@@ -391,6 +446,9 @@ export default {
       text = text.replace(/\{\{full_name\}\}/g, 'John Doe').replace(/\{\{first_name\}\}/g, 'John').replace(/\{\{phone_number\}\}/g, '+1234567890');
 
       return text;
+    },
+    isSavedTemplateSelected() {
+      return this.selectedTemplate && typeof this.selectedTemplate.id === 'number';
     },
   },
 
@@ -482,6 +540,8 @@ export default {
       const name = this.newTemplateName.trim();
       if (!name) return;
 
+      this.isSavingTemplate = true;
+
       try {
         const payload = {
           name: name,
@@ -500,7 +560,48 @@ export default {
         
         this.closeTemplateModal();
       } catch (error) {
-        if (window.bus) window.bus.$emit('new-toast-message', 'Gagal menyimpan template pesan.');
+        if (window.bus) window.bus.$emit('new-toast-message', this.$t('BROADCAST.TEMPLATE_SAVE_ERROR'));
+      } finally {
+        this.isSavingTemplate = false;
+      }
+    },
+
+    async updateSelectedTemplate() {
+      if (!this.isSavedTemplateSelected) return;
+      this.isUpdatingTemplate = true;
+
+      try {
+        const reqPayload = {
+          id: this.selectedTemplate.id,
+          payload: { message_body: this.form.message_body }
+        };
+        
+        await this.$store.dispatch('broadcastTemplates/update', reqPayload);
+        
+        if (window.bus) window.bus.$emit('new-toast-message', this.$t('BROADCAST.TEMPLATE_UPDATED_TOAST'));
+      } catch (error) {
+        if (window.bus) window.bus.$emit('new-toast-message', this.$t('BROADCAST.TEMPLATE_UPDATE_ERROR'));
+      } finally {
+        this.isUpdatingTemplate = false;
+      }
+    },
+
+    async deleteSelectedTemplate() {
+      if (!this.isSavedTemplateSelected) return;
+      
+      this.isDeletingTemplate = true;
+      try {
+        await this.$store.dispatch('broadcastTemplates/delete', this.selectedTemplate.id);
+        
+        if (window.bus) window.bus.$emit('new-toast-message', this.$t('BROADCAST.TEMPLATE_DELETED_TOAST'));
+        
+        this.selectedTemplate = null;
+        this.form.message_body = '';
+        this.showDeleteTemplateModal = false;
+      } catch (error) {
+        if (window.bus) window.bus.$emit('new-toast-message', this.$t('BROADCAST.TEMPLATE_DELETE_ERROR'));
+      } finally {
+        this.isDeletingTemplate = false;
       }
     },
 
@@ -552,7 +653,8 @@ export default {
   .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
   .dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #475569; }
   .uniform-dropdown { @apply text-sm text-slate-700 dark:text-slate-200; }
-  :deep(.uniform-dropdown .multiselect__tags) { @apply bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 rounded-lg; min-height: 44px; padding-top: 10px; padding-bottom: 10px; }
+  :deep(.uniform-dropdown .multiselect__tags) { @apply bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 rounded-lg; min-height: 42px; padding-top: 8px; padding-bottom: 8px; }
+  :deep(.uniform-dropdown .multiselect__select) { height: 40px; top: 1px; }
   :deep(.uniform-dropdown .multiselect__input) { @apply bg-transparent dark:text-white pt-0.5; }
   :deep(.uniform-dropdown .multiselect__single) { @apply bg-transparent dark:text-white mt-0.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90%; }
   :deep(.uniform-dropdown .multiselect__content-wrapper) { @apply bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 z-50 rounded-lg shadow-lg mt-1; }

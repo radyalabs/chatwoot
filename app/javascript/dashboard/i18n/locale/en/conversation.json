@@ -484,7 +484,19 @@
     "DELETE_ERROR": "Failed to delete broadcast",
     "RECIPIENT_PREVIEW": "Recipient List Preview",
     "RECIPIENT_LIST": "Message Recipients List",
-    "TOTAL_CONTACTS": "Total: "
+    "TOTAL_CONTACTS": "Total: ",
+    "DELETE_TEMPLATE_TOOLTIP": "Delete Template",
+    "UPDATE_TEMPLATE_BTN": "Update Template Content",
+    "SAVE_AS_NEW_BTN": "Save as New",
+    "MODAL_DELETE_TPL_TITLE": "Delete Template",
+    "MODAL_DELETE_TPL_DESC_1": "Are you sure you want to delete the",
+    "MODAL_DELETE_TPL_DESC_2": "template? This action cannot be undone.",
+    "MODAL_DELETE_TPL_BTN_CONFIRM": "Yes, Delete",
+    "TEMPLATE_UPDATED_TOAST": "Template updated successfully!",
+    "TEMPLATE_UPDATE_ERROR": "Failed to update template.",
+    "TEMPLATE_DELETED_TOAST": "Template deleted successfully!",
+    "TEMPLATE_DELETE_ERROR": "Failed to delete template.",
+    "TEMPLATE_SAVE_ERROR": "Failed to save message template."
   },
   "BROADCAST_DETAIL": {
     "BACK": "Back to List",

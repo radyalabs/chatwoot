@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import ApiClient from './ApiClient';
 
 class BroadcastTemplatesAPI extends ApiClient {

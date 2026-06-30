@@ -32,6 +32,7 @@ class Api::V2::Accounts::IdleConfigsController < Api::V1::Accounts::BaseControll
   def idle_config_response
     {
       id: @idle_config.id,
+      enabled: @idle_config.enabled,
       duration: @idle_config.duration,
       ai_agent_id: @idle_config.ai_agent_id,
       account_id: @idle_config.account_id,

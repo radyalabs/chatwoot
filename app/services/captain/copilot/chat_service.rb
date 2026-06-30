@@ -153,7 +153,7 @@ class Captain::Copilot::ChatService
       if is_first
         Rails.logger.info "[BOT] First bubble, enqueuing delay job for Conv: #{conversation_id}"
         Captain::Copilot::ChatDelayJob
-          .set(wait: 2.seconds)
+          .set(wait: 10.seconds)
           .perform_later(conversation_id)
       else
         Rails.logger.info "[BOT] Subsequent bubble buffered for Conv: #{conversation_id}"

@@ -18,13 +18,21 @@ class NotifyIdleConversationJob < ApplicationJob
     preload_durations(conversations)
 
     conversations.each do |idle_conversation|
-      duration = DEFAULT_END_STATE_DURATION # default duration
-      duration = @duration_cache[idle_conversation.ai_agent_id] || DEFAULT_DURATION if idle_conversation.step.zero?
-      unit = idle_conversation.step.zero? ? DEFAULT_UNIT : DEFAULT_END_STATE_UNIT
+      enabled = @enabled_cache.fetch(idle_conversation.ai_agent_id, true)
+
+      if enabled
+        duration = DEFAULT_END_STATE_DURATION
+        duration = @duration_cache[idle_conversation.ai_agent_id] || DEFAULT_DURATION if idle_conversation.step.zero?
+        unit = idle_conversation.step.zero? ? DEFAULT_UNIT : DEFAULT_END_STATE_UNIT
+      else
+        base_duration = @duration_cache[idle_conversation.ai_agent_id] || DEFAULT_DURATION
+        duration = [base_duration, 30].max
+        unit = 'minutes'
+      end
 
       next unless idle_since?(idle_conversation.conversation.last_activity_at, duration, unit)
 
-      idle_conversation_processor(idle_conversation)
+      enabled ? idle_conversation_processor(idle_conversation) : complete_and_resolve(idle_conversation)
     end
 
     Rails.logger.info('[NotifyIdleConversationJob] Completed processing idle conversations')
@@ -34,9 +42,9 @@ class NotifyIdleConversationJob < ApplicationJob
 
   def preload_durations(conversations)
     ai_agent_ids = conversations.map(&:ai_agent_id).uniq
-    @duration_cache = IdleConfig.where(ai_agent_id: ai_agent_ids)
-                                .pluck(:ai_agent_id, :duration)
-                                .to_h
+    configs = IdleConfig.where(ai_agent_id: ai_agent_ids).pluck(:ai_agent_id, :duration, :enabled)
+    @duration_cache = configs.to_h { |id, dur, _| [id, dur] }
+    @enabled_cache = configs.to_h { |id, _, en| [id, en] }
   end
 
   def idle_since?(last_activity_at, duration, unit)

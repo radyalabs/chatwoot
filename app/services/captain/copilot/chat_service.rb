@@ -13,7 +13,7 @@ class Captain::Copilot::ChatService
 
   def perform
     switch_locale_using_account_locale do
-      Rails.logger.info "[ChatService] >>> PERFORM msg_id=#{@message.id} conv=#{@context.conversation.id} combined=#{@combined_text.present?} sender=#{@message.sender_type} content=#{@message.content&.first(50).inspect}"
+      Rails.logger.info "[ChatService] >>> PERFORM msg_id=#{@message.id} conv=#{@context.conversation.id} sender=#{@message.sender_type} content=#{@message.content&.first(50).inspect}"
 
       unless @context.active_conversation
         Rails.logger.warn "[ChatService] SKIPPED: no active conversation (assignee may be set) | msg_id=#{@message.id} conv_id=#{@context.conversation.id} assignee_id=#{@context.conversation.reload.assignee_id}"
@@ -49,41 +49,11 @@ class Captain::Copilot::ChatService
       return if group_message_without_mention?
 
       is_welcome = welcome_message?
-      delay = delay_enabled?
 
-      Rails.logger.info "[ChatService] ROUTING msg_id=#{@message.id} is_welcome=#{is_welcome} delay_enabled=#{delay} combined=#{@combined_text.present?}"
+      Rails.logger.info "[ChatService] ROUTING msg_id=#{@message.id} is_welcome=#{is_welcome}"
 
-      clear_pending_idle_conversation unless @combined_text.present?
-
-      if @combined_text.present?
-        send_messages(payload: @combined_text, is_welcome: false)
-      elsif delay && !is_welcome
-        enqueue_for_delay
-      else
-        send_messages(payload: @message, is_welcome: is_welcome)
-      end
-    end
-  end
-
-  # Optimized path for ChatDelayJob - skips pre-checks that were already
-  # performed when the message first arrived. This avoids double initialization
-  # overhead and redundant database queries.
-  def perform_combined
-    switch_locale_using_account_locale do
-      Rails.logger.info "[ChatService] >>> PERFORM_COMBINED msg_id=#{@message.id} conv=#{@context.conversation.id} combined_text=#{@combined_text.present?}"
-
-      send_messages(payload: @combined_text || @message, is_welcome: false)
-    end
-  end
-
-  private
-
-  def delay_enabled?
-    agents_config = @context.ai_agent.flow_data&.dig('agents_config') || []
-
-    agents_config.any? do |agent|
-      agent&.dig('configurations', 'delay_enabled') == true ||
-        agent&.dig('configurations', 'delay_enabled') == 'true'
+      clear_pending_idle_conversation
+      send_messages(payload: @message, is_welcome: is_welcome)
     end
   end
 
@@ -143,37 +113,18 @@ class Captain::Copilot::ChatService
     bot_messages.any?
   end
 
-  def enqueue_for_delay
-    conversation_id = @context.conversation.id
-    lock_key = "jangkau:chat_lock:#{conversation_id}"
-
-    Sidekiq.redis do |redis|
-      is_first = redis.set(lock_key, '1', nx: true, ex: 600)
-
-      if is_first
-        Rails.logger.info "[BOT] First bubble, enqueuing delay job for Conv: #{conversation_id}"
-        Captain::Copilot::ChatDelayJob
-          .set(wait: 10.seconds)
-          .perform_later(conversation_id)
-      else
-        Rails.logger.info "[BOT] Subsequent bubble buffered for Conv: #{conversation_id}"
-      end
-    end
-  end
-
   def send_messages(payload:, is_welcome: false)
     Rails.logger.info '[DEBUG JANGKAU] Memasuki execute_ai_call untuk memanggil AI API'
 
-    actual_payload = @combined_text.present? ? @message : payload
-    combined_text_arg = @combined_text.presence
-
     send_message = Captain::Llm::AssistantChatService.new(
-      actual_payload,
+      payload,
       @context.conversation,
       @context.ai_agent,
-      @current_account.id,
-      combined_text: combined_text_arg
+      @current_account.id
     ).perform
+
+    # nil means 202 Accepted — Langgraph will process asynchronously
+    return unless send_message
 
     unless send_message.success?
       Rails.logger.error '[DEBUG JANGKAU] Gagal mendapat respons sukses dari AI!'

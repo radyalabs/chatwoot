@@ -6,6 +6,12 @@ class Captain::Copilot::MessageDebouncer
   end
 
   def schedule
+    Rails.logger.info(
+      '[Captain::Copilot::MessageDebouncer] Scheduled debounced processing | ' \
+      "conversation_id=#{@message.conversation_id} | message_id=#{@message.id} | " \
+      "debounce_interval_seconds=#{debounce_interval_seconds}"
+    )
+
     Captain::Copilot::ProcessDebouncedConversationJob
       .set(wait: debounce_interval_seconds.seconds)
       .perform_later(@message.conversation_id, @message.id)

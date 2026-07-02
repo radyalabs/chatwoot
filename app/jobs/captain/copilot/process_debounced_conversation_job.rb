@@ -78,6 +78,7 @@ class Captain::Copilot::ProcessDebouncedConversationJob < ApplicationJob
                 .where(sender_type: 'Contact', private: false)
                 .where('created_at >= ?', first_in_burst.created_at)
                 .where('created_at < ? OR (created_at = ? AND id <= ?)', latest_message.created_at, latest_message.created_at, latest_message.id)
+                .order(created_at: :asc, id: :asc)
                 .includes(attachments: { file_attachment: :blob })
   end
 

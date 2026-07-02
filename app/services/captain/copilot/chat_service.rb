@@ -4,11 +4,13 @@ class Captain::Copilot::ChatService
 
   AI_SUPPORTED_ATTACHMENT_TYPES = %w[image].freeze
 
-  def initialize(message, combined_text = nil)
+  def initialize(message, combined_question: nil, attachments: nil)
     @message = message
-    @combined_text = combined_text
     @context = Captain::Copilot::MessageContext.new(message)
     @current_account = @context.account
+    @combined_question = combined_question
+    @combined_text = combined_question
+    @attachments = attachments || []
   end
 
   def perform
@@ -48,23 +50,21 @@ class Captain::Copilot::ChatService
 
       return if group_message_without_mention?
 
-      is_welcome = welcome_message?
-
-      Rails.logger.info "[ChatService] ROUTING msg_id=#{@message.id} is_welcome=#{is_welcome}"
-
       clear_pending_idle_conversation
-      send_messages(payload: @message, is_welcome: is_welcome)
+      send_messages
     end
   end
 
+  private
+
   def meaningful_for_ai?
-    return true if @message.content.present?
-    return true if @message.attachments.any? { |att| AI_SUPPORTED_ATTACHMENT_TYPES.include?(att.file_type) }
+    return true if question_payload.present?
+    return true if ai_attachments.any? { |att| attachment_type(att).to_s.start_with?('image') }
 
     Rails.logger.info(
       '[ChatService] Skipping AI request — no text or image content | ' \
       "message_id=#{@message.id} | " \
-      "attachment_types=#{@message.attachments.map(&:file_type)}"
+      "attachment_types=#{ai_attachments.map { |att| attachment_type(att) }}"
     )
     false
   end
@@ -113,37 +113,6 @@ class Captain::Copilot::ChatService
     bot_messages.any?
   end
 
-  def send_messages(payload:, is_welcome: false)
-    Rails.logger.info '[DEBUG JANGKAU] Memasuki execute_ai_call untuk memanggil AI API'
-
-    send_message = Captain::Llm::AssistantChatService.new(
-      payload,
-      @context.conversation,
-      @context.ai_agent,
-      @current_account.id
-    ).perform
-
-    # nil means 202 Accepted — Langgraph will process asynchronously
-    return unless send_message
-
-    unless send_message.success?
-      Rails.logger.error '[DEBUG JANGKAU] Gagal mendapat respons sukses dari AI!'
-      return send_reply_failure(I18n.t('conversations.bot.failure'))
-    end
-
-    @context.usage.increment_ai_responses
-    response = send_message.parsed_response
-    parsed = parsed_response(response, is_custom_agent: @context.ai_agent.custom_agent?)
-
-    if is_welcome
-      sent = send_greeting_images(caption: parsed[:response])
-
-      send_reply(parsed, additional_attributes: { message_type: 1, sender_type: 'AiAgent', attachments: parsed[:attachments] }) unless sent
-    else
-      send_reply(parsed, additional_attributes: { message_type: 1, sender_type: 'AiAgent', attachments: parsed[:attachments] })
-    end
-  end
-
   def pre_check_failure_reason
     return I18n.t('subscriptions.limit_reached') unless @context.subscription
     return I18n.t('subscriptions.limit_reached') unless @context.usage
@@ -153,11 +122,94 @@ class Captain::Copilot::ChatService
     nil
   end
 
+  def send_messages
+    # Cache before API call to avoid race condition — new messages arriving
+    # during the request would change the count and skip greeting images
+    is_welcome = welcome_message?
+
+    send_message = Captain::Llm::AssistantChatService.new(
+      assistant_message,
+      @context.conversation,
+      @context.ai_agent,
+      @current_account.id,
+      attachments: ai_attachments
+    ).perform
+
+    # nil means 202 Accepted — Langgraph will process asynchronously
+    return unless send_message
+
+    return send_reply_failure(I18n.t('conversations.bot.failure')) unless send_message.success?
+
+    @context.usage.increment_ai_responses
+    response = send_message.parsed_response
+    parsed = parsed_response(response, is_custom_agent: @context.ai_agent.custom_agent?)
+
+    if is_welcome
+      sent = send_greeting_images(caption: parsed[:response])
+
+      unless sent
+        send_reply(
+          parsed,
+          additional_attributes: {
+            message_type: 1,
+            sender_type: 'AiAgent',
+            attachments: parsed[:attachments]
+          }
+        )
+      end
+    else
+      send_reply(
+        parsed,
+        additional_attributes: {
+          message_type: 1,
+          sender_type: 'AiAgent',
+          attachments: parsed[:attachments]
+        }
+      )
+    end
+  end
+
   def welcome_message?
     greeting_config = @context.ai_agent&.display_flow_data&.dig('greeting_config')
     return false unless greeting_config&.dig('enabled')
 
-    @context.conversation.messages.incoming.where(private: false).count == 1
+    !conversation_ai_state.ai_replied?
+  end
+
+  def conversation_ai_state
+    @conversation_ai_state ||= Captain::Copilot::ConversationAiState.new(@context.conversation)
+  end
+
+  def assistant_message
+    @combined_question.presence || @message
+  end
+
+  def question_payload
+    return @combined_question if @combined_question.is_a?(String)
+
+    @message.content
+  end
+
+  def ai_attachments
+    return @attachments if @attachments.present?
+
+    @message.attachments
+            .includes(file_attachment: :blob)
+            .select { |att| att.file.attached? }
+            .map do |att|
+      {
+        key: att.file.key,
+        file_type: att.file.content_type,
+        filename: att.file.filename.to_s,
+        url: att.download_url
+      }
+    end
+  end
+
+  def attachment_type(attachment)
+    return attachment[:file_type] || attachment['file_type'] if attachment.is_a?(Hash)
+
+    attachment.file_type
   end
 
   def send_greeting_images(caption: nil)

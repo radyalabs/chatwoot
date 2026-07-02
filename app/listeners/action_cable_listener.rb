@@ -38,11 +38,12 @@ class ActionCableListener < BaseListener
     tokens = user_tokens(account, conversation.inbox.members) +
              contact_tokens(conversation.contact_inbox, message)
 
-    if message.sender_type == 'Contact'
-      Rails.logger.info "[Listener] message_created → ChatServiceJob enqueued | msg_id=#{message.id} conv=#{conversation.id} sender=#{message.sender_type}"
-      Captain::Copilot::ChatServiceJob.perform_later(message.id)
-    else
-      Rails.logger.info "[Listener] message_created → SKIPPED (not Contact) | msg_id=#{message.id} sender=#{message.sender_type}"
+    if message.sender_type == 'Contact' && message.incoming? && !message.private?
+      if ENV.fetch('CAPTAIN_DEBOUNCE_ENABLED', 'true') == 'true'
+        Captain::Copilot::MessageDebouncer.new(message).schedule
+      else
+        Captain::Copilot::ChatServiceJob.perform_later(message.id)
+      end
     end
 
     broadcast(account, tokens, MESSAGE_CREATED, message.push_event_data)

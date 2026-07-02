@@ -72,7 +72,7 @@ class Captain::Llm::BaseJangkauService
   end
 
   def first_message?(conversation)
-    conversation.messages.incoming.where(private: false).count == 1
+    !Captain::Copilot::ConversationAiState.new(conversation).ai_replied?
   end
 
   def welcome_enabled?(ai_agent)
@@ -167,8 +167,9 @@ class Captain::Llm::BaseJangkauService
                                content_attrs['in_reply_to_external_id'] ||
                                content_attrs.dig('gowa_reply', 'raw_in_reply_to_external_id') ||
                                content_attrs.dig(:gowa_reply, :raw_in_reply_to_external_id)
+    quoted_text = content_attrs.dig('gowa_reply', 'quoted_text') || content_attrs.dig(:gowa_reply, :quoted_text)
 
-    in_reply_to.present? || in_reply_to_external_id.present?
+    in_reply_to.present? || in_reply_to_external_id.present? || quoted_text.present?
   end
 
   def replied_to_message_text

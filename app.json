@@ -36,6 +36,18 @@
     "REDIS_OPENSSL_VERIFY_MODE":{
       "description": "OpenSSL verification mode for Redis connections. ref https://help.heroku.com/HC0F8CUS/redis-connection-issues",
       "value": "none"
+    },
+    "CAPTAIN_DEBOUNCE_ENABLED": {
+      "description": "Enable conversation-level debounce for AI agent invocation.",
+      "value": "true"
+    },
+    "CAPTAIN_DEBOUNCE_INTERVAL_SECONDS": {
+      "description": "Trailing debounce interval for incoming customer messages.",
+      "value": "10"
+    },
+    "CAPTAIN_DEBOUNCE_MAX_WAIT_SECONDS": {
+      "description": "Maximum wait before forcing buffered AI invocation.",
+      "value": "60"
     }
   },
   "formation": {

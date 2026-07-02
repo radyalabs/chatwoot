@@ -4,25 +4,34 @@ class Captain::Copilot::ChatServiceJob < ApplicationJob
   BLOB_WAIT_TIMEOUT = 30
   BLOB_CHECK_INTERVAL = 1
   MAX_RETRIES = 3
+  ADVISORY_LOCK_NAMESPACE = 10_201
 
   retry_on ActiveStorage::FileNotFoundError, wait: 5.seconds, attempts: MAX_RETRIES
 
   def perform(message_id, combined_question: nil, attachments: nil)
     Rails.logger.info "[ChatServiceJob] >>> START message_id=#{message_id}"
-    message = load_message_with_attachments(message_id)
-    unless message
-      Rails.logger.warn "[ChatServiceJob] Message not found in DB: #{message_id}"
-      return
+    with_message_lock(message_id) do
+      message = load_message_with_attachments(message_id)
+      unless message
+        Rails.logger.warn "[ChatServiceJob] Message not found in DB: #{message_id}"
+        return
+      end
+
+      Rails.logger.info "[ChatServiceJob] Loaded msg_id=#{message_id} conv=#{message.conversation_id} sender=#{message.sender_type}"
+
+      if ai_already_replied_after?(message)
+        Rails.logger.info("[ChatServiceJob] Skipping duplicate invocation for message #{message.id}")
+        return
+      end
+
+      wait_for_attachment_blobs(message)
+
+      Captain::Copilot::ChatService.new(
+        message,
+        combined_question: combined_question,
+        attachments: attachments
+      ).perform
     end
-
-    Rails.logger.info "[ChatServiceJob] Loaded msg_id=#{message_id} conv=#{message.conversation_id} sender=#{message.sender_type}"
-    wait_for_attachment_blobs(message)
-
-    Captain::Copilot::ChatService.new(
-      message,
-      combined_question: combined_question,
-      attachments: attachments
-    ).perform
   rescue StandardError => e
     track_metric('captain.debounce.ai_invocation_failure', message_id: message_id, error: e.class.name)
     raise
@@ -67,6 +76,28 @@ class Captain::Copilot::ChatServiceJob < ApplicationJob
   rescue StandardError => e
     Rails.logger.warn "Error checking blob: #{e.message}"
     false
+  end
+
+  def ai_already_replied_after?(message)
+    message.conversation.messages
+           .where(sender_type: 'AiAgent')
+           .exists?([
+                      'created_at > ? OR (created_at = ? AND id > ?)',
+                      message.created_at,
+                      message.created_at,
+                      message.id
+                    ])
+  end
+
+  def with_message_lock(message_id)
+    connection = ActiveRecord::Base.connection
+    lock_sql = "SELECT pg_advisory_lock(#{ADVISORY_LOCK_NAMESPACE}, #{message_id.to_i})"
+    unlock_sql = "SELECT pg_advisory_unlock(#{ADVISORY_LOCK_NAMESPACE}, #{message_id.to_i})"
+
+    connection.execute(lock_sql)
+    yield
+  ensure
+    connection&.execute(unlock_sql)
   end
 
   def track_metric(event_name, payload)

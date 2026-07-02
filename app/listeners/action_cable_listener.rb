@@ -38,7 +38,13 @@ class ActionCableListener < BaseListener
     tokens = user_tokens(account, conversation.inbox.members) +
              contact_tokens(conversation.contact_inbox, message)
 
-    Captain::Copilot::ChatServiceJob.perform_later(message.id) if message.sender_type == 'Contact'
+    if message.sender_type == 'Contact' && message.incoming? && !message.private?
+      if ENV.fetch('CAPTAIN_DEBOUNCE_ENABLED', 'true') == 'true'
+        Captain::Copilot::MessageDebouncer.new(message).schedule
+      else
+        Captain::Copilot::ChatServiceJob.perform_later(message.id)
+      end
+    end
 
     broadcast(account, tokens, MESSAGE_CREATED, message.push_event_data)
   end

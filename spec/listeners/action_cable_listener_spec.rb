@@ -1,13 +1,15 @@
 require 'rails_helper'
 describe ActionCableListener do
   let(:listener) { described_class.instance }
+  let(:usage_incrementer) { instance_double(Subscriptions::IncrementUsageService, perform: true) }
   let!(:account) { create(:account) }
   let!(:admin) { create(:user, account: account, role: :administrator) }
   let!(:inbox) { create(:inbox, account: account) }
   let!(:agent) { create(:user, account: account, role: :agent) }
-  let!(:conversation) { create(:conversation, account: account, inbox: inbox, assignee: agent) }
+  let(:conversation) { create(:conversation, account: account, inbox: inbox, assignee: agent) }
 
   before do
+    allow(Subscriptions::IncrementUsageService).to receive(:new).and_return(usage_incrementer)
     create(:inbox_member, inbox: inbox, user: agent)
     Current.user = nil
     Current.account = nil
@@ -51,6 +53,42 @@ describe ActionCableListener do
         message.push_event_data.merge(account_id: account.id)
       )
       listener.message_created(event)
+    end
+
+    context 'when message is incoming from contact' do
+      let!(:message) do
+        create(
+          :message,
+          message_type: 'incoming',
+          sender: conversation.contact,
+          account: account,
+          inbox: inbox,
+          conversation: conversation
+        )
+      end
+
+      it 'routes message through debouncer when debounce is enabled' do
+        debouncer = instance_double(Captain::Copilot::MessageDebouncer, schedule: true)
+        allow(ActionCableBroadcastJob).to receive(:perform_later)
+
+        expect(Captain::Copilot::MessageDebouncer).to receive(:new).with(message).and_return(debouncer)
+        expect(Captain::Copilot::ChatServiceJob).not_to receive(:perform_later)
+
+        with_modified_env CAPTAIN_DEBOUNCE_ENABLED: 'true' do
+          listener.message_created(event)
+        end
+      end
+
+      it 'routes message directly to ChatServiceJob when debounce is disabled' do
+        allow(ActionCableBroadcastJob).to receive(:perform_later)
+
+        expect(Captain::Copilot::MessageDebouncer).not_to receive(:new)
+        expect(Captain::Copilot::ChatServiceJob).to receive(:perform_later).with(message.id)
+
+        with_modified_env CAPTAIN_DEBOUNCE_ENABLED: 'false' do
+          listener.message_created(event)
+        end
+      end
     end
   end
 

@@ -7,13 +7,20 @@ class Captain::Copilot::ChatServiceJob < ApplicationJob
 
   retry_on ActiveStorage::FileNotFoundError, wait: 5.seconds, attempts: MAX_RETRIES
 
-  def perform(message_id)
+  def perform(message_id, combined_question: nil, attachments: nil)
     message = load_message_with_attachments(message_id)
     return unless message
 
     wait_for_attachment_blobs(message)
 
-    Captain::Copilot::ChatService.new(message).perform
+    Captain::Copilot::ChatService.new(
+      message,
+      combined_question: combined_question,
+      attachments: attachments
+    ).perform
+  rescue StandardError => e
+    track_metric('captain.debounce.ai_invocation_failure', message_id: message_id, error: e.class.name)
+    raise
   end
 
   private
@@ -55,5 +62,11 @@ class Captain::Copilot::ChatServiceJob < ApplicationJob
   rescue StandardError => e
     Rails.logger.warn "Error checking blob: #{e.message}"
     false
+  end
+
+  def track_metric(event_name, payload)
+    ActiveSupport::Notifications.instrument(event_name, payload)
+  rescue StandardError => e
+    Rails.logger.warn("[ChatServiceJob] metric emit failed: #{e.message}")
   end
 end

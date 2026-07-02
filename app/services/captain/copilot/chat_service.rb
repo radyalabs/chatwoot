@@ -4,10 +4,12 @@ class Captain::Copilot::ChatService
 
   AI_SUPPORTED_ATTACHMENT_TYPES = %w[image].freeze
 
-  def initialize(message)
+  def initialize(message, combined_question: nil, attachments: nil)
     @message = message
     @context = Captain::Copilot::MessageContext.new(message)
     @current_account = @context.account
+    @combined_question = combined_question
+    @attachments = attachments || []
   end
 
   def perform
@@ -29,13 +31,13 @@ class Captain::Copilot::ChatService
   private
 
   def meaningful_for_ai?
-    return true if @message.content.present?
-    return true if @message.attachments.any? { |att| AI_SUPPORTED_ATTACHMENT_TYPES.include?(att.file_type) }
+    return true if question_payload.present?
+    return true if ai_attachments.any? { |att| attachment_type(att).to_s.start_with?('image') }
 
     Rails.logger.info(
-      "[ChatService] Skipping AI request — no text or image content | " \
+      '[ChatService] Skipping AI request — no text or image content | ' \
       "message_id=#{@message.id} | " \
-      "attachment_types=#{@message.attachments.map(&:file_type)}"
+      "attachment_types=#{ai_attachments.map { |att| attachment_type(att) }}"
     )
     false
   end
@@ -55,10 +57,11 @@ class Captain::Copilot::ChatService
     is_welcome = welcome_message?
 
     send_message = Captain::Llm::AssistantChatService.new(
-      @message,
+      assistant_message,
       @context.conversation,
       @context.ai_agent,
-      @current_account.id
+      @current_account.id,
+      attachments: ai_attachments
     ).perform
 
     return send_reply_failure(I18n.t('conversations.bot.failure')) unless send_message.success?
@@ -96,7 +99,43 @@ class Captain::Copilot::ChatService
     greeting_config = @context.ai_agent&.display_flow_data&.dig('greeting_config')
     return false unless greeting_config&.dig('enabled')
 
-    @context.conversation.messages.incoming.where(private: false).count == 1
+    !conversation_ai_state.ai_replied?
+  end
+
+  def conversation_ai_state
+    @conversation_ai_state ||= Captain::Copilot::ConversationAiState.new(@context.conversation)
+  end
+
+  def assistant_message
+    @combined_question.presence || @message
+  end
+
+  def question_payload
+    return @combined_question if @combined_question.is_a?(String)
+
+    @message.content
+  end
+
+  def ai_attachments
+    return @attachments if @attachments.present?
+
+    @message.attachments
+            .includes(file_attachment: :blob)
+            .select { |att| att.file.attached? }
+            .map do |att|
+      {
+        key: att.file.key,
+        file_type: att.file.content_type,
+        filename: att.file.filename.to_s,
+        url: att.download_url
+      }
+    end
+  end
+
+  def attachment_type(attachment)
+    return attachment[:file_type] || attachment['file_type'] if attachment.is_a?(Hash)
+
+    attachment.file_type
   end
 
   def send_greeting_images(caption: nil)

@@ -1,7 +1,8 @@
 class Captain::Copilot::ConversationStateHandler
-  def initialize(context, log_prefix:)
+  LOG_PREFIX = '[Captain::Copilot::ConversationStateHandler]'.freeze
+
+  def initialize(context)
     @context = context
-    @log_prefix = log_prefix
   end
 
   def process_handover(content)
@@ -20,7 +21,7 @@ class Captain::Copilot::ConversationStateHandler
     return unless response[:has_domain_change]
 
     @context.conversation.update(is_convert: true)
-    Rails.logger.info "#{@log_prefix} conversation_marked_converted | conversation_id=#{@context.conversation.id}"
+    Rails.logger.info "#{LOG_PREFIX} conversation_marked_converted | conversation_id=#{@context.conversation.id}"
   end
 
   def process_end_state(response)

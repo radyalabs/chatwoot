@@ -1,16 +1,16 @@
 class Captain::Copilot::GreetingImageSender
   MAX_GREETING_IMAGE_SIZE = 10.megabytes
+  LOG_PREFIX = '[Captain::Copilot::GreetingImageSender]'.freeze
 
-  def initialize(context, log_prefix:)
+  def initialize(context)
     @context = context
-    @log_prefix = log_prefix
   end
 
   def perform(caption: nil)
     images = greeting_images
     return false if images.empty?
 
-    Rails.logger.info "#{@log_prefix} sending_greeting_images | conversation_id=#{@context.conversation.id} | image_count=#{images.count}"
+    Rails.logger.info "#{LOG_PREFIX} sending_greeting_images | conversation_id=#{@context.conversation.id} | image_count=#{images.count}"
 
     attrs = {
       account_id: @context.account_id,
@@ -106,7 +106,7 @@ class Captain::Copilot::GreetingImageSender
 
   def log_greeting_image_sent(index, message_id)
     Rails.logger.info(
-      "#{@log_prefix} greeting_image_sent | " \
+      "#{LOG_PREFIX} greeting_image_sent | " \
       "conversation_id=#{@context.conversation.id} | " \
       "image_index=#{index + 1} | " \
       "message_id=#{message_id}"
@@ -115,7 +115,7 @@ class Captain::Copilot::GreetingImageSender
 
   def log_greeting_image_send_failed(index, error)
     Rails.logger.error(
-      "#{@log_prefix} greeting_image_send_failed | " \
+      "#{LOG_PREFIX} greeting_image_send_failed | " \
       "conversation_id=#{@context.conversation.id} | " \
       "image_index=#{index + 1} | " \
       "error_class=#{error.class.name}"
@@ -124,7 +124,7 @@ class Captain::Copilot::GreetingImageSender
 
   def log_greeting_image_too_large(index, image_size)
     Rails.logger.warn(
-      "#{@log_prefix} skipped_greeting_image_too_large | " \
+      "#{LOG_PREFIX} skipped_greeting_image_too_large | " \
       "image_index=#{index + 1} | " \
       "image_size_bytes=#{image_size} | " \
       "max_size_bytes=#{MAX_GREETING_IMAGE_SIZE}"
@@ -133,7 +133,7 @@ class Captain::Copilot::GreetingImageSender
 
   def log_greeting_blob_too_large(image_size)
     Rails.logger.warn(
-      "#{@log_prefix} skipped_greeting_blob_too_large | " \
+      "#{LOG_PREFIX} skipped_greeting_blob_too_large | " \
       "image_size_bytes=#{image_size} | " \
       "max_size_bytes=#{MAX_GREETING_IMAGE_SIZE}"
     )

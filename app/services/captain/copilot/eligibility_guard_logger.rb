@@ -1,8 +1,9 @@
 class Captain::Copilot::EligibilityGuardLogger
-  def initialize(message, context, log_prefix:)
+  LOG_PREFIX = '[Captain::Copilot::EligibilityGuardLogger]'.freeze
+
+  def initialize(message, context)
     @message = message
     @context = context
-    @log_prefix = log_prefix
   end
 
   def log(result)
@@ -20,7 +21,7 @@ class Captain::Copilot::EligibilityGuardLogger
 
   def log_no_active_conversation(result)
     Rails.logger.info(
-      "#{@log_prefix} skipped_no_active_conversation | " \
+      "#{LOG_PREFIX} skipped_no_active_conversation | " \
       "message_id=#{@message.id} | " \
       "conversation_id=#{result.metadata[:conversation_id]} | " \
       "assignee_id=#{result.metadata[:assignee_id]}"
@@ -28,25 +29,25 @@ class Captain::Copilot::EligibilityGuardLogger
   end
 
   def log_pre_check_failure(result)
-    Rails.logger.info "#{@log_prefix} skipped_pre_check_failure | message_id=#{@message.id} | reason=#{result.failure_reason}"
+    Rails.logger.info "#{LOG_PREFIX} skipped_pre_check_failure | message_id=#{@message.id} | reason=#{result.failure_reason}"
   end
 
   def log_no_agent_bot_inbox
-    Rails.logger.warn "#{@log_prefix} skipped_no_agent_bot_inbox | message_id=#{@message.id} | inbox_id=#{@context.inbox_id}"
+    Rails.logger.warn "#{LOG_PREFIX} skipped_no_agent_bot_inbox | message_id=#{@message.id} | inbox_id=#{@context.inbox_id}"
   end
 
   def log_no_ai_agent
-    Rails.logger.warn "#{@log_prefix} skipped_no_ai_agent | message_id=#{@message.id}"
+    Rails.logger.warn "#{LOG_PREFIX} skipped_no_ai_agent | message_id=#{@message.id}"
   end
 
   def log_bot_not_available
-    Rails.logger.info "#{@log_prefix} skipped_bot_not_available | message_id=#{@message.id}"
+    Rails.logger.info "#{LOG_PREFIX} skipped_bot_not_available | message_id=#{@message.id}"
   end
 
   def log_not_meaningful_for_ai(result)
-    Rails.logger.info "#{@log_prefix} skipped_not_meaningful_for_ai | message_id=#{@message.id}"
+    Rails.logger.info "#{LOG_PREFIX} skipped_not_meaningful_for_ai | message_id=#{@message.id}"
     Rails.logger.info(
-      "#{@log_prefix} skipped_no_text_or_image_content | " \
+      "#{LOG_PREFIX} skipped_no_text_or_image_content | " \
       "message_id=#{@message.id} | " \
       "attachment_types=#{result.metadata[:attachment_types]}"
     )

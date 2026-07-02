@@ -1,7 +1,8 @@
 class Captain::Copilot::ReplyDispatcher
-  def initialize(context, log_prefix:)
+  LOG_PREFIX = '[Captain::Copilot::ReplyDispatcher]'.freeze
+
+  def initialize(context)
     @context = context
-    @log_prefix = log_prefix
   end
 
   def perform(content:, additional_attributes:)
@@ -38,7 +39,7 @@ class Captain::Copilot::ReplyDispatcher
   def enqueue_attachments(attrs, attachments, content)
     return if attachments.blank?
 
-    Rails.logger.info "#{@log_prefix} enqueue_async_image_attach | conversation_id=#{@context.conversation.id} | image_count=#{attachments.count}"
+    Rails.logger.info "#{LOG_PREFIX} enqueue_async_image_attach | conversation_id=#{@context.conversation.id} | image_count=#{attachments.count}"
 
     attachments.each_with_index do |attachment, idx|
       Captain::Copilot::AttachMessageImageJob.perform_later(

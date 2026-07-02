@@ -38,7 +38,7 @@ class Captain::Copilot::ChatService
 
   def handle_ineligible_request(result)
     Captain::Copilot::EligibilityGuardLogger
-      .new(@message, @context, log_prefix: LOG_PREFIX)
+      .new(@message, @context)
       .log(result)
 
     return send_reply_failure(result.failure_reason) if result.code == :pre_check_failure
@@ -134,7 +134,7 @@ class Captain::Copilot::ChatService
 
   def send_greeting_images(caption: nil)
     Captain::Copilot::GreetingImageSender
-      .new(@context, log_prefix: LOG_PREFIX)
+      .new(@context)
       .perform(caption: caption)
   end
 
@@ -160,7 +160,7 @@ class Captain::Copilot::ChatService
     conversation_state_handler.process_conversion(response)
 
     Captain::Copilot::ReplyDispatcher
-      .new(@context, log_prefix: LOG_PREFIX)
+      .new(@context)
       .perform(
         content: message_content,
         additional_attributes: additional_attributes.except(:reservation_details)
@@ -184,7 +184,7 @@ class Captain::Copilot::ChatService
   end
 
   def conversation_state_handler
-    @conversation_state_handler ||= Captain::Copilot::ConversationStateHandler.new(@context, log_prefix: LOG_PREFIX)
+    @conversation_state_handler ||= Captain::Copilot::ConversationStateHandler.new(@context)
   end
 
   def send_log_reply(is_handover: false)

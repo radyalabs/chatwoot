@@ -56,7 +56,13 @@ class Captain::Copilot::ChatService
 
   def send_messages
     is_welcome = welcome_message?
+    parsed = parsed_assistant_response
+    return unless parsed
 
+    send_parsed_reply(parsed, is_welcome: is_welcome)
+  end
+
+  def parsed_assistant_response
     send_message = Captain::Llm::AssistantChatService.new(
       assistant_message,
       @context.conversation,
@@ -65,35 +71,28 @@ class Captain::Copilot::ChatService
       attachments: ai_attachments
     ).perform
 
-    return send_reply_failure(I18n.t('conversations.bot.failure')) unless send_message.success?
+    unless send_message.success?
+      send_reply_failure(I18n.t('conversations.bot.failure'))
+      return
+    end
 
     @context.usage.increment_ai_responses
-    response = send_message.parsed_response
-    parsed = parsed_response(response, is_custom_agent: @context.ai_agent.custom_agent?)
+    parsed_response(send_message.parsed_response, is_custom_agent: @context.ai_agent.custom_agent?)
+  end
 
-    if is_welcome
-      sent = send_greeting_images(caption: parsed[:response])
+  def send_parsed_reply(parsed, is_welcome:)
+    return send_reply(parsed, additional_attributes: reply_attributes(parsed)) unless is_welcome
+    return if send_greeting_images(caption: parsed[:response])
 
-      unless sent
-        send_reply(
-          parsed,
-          additional_attributes: {
-            message_type: 1,
-            sender_type: 'AiAgent',
-            attachments: parsed[:attachments]
-          }
-        )
-      end
-    else
-      send_reply(
-        parsed,
-        additional_attributes: {
-          message_type: 1,
-          sender_type: 'AiAgent',
-          attachments: parsed[:attachments]
-        }
-      )
-    end
+    send_reply(parsed, additional_attributes: reply_attributes(parsed))
+  end
+
+  def reply_attributes(parsed)
+    {
+      message_type: 1,
+      sender_type: 'AiAgent',
+      attachments: parsed[:attachments]
+    }
   end
 
   def welcome_message?

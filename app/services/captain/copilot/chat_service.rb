@@ -197,7 +197,13 @@ class Captain::Copilot::ChatService
 
     conversion_processing(response)
 
-    message_created(message_content, additional_attributes.except(:reservation_details))
+    Captain::Copilot::ReplyDispatcher
+      .new(@context, log_prefix: LOG_PREFIX)
+      .perform(
+        content: message_content,
+        additional_attributes: additional_attributes.except(:reservation_details)
+      )
+
     send_log_reply(is_handover: response[:is_handover])
   rescue StandardError => e
     Rails.logger.error "#{LOG_PREFIX} ai_reply_save_failed | conversation_id=#{@context.conversation.id} | error=#{e.message}"
@@ -264,37 +270,5 @@ class Captain::Copilot::ChatService
     agent_id ||= member_ids.sample
 
     User.find_by(id: agent_id)
-  end
-
-  def message_created(content, additional_attributes)
-    attachments = additional_attributes&.delete(:attachments)
-
-    attrs = {
-      content: content,
-      account_id: @context.account_id,
-      inbox_id: @context.conversation.inbox_id,
-      conversation_id: @context.conversation.id,
-      content_type: 0,
-      status: 0
-    }
-
-    attrs[:sender_id] = @context.ai_agent&.id
-
-    attrs.merge!(additional_attributes) if additional_attributes.present?
-
-    Message.create!(attrs)
-
-    return if attachments.blank?
-
-    Rails.logger.info "#{LOG_PREFIX} enqueue_async_image_attach | conversation_id=#{@context.conversation.id} | image_count=#{attachments.count}"
-
-    attachments.each_with_index do |attachment, idx|
-      Captain::Copilot::AttachMessageImageJob.perform_later(
-        attrs,
-        attachment,
-        idx + 1,
-        content
-      )
-    end
   end
 end

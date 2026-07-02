@@ -41,12 +41,6 @@ class Captain::Llm::BaseJangkauService
       headers: headers
     )
 
-    # 202 Accepted: Langgraph will process asynchronously
-    if response.code == 202
-      Rails.logger.info '[generate_response] Langgraph returned 202 — processing deferred, response will be pushed later'
-      return nil
-    end
-
     # Fallback: if welcome endpoint fails or returns empty, retry with completion endpoint
     if endpoint == '/v2/chat/welcome/' && (!response.success? || response.parsed_response.blank?)
       Rails.logger.warn "[generate_response] Welcome endpoint failed (#{response.code}), falling back to /v2/chat/completion/"
@@ -55,12 +49,6 @@ class Captain::Llm::BaseJangkauService
         body: request_body.to_json,
         headers: headers
       )
-
-      # Also check for 202 on the fallback
-      if response.code == 202
-        Rails.logger.info '[generate_response] Langgraph returned 202 on fallback — deferred'
-        return nil
-      end
     end
 
     Rails.logger.info '[generate_response] Received Jangkau response'

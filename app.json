@@ -48,6 +48,10 @@
     "CAPTAIN_DEBOUNCE_MAX_WAIT_SECONDS": {
       "description": "Maximum wait before forcing buffered AI invocation.",
       "value": "60"
+    },
+    "SIDEKIQ_AVERAGE_SCHEDULED_POLL_INTERVAL": {
+      "description": "Average interval in seconds to promote scheduled Sidekiq jobs.",
+      "value": "5"
     }
   },
   "formation": {

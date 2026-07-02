@@ -21,7 +21,6 @@ class Captain::Llm::BaseJangkauService
 
   def generate_response
     Rails.logger.info '[generate_response] Generating response for Jangkau AI Agent'
-    Rails.logger.info "[generate_response] request_body=#{request_body.to_json}"
 
     endpoint = if first_message?(@conversation) && welcome_enabled?(@ai_agent)
                  '/v2/chat/welcome/'

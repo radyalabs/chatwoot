@@ -33,6 +33,9 @@ class Captain::Copilot::ProcessDebouncedConversationJob < ApplicationJob
     messages = burst_messages(conversation: conversation, first_in_burst: first_in_burst, latest_message: latest_message)
     return if messages.blank?
 
+    combined_question = build_combined_question(messages)
+    attachments = collect_attachments(messages)
+
     track_metric(
       'captain.debounce.invocation',
       conversation_id: conversation.id,
@@ -41,10 +44,18 @@ class Captain::Copilot::ProcessDebouncedConversationJob < ApplicationJob
       first_message_wait_seconds: (Time.current - first_in_burst.created_at).to_i
     )
 
+    Rails.logger.info(
+      '[ProcessDebouncedConversationJob] invoking chat service | ' \
+      "conversation_id=#{conversation.id} | latest_message_id=#{latest_message.id} | " \
+      "message_ids=#{messages.map(&:id)} | messages_combined=#{messages.size} | " \
+      "combined_question_present=#{combined_question.present?} | " \
+      "combined_question=#{combined_question&.truncate(500)}"
+    )
+
     Captain::Copilot::ChatServiceJob.perform_later(
       latest_message.id,
-      combined_question: build_combined_question(messages),
-      attachments: collect_attachments(messages)
+      combined_question: combined_question,
+      attachments: attachments
     )
   end
 

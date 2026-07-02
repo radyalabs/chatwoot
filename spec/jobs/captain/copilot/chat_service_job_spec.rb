@@ -39,7 +39,8 @@ RSpec.describe Captain::Copilot::ChatServiceJob do
 
     it 'tracks debounce invocation failure metric when perform raises' do
       message_id = 999
-      allow_any_instance_of(described_class).to receive(:load_message_with_attachments).and_raise(StandardError, 'boom')
+      job = described_class.new
+      allow(job).to receive(:load_message_with_attachments).and_raise(StandardError, 'boom')
       allow(ActiveSupport::Notifications).to receive(:instrument)
 
       expect(ActiveSupport::Notifications).to receive(:instrument).with(
@@ -47,7 +48,15 @@ RSpec.describe Captain::Copilot::ChatServiceJob do
         hash_including(message_id: message_id, error: 'StandardError')
       )
 
-      expect { described_class.new.perform(message_id) }.to raise_error(StandardError, 'boom')
+      expect { job.perform(message_id) }.to raise_error(StandardError, 'boom')
+    end
+
+    it 'skips duplicate invocation when AI already replied for the same message window' do
+      job = described_class.new
+      allow(job).to receive(:ai_already_replied_after?).and_return(true)
+      expect(Captain::Copilot::ChatService).not_to receive(:new)
+
+      job.perform(message.id)
     end
   end
 end

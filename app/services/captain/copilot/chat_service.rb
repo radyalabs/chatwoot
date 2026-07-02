@@ -169,7 +169,7 @@ class Captain::Copilot::ChatService
 
     send_log_reply(is_handover: response[:is_handover])
   rescue StandardError => e
-    Rails.logger.error "#{LOG_PREFIX} ai_reply_save_failed | conversation_id=#{@context.conversation.id} | error=#{e.message}"
+    Rails.logger.error "#{LOG_PREFIX} ai_reply_save_failed | conversation_id=#{@context.conversation.id} | error_class=#{e.class.name}"
   end
 
   def send_reply_failure(reason)

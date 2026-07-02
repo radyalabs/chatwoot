@@ -52,9 +52,9 @@ class Captain::Copilot::GreetingImageSender
     end
 
     message.save!
-    Rails.logger.info "#{@log_prefix} greeting_image_sent | conversation_id=#{@context.conversation.id} | image_index=#{index + 1} | message_id=#{message.id}"
+    log_greeting_image_sent(index, message.id)
   rescue StandardError => e
-    Rails.logger.error "#{@log_prefix} greeting_image_send_failed | conversation_id=#{@context.conversation.id} | image_index=#{index + 1} | error=#{e.message}"
+    log_greeting_image_send_failed(index, e)
   end
 
   def attach_base64_image(message, data_url, attrs, index)
@@ -65,7 +65,7 @@ class Captain::Copilot::GreetingImageSender
     decoded = Base64.decode64(matches[2])
 
     if decoded.bytesize > MAX_GREETING_IMAGE_SIZE
-      Rails.logger.warn "#{@log_prefix} skipped_greeting_image_too_large | image_index=#{index + 1} | image_size_bytes=#{decoded.bytesize} | max_size_bytes=#{MAX_GREETING_IMAGE_SIZE}"
+      log_greeting_image_too_large(index, decoded.bytesize)
       return
     end
 
@@ -83,7 +83,7 @@ class Captain::Copilot::GreetingImageSender
     blob = ActiveStorage::Blob.find_signed!(signed_id)
 
     if blob.byte_size > MAX_GREETING_IMAGE_SIZE
-      Rails.logger.warn "#{@log_prefix} skipped_greeting_blob_too_large | filename=#{blob.filename} | image_size_bytes=#{blob.byte_size} | max_size_bytes=#{MAX_GREETING_IMAGE_SIZE}"
+      log_greeting_blob_too_large(blob.byte_size)
       return
     end
 
@@ -101,6 +101,41 @@ class Captain::Copilot::GreetingImageSender
         filename: safe_filename,
         content_type: blob.content_type.to_s.encode('UTF-8', invalid: :replace, undef: :replace, replace: '')
       }
+    )
+  end
+
+  def log_greeting_image_sent(index, message_id)
+    Rails.logger.info(
+      "#{@log_prefix} greeting_image_sent | " \
+      "conversation_id=#{@context.conversation.id} | " \
+      "image_index=#{index + 1} | " \
+      "message_id=#{message_id}"
+    )
+  end
+
+  def log_greeting_image_send_failed(index, error)
+    Rails.logger.error(
+      "#{@log_prefix} greeting_image_send_failed | " \
+      "conversation_id=#{@context.conversation.id} | " \
+      "image_index=#{index + 1} | " \
+      "error_class=#{error.class.name}"
+    )
+  end
+
+  def log_greeting_image_too_large(index, image_size)
+    Rails.logger.warn(
+      "#{@log_prefix} skipped_greeting_image_too_large | " \
+      "image_index=#{index + 1} | " \
+      "image_size_bytes=#{image_size} | " \
+      "max_size_bytes=#{MAX_GREETING_IMAGE_SIZE}"
+    )
+  end
+
+  def log_greeting_blob_too_large(image_size)
+    Rails.logger.warn(
+      "#{@log_prefix} skipped_greeting_blob_too_large | " \
+      "image_size_bytes=#{image_size} | " \
+      "max_size_bytes=#{MAX_GREETING_IMAGE_SIZE}"
     )
   end
 end

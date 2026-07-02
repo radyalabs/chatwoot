@@ -69,47 +69,11 @@ class Captain::Copilot::ChatService
   end
 
   def group_message_without_mention?
-    return false unless group_conversation?
+    policy = Captain::Copilot::GroupMentionPolicy.new(@message, inbox: @context.inbox)
+    return false unless policy.skip_reason == :missing_bot_mention
 
-    unless bot_mentioned?
-      Rails.logger.info "#{LOG_PREFIX} skipped_group_message_without_bot_mention | conversation_id=#{@context.conversation.id}"
-      return true
-    end
-
-    false
-  end
-
-  def group_conversation?
-    @message.conversation.additional_attributes&.dig('group_chat_id').present?
-  end
-
-  def bot_mentioned?
-    content_body = @message.content.to_s.downcase
-    channel = @context.inbox.channel
-    return false unless channel.respond_to?(:bot_jid)
-
-    bot_phone = channel.phone_number.to_s.gsub(/\D/, '')
-
-    return true if content_body.include?("@#{bot_phone}")
-
-    mentioned = @message.content_attributes&.dig('mentioned_jids') || []
-    return true if mentioned.any? { |jid| jid.include?(bot_phone) }
-
-    reply_context = @message.content_attributes&.dig('gowa_reply', 'raw_in_reply_to_external_id')
-    return true if reply_context.present? && bot_message_replied_to?
-
-    false
-  end
-
-  def bot_message_replied_to?
-    reply_id = @message.content_attributes&.dig('in_reply_to_external_id') ||
-               @message.content_attributes&.dig('gowa_reply', 'raw_in_reply_to_external_id')
-    return false unless reply_id
-
-    bot_messages = @message.conversation.messages
-                           .where.not(sender_type: 'Contact')
-                           .where(source_id: reply_id)
-    bot_messages.any?
+    Rails.logger.info "#{LOG_PREFIX} skipped_group_message_without_bot_mention | conversation_id=#{@context.conversation.id}"
+    true
   end
 
   def pre_check_failure_reason

@@ -3,27 +3,53 @@ class Captain::Copilot::ChatService
   include ResponseFormatChatHelper
 
   AI_SUPPORTED_ATTACHMENT_TYPES = %w[image].freeze
+  LOG_PREFIX = '[Captain::Copilot::ChatService]'.freeze
 
   def initialize(message, combined_question: nil, attachments: nil)
     @message = message
     @context = Captain::Copilot::MessageContext.new(message)
     @current_account = @context.account
     @combined_question = combined_question
+    @combined_text = combined_question
     @attachments = attachments || []
   end
 
   def perform
     switch_locale_using_account_locale do
-      return unless @context.active_conversation
+      unless @context.active_conversation
+        Rails.logger.info "#{LOG_PREFIX} skipped_no_active_conversation | message_id=#{@message.id} | conversation_id=#{@context.conversation.id} | assignee_id=#{@context.conversation.reload.assignee_id}"
+        return
+      end
 
       failure_reason = pre_check_failure_reason
-      return send_reply_failure(failure_reason) if failure_reason
+      if failure_reason
+        Rails.logger.info "#{LOG_PREFIX} skipped_pre_check_failure | message_id=#{@message.id} | reason=#{failure_reason}"
+        return send_reply_failure(failure_reason)
+      end
 
-      return unless @context.agent_bot_inbox
-      return unless @context.ai_agent
-      return unless @context.bot_available?
-      return unless meaningful_for_ai?
+      unless @context.agent_bot_inbox
+        Rails.logger.warn "#{LOG_PREFIX} skipped_no_agent_bot_inbox | message_id=#{@message.id} | inbox_id=#{@context.inbox_id}"
+        return
+      end
 
+      unless @context.ai_agent
+        Rails.logger.warn "#{LOG_PREFIX} skipped_no_ai_agent | message_id=#{@message.id}"
+        return
+      end
+
+      unless @context.bot_available?
+        Rails.logger.info "#{LOG_PREFIX} skipped_bot_not_available | message_id=#{@message.id}"
+        return
+      end
+
+      unless meaningful_for_ai?
+        Rails.logger.info "#{LOG_PREFIX} skipped_not_meaningful_for_ai | message_id=#{@message.id}"
+        return
+      end
+
+      return if group_message_without_mention?
+
+      clear_pending_idle_conversation
       send_messages
     end
   end
@@ -35,11 +61,55 @@ class Captain::Copilot::ChatService
     return true if ai_attachments.any? { |att| attachment_type(att).to_s.start_with?('image') }
 
     Rails.logger.info(
-      '[ChatService] Skipping AI request — no text or image content | ' \
+      "#{LOG_PREFIX} skipped_no_text_or_image_content | " \
       "message_id=#{@message.id} | " \
       "attachment_types=#{ai_attachments.map { |att| attachment_type(att) }}"
     )
     false
+  end
+
+  def group_message_without_mention?
+    return false unless group_conversation?
+
+    unless bot_mentioned?
+      Rails.logger.info "#{LOG_PREFIX} skipped_group_message_without_bot_mention | conversation_id=#{@context.conversation.id}"
+      return true
+    end
+
+    false
+  end
+
+  def group_conversation?
+    @message.conversation.additional_attributes&.dig('group_chat_id').present?
+  end
+
+  def bot_mentioned?
+    content_body = @message.content.to_s.downcase
+    channel = @context.inbox.channel
+    return false unless channel.respond_to?(:bot_jid)
+
+    bot_phone = channel.phone_number.to_s.gsub(/\D/, '')
+
+    return true if content_body.include?("@#{bot_phone}")
+
+    mentioned = @message.content_attributes&.dig('mentioned_jids') || []
+    return true if mentioned.any? { |jid| jid.include?(bot_phone) }
+
+    reply_context = @message.content_attributes&.dig('gowa_reply', 'raw_in_reply_to_external_id')
+    return true if reply_context.present? && bot_message_replied_to?
+
+    false
+  end
+
+  def bot_message_replied_to?
+    reply_id = @message.content_attributes&.dig('in_reply_to_external_id') ||
+               @message.content_attributes&.dig('gowa_reply', 'raw_in_reply_to_external_id')
+    return false unless reply_id
+
+    bot_messages = @message.conversation.messages
+                           .where.not(sender_type: 'Contact')
+                           .where(source_id: reply_id)
+    bot_messages.any?
   end
 
   def pre_check_failure_reason
@@ -52,8 +122,6 @@ class Captain::Copilot::ChatService
   end
 
   def send_messages
-    # Cache before API call to avoid race condition — new messages arriving
-    # during the request would change the count and skip greeting images
     is_welcome = welcome_message?
 
     send_message = Captain::Llm::AssistantChatService.new(
@@ -145,7 +213,7 @@ class Captain::Copilot::ChatService
 
     return false if images.empty?
 
-    Rails.logger.info "[BOT] Sending #{images.count} greeting image(s) for conversation #{@context.conversation.id}"
+    Rails.logger.info "#{LOG_PREFIX} sending_greeting_images | conversation_id=#{@context.conversation.id} | image_count=#{images.count}"
 
     attrs = {
       account_id: @context.account_id,
@@ -178,9 +246,9 @@ class Captain::Copilot::ChatService
     end
 
     message.save!
-    Rails.logger.info "[BOT] Greeting image #{index + 1} sent as message #{message.id}"
+    Rails.logger.info "#{LOG_PREFIX} greeting_image_sent | conversation_id=#{@context.conversation.id} | image_index=#{index + 1} | message_id=#{message.id}"
   rescue StandardError => e
-    Rails.logger.error "[BOT] Failed to send greeting image #{index}: #{e.message}"
+    Rails.logger.error "#{LOG_PREFIX} greeting_image_send_failed | conversation_id=#{@context.conversation.id} | image_index=#{index + 1} | error=#{e.message}"
   end
 
   MAX_GREETING_IMAGE_SIZE = 10.megabytes
@@ -193,7 +261,7 @@ class Captain::Copilot::ChatService
     decoded = Base64.decode64(matches[2])
 
     if decoded.bytesize > MAX_GREETING_IMAGE_SIZE
-      Rails.logger.warn "[BOT] Greeting image #{index} exceeds size limit (#{decoded.bytesize} bytes), skipping"
+      Rails.logger.warn "#{LOG_PREFIX} skipped_greeting_image_too_large | image_index=#{index + 1} | image_size_bytes=#{decoded.bytesize} | max_size_bytes=#{MAX_GREETING_IMAGE_SIZE}"
       return
     end
 
@@ -211,7 +279,7 @@ class Captain::Copilot::ChatService
     blob = ActiveStorage::Blob.find_signed!(signed_id)
 
     if blob.byte_size > MAX_GREETING_IMAGE_SIZE
-      Rails.logger.warn "[BOT] Greeting blob #{blob.filename} exceeds size limit (#{blob.byte_size} bytes), skipping"
+      Rails.logger.warn "#{LOG_PREFIX} skipped_greeting_blob_too_large | filename=#{blob.filename} | image_size_bytes=#{blob.byte_size} | max_size_bytes=#{MAX_GREETING_IMAGE_SIZE}"
       return
     end
 
@@ -232,6 +300,20 @@ class Captain::Copilot::ChatService
     )
   end
 
+  def enrich_with_group_context
+    return @combined_text unless GroupContextService.new(@message, @combined_text).group_summary_request?
+
+    enriched = GroupContextService.new(@message, @combined_text).enrich_message
+    return @combined_text if enriched == check_original_text
+
+    Rails.logger.info "#{LOG_PREFIX} group_context_injected | message_id=#{@message.id}"
+    enriched
+  end
+
+  def check_original_text
+    @combined_text.presence || @message.content.to_s
+  end
+
   def send_reply(response, additional_attributes: {})
     message_content = response[:is_handover] ? handover_processing(response[:response]) : response[:response]
 
@@ -242,11 +324,11 @@ class Captain::Copilot::ChatService
     message_created(message_content, additional_attributes.except(:reservation_details))
     send_log_reply(is_handover: response[:is_handover])
   rescue StandardError => e
-    Rails.logger.error("Failed to save AI reply: #{e.message}")
+    Rails.logger.error "#{LOG_PREFIX} ai_reply_save_failed | conversation_id=#{@context.conversation.id} | error=#{e.message}"
   end
 
   def send_reply_failure(reason)
-    Rails.logger.warn("Bot failure: #{reason}")
+    Rails.logger.warn "#{LOG_PREFIX} bot_failure_reply | conversation_id=#{@context.conversation.id} | reason=#{reason}"
     response = {
       response: reason,
       is_handover: false,
@@ -270,7 +352,7 @@ class Captain::Copilot::ChatService
     return unless response[:has_domain_change]
 
     @context.conversation.update(is_convert: true)
-    Rails.logger.info "[BOT] Conversation #{@context.conversation.id} marked as converted (domain change detected)."
+    Rails.logger.info "#{LOG_PREFIX} conversation_marked_converted | conversation_id=#{@context.conversation.id}"
   end
 
   def end_state_processing(response)
@@ -286,11 +368,15 @@ class Captain::Copilot::ChatService
     ::Conversations::AddIdleConversationJob.perform_later(response, attrs)
   end
 
+  def clear_pending_idle_conversation
+    IdleConversation.where(conversation_id: @context.conversation.id, status: :idle).destroy_all
+  end
+
   def send_log_reply(is_handover: false)
     if is_handover
-      Rails.logger.info("Handover completed: Conversation #{@context.conversation.id} assigned to Agent!")
+      Rails.logger.info "#{LOG_PREFIX} handover_completed | conversation_id=#{@context.conversation.id}"
     else
-      Rails.logger.info('Bot completed to reply message')
+      Rails.logger.info "#{LOG_PREFIX} reply_completed | conversation_id=#{@context.conversation.id}"
     end
   end
 
@@ -304,8 +390,7 @@ class Captain::Copilot::ChatService
     User.find_by(id: agent_id)
   end
 
-  def message_created(content, additional_attributes) # rubocop:disable Metrics/MethodLength
-    # Extract image_urls before merging (it's not a Message attribute)
+  def message_created(content, additional_attributes)
     attachments = additional_attributes&.delete(:attachments)
 
     attrs = {
@@ -325,7 +410,7 @@ class Captain::Copilot::ChatService
 
     return if attachments.blank?
 
-    Rails.logger.info "[BOT] Enqueuing #{attachments.count} image(s) for async attach..."
+    Rails.logger.info "#{LOG_PREFIX} enqueue_async_image_attach | conversation_id=#{@context.conversation.id} | image_count=#{attachments.count}"
 
     attachments.each_with_index do |attachment, idx|
       Captain::Copilot::AttachMessageImageJob.perform_later(

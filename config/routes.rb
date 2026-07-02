@@ -583,8 +583,6 @@ Rails.application.routes.draw do
             put :sync_counter, action: :sync_counter
           end
         end
-
-        post 'conversations/:conversation_id/messages', to: 'conversation_messages#create'
       end
     end
   end

@@ -21,7 +21,7 @@ class Captain::Copilot::ChatService
 
       return if group_message_without_mention?
 
-      clear_pending_idle_conversation
+      conversation_state_handler.clear_pending_idle_conversation
       send_messages
     end
   end
@@ -154,11 +154,11 @@ class Captain::Copilot::ChatService
   end
 
   def send_reply(response, additional_attributes: {})
-    message_content = response[:is_handover] ? handover_processing(response[:response]) : response[:response]
+    message_content = response[:is_handover] ? conversation_state_handler.process_handover(response[:response]) : response[:response]
 
-    end_state_processing(response) unless response[:is_handover] || response[:is_failure]
+    conversation_state_handler.process_end_state(response) unless response[:is_handover] || response[:is_failure]
 
-    conversion_processing(response)
+    conversation_state_handler.process_conversion(response)
 
     Captain::Copilot::ReplyDispatcher
       .new(@context, log_prefix: LOG_PREFIX)
@@ -184,37 +184,8 @@ class Captain::Copilot::ChatService
     send_reply(response, additional_attributes: { message_type: 3 })
   end
 
-  def handover_processing(content)
-    agent_available = find_available_agent
-
-    @context.conversation.update!(assignee_id: agent_available.id, is_reminded: false, is_handover_reminded: true) if agent_available
-    agent_available ? content : I18n.t('conversations.bot.not_available_agent')
-  end
-
-  def conversion_processing(response)
-    return if @context.conversation.is_convert?
-
-    return unless response[:has_domain_change]
-
-    @context.conversation.update(is_convert: true)
-    Rails.logger.info "#{LOG_PREFIX} conversation_marked_converted | conversation_id=#{@context.conversation.id}"
-  end
-
-  def end_state_processing(response)
-    return unless @context.ai_agent
-
-    attrs = {
-      conversation_id: @context.conversation.id,
-      inbox_id: @context.inbox_id,
-      account_id: @context.account_id,
-      ai_agent_id: @context.ai_agent.id
-    }
-
-    ::Conversations::AddIdleConversationJob.perform_later(response, attrs)
-  end
-
-  def clear_pending_idle_conversation
-    IdleConversation.where(conversation_id: @context.conversation.id, status: :idle).destroy_all
+  def conversation_state_handler
+    @conversation_state_handler ||= Captain::Copilot::ConversationStateHandler.new(@context, log_prefix: LOG_PREFIX)
   end
 
   def send_log_reply(is_handover: false)
@@ -223,15 +194,5 @@ class Captain::Copilot::ChatService
     else
       Rails.logger.info "#{LOG_PREFIX} reply_completed | conversation_id=#{@context.conversation.id}"
     end
-  end
-
-  def find_available_agent
-    member_ids = InboxMember.where(inbox_id: @context.inbox_id).pluck(:user_id)
-    return nil if member_ids.empty?
-
-    agent_id = Conversation.least_loaded_agent(@context.inbox_id, member_ids)
-    agent_id ||= member_ids.sample
-
-    User.find_by(id: agent_id)
   end
 end

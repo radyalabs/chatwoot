@@ -16,12 +16,14 @@ class Captain::Copilot::ConversationAiState
   end
 
   def first_unprocessed_incoming_message
-    incoming_contact_messages_since_last_ai_reply.first
+    incoming_contact_messages_since_last_ai_reply
+      .reorder(created_at: :asc, id: :asc)
+      .first
   end
 
   def latest_incoming_contact_message
     incoming_contact_messages_since_last_ai_reply
-      .order(created_at: :desc, id: :desc)
+      .reorder(created_at: :desc, id: :desc)
       .first
   end
 

@@ -16,36 +16,8 @@ class Captain::Copilot::ChatService
 
   def perform
     switch_locale_using_account_locale do
-      unless @context.active_conversation
-        Rails.logger.info "#{LOG_PREFIX} skipped_no_active_conversation | message_id=#{@message.id} | conversation_id=#{@context.conversation.id} | assignee_id=#{@context.conversation.reload.assignee_id}"
-        return
-      end
-
-      failure_reason = pre_check_failure_reason
-      if failure_reason
-        Rails.logger.info "#{LOG_PREFIX} skipped_pre_check_failure | message_id=#{@message.id} | reason=#{failure_reason}"
-        return send_reply_failure(failure_reason)
-      end
-
-      unless @context.agent_bot_inbox
-        Rails.logger.warn "#{LOG_PREFIX} skipped_no_agent_bot_inbox | message_id=#{@message.id} | inbox_id=#{@context.inbox_id}"
-        return
-      end
-
-      unless @context.ai_agent
-        Rails.logger.warn "#{LOG_PREFIX} skipped_no_ai_agent | message_id=#{@message.id}"
-        return
-      end
-
-      unless @context.bot_available?
-        Rails.logger.info "#{LOG_PREFIX} skipped_bot_not_available | message_id=#{@message.id}"
-        return
-      end
-
-      unless meaningful_for_ai?
-        Rails.logger.info "#{LOG_PREFIX} skipped_not_meaningful_for_ai | message_id=#{@message.id}"
-        return
-      end
+      eligibility = eligibility_guard.check
+      return handle_ineligible_request(eligibility) unless eligibility.ok?
 
       return if group_message_without_mention?
 
@@ -56,16 +28,22 @@ class Captain::Copilot::ChatService
 
   private
 
-  def meaningful_for_ai?
-    return true if question_payload.present?
-    return true if ai_attachments.any? { |att| attachment_type(att).to_s.start_with?('image') }
-
-    Rails.logger.info(
-      "#{LOG_PREFIX} skipped_no_text_or_image_content | " \
-      "message_id=#{@message.id} | " \
-      "attachment_types=#{ai_attachments.map { |att| attachment_type(att) }}"
+  def eligibility_guard
+    Captain::Copilot::EligibilityGuard.new(
+      context: @context,
+      question_payload: question_payload,
+      ai_attachments: ai_attachments
     )
-    false
+  end
+
+  def handle_ineligible_request(result)
+    Captain::Copilot::EligibilityGuardLogger
+      .new(@message, @context, log_prefix: LOG_PREFIX)
+      .log(result)
+
+    return send_reply_failure(result.failure_reason) if result.code == :pre_check_failure
+
+    nil
   end
 
   def group_message_without_mention?
@@ -74,15 +52,6 @@ class Captain::Copilot::ChatService
 
     Rails.logger.info "#{LOG_PREFIX} skipped_group_message_without_bot_mention | conversation_id=#{@context.conversation.id}"
     true
-  end
-
-  def pre_check_failure_reason
-    return I18n.t('subscriptions.limit_reached') unless @context.subscription
-    return I18n.t('subscriptions.limit_reached') unless @context.usage
-
-    return I18n.t('subscriptions.limit_reached') if @context.usage.exceeded_limits?
-
-    nil
   end
 
   def send_messages
@@ -162,12 +131,6 @@ class Captain::Copilot::ChatService
         url: att.download_url
       }
     end
-  end
-
-  def attachment_type(attachment)
-    return attachment[:file_type] || attachment['file_type'] if attachment.is_a?(Hash)
-
-    attachment.file_type
   end
 
   def send_greeting_images(caption: nil)

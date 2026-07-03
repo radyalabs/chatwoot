@@ -22,13 +22,13 @@ RSpec.describe Captain::Copilot::DebounceConfig do
       end
     end
 
-    it 'falls back to global setting when per-agent config is missing' do
+    it 'disables debounce when per-agent config is missing' do
       message = instance_double(Message, conversation: nil)
       context = instance_double(Captain::Copilot::MessageContext, ai_agent: nil)
       allow(Captain::Copilot::MessageContext).to receive(:new).with(message).and_return(context)
 
       with_modified_env CAPTAIN_DEBOUNCE_ENABLED: 'true' do
-        expect(described_class.for_message(message).enabled?).to be(true)
+        expect(described_class.for_message(message).enabled?).to be(false)
       end
     end
 

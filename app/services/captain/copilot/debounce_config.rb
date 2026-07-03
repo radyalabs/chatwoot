@@ -20,7 +20,7 @@ class Captain::Copilot::DebounceConfig
 
   def enabled?
     return false unless global_enabled?
-    return true if agent_enabled.nil?
+    return false if agent_enabled.nil?
     return false unless agent_enabled
     return true if valid_agent_config?
 

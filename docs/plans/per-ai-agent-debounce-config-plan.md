@@ -14,7 +14,7 @@ Add debounce configuration scoped to each `AiAgent` while keeping a global emerg
    - `enabled=false` => debounce OFF for that agent.
    - `enabled=true` + valid values => debounce ON using per-agent values.
    - `enabled=true` + invalid values => debounce OFF for that agent (direct `ChatServiceJob`).
-   - `debounce_config` absent => fallback to existing ENV/default behavior.
+   - `debounce_config` absent => debounce OFF for that agent (direct `ChatServiceJob`).
 
 ## Config Shape
 
@@ -74,5 +74,5 @@ When a new `AiAgent` is created, initialize `display_flow_data.debounce_config` 
 
 ## Notes
 
-- Keep existing behavior unchanged for agents without `debounce_config`.
+- Agents without `debounce_config` are treated as debounce disabled.
 - No changes to Jangkau request schema are required for this plan.

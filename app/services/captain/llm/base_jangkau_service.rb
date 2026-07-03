@@ -1,16 +1,13 @@
-require 'httparty'
-
 class Captain::Llm::BaseJangkauService
-  include HTTParty
-  base_uri ENV.fetch('JANGKAU_AGENT_API_URL', 'https://agent.jangkau.ai/')
+  LOG_PREFIX = '[Captain::Llm::BaseJangkauService]'.freeze
 
-  def initialize(account_id, ai_agent, conversation, message, preview_attachments: [])
+  def initialize(account_id, ai_agent, conversation, message, preview_attachments: [], combined_text: nil)
     @conversation = conversation
     @account_id = account_id
     @ai_agent = ai_agent
     @message = message
     @preview_attachments = preview_attachments
-    @question, @additional_attributes = extract_message_data
+    @combined_text = combined_text
   end
 
   def perform
@@ -20,161 +17,52 @@ class Captain::Llm::BaseJangkauService
   private
 
   def generate_response
-    Rails.logger.info '[generate_response] Generating response for Jangkau AI Agent'
+    Rails.logger.info "#{LOG_PREFIX} Generating response for Jangkau AI Agent"
 
-    endpoint = if first_message?(@conversation) && welcome_enabled?(@ai_agent)
-                 '/v2/chat/welcome/'
-               else
-                 '/v2/chat/completion/'
-               end
+    endpoint = endpoint_policy.endpoint
+    Rails.logger.info "#{LOG_PREFIX} Using endpoint: #{endpoint}"
 
-    Rails.logger.info "[generate_response] Using endpoint: #{endpoint}"
+    response = api_client.post_with_welcome_fallback(endpoint: endpoint, body: request_body, headers: headers)
 
-    response = self.class.post(
-      endpoint,
-      body: request_body.to_json,
-      headers: headers
-    )
-
-    # Fallback: if welcome endpoint fails or returns empty, retry with completion endpoint
-    if endpoint == '/v2/chat/welcome/' && (!response.success? || response.parsed_response.blank?)
-      Rails.logger.warn "[generate_response] Welcome endpoint failed (#{response.code}), falling back to /v2/chat/completion/"
-      response = self.class.post(
-        '/v2/chat/completion/',
-        body: request_body.to_json,
-        headers: headers
-      )
-    end
-
-    Rails.logger.info '[generate_response] Received Jangkau response'
+    Rails.logger.info "#{LOG_PREFIX} Received Jangkau response"
     response
   rescue StandardError => e
-    Rails.logger.error "[generate_response] error: #{e.message}"
+    Rails.logger.error "#{LOG_PREFIX} error_class=#{e.class.name}"
     raise "Failed to generate response: #{e.message}"
   end
 
-  def first_message?(conversation)
-    !Captain::Copilot::ConversationAiState.new(conversation).ai_replied?
+  def endpoint_policy
+    @endpoint_policy ||= Captain::Llm::JangkauEndpointPolicy.new(conversation: @conversation, ai_agent: @ai_agent)
   end
 
-  def welcome_enabled?(ai_agent)
-    ai_agent.display_flow_data&.dig('greeting_config', 'enabled') == true
+  def api_client
+    @api_client ||= Captain::Llm::JangkauApiClient.new
   end
 
   def request_body
-    {
-      'question' => @question,
-      'attachments' => formatted_attachments,
-      'overrideConfig' => override_config
-    }.compact
+    request_builder.build
   end
 
-  def formatted_attachments
-    return @preview_attachments if @preview_attachments.present?
-
-    last_message_attachments.map do |att|
-      {
-        key: att.file.key,
-        file_type: att.file.content_type,
-        filename: att.file.filename.to_s,
-        url: att.download_url
-      }
-    end
+  def request_builder
+    @request_builder ||= Captain::Llm::JangkauRequestBuilder.new(
+      context: {
+        account_id: @account_id,
+        ai_agent: @ai_agent,
+        conversation: @conversation,
+        message: @message
+      },
+      preview_attachments: @preview_attachments,
+      combined_text: @combined_text,
+      question_enricher: question_enricher
+    )
   end
 
-  def last_message_attachments
-    return [] unless @message.is_a?(Message)
-
-    @message.attachments
-            .includes(file_attachment: :blob)
-            .select { |att| att.file.attached? }
+  def question_enricher
+    @question_enricher ||= ->(question) { reply_context_enricher.enrich(question) }
   end
 
-  def override_config
-    {
-      'session_id' => @conversation.uuid,
-      'conversation_id' => @conversation.id,
-      'inbox_id' => @conversation.inbox_id,
-      'ai_agent_id' => @ai_agent.id,
-      'vars' => base_vars.merge(@ai_agent.flow_data || {})
-    }
-  end
-
-  def base_vars
-    {
-      'account_id' => @account_id.to_s,
-      'customer_name' => @additional_attributes['name'] || '',
-      'contact' => @additional_attributes['phone_number'] || '',
-      'channel' => @additional_attributes['channel'] || ''
-    }
-  end
-
-  def extract_message_data
-    if @message.is_a?(String)
-      [@message, {}]
-    else
-      # If message has no text content but has attachments, use a placeholder
-      question = (@message.content.presence || '')
-      question = enrich_question_with_reply_context(question)
-      [question, @message.additional_attributes || {}]
-    end
-  end
-
-  def enrich_question_with_reply_context(question)
-    return question unless reply_context_enabled?
-
-    replied_text = replied_to_message_text
-    return question if replied_text.blank?
-
-    replied_text = replied_text.to_s.strip.truncate(1000)
-    question_text = question.to_s
-
-    if question_text.present?
-      "User replied to:\n#{replied_text}\n\nUser message:\n#{question_text}"
-    else
-      "User replied to:\n#{replied_text}"
-    end
-  rescue StandardError
-    question
-  end
-
-  def reply_context_enabled?
-    return false unless @message.is_a?(Message)
-
-    channel = @message.additional_attributes&.[]('channel') || @message.additional_attributes&.[](:channel)
-    return false unless channel.to_s == 'WhatsappUnofficial'
-
-    content_attrs = @message.content_attributes || {}
-    in_reply_to = content_attrs[:in_reply_to] || content_attrs['in_reply_to']
-    in_reply_to_external_id = content_attrs[:in_reply_to_external_id] ||
-                               content_attrs['in_reply_to_external_id'] ||
-                               content_attrs.dig('gowa_reply', 'raw_in_reply_to_external_id') ||
-                               content_attrs.dig(:gowa_reply, :raw_in_reply_to_external_id)
-    quoted_text = content_attrs.dig('gowa_reply', 'quoted_text') || content_attrs.dig(:gowa_reply, :quoted_text)
-
-    in_reply_to.present? || in_reply_to_external_id.present? || quoted_text.present?
-  end
-
-  def replied_to_message_text
-    return nil unless @message.is_a?(Message)
-
-    content_attrs = @message.content_attributes || {}
-    in_reply_to = content_attrs[:in_reply_to] || content_attrs['in_reply_to']
-    in_reply_to_external_id = content_attrs[:in_reply_to_external_id] || content_attrs['in_reply_to_external_id']
-
-    replied_message = if in_reply_to.present?
-                        @message.conversation.messages.find_by(id: in_reply_to)
-                      elsif in_reply_to_external_id.present?
-                        @message.conversation.messages.find_by(source_id: in_reply_to_external_id)
-                      end
-
-    replied_message_content = replied_message&.content
-    return replied_message_content if replied_message_content.present?
-
-    gowa_reply = content_attrs[:gowa_reply] || content_attrs['gowa_reply']
-    return nil unless gowa_reply.is_a?(Hash)
-
-    gowa_reply[:quoted_text] || gowa_reply['quoted_text']
+  def reply_context_enricher
+    @reply_context_enricher ||= Captain::Llm::WhatsappReplyContextEnricher.new(message: @message)
   end
 
   def headers

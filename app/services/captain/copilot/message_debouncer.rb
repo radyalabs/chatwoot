@@ -1,6 +1,4 @@
 class Captain::Copilot::MessageDebouncer
-  DEFAULT_DEBOUNCE_INTERVAL_SECONDS = 10
-
   def initialize(message)
     @message = message
   end
@@ -20,6 +18,10 @@ class Captain::Copilot::MessageDebouncer
   private
 
   def debounce_interval_seconds
-    ENV.fetch('CAPTAIN_DEBOUNCE_INTERVAL_SECONDS', DEFAULT_DEBOUNCE_INTERVAL_SECONDS).to_i
+    debounce_config.interval_seconds
+  end
+
+  def debounce_config
+    @debounce_config ||= Captain::Copilot::DebounceConfig.for_message(@message)
   end
 end

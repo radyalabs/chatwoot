@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_05_12_000002) do
+ActiveRecord::Schema[7.0].define(version: 2026_06_25_070539) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -295,6 +295,30 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_12_000002) do
     t.datetime "updated_at", precision: nil, null: false
     t.boolean "active", default: true, null: false
     t.index ["account_id"], name: "index_automation_rules_on_account_id"
+  end
+
+  create_table "broadcast_campaigns", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "inbox_id", null: false
+    t.string "target_segment", default: "all"
+    t.text "message_body", null: false
+    t.boolean "spin_text_enabled", default: false
+    t.boolean "unsubscribe_link_enabled", default: false
+    t.integer "status", default: 0
+    t.datetime "scheduled_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_broadcast_campaigns_on_account_id"
+    t.index ["inbox_id"], name: "index_broadcast_campaigns_on_inbox_id"
+  end
+
+  create_table "broadcast_templates", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "name", null: false
+    t.text "message_body", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_broadcast_templates_on_account_id"
   end
 
   create_table "campaigns", force: :cascade do |t|
@@ -857,9 +881,11 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_12_000002) do
     t.integer "sender_name_type", default: 0, null: false
     t.string "business_name"
     t.boolean "channel_status", default: true
+    t.datetime "deleted_at"
     t.index ["account_id"], name: "index_inboxes_on_account_id"
     t.index ["channel_id", "channel_type"], name: "index_inboxes_on_channel_id_and_channel_type"
     t.index ["channel_status"], name: "index_inboxes_on_channel_status"
+    t.index ["deleted_at"], name: "index_inboxes_on_deleted_at"
     t.index ["portal_id"], name: "index_inboxes_on_portal_id"
   end
 
@@ -1647,6 +1673,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_12_000002) do
   add_foreign_key "ai_agent_followups", "ai_agents"
   add_foreign_key "ai_agent_selected_labels", "ai_agents"
   add_foreign_key "ai_agent_selected_labels", "labels"
+  add_foreign_key "broadcast_campaigns", "accounts"
+  add_foreign_key "broadcast_campaigns", "inboxes"
+  add_foreign_key "broadcast_templates", "accounts"
   add_foreign_key "contact_attribute_keys", "accounts"
   add_foreign_key "idle_configs", "accounts"
   add_foreign_key "idle_configs", "ai_agents"

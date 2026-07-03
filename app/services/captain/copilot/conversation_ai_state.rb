@@ -11,26 +11,38 @@ class Captain::Copilot::ConversationAiState
     @last_ai_reply ||= @conversation.messages.where(sender_type: 'AiAgent').order(created_at: :desc, id: :desc).first
   end
 
-  def last_ai_reply_at
-    last_ai_reply&.created_at
-  end
-
   def first_unprocessed_incoming_message
-    incoming_contact_messages_since_last_ai_reply
+    incoming_contact_messages_since_processing_boundary
       .reorder(created_at: :asc, id: :asc)
       .first
   end
 
   def latest_incoming_contact_message
-    incoming_contact_messages_since_last_ai_reply
+    incoming_contact_messages_since_processing_boundary
       .reorder(created_at: :desc, id: :desc)
       .first
   end
 
-  def incoming_contact_messages_since_last_ai_reply
-    scope = @conversation.messages.incoming.where(sender_type: 'Contact', private: false)
-    return scope unless last_ai_reply_at
+  def processing_boundary_message_id
+    [last_ai_reply_id, last_debounced_processed_message_id].compact.max
+  end
 
-    scope.where('created_at > ?', last_ai_reply_at)
+  def last_debounced_processed_message_id
+    value = @conversation.additional_attributes&.dig('last_debounced_processed_message_id')
+    return if value.blank?
+
+    value.to_i
+  end
+
+  def incoming_contact_messages_since_processing_boundary
+    scope = @conversation.messages.incoming.where(sender_type: 'Contact', private: false)
+    boundary_id = processing_boundary_message_id
+    return scope unless boundary_id
+
+    scope.where('id > ?', boundary_id)
+  end
+
+  def last_ai_reply_id
+    last_ai_reply&.id
   end
 end

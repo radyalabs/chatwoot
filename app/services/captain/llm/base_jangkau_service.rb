@@ -1,11 +1,11 @@
 class Captain::Llm::BaseJangkauService
   LOG_PREFIX = '[Captain::Llm::BaseJangkauService]'.freeze
 
-  def initialize(account_id, ai_agent, conversation, message, preview_attachments: [], combined_text: nil)
-    @conversation = conversation
-    @account_id = account_id
-    @ai_agent = ai_agent
-    @message = message
+  def initialize(context:, preview_attachments: [], combined_text: nil)
+    @account_id = context.fetch(:account_id)
+    @ai_agent = context.fetch(:ai_agent)
+    @conversation = context.fetch(:conversation)
+    @message = context.fetch(:message)
     @preview_attachments = preview_attachments
     @combined_text = combined_text
   end

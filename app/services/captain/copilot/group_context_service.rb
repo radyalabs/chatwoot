@@ -69,8 +69,9 @@ class Captain::Copilot::GroupContextService
   end
 
   def attachment_summary(msg)
-    types = msg.attachments.map(&:file_type).compact
+    types = msg.attachments.filter_map(&:file_type)
     return '' if types.blank?
+
     "[#{types.join(', ')}]"
   end
 end

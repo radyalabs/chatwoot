@@ -18,20 +18,33 @@ class Captain::Copilot::GroupMentionPolicy
   end
 
   def bot_mentioned?
-    content_body = @message.content.to_s.downcase
+    phone = bot_phone
+    return false if phone.blank?
+
+    explicit_phone_mention?(phone) ||
+      mentioned_jids_include?(phone) ||
+      reply_context_mentions_bot?
+  end
+
+  def bot_phone
     channel = @inbox.channel
-    return false unless channel.respond_to?(:bot_jid)
+    return nil unless channel.respond_to?(:bot_jid)
 
-    bot_phone = channel.phone_number.to_s.gsub(/\D/, '')
-    return true if content_body.include?("@#{bot_phone}")
+    channel.phone_number.to_s.gsub(/\D/, '')
+  end
 
-    mentioned = @message.content_attributes&.dig('mentioned_jids') || []
-    return true if mentioned.any? { |jid| jid.include?(bot_phone) }
+  def explicit_phone_mention?(phone)
+    @message.content.to_s.downcase.include?("@#{phone}")
+  end
 
+  def mentioned_jids_include?(phone)
+    mentioned_jids = @message.content_attributes&.dig('mentioned_jids') || []
+    mentioned_jids.any? { |jid| jid.include?(phone) }
+  end
+
+  def reply_context_mentions_bot?
     reply_context = @message.content_attributes&.dig('gowa_reply', 'raw_in_reply_to_external_id')
-    return true if reply_context.present? && bot_message_replied_to?
-
-    false
+    reply_context.present? && bot_message_replied_to?
   end
 
   def bot_message_replied_to?
@@ -41,7 +54,6 @@ class Captain::Copilot::GroupMentionPolicy
 
     @message.conversation.messages
             .where.not(sender_type: 'Contact')
-            .where(source_id: reply_id)
-            .exists?
+            .exists?(source_id: reply_id)
   end
 end

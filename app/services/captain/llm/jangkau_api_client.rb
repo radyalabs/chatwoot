@@ -12,12 +12,12 @@ class Captain::Llm::JangkauApiClient
   read_timeout 120
 
   def post_with_welcome_fallback(endpoint:, body:, headers:)
-    response = post(endpoint, body: body.to_json, headers: headers)
+    response = self.class.post(endpoint, body: body.to_json, headers: headers)
 
     return response unless should_fallback_to_completion?(endpoint, response)
 
     Rails.logger.warn("#{LOG_PREFIX} Welcome endpoint failed (#{response.code}), falling back to /v2/chat/completion/")
-    post(Captain::Llm::JangkauEndpointPolicy::COMPLETION_ENDPOINT, body: body.to_json, headers: headers)
+    self.class.post(Captain::Llm::JangkauEndpointPolicy::COMPLETION_ENDPOINT, body: body.to_json, headers: headers)
   end
 
   private

@@ -39,7 +39,7 @@ class ActionCableListener < BaseListener
              contact_tokens(conversation.contact_inbox, message)
 
     if message.sender_type == 'Contact' && message.incoming? && !message.private?
-      if ENV.fetch('CAPTAIN_DEBOUNCE_ENABLED', 'true') == 'true'
+      if Captain::Copilot::DebounceConfig.for_message(message).enabled?
         Captain::Copilot::MessageDebouncer.new(message).schedule
       else
         Captain::Copilot::ChatServiceJob.perform_later(message.id)

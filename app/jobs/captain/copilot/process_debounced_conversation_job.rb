@@ -1,7 +1,6 @@
 class Captain::Copilot::ProcessDebouncedConversationJob < ApplicationJob
   queue_as :send_reply_with_attachments
 
-  DEFAULT_MAX_WAIT_SECONDS = 60
   ADVISORY_LOCK_NAMESPACE = 10_202
 
   def perform(conversation_id, message_id)
@@ -32,7 +31,8 @@ class Captain::Copilot::ProcessDebouncedConversationJob < ApplicationJob
     scheduled_message = conversation.messages.incoming.find_by(id: message_id, sender_type: 'Contact', private: false)
     return true unless scheduled_message
 
-    return false unless skip_as_superseded?(latest_message: latest_message, scheduled_message: scheduled_message, first_in_burst: first_in_burst)
+    return false unless skip_as_superseded?(conversation: conversation, latest_message: latest_message,
+                                            scheduled_message: scheduled_message, first_in_burst: first_in_burst)
 
     track_metric('captain.debounce.noop', conversation_id: conversation.id, message_id: message_id)
     true
@@ -105,18 +105,18 @@ class Captain::Copilot::ProcessDebouncedConversationJob < ApplicationJob
     )
   end
 
-  def skip_as_superseded?(latest_message:, scheduled_message:, first_in_burst:)
-    return false if max_wait_elapsed?(first_in_burst)
+  def skip_as_superseded?(conversation:, latest_message:, scheduled_message:, first_in_burst:)
+    return false if max_wait_elapsed?(first_in_burst, conversation)
 
     latest_message.id != scheduled_message.id
   end
 
-  def max_wait_elapsed?(first_in_burst)
-    (Time.current - first_in_burst.created_at) >= max_wait_seconds
+  def max_wait_elapsed?(first_in_burst, conversation)
+    (Time.current - first_in_burst.created_at) >= max_wait_seconds(conversation)
   end
 
-  def max_wait_seconds
-    ENV.fetch('CAPTAIN_DEBOUNCE_MAX_WAIT_SECONDS', DEFAULT_MAX_WAIT_SECONDS).to_i
+  def max_wait_seconds(conversation)
+    Captain::Copilot::DebounceConfig.for_conversation(conversation).max_wait_seconds
   end
 
   def burst_messages(conversation:, latest_message:, processing_boundary_id:)

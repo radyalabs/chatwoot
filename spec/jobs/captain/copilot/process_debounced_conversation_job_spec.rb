@@ -20,25 +20,24 @@ RSpec.describe Captain::Copilot::ProcessDebouncedConversationJob do
   describe '#perform' do
     before do
       allow(job).to receive(:update_processing_watermark).and_return(30)
+      allow(job).to receive(:max_wait_seconds).with(conversation).and_return(60)
     end
 
     it 'returns early when a newer message supersedes scheduled message' do
       scheduled_message = instance_double('Message', id: 10)
-      latest_message = instance_double('Message', id: 20)
+      latest_message = instance_double('Message', id: 20, conversation: conversation)
 
       allow(state).to receive(:latest_incoming_contact_message).and_return(latest_message)
       allow(state).to receive(:first_unprocessed_incoming_message).and_return(first_in_burst)
       allow(state).to receive(:processing_boundary_message_id).and_return(nil)
       allow(incoming_relation).to receive(:find_by).with(id: 10, sender_type: 'Contact', private: false).and_return(scheduled_message)
-      allow(job).to receive(:max_wait_seconds).and_return(60)
-
       expect(Captain::Copilot::ChatServiceJob).not_to receive(:perform_later)
 
       job.perform(conversation_id, 10)
     end
 
     it 'invokes ChatServiceJob with combined content in order for multi-message burst' do
-      latest_message = instance_double('Message', id: 30)
+      latest_message = instance_double('Message', id: 30, conversation: conversation)
       scheduled_message = latest_message
       first_message = instance_double('Message', id: 1, content: 'Hello')
       second_message = instance_double('Message', id: 2, content: 'Need help')
@@ -62,7 +61,7 @@ RSpec.describe Captain::Copilot::ProcessDebouncedConversationJob do
 
     it 'invokes latest message when max_wait is reached by first burst message' do
       scheduled_message = instance_double('Message', id: 40)
-      latest_message = instance_double('Message', id: 41)
+      latest_message = instance_double('Message', id: 41, conversation: conversation)
       old_first = instance_double('Message', created_at: 2.minutes.ago)
       first_message = instance_double('Message', id: 4, content: 'first')
       second_message = instance_double('Message', id: 5, content: 'latest')
@@ -71,7 +70,7 @@ RSpec.describe Captain::Copilot::ProcessDebouncedConversationJob do
       allow(state).to receive(:first_unprocessed_incoming_message).and_return(old_first)
       allow(state).to receive(:processing_boundary_message_id).and_return(12)
       allow(incoming_relation).to receive(:find_by).with(id: 40, sender_type: 'Contact', private: false).and_return(scheduled_message)
-      allow(job).to receive(:max_wait_seconds).and_return(30)
+      allow(job).to receive(:max_wait_seconds).with(conversation).and_return(30)
       allow(job).to receive(:burst_messages).and_return([first_message, second_message])
       allow(job).to receive(:collect_attachments).and_return([])
 
@@ -85,7 +84,7 @@ RSpec.describe Captain::Copilot::ProcessDebouncedConversationJob do
     end
 
     it 'updates processed watermark with latest message id after invocation' do
-      latest_message = instance_double('Message', id: 50)
+      latest_message = instance_double('Message', id: 50, conversation: conversation)
       scheduled_message = latest_message
       first_message = instance_double('Message', id: 6, content: 'first')
 

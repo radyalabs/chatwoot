@@ -26,6 +26,12 @@
 #  template_id        :bigint
 #
 class AiAgent < ApplicationRecord
+  DEFAULT_DEBOUNCE_CONFIG = {
+    'enabled' => false,
+    'interval_seconds' => 15,
+    'max_wait_seconds' => 60
+  }.freeze
+
   belongs_to :account
   has_many :ai_agent_selected_labels, dependent: :destroy
   has_many :labels, through: :ai_agent_selected_labels
@@ -55,12 +61,21 @@ class AiAgent < ApplicationRecord
   accepts_nested_attributes_for :ai_agent_selected_labels, allow_destroy: true
 
   before_validation :set_default_messages
+  before_validation :set_default_debounce_config, on: :create
   after_create :create_default_numbering_config
   after_destroy :cleanup_numbering_counters
 
   def set_default_messages
     self.system_prompts ||= 'Default system prompt'
     self.welcoming_message ||= 'Welcome!'
+  end
+
+  def set_default_debounce_config
+    attrs = display_flow_data.is_a?(Hash) ? display_flow_data.deep_dup : {}
+    incoming = attrs['debounce_config']
+    incoming = incoming.stringify_keys if incoming.is_a?(Hash)
+    attrs['debounce_config'] = DEFAULT_DEBOUNCE_CONFIG.merge(incoming || {})
+    self.display_flow_data = attrs
   end
 
   def push_event_data(_inbox = nil)

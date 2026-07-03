@@ -69,25 +69,25 @@ describe ActionCableListener do
 
       it 'routes message through debouncer when debounce is enabled' do
         debouncer = instance_double(Captain::Copilot::MessageDebouncer, schedule: true)
+        debounce_config = instance_double(Captain::Copilot::DebounceConfig, enabled?: true)
         allow(ActionCableBroadcastJob).to receive(:perform_later)
 
+        expect(Captain::Copilot::DebounceConfig).to receive(:for_message).with(message).and_return(debounce_config)
         expect(Captain::Copilot::MessageDebouncer).to receive(:new).with(message).and_return(debouncer)
         expect(Captain::Copilot::ChatServiceJob).not_to receive(:perform_later)
 
-        with_modified_env CAPTAIN_DEBOUNCE_ENABLED: 'true' do
-          listener.message_created(event)
-        end
+        listener.message_created(event)
       end
 
-      it 'routes message directly to ChatServiceJob when debounce is disabled' do
+      it 'routes message directly to ChatServiceJob when debounce is disabled for the agent' do
+        debounce_config = instance_double(Captain::Copilot::DebounceConfig, enabled?: false)
         allow(ActionCableBroadcastJob).to receive(:perform_later)
 
+        expect(Captain::Copilot::DebounceConfig).to receive(:for_message).with(message).and_return(debounce_config)
         expect(Captain::Copilot::MessageDebouncer).not_to receive(:new)
         expect(Captain::Copilot::ChatServiceJob).to receive(:perform_later).with(message.id)
 
-        with_modified_env CAPTAIN_DEBOUNCE_ENABLED: 'false' do
-          listener.message_created(event)
-        end
+        listener.message_created(event)
       end
     end
   end

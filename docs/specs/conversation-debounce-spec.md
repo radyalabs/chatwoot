@@ -155,7 +155,7 @@ Per-`AiAgent` override (when global kill switch is `true`):
   - Global true + per-agent `enabled=false` => debounce OFF (direct path).
   - Global true + per-agent `enabled=true` + valid values => debounce ON with per-agent values.
   - Global true + per-agent `enabled=true` + invalid values => debounce OFF for that agent (direct path, with warning log).
-  - Missing per-agent config => fallback to global ENV defaults.
+  - Missing per-agent config => debounce OFF for that agent (direct path).
 - Validation:
   - `interval_seconds` integer `>= 5`
   - `max_wait_seconds` integer `>= 30`

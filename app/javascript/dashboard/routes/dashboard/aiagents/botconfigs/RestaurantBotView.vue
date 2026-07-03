@@ -756,7 +756,7 @@ onMounted(async () => {
                         <option :value="30">{{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_OPTION_30_MIN') }}</option>
                         <option :value="60">{{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_OPTION_1_HOUR') }}</option>
                         <option :value="120">{{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_OPTION_2_HOURS') }}</option>
-                        <option :value="1440">{{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_OPTION_24_HOURS') }}</option>
+                        <option :value="1410">{{ $t('AGENT_MGMT.EOBOT.IDLE_TIME_OPTION_24_HOURS') }}</option>
                       </select>
                     </div>
                   </div>

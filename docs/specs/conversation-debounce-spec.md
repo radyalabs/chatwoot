@@ -1,131 +1,223 @@
 # Spec: Conversation-Level Trailing-Edge Debounce for AI Agent Invocation
 
-**Status:** Ready for implementation, pending sign-off on §5 reply-context trade-off (v4 — integration point confirmed)
+**Status:** In implementation. Core debounce flow has shipped; this spec now includes replay-safe watermarking and per-`AiAgent` config precedence.
 **Owner:** TBD
-**Last updated:** 2026-07-02
-**Scope:** `Captain::Copilot::ChatService` → `Captain::Llm::AssistantChatService` → `Captain::Llm::BaseJangkauService` (Jangkau branch confirmed; `BaseFlowiseService`/custom-agent branch NOT yet reviewed — see §8)
+**Last updated:** 2026-07-03
+**Scope:** `Captain::Copilot::ChatService` → `Captain::Llm::AssistantChatService` → `Captain::Llm::BaseJangkauService` (Jangkau branch only — Flowise explicitly out of scope, §9)
 
-## 0. Correction From v2
+## 0. Design Change: No Redis, No Fencing Token
 
-v2 assumed the buffer didn't need to store message content, because `AssistantChatService` receives `@context.conversation` alongside `@message`. **That assumption was wrong.** Confirmed from `base_jangkau_service.rb#extract_message_data`: the "question" sent to the external Jangkau agent API is built from a single `@message.content` — the conversation object is only used for `session_id`/`conversation_id`/`inbox_id` metadata in `override_config`, not for pulling message history. The external agent API is presumably stateful per `session_id`, and Chatwoot sends one incremental question per call — meaning a debounced burst of N messages must be **concatenated into one combined question string** before firing, not resolved by simply pointing at the last message. v1's original approach (buffer content) was correct; v2's simplification is discarded.
+Earlier drafts of this spec used Redis (fencing token, TTL'd keys) to track debounce state. That's discarded here. Postgres already holds every incoming message with an accurate `created_at`, and Sidekiq/ActiveJob's own delayed-execution primitive (`perform_in`/`perform_at`) is sufficient to implement trailing-edge debounce without a second, parallel source of truth. Reasoning:
+
+- A fencing token exists purely to answer "has a newer message arrived since I was scheduled?" — that's a question Postgres can already answer directly (`conversation.messages.incoming.where('created_at > ?', my_scheduled_at)`), with no separate state store needed.
+- Removing Redis removes an entire class of bugs that only exist because of it: TTL misconfiguration silently dropping buffer state, and races between "check token" and "clear token" needing an atomic Lua/`GETDEL` operation.
+- Cost: every debounce job does one extra read query when it fires, instead of a Redis round-trip. Negligible at chat-support message volumes.
+
+If a future load profile genuinely requires avoiding that read (very high message volume, DB read pressure), Redis can be reintroduced — but that's a scaling problem to solve if and when it appears, not a default to build in from day one.
 
 ## 1. Problem Statement
 
-`ChatService#perform` fires once per inbound message today (call site itself still not located — §9, still blocking). A burst of N rapid customer messages currently produces N separate calls to the external Jangkau/Flowise agent API, each with only that single message's text as context. Goal: batch a burst into exactly one invocation, with one combined question string covering the whole burst.
+Today, `ActionCableListener#message_created` calls `Captain::Copilot::ChatServiceJob.perform_later(message.id)` once per inbound customer message (confirmed integration point, §8). A burst of N rapid messages produces N separate calls to the external Jangkau agent API, each built from only that single message's text (confirmed in `base_jangkau_service.rb#extract_message_data` — the external API is stateful per `session_id`, and Chatwoot sends one incremental "question" per call; it does not receive full conversation history from Chatwoot itself). Goal: collapse a burst into exactly one invocation with one combined question.
 
-## 2. Data Model
+## 2. Mechanism
 
-Per `conversation_id`, in Redis:
+**Trailing-edge debounce with a hard `max_wait` ceiling, using DB re-checks instead of Redis state:**
 
-| Key | Type | TTL | Purpose |
-|---|---|---|---|
-| `debounce:{conversation_id}:token` | String (UUID) | `max_wait + grace` | Fencing token for the current pending invocation |
-| `debounce:{conversation_id}:first_seen_at` | Integer (epoch ms) | same | Start of burst window, for `max_wait` |
-| `debounce:{conversation_id}:message_ids` | List of integers | same | Ordered IDs of buffered incoming messages in this burst |
+1. Inbound message arrives. In place of the current direct `ChatServiceJob.perform_later(message.id)` call, schedule:
+   ```ruby
+   Captain::Copilot::ProcessDebouncedConversationJob.perform_in(
+     debounce_interval.seconds, conversation.id, message.id
+   )
+   ```
+   Every message schedules its own job. No job is cancelled, no shared state is written up front — this is intentional; see §2.1 for why "do nothing on schedule" is safe.
 
-Message *content* itself does not need duplicating into Redis — only IDs — because at fire time the job re-reads the actual `Message` records from Postgres in order and builds the combined question then. This avoids stale/duplicated content in Redis and keeps the buffer small.
+2. When a scheduled job fires (`conversation_id`, `message_id` it was scheduled with), it asks exactly one question: **"Is this still the most recent customer message in this conversation, or has a newer one arrived since I was scheduled?"**
+   ```ruby
+   latest = conversation.messages.incoming.where(sender_type: 'Contact').order(:created_at).last
+   return if latest.id != message_id  # a newer message exists; that message's own job will handle this burst
+   ```
+   If a newer message arrived, this job is a no-op — the newer message's own scheduled job will perform the same check later and (assuming no even-newer message has arrived by then) will be the one that proceeds. This is the entire debounce mechanism: **only the job scheduled by the chronologically last message in a burst ever proceeds.**
 
-## 3. Flow
+3. **`max_wait` enforcement**, checked in the same job before it decides to proceed:
+   ```ruby
+   first_in_burst = first_unprocessed_incoming_message(conversation) # see §2.2
+   if Time.current - first_in_burst.created_at >= max_wait
+     # ceiling reached — proceed now regardless of how recent `latest` is
+   elsif latest.id != message_id
+     return # not the latest message yet, and still within max_wait — let the newer message's job handle it
+   end
+   ```
 
-1. Inbound message arrives, would previously call `ChatService.new(message).perform` directly.
-2. Append `message.id` to `debounce:{id}:message_ids`. If `first_seen_at` unset, set it now.
-3. `deadline = min(now + debounce_interval, first_seen_at + max_wait)`.
-4. New fencing token generated, stored; delayed job scheduled for `deadline` (same `perform_at` pattern already used by `Conversations::AddIdleConversationJob`).
-5. **Job fires:**
-   - Token mismatch → stale, exit.
-   - Token match → atomically clear `token`, `first_seen_at`, `message_ids`; load the actual `Message` records for those IDs in order; build the combined question (§4); call `ChatService` with the necessary changes below.
+4. Once a job determines it should proceed: gather every incoming customer message since the processing boundary (see §2.2) up to and including `latest`, build the combined question (§3), and call `Captain::Copilot::ChatServiceJob.perform_later(message_id, ...)` exactly once for that window.
 
-## 4. Combined Question Construction
+### 2.1 Why scheduling redundant jobs per-message is safe and not wasteful
 
-Given the buffered `Message` records in order:
+Every message in a burst schedules a job, but only the last one's job ever does real work — every earlier job's check (`latest.id != message_id`) fails fast with a single indexed query and returns immediately. This trades "N scheduled jobs per burst, N-1 of which are cheap no-ops" for "zero shared mutable state, zero race conditions, zero TTL to misconfigure." At chat-support volumes this trade is clearly worth it; flag for revisit only if profiling ever shows job-scheduling overhead as a real cost.
 
-- If the buffer has exactly **one meaningful message** (the common, non-burst case): pass it through to `ChatService`/`AssistantChatService` exactly as today. Zero behavior change for the majority of traffic.
-- If the buffer has **more than one meaningful message**: concatenate their `.content` values (e.g. newline-joined, in order) into a single string, and pass that string in place of the `Message` object at the `AssistantChatService`/`BaseJangkauService` boundary. This works cleanly because `extract_message_data` already special-cases a `String` input (`if @message.is_a?(String) then [@message, {}]`) — no change needed there for the question text itself.
-- **Trade-off this creates:** passing a `String` instead of a `Message` skips `enrich_question_with_reply_context` (WhatsApp reply-quote enrichment) and the `is_a?(Message)`-gated attachment fallback. Reply-context enrichment being skipped for multi-message bursts is likely acceptable (a reply-quote tied to one specific message in a burst is an edge case), but this is a product call, not an engineering default — flag for sign-off.
-- **Required code change, not optional:** `ChatService#send_messages` must start passing `attachments:` through to `AssistantChatService.new(...)`, gathering attachments from **all** buffered messages, not just the last one. Today this kwarg isn't forwarded at all, so even a single-message-with-image case relies on the `last_message_attachments` fallback inside `BaseJangkauService` — that fallback breaks the moment `@message` is a `String` instead of a `Message`, so explicit `attachments:` passing becomes mandatory once bursts are combined into strings.
-- **Confirmed low-cost:** attachments are sent as blob references (`key`, `file_type`, `filename`, `url`) that the external agent fetches on its own side — not raw binary through this pipeline. Concatenating attachment arrays across every buffered message in a burst therefore has negligible payload cost; no batching/size concern here. Order attachments to match the chronological order of the buffered messages so the agent can associate each blob with roughly the right point in the combined question, even though there's no strict positional binding once text is flattened into one string.
+### 2.2 Defining the processing boundary (replay-safe)
 
-## 5. The "First Message" Check Exists in Two Places — Both Must Be Fixed Together
+Using only `last_ai_reply_at` is not sufficient when AI replies are delayed: a second burst can re-include messages that were already sent to AI by a previous debounce invocation.
 
-Identical logic, duplicated:
+Required boundary rule:
 
-```ruby
-# chat_service.rb
-def welcome_message?
-  ...
-  @context.conversation.messages.incoming.where(private: false).count == 1
-end
+- `processing_boundary_message_id = max(last_ai_reply_id, last_debounced_processed_message_id)`.
+- `last_debounced_processed_message_id` is stored in `Conversation.additional_attributes`.
+- Burst message selection is by `id` window (`id > processing_boundary_message_id` and `id <= latest.id`) for deterministic replay-safe behavior.
 
-# base_jangkau_service.rb
-def first_message?(conversation)
-  conversation.messages.incoming.where(private: false).count == 1
-end
+### 2.3 Concurrency and watermark update
+
+Debounce job execution for a conversation must be serialized:
+
+- Use a PostgreSQL advisory lock keyed by `conversation_id`.
+- Inside the lock: evaluate superseded/max-wait checks, build burst payload, enqueue one `ChatServiceJob`, then update watermark.
+- Watermark update must be monotonic: `last_debounced_processed_message_id = max(existing, latest.id)`.
+
+This guarantees overlapping scheduled jobs do not enqueue duplicate overlapping windows.
+
+### 2.4 Sequence diagram
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant C as Contact
+  participant ACL as ActionCableListener
+  participant DC as DebounceConfig
+  participant MD as MessageDebouncer
+  participant PDJ as ProcessDebouncedConversationJob
+  participant CAS as ConversationAiState
+  participant CSJ as ChatServiceJob
+
+  C->>ACL: Incoming message created
+  ACL->>DC: enabled?(message)
+
+  alt Debounce disabled (global false OR per-agent false/invalid)
+    ACL->>CSJ: perform_later(message_id)
+  else Debounce enabled
+    ACL->>MD: schedule(message)
+    MD->>PDJ: perform_in(interval, conversation_id, message_id)
+
+    PDJ->>PDJ: Acquire advisory lock(conversation_id)
+    PDJ->>CAS: latest_incoming_contact_message
+    PDJ->>CAS: first_unprocessed_incoming_message
+    PDJ->>CAS: processing_boundary_message_id
+
+    alt Superseded and max_wait not reached
+      PDJ-->>PDJ: no-op, emit captain.debounce.noop
+    else Eligible to invoke (latest OR max_wait reached)
+      PDJ->>PDJ: Build burst messages (id > boundary, id <= latest)
+      PDJ->>PDJ: Build combined question + attachments
+      PDJ->>CSJ: perform_later(latest_id, combined_question:, attachments:)
+      PDJ->>PDJ: Update watermark = max(existing, latest_id)
+    end
+
+    PDJ->>PDJ: Release advisory lock
+  end
 ```
 
-Once debounce delays invocation, a first-contact burst of 3 messages makes both of these evaluate `count == 3`, not `1`. Two independent, currently-correct behaviors will silently break at the same time:
+## 3. Combined Question Construction
 
-1. `ChatService` will not send greeting images on what is, from the customer's perspective, their first contact.
-2. `BaseJangkauService` will route to `/v2/chat/completion/` instead of `/v2/chat/welcome/`, meaning the external agent API itself never gets told this is a welcome turn.
+Given the ordered set of messages in the burst (from §2.2's definition through `latest`):
 
-**Recommendation:** extract a single shared check — e.g. "no AI Agent reply exists yet for this conversation" (checking `messages.where(sender_type: 'AiAgent').none?` or similar) instead of counting incoming messages — and have both call sites use it. Fixing one without the other will leave a half-working, hard-to-debug inconsistency between the dashboard experience and what the external agent API believes is happening.
+- **Single message in the burst (the common case):** pass it straight through, unchanged from today's behavior.
+- **Multiple messages:** concatenate `.content` values (newline-joined, chronological order) into a single string, passed in place of the `Message` object at the `AssistantChatService`/`BaseJangkauService` boundary — this works because `extract_message_data` already special-cases a `String` input.
+- **Accepted regression, tracked as a separate follow-up spec — not a pending sign-off.** Passing a `String` instead of a `Message` skips `enrich_question_with_reply_context` (WhatsApp reply-quote enrichment). **Decision:** this spec ships as-is; handling reply-quote enrichment for multi-message bursts is deferred to a separate follow-up spec (not yet written). Until that follow-up ships, WhatsApp customers who use the reply/quote feature and then send a burst of >1 message will lose that quoted context in what the AI Agent sees — this is a known, live regression starting the moment this spec is deployed, not a theoretical future gap. Track the follow-up spec explicitly (ticket/issue reference: **TBD** — add before implementation begins) so this doesn't silently become permanent by default.
+- **Required code change:** `ChatService#send_messages` must start passing `attachments:` through to `AssistantChatService.new(...)`, gathered from every message in the burst, not just the last. This kwarg isn't forwarded today at all.
+- **Confirmed low-cost:** attachments are blob references (`key`, `file_type`, `filename`, `url`), fetched by the external agent itself — concatenating them across a burst has negligible payload cost.
 
-## 6. Configuration
+## 4. The "First Message" Check Exists in Two Places — Both Must Be Fixed Together
 
-Global, via `.env` (per your decision):
+Identical logic, duplicated in `chat_service.rb#welcome_message?` and `base_jangkau_service.rb#first_message?`:
+```ruby
+conversation.messages.incoming.where(private: false).count == 1
+```
+Once debounce delays invocation, a first-contact burst of 3 messages makes both evaluate `count == 3`, breaking two things simultaneously: greeting images won't send, and the external Jangkau API will be routed to `/v2/chat/completion/` instead of `/v2/chat/welcome/`. **Recommendation:** extract one shared check (e.g. "no AI Agent reply exists yet for this conversation") and use it in both places. Fixing one without the other leaves a half-working, hard-to-debug inconsistency.
+
+## 5. Configuration
+
+Global, via `.env`:
 
 | Variable | Suggested default |
 |---|---|
 | `CAPTAIN_DEBOUNCE_INTERVAL_SECONDS` | 10 |
 | `CAPTAIN_DEBOUNCE_MAX_WAIT_SECONDS` | 60 |
+| `CAPTAIN_DEBOUNCE_ENABLED` | `true` |
 
-[Guessing] Defaults are placeholders pending real usage data.
+[Guessing] Interval/max-wait defaults are placeholders pending real usage data.
 
-## 7. Failure Handling — Per Your Decision
+**`CAPTAIN_DEBOUNCE_ENABLED` is a new addition, not previously in scope, and it's not optional.** Every AI Agent reply in the account goes through this code path once shipped. Without a flag that reverts to today's direct `ChatServiceJob.perform_later(message.id)` call when `false`, the only way to recover from a bug here in production is a deploy. That's an unacceptable blast radius for a one-line config guard.
 
-No retry, no automatic handover — skip. `ChatService`'s existing internal failure path (`send_reply_failure`, triggered by subscription limits or a failed `AssistantChatService` call) is unaffected by this change and still applies once the debounced job actually calls `ChatService`. The only new failure mode is the delayed job itself never firing (worker crash, queue issue) — recommendation within the "skip" boundary: log it (`Rails.logger.warn`) for visibility, add nothing beyond that.
+Per-`AiAgent` override (when global kill switch is `true`):
 
-## 8. `custom_agent` / Flowise Branch — Explicitly Out of Scope
+- Source: `ai_agents.display_flow_data.debounce_config`.
+- This must stay out of `flow_data` so it is not forwarded as Jangkau runtime vars.
+- Resolution precedence:
+  - `CAPTAIN_DEBOUNCE_ENABLED=false` => debounce OFF for all agents.
+  - Global true + per-agent `enabled=false` => debounce OFF (direct path).
+  - Global true + per-agent `enabled=true` + valid values => debounce ON with per-agent values.
+  - Global true + per-agent `enabled=true` + invalid values => debounce OFF for that agent (direct path, with warning log).
+  - Missing per-agent config => fallback to global ENV defaults.
+- Validation:
+  - `interval_seconds` integer `>= 5`
+  - `max_wait_seconds` integer `>= 30`
+  - `max_wait_seconds >= interval_seconds`
+- New `AiAgent` default config:
+  - `enabled=false`
+  - `interval_seconds=15`
+  - `max_wait_seconds=60`
 
-Per product decision: `BaseFlowiseService` is no longer in active use, so this spec does not cover it. Implementation targets the `BaseJangkauService` path only.
+## 6. Failure Handling
 
-**Residual risk to guard against, not to solve now:** `ChatService`/`AssistantChatService` still branch on `@ai_agent.custom_agent?` at the code level — nothing prevents an account from being configured with a custom agent in the future. If that happens, debounce would still fire and hand a combined `String`/attachment array into a code path (`BaseFlowiseService`) that was never verified to handle either correctly. Recommendation: add a log line (e.g. `Rails.logger.warn` if `custom_agent?` is true at debounce-fire time) so this silently-wrong scenario is at least visible in logs rather than failing invisibly. Not a blocker for this build, but cheap insurance.
+No retry, no automatic handover — skip, per product decision. `ChatService`'s existing internal failure path (`send_reply_failure`) is unaffected and still applies once the debounce logic calls it. Since there's no more "the job silently never fires" risk from Redis TTL expiry (§0 removes that failure mode entirely), the main residual risk is a Sidekiq queue outage delaying `perform_in` jobs generally — an infra-level concern outside this spec's scope, not specific to debounce.
 
-## 9. Integration Point — Confirmed
+## 7. Observability
 
-Found in `app/listeners/action_cable_listener.rb#message_created`:
+Minimum metrics required at launch, not a follow-up:
 
+- **Messages-combined-per-invocation** (distribution) — the entire point of this feature is fewer, larger invocations; without this metric there's no way to confirm it's working post-launch.
+- **Time from first-message-in-burst to invocation** — validates debounce/max_wait behavior matches configured values in production.
+- **No-op job rate** (jobs that exit early because a newer message superseded them) — expected to be high and is a sign the mechanism is working, not a problem; useful as a sanity check that the ratio roughly matches burst sizes.
+- **AI invocation failure rate post-debounce** — a failure now affects the whole burst, not one message; blast radius is larger, worth tracking separately from pre-debounce failure rate.
+- **Watermark diagnostics in logs** — include `processing_boundary_id`, `watermark_before`, `watermark_after` on invocation/update logs for replay debugging.
+
+## 8. Integration Point — Confirmed
+
+`app/listeners/action_cable_listener.rb#message_created`:
 ```ruby
-def message_created(event)
-  message, account = extract_message_and_account(event)
-  ...
-  Captain::Copilot::ChatServiceJob.perform_later(message.id) if message.sender_type == 'Contact'
-  broadcast(account, tokens, MESSAGE_CREATED, message.push_event_data)
+Captain::Copilot::ChatServiceJob.perform_later(message.id) if message.sender_type == 'Contact'
+```
+becomes:
+```ruby
+if message.sender_type == 'Contact' && message.incoming? && !message.private?
+  if Captain::Copilot::DebounceConfig.for_message(message).enabled?
+    Captain::Copilot::MessageDebouncer.new(message).schedule
+  else
+    Captain::Copilot::ChatServiceJob.perform_later(message.id)
+  end
 end
 ```
+`Captain::Copilot::ChatServiceJob` itself is unchanged. `MessageDebouncer#schedule` just does the `perform_in` call from §2 step 1 — it owns no state.
 
-This is a single, event-driven call site (Wisper-style dispatch off `Message` creation), already filtered to `sender_type == 'Contact'` — not scattered per-channel as earlier assumed. This is where the debounce wrapper replaces the direct job call:
+**Minor item to confirm during implementation:** whether `sender_type == 'Contact'` alone is sufficient to exclude activity messages/private notes — worth a quick check against the `Message` model.
 
-```ruby
-# Before:
-Captain::Copilot::ChatServiceJob.perform_later(message.id) if message.sender_type == 'Contact'
+## 9. `custom_agent` / Flowise Branch — Explicitly Out of Scope
 
-# After:
-Captain::Copilot::MessageDebouncer.new(message).schedule if message.sender_type == 'Contact'
-```
+`BaseFlowiseService` is no longer in active use per product decision; this spec covers the `BaseJangkauService` path only. Residual risk: `ChatService`/`AssistantChatService` still branch on `@ai_agent.custom_agent?` at the code level, so nothing prevents a future account being configured with a custom agent. Recommendation: log a warning if `custom_agent?` is true at the point this logic would fire, so the scenario is visible rather than silently mishandled. Not a blocker.
 
-`Captain::Copilot::ChatServiceJob` itself is unchanged — it remains the simple `Message.find(message_id)` → `ChatService.new(message).perform` wrapper, and is exactly what the debounce-fire job (component #3 from the architecture discussion) calls at the end of its run, whether the buffer resolved to a single message or a combined string.
+## 10. Architecture — Runtime Components
 
-**Minor item to confirm during implementation, not a blocker:** the `sender_type == 'Contact'` filter is assumed sufficient to exclude activity messages and private notes from reaching the debouncer — worth a quick check against the `Message` model rather than taking on faith.
+1. **Interception point** — `ActionCableListener#message_created` (§8). No debounce logic inside `ChatService` itself.
+2. **`Captain::Copilot::DebounceConfig`** — central precedence and validation resolver for global + per-agent debounce behavior.
+3. **`Captain::Copilot::MessageDebouncer`** — stateless scheduler wrapper that reads interval from `DebounceConfig` and enqueues `ProcessDebouncedConversationJob`.
+4. **`Captain::Copilot::ConversationAiState` + `ProcessDebouncedConversationJob`** — replay-safe boundary resolution, superseded/max-wait decision, burst payload build, single downstream enqueue, monotonic watermark update under advisory lock.
 
-## 11. Architecture — Three Components
+## 11. Resolved Decisions
 
-1. **Interception point** — `ActionCableListener#message_created`, per §9. Do not put debounce logic inside `ChatService` itself.
-2. **`Captain::Copilot::MessageDebouncer`** (new service) — owns Redis buffering: append message ID, compute deadline, generate fencing token, schedule the delayed job. Knows nothing about AI Agents, welcome messages, or attachments.
-3. **Delayed job** (new, e.g. `Captain::Copilot::ProcessDebouncedConversationJob`), scheduled via `perform_at` — checks the fencing token, loads buffered `Message` records, builds the combined question per §4, then calls `Captain::Copilot::ChatServiceJob.perform_later(message_id)` (single-message case) or an equivalent path that hands `ChatService` the combined string (burst case).
-
-## 10. Resolved Decisions
-
-1. `max_wait` approved (§3).
-2. AI invocation failure: no retry, no handover — skip, log only (§7).
-3. Config: global via `.env` (§6).
+1. `max_wait` approved (§2).
+2. AI invocation failure: no retry, no handover — skip (§6).
+3. Config: global via `.env`, now including a kill switch (§5).
 4. Mid-buffer human handover: out of scope, feature doesn't exist in this fork.
+5. Flowise/custom_agent: out of scope (§9).
+6. Redis-based fencing token design: discarded in favor of DB re-check via scheduled-job self-comparison (§0, §2).
+7. WhatsApp reply-quote enrichment for multi-message bursts: accepted as a known regression on ship, deferred to a separate follow-up spec (§3) rather than blocking this implementation.
+8. Replay-safe boundary uses conversation watermark (`last_debounced_processed_message_id`) plus last AI reply id, with advisory lock and monotonic watermark writes (§2.2, §2.3).
+9. Debounce behavior can be overridden per `AiAgent` via `display_flow_data.debounce_config`, but global kill switch always wins (§5).

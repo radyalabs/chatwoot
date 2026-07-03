@@ -1,6 +1,6 @@
-# Plan: Conversation Debounce v2 (File-by-File)
+# Plan: Conversation Debounce (File-by-File)
 
-**Reference spec:** `docs/specs/conversation-debounce-spec-v2.md`  
+**Reference spec:** `docs/specs/conversation-debounce-spec.md`  
 **Last updated:** 2026-07-02
 
 This plan turns the v2 spec into a concrete implementation checklist by file, with minimal moving parts (no Redis, no fencing token), and keeps rollout guarded by `CAPTAIN_DEBOUNCE_ENABLED`.

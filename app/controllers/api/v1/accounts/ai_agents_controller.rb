@@ -48,10 +48,12 @@ class Api::V1::Accounts::AiAgentsController < Api::V1::Accounts::BaseController
     preview_attachments = upload_preview_attachments
 
     Captain::Llm::AssistantChatService.new(
-      params[:question],
-      conversation,
-      ai_agent,
-      account.id,
+      context: {
+        message: params[:question],
+        conversation: conversation,
+        ai_agent: ai_agent,
+        account_id: account.id
+      },
       attachments: preview_attachments[:metadata]
     ).perform.then do |response|
       if response.success?

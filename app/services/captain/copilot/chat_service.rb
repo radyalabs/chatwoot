@@ -64,10 +64,12 @@ class Captain::Copilot::ChatService
 
   def parsed_assistant_response
     send_message = Captain::Llm::AssistantChatService.new(
-      assistant_message,
-      @context.conversation,
-      @context.ai_agent,
-      @current_account.id,
+      context: {
+        message: assistant_message,
+        conversation: @context.conversation,
+        ai_agent: @context.ai_agent,
+        account_id: @current_account.id
+      },
       attachments: ai_attachments
     ).perform
 

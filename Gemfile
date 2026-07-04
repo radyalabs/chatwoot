@@ -61,8 +61,6 @@ gem 'redis'
 gem 'redis-namespace'
 # super fast record imports in bulk
 gem 'activerecord-import'
-# MongoDB for Excel import storage
-gem 'mongoid', '~> 8.0'
 # Excel file processing
 gem 'roo', '~> 2.10'
 

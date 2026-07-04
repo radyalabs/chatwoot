@@ -21,9 +21,7 @@ Devise.setup do |config|
   config.parent_mailer = 'ApplicationMailer'
 
   # ==> ORM configuration
-  # Load and configure the ORM. Supports :active_record (default) and
-  # :mongoid (bson_ext recommended) by default. Other ORMs may be
-  # available as additional gems.
+  # Load and configure the ORM.
   require 'devise/orm/active_record'
 
   # ==> Configuration for any authentication mechanism

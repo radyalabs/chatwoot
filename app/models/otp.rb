@@ -26,37 +26,13 @@
 #  fk_rails_...  (user_id => users.id)
 #
 
-#  include Mongoid::Document
-
-# Table name: otps  include Mongoid::Timestamps
-
-#  field :code, type: String
-
-#  id           :integer          not null, primary key  field :purpose, type: String
-
-#  code         :string(6)        not null  field :expires_at, type: Time
-
-#  purpose      :string           not null, default: "email_verification"  field :verified_at, type: Time
-
-#  verified     :boolean          not null, default: false  belongs_to :user
-
-#  verified_at  :datetimeend
-
-#  expires_at   :datetime         not null
-#  ip_address   :string
-#  user_agent   :string
-#  user_id      :integer          not null
-#  created_at   :datetime         not null
-#  updated_at   :datetime         not null
-#
-
 class Otp < ApplicationRecord
   belongs_to :user
 
   validates :code, presence: true, length: { is: 6 }, format: { with: /\A\d{6}\z/ }
   validates :purpose, presence: true, inclusion: { in: %w[email_verification password_reset login] }
   validates :expires_at, presence: true
-  
+
   scope :active, -> { where(verified: false) }
   scope :verified, -> { where(verified: true) }
   scope :expired, -> { where('expires_at < ?', Time.current) }
@@ -75,17 +51,17 @@ class Otp < ApplicationRecord
 
   def verify!
     Rails.logger.info "Attempting to verify OTP #{id}: verified=#{verified?}, expired=#{expired?}"
-    
+
     if verified?
       Rails.logger.warn "OTP #{id} already verified"
       return false
     end
-    
+
     if expired?
       Rails.logger.warn "OTP #{id} expired: expires_at=#{expires_at}, current=#{Time.current}"
       return false
     end
-    
+
     Rails.logger.info "Marking OTP #{id} as verified"
     update!(verified: true, verified_at: Time.current)
     Rails.logger.info "OTP #{id} successfully marked as verified"
@@ -102,29 +78,17 @@ class Otp < ApplicationRecord
     otp = find_by(user: user, purpose: purpose, code: code)
     return nil unless otp
     return nil if otp.verified? || otp.expired?
+
     otp
   end
 
   # Generate OTP for user using upsert pattern
   def self.generate_for_user(user, purpose = 'email_verification', expires_in_minutes = OtpConfig.expiry_minutes, request = nil)
     Rails.logger.info "Generating OTP for user #{user.id}, purpose: #{purpose}"
-    
-    # Generate new OTP code
-    otp_code = (SecureRandom.random_number(900000) + 100000).to_s
-    Rails.logger.info "Generated OTP code: #{otp_code}"
-    
-    # Find existing OTP record for this user and purpose, or initialize new one
-    otp = find_or_initialize_by(user: user, purpose: purpose) do |new_otp|
-      Rails.logger.info "Creating new OTP record for user #{user.id}"
-    end
-    
-    # Log current state
-    if otp.persisted?
-      Rails.logger.info "Updating existing OTP #{otp.id} for user #{user.id}"
-      Rails.logger.info "Previous: code=#{otp.code}, expires_at=#{otp.expires_at}, verified=#{otp.verified}"
-    end
-    
-    # Update/set OTP attributes
+
+    otp_code = generate_otp_code
+    otp = find_or_initialize_otp(user, purpose)
+    log_current_state(otp, user)
     otp.assign_attributes(
       code: otp_code,
       verified: false,
@@ -133,20 +97,43 @@ class Otp < ApplicationRecord
       ip_address: request&.remote_ip,
       user_agent: request&.user_agent
     )
-    
+
     Rails.logger.info "OTP attributes: #{otp.attributes}"
-    
-    if otp.save
-      Rails.logger.info "OTP #{otp.persisted? ? 'updated' : 'created'} successfully: #{otp.id}"
-      otp
-    else
-      Rails.logger.error "OTP save failed: #{otp.errors.full_messages.join(', ')}"
-      Rails.logger.error "OTP attributes: #{otp.attributes}"
-      raise ActiveRecord::RecordInvalid.new(otp)
+
+    save_generated_otp(otp)
+  end
+
+  def self.generate_otp_code
+    otp_code = (SecureRandom.random_number(900_000) + 100_000).to_s
+    Rails.logger.info "Generated OTP code: #{otp_code}"
+    otp_code
+  end
+
+  def self.find_or_initialize_otp(user, purpose)
+    find_or_initialize_by(user: user, purpose: purpose) do |_new_otp|
+      Rails.logger.info "Creating new OTP record for user #{user.id}"
     end
   end
 
-  private
+  def self.log_current_state(otp, user)
+    return unless otp.persisted?
+
+    Rails.logger.info "Updating existing OTP #{otp.id} for user #{user.id}"
+    Rails.logger.info "Previous: code=#{otp.code}, expires_at=#{otp.expires_at}, verified=#{otp.verified}"
+  end
+
+  def self.save_generated_otp(otp)
+    if otp.save
+      Rails.logger.info "OTP #{otp.persisted? ? 'updated' : 'created'} successfully: #{otp.id}"
+      return otp
+    end
+
+    Rails.logger.error "OTP save failed: #{otp.errors.full_messages.join(', ')}"
+    Rails.logger.error "OTP attributes: #{otp.attributes}"
+    raise ActiveRecord::RecordInvalid, otp
+  end
+
+  private_class_method :generate_otp_code, :find_or_initialize_otp, :log_current_state, :save_generated_otp
 
   # These methods are no longer needed since we generate code manually
   # def generate_code

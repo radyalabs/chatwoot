@@ -24,7 +24,7 @@ class Captain::Copilot::ConversationAiState
   end
 
   def processing_boundary_message_id
-    [last_ai_reply_id, last_debounced_processed_message_id].compact.max
+    last_debounced_processed_message_id || last_ai_reply_id
   end
 
   def last_debounced_processed_message_id

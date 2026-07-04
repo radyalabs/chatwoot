@@ -1,13 +1,14 @@
 class Captain::Llm::BaseJangkauService
   LOG_PREFIX = '[Captain::Llm::BaseJangkauService]'.freeze
 
-  def initialize(context:, preview_attachments: [], combined_text: nil)
+  def initialize(context:, preview_attachments: [], combined_text: nil, intent: :completion)
     @account_id = context.fetch(:account_id)
     @ai_agent = context.fetch(:ai_agent)
     @conversation = context.fetch(:conversation)
     @message = context.fetch(:message)
     @preview_attachments = preview_attachments
     @combined_text = combined_text
+    @intent = intent
   end
 
   def perform
@@ -32,7 +33,7 @@ class Captain::Llm::BaseJangkauService
   end
 
   def endpoint_policy
-    @endpoint_policy ||= Captain::Llm::JangkauEndpointPolicy.new(conversation: @conversation, ai_agent: @ai_agent)
+    @endpoint_policy ||= Captain::Llm::JangkauEndpointPolicy.new(intent: @intent)
   end
 
   def api_client

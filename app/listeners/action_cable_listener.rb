@@ -38,13 +38,7 @@ class ActionCableListener < BaseListener
     tokens = user_tokens(account, conversation.inbox.members) +
              contact_tokens(conversation.contact_inbox, message)
 
-    if message.sender_type == 'Contact' && message.incoming? && !message.private?
-      if Captain::Copilot::DebounceConfig.for_message(message).enabled?
-        Captain::Copilot::MessageDebouncer.new(message).schedule
-      else
-        Captain::Copilot::ChatServiceJob.perform_later(message.id)
-      end
-    end
+    route_copilot_message(message) if copilot_candidate_message?(message)
 
     broadcast(account, tokens, MESSAGE_CREATED, message.push_event_data)
   end
@@ -186,6 +180,20 @@ class ActionCableListener < BaseListener
   def typing_event_listener_tokens(account, conversation, user)
     current_user_token = user.is_a?(Contact) ? conversation.contact_inbox.pubsub_token : user.pubsub_token
     (user_tokens(account, conversation.inbox.members) + [conversation.contact_inbox.pubsub_token]) - [current_user_token]
+  end
+
+  def copilot_candidate_message?(message)
+    message.sender_type == 'Contact' && message.incoming? && !message.private?
+  end
+
+  def route_copilot_message(message)
+    return Captain::Copilot::WelcomeMessageJob.perform_later(message.id) \
+      if Captain::Copilot::WelcomeSourceClaimer.new(message).claim? && Captain::Copilot::WelcomeMessagePolicy.new(message).eligible?
+
+    return Captain::Copilot::MessageDebouncer.new(message).schedule \
+      if Captain::Copilot::DebounceConfig.for_message(message).enabled?
+
+    Captain::Copilot::ChatServiceJob.perform_later(message.id)
   end
 
   def user_tokens(account, agents)

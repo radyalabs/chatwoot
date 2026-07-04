@@ -55,11 +55,10 @@ class Captain::Copilot::ChatService
   end
 
   def send_messages
-    is_welcome = welcome_message?
     parsed = parsed_assistant_response
     return unless parsed
 
-    send_parsed_reply(parsed, is_welcome: is_welcome)
+    send_reply(parsed, additional_attributes: reply_attributes(parsed))
   end
 
   def parsed_assistant_response
@@ -70,7 +69,8 @@ class Captain::Copilot::ChatService
         ai_agent: @context.ai_agent,
         account_id: @current_account.id
       },
-      attachments: ai_attachments
+      attachments: ai_attachments,
+      intent: :completion
     ).perform
 
     unless send_message.success?
@@ -82,30 +82,12 @@ class Captain::Copilot::ChatService
     parsed_response(send_message.parsed_response, is_custom_agent: @context.ai_agent.custom_agent?)
   end
 
-  def send_parsed_reply(parsed, is_welcome:)
-    return send_reply(parsed, additional_attributes: reply_attributes(parsed)) unless is_welcome
-    return if send_greeting_images(caption: parsed[:response])
-
-    send_reply(parsed, additional_attributes: reply_attributes(parsed))
-  end
-
   def reply_attributes(parsed)
     {
       message_type: 1,
       sender_type: 'AiAgent',
       attachments: parsed[:attachments]
     }
-  end
-
-  def welcome_message?
-    greeting_config = @context.ai_agent&.display_flow_data&.dig('greeting_config')
-    return false unless greeting_config&.dig('enabled')
-
-    !conversation_ai_state.ai_replied?
-  end
-
-  def conversation_ai_state
-    @conversation_ai_state ||= Captain::Copilot::ConversationAiState.new(@context.conversation)
   end
 
   def assistant_message
@@ -134,12 +116,6 @@ class Captain::Copilot::ChatService
     end
   end
 
-  def send_greeting_images(caption: nil)
-    Captain::Copilot::GreetingImageSender
-      .new(@context)
-      .perform(caption: caption)
-  end
-
   def enrich_with_group_context
     return @combined_text unless GroupContextService.new(@message, @combined_text).group_summary_request?
 
@@ -155,45 +131,18 @@ class Captain::Copilot::ChatService
   end
 
   def send_reply(response, additional_attributes: {})
-    message_content = response[:is_handover] ? conversation_state_handler.process_handover(response[:response]) : response[:response]
-
-    conversation_state_handler.process_end_state(response) unless response[:is_handover] || response[:is_failure]
-
-    conversation_state_handler.process_conversion(response)
-
-    Captain::Copilot::ReplyDispatcher
-      .new(@context)
-      .perform(
-        content: message_content,
-        additional_attributes: additional_attributes.except(:reservation_details)
-      )
-
-    send_log_reply(is_handover: response[:is_handover])
-  rescue StandardError => e
-    Rails.logger.error "#{LOG_PREFIX} ai_reply_save_failed | conversation_id=#{@context.conversation.id} | error_class=#{e.class.name}"
+    reply_sender.send_reply(response, additional_attributes: additional_attributes)
   end
 
   def send_reply_failure(reason)
-    Rails.logger.warn "#{LOG_PREFIX} bot_failure_reply | conversation_id=#{@context.conversation.id} | reason=#{reason}"
-    response = {
-      response: reason,
-      is_handover: false,
-      is_end_state: false,
-      has_domain_change: false,
-      is_failure: true
-    }
-    send_reply(response, additional_attributes: { message_type: 3 })
+    reply_sender.send_failure(reason)
   end
 
   def conversation_state_handler
     @conversation_state_handler ||= Captain::Copilot::ConversationStateHandler.new(@context)
   end
 
-  def send_log_reply(is_handover: false)
-    if is_handover
-      Rails.logger.info "#{LOG_PREFIX} handover_completed | conversation_id=#{@context.conversation.id}"
-    else
-      Rails.logger.info "#{LOG_PREFIX} reply_completed | conversation_id=#{@context.conversation.id}"
-    end
+  def reply_sender
+    @reply_sender ||= Captain::Copilot::ReplySender.new(@context, state_handler: conversation_state_handler)
   end
 end

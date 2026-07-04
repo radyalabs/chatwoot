@@ -58,5 +58,37 @@ RSpec.describe Captain::Copilot::ChatServiceJob do
 
       job.perform(message.id)
     end
+
+    it 'routes welcome source messages to WelcomeMessageService instead of normal ChatService' do
+      welcome_source_claimer = instance_double(Captain::Copilot::WelcomeSourceClaimer, claim?: true)
+      welcome_policy = instance_double(Captain::Copilot::WelcomeMessagePolicy, eligible?: true)
+      welcome_service = instance_double(Captain::Copilot::WelcomeMessageService, perform: true)
+
+      allow(Captain::Copilot::WelcomeSourceClaimer).to receive(:new).with(message).and_return(welcome_source_claimer)
+      allow(Captain::Copilot::WelcomeMessagePolicy).to receive(:new).with(message).and_return(welcome_policy)
+      allow(Captain::Copilot::WelcomeMessageService).to receive(:new).with(message).and_return(welcome_service)
+
+      expect(Captain::Copilot::ChatService).not_to receive(:new)
+
+      described_class.perform_now(message.id)
+
+      expect(welcome_service).to have_received(:perform)
+    end
+
+    it 'does not treat a welcome reply for an earlier source message as a duplicate for a follow-up message' do
+      welcome_source = create(:message, message_type: :incoming, conversation: conversation, inbox: inbox, account: account)
+      follow_up = create(:message, message_type: :incoming, conversation: conversation, inbox: inbox, account: account)
+      Message.create!(
+        account: account,
+        inbox: inbox,
+        conversation: conversation,
+        message_type: :outgoing,
+        sender_type: 'AiAgent',
+        content: 'Welcome!',
+        additional_attributes: { 'welcome_source_message_id' => welcome_source.id }
+      )
+
+      expect(described_class.new.send(:ai_already_replied_after?, follow_up)).to be(false)
+    end
   end
 end

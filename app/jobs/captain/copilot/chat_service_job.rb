@@ -13,18 +13,15 @@ class Captain::Copilot::ChatServiceJob < ApplicationJob
       message = load_message_with_attachments(message_id)
       return unless message
 
-      if ai_already_replied_after?(message)
-        Rails.logger.info("[ChatServiceJob] Skipping duplicate invocation for message #{message.id}")
-        return
+      ai_invocation_lock(message.conversation_id).with_lock do
+        if route_welcome_message?(message)
+          Rails.logger.info("[ChatServiceJob] Routed welcome source message #{message.id} to WelcomeMessageService")
+        elsif ai_already_replied_after?(message)
+          Rails.logger.info("[ChatServiceJob] Skipping duplicate invocation for message #{message.id}")
+        else
+          invoke_chat_service(message, combined_question: combined_question, attachments: attachments)
+        end
       end
-
-      wait_for_attachment_blobs(message)
-
-      Captain::Copilot::ChatService.new(
-        message,
-        combined_question: combined_question,
-        attachments: attachments
-      ).perform
     end
   rescue StandardError => e
     track_metric('captain.debounce.ai_invocation_failure', message_id: message_id, error: e.class.name)
@@ -65,6 +62,16 @@ class Captain::Copilot::ChatServiceJob < ApplicationJob
     Rails.logger.info "Attachment #{attachment_id}: blob #{blob.key} ready after #{elapsed}s"
   end
 
+  def invoke_chat_service(message, combined_question:, attachments:)
+    wait_for_attachment_blobs(message)
+
+    Captain::Copilot::ChatService.new(
+      message,
+      combined_question: combined_question,
+      attachments: attachments
+    ).perform
+  end
+
   def blob_exists?(blob)
     blob.service.exist?(blob.key)
   rescue StandardError => e
@@ -73,14 +80,30 @@ class Captain::Copilot::ChatServiceJob < ApplicationJob
   end
 
   def ai_already_replied_after?(message)
+    welcome_reply_for_earlier_message = [
+      "additional_attributes->>'welcome_source_message_id' IS NOT NULL AND " \
+      "(additional_attributes->>'welcome_source_message_id')::bigint < ?",
+      message.id
+    ]
+    duplicate_reply_after_message = [
+      'created_at > ? OR (created_at = ? AND id > ?)',
+      message.created_at,
+      message.created_at,
+      message.id
+    ]
+
     message.conversation.messages
            .where(sender_type: 'AiAgent')
-           .exists?([
-                      'created_at > ? OR (created_at = ? AND id > ?)',
-                      message.created_at,
-                      message.created_at,
-                      message.id
-                    ])
+           .where.not(welcome_reply_for_earlier_message)
+           .exists?(duplicate_reply_after_message)
+  end
+
+  def route_welcome_message?(message)
+    return false unless Captain::Copilot::WelcomeSourceClaimer.new(message).claim?
+    return false unless Captain::Copilot::WelcomeMessagePolicy.new(message).eligible?
+
+    Captain::Copilot::WelcomeMessageService.new(message).perform
+    true
   end
 
   def with_message_lock(message_id)
@@ -92,6 +115,10 @@ class Captain::Copilot::ChatServiceJob < ApplicationJob
     yield
   ensure
     connection&.execute(unlock_sql)
+  end
+
+  def ai_invocation_lock(conversation_id)
+    Captain::Copilot::AiInvocationLock.new(conversation_id)
   end
 
   def track_metric(event_name, payload)

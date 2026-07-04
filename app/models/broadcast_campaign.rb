@@ -6,7 +6,7 @@
 #  message_body             :text             not null
 #  scheduled_at             :datetime
 #  spin_text_enabled        :boolean          default(FALSE)
-#  status                   :integer          default(0)
+#  status                   :integer          default("draft")
 #  target_segment           :string           default("all")
 #  unsubscribe_link_enabled :boolean          default(FALSE)
 #  created_at               :datetime         not null

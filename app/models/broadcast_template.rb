@@ -2,12 +2,12 @@
 #
 # Table name: broadcast_templates
 #
-#  id            :bigint           not null, primary key
-#  name          :string           not null
-#  message_body  :text             not null
-#  created_at    :datetime         not null
-#  updated_at    :datetime         not null
-#  account_id    :bigint           not null
+#  id           :bigint           not null, primary key
+#  message_body :text             not null
+#  name         :string           not null
+#  created_at   :datetime         not null
+#  updated_at   :datetime         not null
+#  account_id   :bigint           not null
 #
 # Indexes
 #

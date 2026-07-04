@@ -466,14 +466,7 @@ Rails.application.routes.draw do
     namespace :v2 do
       resources :accounts, only: [:create] do
         scope module: :accounts do
-          # AI Agents with nested Excel import routes
           resources :ai_agents, only: [] do
-            resources :excel_imports, path: 'knowledge_sources/excel_imports', only: [:create, :show, :destroy] do
-              member do
-                get :download
-              end
-            end
-
             # Reminders routes
             resources :reminders, only: [:index, :create, :show, :destroy] do
               collection do

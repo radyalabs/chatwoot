@@ -41,7 +41,7 @@ Because welcome handling lives inside `ChatService`, it follows whichever route 
 - Loads the message and re-checks welcome eligibility after acquiring a conversation-level lock.
 - Invokes `WelcomeMessageService` only if the message is still welcome-eligible.
 
-### `Captain::Copilot::WelcomeMessagePolicy`
+### `Captain::Copilot::Policies::WelcomeMessagePolicy`
 
 - Lightweight routing policy used before debounce.
 - Determines whether an incoming message should be routed to the welcome path.
@@ -203,20 +203,20 @@ The claim marker does not replace `AiInvocationLock`. The marker decides which m
 
 ### 1. Add Welcome Message Policy
 
-Create `app/services/captain/copilot/welcome_message_policy.rb`.
+Create `app/services/captain/copilot/policies/welcome_message_policy.rb`.
 
 Responsibilities:
 
-- Build `Captain::Copilot::MessageContext`.
+- Build `Captain::Copilot::State::MessageContext`.
 - Return false for group conversations.
 - Check `ai_agent.display_flow_data.dig('greeting_config', 'enabled') == true`.
 - Check that `conversation.captain_welcome_source_message_id == message.id`.
-- Check `!Captain::Copilot::ConversationAiState.new(conversation).ai_replied?`.
+- Check `!Captain::Copilot::State::ConversationAiState.new(conversation).ai_replied?`.
 
 Public API:
 
 ```ruby
-Captain::Copilot::WelcomeMessagePolicy.new(message).eligible?
+Captain::Copilot::Policies::WelcomeMessagePolicy.new(message).eligible?
 ```
 
 This policy is only for routing. Full subscription, availability, and meaningful-payload checks still run in the service.
@@ -246,14 +246,14 @@ Captain::Copilot::WelcomeSourceClaimer.new(message).claim?
 
 ### 2. Add Explicit LLM Intent
 
-Update `Captain::Llm::AssistantChatService`, `Captain::Llm::BaseJangkauService`, and `Captain::Llm::JangkauEndpointPolicy` to accept an explicit intent.
+Update `Captain::Llm::AssistantChatService`, `Captain::Llm::BaseJangkauService`, and `Captain::Llm::Policies::JangkauEndpointPolicy` to accept an explicit intent.
 
 Expected behavior:
 
 - Default intent is `:completion`.
 - Welcome service passes `intent: :welcome`.
 - Normal `ChatService` passes or defaults to `intent: :completion`.
-- `JangkauEndpointPolicy` chooses endpoint based on intent instead of `first_message? && welcome_enabled?`.
+- `Captain::Llm::Policies::JangkauEndpointPolicy` chooses endpoint based on intent instead of `first_message? && welcome_enabled?`.
 
 ### 3. Extract Shared Reply Sending
 
@@ -295,7 +295,7 @@ Add a shared lock used by both welcome and normal chat jobs.
 
 Possible implementation:
 
-`app/services/captain/copilot/ai_invocation_lock.rb`
+`app/services/captain/copilot/locks/ai_invocation_lock.rb`
 
 Requirements:
 
@@ -326,9 +326,9 @@ Target flow:
 
 ```ruby
 if message.sender_type == 'Contact' && message.incoming? && !message.private?
-  if Captain::Copilot::WelcomeSourceClaimer.new(message).claim? && Captain::Copilot::WelcomeMessagePolicy.new(message).eligible?
+  if Captain::Copilot::WelcomeSourceClaimer.new(message).claim? && Captain::Copilot::Policies::WelcomeMessagePolicy.new(message).eligible?
     Captain::Copilot::WelcomeMessageJob.perform_later(message.id)
-  elsif Captain::Copilot::DebounceConfig.for_message(message).enabled?
+  elsif Captain::Copilot::Config::DebounceConfig.for_message(message).enabled?
     Captain::Copilot::MessageDebouncer.new(message).schedule
   else
     Captain::Copilot::ChatServiceJob.perform_later(message.id)

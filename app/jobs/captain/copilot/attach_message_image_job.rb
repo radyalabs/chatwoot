@@ -6,53 +6,17 @@ class Captain::Copilot::AttachMessageImageJob < ApplicationJob
   MAX_DOWNLOAD_TIMEOUT = 30
 
   def perform(message_attrs, attachment, index = nil, message_content = nil)
-    # Parse attachment as JSON object with title and url
     attachment_data = attachment.is_a?(String) ? JSON.parse(attachment) : attachment
     title = attachment_data['title'] || ''
     url = attachment_data['url']
-
     return if url.blank?
 
-    image_file = nil
-    Timeout.timeout(MAX_DOWNLOAD_TIMEOUT) do
-      image_file = Down.download(url, max_size: MAX_IMAGE_SIZE)
-    end
-
+    image_file = download_image(url)
     return if image_file.nil?
 
-    content_type = image_file.content_type
+    return send_non_image_fallback(image_file, title, url, message_attrs, message_content) unless image?(image_file)
 
-    # If not an image, send message with format "Title: link"
-    if content_type.blank? || !content_type.start_with?('image/')
-      Rails.logger.warn "[AttachMessageImageJob] Non-image attachment (#{content_type || 'unknown'}): #{url}"
-      send_fallback_message(title, url, message_attrs, message_content)
-      return
-    end
-
-    # For image files, create attachment
-    extension = case content_type
-                when 'image/jpeg', 'image/jpg' then '.jpg'
-                when 'image/png' then '.png'
-                when 'image/gif' then '.gif'
-                when 'image/webp' then '.webp'
-                else '.jpg'
-                end
-    filename = "bot_image_#{message_attrs[:conversation_id]}_#{message_attrs[:account_id]}_#{message_attrs[:sender_id]}_#{index}_#{Time.current.to_i}#{extension}"
-
-    message = Message.new(message_attrs.merge(content: title))
-
-    message.attachments.build(
-      account_id: message.account_id,
-      file_type: 'image',
-      file: {
-        io: image_file,
-        filename: filename,
-        content_type: content_type
-      }
-    )
-
-    message.save!
-    Rails.logger.info "[AttachMessageImageJob] Message #{message.id} created with attachment named #{filename}"
+    attach_image(message_attrs, title, image_file, index)
   rescue JSON::ParserError => e
     Rails.logger.error "[AttachMessageImageJob] Failed to parse attachment JSON: #{e.message}"
     send_fallback_message(title, url, message_attrs, message_content)
@@ -65,6 +29,58 @@ class Captain::Copilot::AttachMessageImageJob < ApplicationJob
   end
 
   private
+
+  def download_image(url)
+    Timeout.timeout(MAX_DOWNLOAD_TIMEOUT) do
+      Down.download(url, max_size: MAX_IMAGE_SIZE)
+    end
+  end
+
+  def image?(image_file)
+    image_file.content_type.present? && image_file.content_type.start_with?('image/')
+  end
+
+  def send_non_image_fallback(image_file, title, url, message_attrs, message_content)
+    Rails.logger.warn "[AttachMessageImageJob] Non-image attachment (#{image_file.content_type || 'unknown'}): #{url}"
+    send_fallback_message(title, url, message_attrs, message_content)
+  end
+
+  def attach_image(message_attrs, title, image_file, index)
+    filename = image_filename(message_attrs, image_file.content_type, index)
+    message = Message.new(message_attrs.merge(content: title))
+
+    message.attachments.build(
+      account_id: message.account_id,
+      file_type: 'image',
+      file: {
+        io: image_file,
+        filename: filename,
+        content_type: image_file.content_type
+      }
+    )
+
+    message.save!
+    Rails.logger.info "[AttachMessageImageJob] Message #{message.id} created with attachment named #{filename}"
+  end
+
+  def image_filename(message_attrs, content_type, index)
+    [
+      'bot_image',
+      message_attrs[:conversation_id],
+      message_attrs[:account_id],
+      message_attrs[:sender_id],
+      index,
+      Time.current.to_i
+    ].join('_') + image_extension(content_type)
+  end
+
+  def image_extension(content_type)
+    return '.png' if content_type == 'image/png'
+    return '.gif' if content_type == 'image/gif'
+    return '.webp' if content_type == 'image/webp'
+
+    '.jpg'
+  end
 
   def send_fallback_message(title, url, message_attrs, message_content = nil)
     return if url.blank?

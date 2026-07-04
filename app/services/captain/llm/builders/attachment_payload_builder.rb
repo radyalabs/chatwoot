@@ -1,4 +1,4 @@
-class Captain::Llm::AttachmentPayloadBuilder
+class Captain::Llm::Builders::AttachmentPayloadBuilder
   def initialize(message:, preview_attachments: [])
     @message = message
     @preview_attachments = preview_attachments

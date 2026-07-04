@@ -6,10 +6,10 @@ RSpec.describe Captain::Copilot::WelcomeMessageJob do
   let(:message_id) { 123 }
   let(:message) { instance_double(Message, conversation_id: 42) }
   let(:messages_relation) { instance_double(ActiveRecord::Relation) }
-  let(:policy) { instance_double(Captain::Copilot::WelcomeMessagePolicy) }
+  let(:policy) { instance_double(Captain::Copilot::Policies::WelcomeMessagePolicy) }
   let(:eligible) { true }
   let(:service) { instance_double(Captain::Copilot::WelcomeMessageService, perform: true) }
-  let(:lock) { instance_double(Captain::Copilot::AiInvocationLock) }
+  let(:lock) { instance_double(Captain::Copilot::Locks::AiInvocationLock) }
   let(:lock_states) { [] }
 
   before do
@@ -17,9 +17,9 @@ RSpec.describe Captain::Copilot::WelcomeMessageJob do
 
     allow(Message).to receive(:includes).with(attachments: { file_attachment: :blob }).and_return(messages_relation)
     allow(messages_relation).to receive(:find_by).with(id: message_id).and_return(message)
-    allow(Captain::Copilot::WelcomeMessagePolicy).to receive(:new).with(message).and_return(policy)
+    allow(Captain::Copilot::Policies::WelcomeMessagePolicy).to receive(:new).with(message).and_return(policy)
     allow(Captain::Copilot::WelcomeMessageService).to receive(:new).with(message).and_return(service)
-    allow(Captain::Copilot::AiInvocationLock).to receive(:new).with(42).and_return(lock)
+    allow(Captain::Copilot::Locks::AiInvocationLock).to receive(:new).with(42).and_return(lock)
     allow(lock).to receive(:with_lock) do |&block|
       inside_lock = true
       block.call
@@ -48,8 +48,8 @@ RSpec.describe Captain::Copilot::WelcomeMessageJob do
       it 'does not check policy or invoke the service' do
         job.perform(message_id)
 
-        expect(Captain::Copilot::AiInvocationLock).not_to have_received(:new)
-        expect(Captain::Copilot::WelcomeMessagePolicy).not_to have_received(:new)
+        expect(Captain::Copilot::Locks::AiInvocationLock).not_to have_received(:new)
+        expect(Captain::Copilot::Policies::WelcomeMessagePolicy).not_to have_received(:new)
         expect(Captain::Copilot::WelcomeMessageService).not_to have_received(:new)
       end
     end

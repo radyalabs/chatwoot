@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe Captain::Copilot::ConversationAiState do
+RSpec.describe Captain::Copilot::State::ConversationAiState do
   subject(:state) { described_class.new(conversation) }
 
   let(:messages_association) { object_double(Message.all) }

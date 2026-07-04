@@ -4,10 +4,10 @@ RSpec.describe Captain::Copilot::ReplySender do
   subject(:sender) { described_class.new(context, state_handler: state_handler) }
 
   let(:conversation) { instance_double(Conversation, id: 42) }
-  let(:context) { instance_double(Captain::Copilot::MessageContext, conversation: conversation) }
+  let(:context) { instance_double(Captain::Copilot::State::MessageContext, conversation: conversation) }
   let(:state_handler) do
     instance_double(
-      Captain::Copilot::ConversationStateHandler,
+      Captain::Copilot::State::ConversationStateHandler,
       process_handover: 'handover content',
       process_end_state: true,
       process_conversion: true

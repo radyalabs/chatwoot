@@ -100,7 +100,7 @@ class Captain::Copilot::ChatServiceJob < ApplicationJob
 
   def route_welcome_message?(message)
     return false unless Captain::Copilot::WelcomeSourceClaimer.new(message).claim?
-    return false unless Captain::Copilot::WelcomeMessagePolicy.new(message).eligible?
+    return false unless Captain::Copilot::Policies::WelcomeMessagePolicy.new(message).eligible?
 
     Captain::Copilot::WelcomeMessageService.new(message).perform
     true
@@ -118,7 +118,7 @@ class Captain::Copilot::ChatServiceJob < ApplicationJob
   end
 
   def ai_invocation_lock(conversation_id)
-    Captain::Copilot::AiInvocationLock.new(conversation_id)
+    Captain::Copilot::Locks::AiInvocationLock.new(conversation_id)
   end
 
   def track_metric(event_name, payload)

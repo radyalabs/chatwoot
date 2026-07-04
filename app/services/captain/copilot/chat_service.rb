@@ -7,7 +7,7 @@ class Captain::Copilot::ChatService
 
   def initialize(message, combined_question: nil, attachments: nil)
     @message = message
-    @context = Captain::Copilot::MessageContext.new(message)
+    @context = Captain::Copilot::State::MessageContext.new(message)
     @current_account = @context.account
     @combined_question = combined_question
     @combined_text = combined_question
@@ -29,7 +29,7 @@ class Captain::Copilot::ChatService
   private
 
   def eligibility_guard
-    Captain::Copilot::EligibilityGuard.new(
+    Captain::Copilot::Guards::EligibilityGuard.new(
       context: @context,
       question_payload: question_payload,
       ai_attachments: ai_attachments
@@ -37,7 +37,7 @@ class Captain::Copilot::ChatService
   end
 
   def handle_ineligible_request(result)
-    Captain::Copilot::EligibilityGuardLogger
+    Captain::Copilot::Guards::EligibilityGuardLogger
       .new(@message, @context)
       .log(result)
 
@@ -47,7 +47,7 @@ class Captain::Copilot::ChatService
   end
 
   def group_message_without_mention?
-    policy = Captain::Copilot::GroupMentionPolicy.new(@message, inbox: @context.inbox)
+    policy = Captain::Copilot::Policies::GroupMentionPolicy.new(@message, inbox: @context.inbox)
     return false unless policy.skip_reason == :missing_bot_mention
 
     Rails.logger.info "#{LOG_PREFIX} skipped_group_message_without_bot_mention | conversation_id=#{@context.conversation.id}"
@@ -139,7 +139,7 @@ class Captain::Copilot::ChatService
   end
 
   def conversation_state_handler
-    @conversation_state_handler ||= Captain::Copilot::ConversationStateHandler.new(@context)
+    @conversation_state_handler ||= Captain::Copilot::State::ConversationStateHandler.new(@context)
   end
 
   def reply_sender

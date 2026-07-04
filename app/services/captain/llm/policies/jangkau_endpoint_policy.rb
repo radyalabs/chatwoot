@@ -1,4 +1,4 @@
-class Captain::Llm::JangkauEndpointPolicy
+class Captain::Llm::Policies::JangkauEndpointPolicy
   WELCOME_ENDPOINT = '/v2/chat/welcome/'.freeze
   COMPLETION_ENDPOINT = '/v2/chat/completion/'.freeze
   VALID_INTENTS = %i[completion welcome].freeze

@@ -1,4 +1,4 @@
-class Captain::Llm::JangkauRequestBuilder
+class Captain::Llm::Builders::JangkauRequestBuilder
   def initialize(context:, preview_attachments: [], combined_text: nil, question_enricher: nil)
     @account_id = context.fetch(:account_id)
     @ai_agent = context.fetch(:ai_agent)
@@ -37,7 +37,7 @@ class Captain::Llm::JangkauRequestBuilder
   end
 
   def attachment_payload
-    @attachment_payload ||= Captain::Llm::AttachmentPayloadBuilder.new(
+    @attachment_payload ||= Captain::Llm::Builders::AttachmentPayloadBuilder.new(
       message: @message,
       preview_attachments: @preview_attachments
     ).build

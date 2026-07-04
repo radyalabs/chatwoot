@@ -7,12 +7,12 @@ RSpec.describe Captain::Copilot::ProcessDebouncedConversationJob do
   let(:conversation) { instance_double('Conversation', id: conversation_id, messages: messages_relation, additional_attributes: {}) }
   let(:messages_relation) { instance_double('MessagesAssociation') }
   let(:incoming_relation) { instance_double('IncomingRelation') }
-  let(:state) { instance_double(Captain::Copilot::ConversationAiState) }
+  let(:state) { instance_double(Captain::Copilot::State::ConversationAiState) }
   let(:first_in_burst) { instance_double('Message', created_at: Time.current) }
 
   before do
     allow(Conversation).to receive(:find_by).with(id: conversation_id).and_return(conversation)
-    allow(Captain::Copilot::ConversationAiState).to receive(:new).with(conversation).and_return(state)
+    allow(Captain::Copilot::State::ConversationAiState).to receive(:new).with(conversation).and_return(state)
     allow(messages_relation).to receive(:incoming).and_return(incoming_relation)
     allow(job).to receive(:with_conversation_lock).and_yield
   end

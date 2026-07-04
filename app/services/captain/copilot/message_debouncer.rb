@@ -22,6 +22,6 @@ class Captain::Copilot::MessageDebouncer
   end
 
   def debounce_config
-    @debounce_config ||= Captain::Copilot::DebounceConfig.for_message(@message)
+    @debounce_config ||= Captain::Copilot::Config::DebounceConfig.for_message(@message)
   end
 end

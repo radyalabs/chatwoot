@@ -9,7 +9,7 @@ This plan turns the v2 spec into a concrete implementation checklist by file, wi
 
 | Order | File | Change |
 |---|---|---|
-| 1 | `app/services/captain/copilot/conversation_ai_state.rb` (new) | Add shared conversation-level helper(s) used by both `ChatService` and `BaseJangkauService`: whether conversation already has AI reply, last AI reply timestamp, and first incoming message in current burst window. |
+| 1 | `app/services/captain/copilot/state/conversation_ai_state.rb` (new) | Add shared conversation-level helper(s) used by both `ChatService` and `BaseJangkauService`: whether conversation already has AI reply, last AI reply timestamp, and first incoming message in current burst window. |
 | 2 | `app/services/captain/copilot/chat_service.rb` | Replace duplicated `welcome_message?` logic (`incoming.count == 1`) with the shared helper from step 1. Add support for burst payload input (combined question string + combined attachments) while keeping existing single-message path unchanged. Ensure `attachments:` is forwarded to `AssistantChatService.new(...)`. |
 | 3 | `app/services/captain/llm/base_jangkau_service.rb` | Replace duplicated `first_message?` logic with shared helper from step 1 so welcome/completion routing stays consistent with `ChatService`. Keep string-question behavior as-is (accepted WhatsApp reply-context regression for multi-message burst remains intentional per spec §3). |
 | 4 | `app/services/captain/copilot/message_debouncer.rb` (new) | Stateless scheduler wrapper. `schedule` enqueues `Captain::Copilot::ProcessDebouncedConversationJob.perform_in(debounce_interval.seconds, conversation_id, message_id)`. No writes/state storage. |

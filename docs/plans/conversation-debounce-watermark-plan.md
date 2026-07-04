@@ -31,7 +31,7 @@ This makes "already processed by debounce" independent from "AI reply already wr
 
 ## Implementation Plan
 
-1. Add boundary helpers in `Captain::Copilot::ConversationAiState`
+1. Add boundary helpers in `Captain::Copilot::State::ConversationAiState`
    - Read watermark from `conversation.additional_attributes`.
    - Compute effective processing boundary:
      - prefer watermark when present,

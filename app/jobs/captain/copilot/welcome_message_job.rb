@@ -6,7 +6,7 @@ class Captain::Copilot::WelcomeMessageJob < ApplicationJob
     return unless message
 
     ai_invocation_lock(message.conversation_id).with_lock do
-      Captain::Copilot::WelcomeMessageService.new(message).perform if Captain::Copilot::WelcomeMessagePolicy.new(message).eligible?
+      Captain::Copilot::WelcomeMessageService.new(message).perform if Captain::Copilot::Policies::WelcomeMessagePolicy.new(message).eligible?
     end
   end
 
@@ -17,6 +17,6 @@ class Captain::Copilot::WelcomeMessageJob < ApplicationJob
   end
 
   def ai_invocation_lock(conversation_id)
-    Captain::Copilot::AiInvocationLock.new(conversation_id)
+    Captain::Copilot::Locks::AiInvocationLock.new(conversation_id)
   end
 end

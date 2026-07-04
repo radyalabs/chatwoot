@@ -14,7 +14,7 @@
   - Request payload construction
   - Attachment data access + formatting
   - WhatsApp-specific reply-context enrichment (`gowa_reply`, `in_reply_to_external_id`)
-- Tight coupling to other domains (`Captain::Copilot::ConversationAiState`) from an LLM base service.
+- Tight coupling to other domains (`Captain::Copilot::State::ConversationAiState`) from an LLM base service.
 
 ## Non-Goals
 
@@ -32,11 +32,11 @@
 
 `BaseJangkauService` stays as orchestrator and delegates to collaborators:
 
-- `Captain::Llm::JangkauEndpointPolicy`
+- `Captain::Llm::Policies::JangkauEndpointPolicy`
   - Decide target endpoint (`/v2/chat/welcome/` or `/v2/chat/completion/`).
-- `Captain::Llm::JangkauApiClient`
+- `Captain::Llm::Clients::JangkauApiClient`
   - Execute HTTP request, apply timeout/headers, handle welcome fallback.
-- `Captain::Llm::JangkauRequestBuilder`
+- `Captain::Llm::Builders::JangkauRequestBuilder`
   - Build `question`, `attachments`, and `overrideConfig` payload.
 - `Captain::Llm::WhatsappReplyContextEnricher`
   - Handle reply-context extraction and prompt enrichment for WhatsApp unofficial messages.

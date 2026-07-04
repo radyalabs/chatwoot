@@ -1,13 +1,13 @@
 require 'rails_helper'
 
 RSpec.describe Captain::Copilot::MessageDebouncer do
-  let(:message) { instance_double('Message', id: 45, conversation_id: 12) }
-  let(:job_proxy) { instance_double('ActiveJob::ConfiguredJob', perform_later: true) }
-  let(:debounce_config) { instance_double(Captain::Copilot::DebounceConfig, interval_seconds: interval_seconds) }
+  let(:message) { instance_double(Message, id: 45, conversation_id: 12) }
+  let(:job_proxy) { instance_double(ActiveJob::ConfiguredJob, perform_later: true) }
+  let(:debounce_config) { instance_double(Captain::Copilot::Config::DebounceConfig, interval_seconds: interval_seconds) }
   let(:interval_seconds) { 10 }
 
   before do
-    allow(Captain::Copilot::DebounceConfig).to receive(:for_message).with(message).and_return(debounce_config)
+    allow(Captain::Copilot::Config::DebounceConfig).to receive(:for_message).with(message).and_return(debounce_config)
   end
 
   describe '#schedule' do

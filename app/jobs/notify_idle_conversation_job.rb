@@ -19,16 +19,7 @@ class NotifyIdleConversationJob < ApplicationJob
 
     conversations.each do |idle_conversation|
       enabled = @enabled_cache.fetch(idle_conversation.ai_agent_id, true)
-
-      if enabled
-        duration = DEFAULT_END_STATE_DURATION
-        duration = @duration_cache[idle_conversation.ai_agent_id] || DEFAULT_DURATION if idle_conversation.step.zero?
-        unit = idle_conversation.step.zero? ? DEFAULT_UNIT : DEFAULT_END_STATE_UNIT
-      else
-        base_duration = @duration_cache[idle_conversation.ai_agent_id] || DEFAULT_DURATION
-        duration = [base_duration, 30].max
-        unit = 'minutes'
-      end
+      duration, unit = idle_schedule(idle_conversation, enabled)
 
       next unless idle_since?(idle_conversation.conversation.last_activity_at, duration, unit)
 
@@ -47,6 +38,18 @@ class NotifyIdleConversationJob < ApplicationJob
     @enabled_cache = configs.to_h { |id, _, en| [id, en] }
   end
 
+  def idle_schedule(idle_conversation, enabled)
+    return disabled_idle_schedule(idle_conversation) unless enabled
+    return [@duration_cache[idle_conversation.ai_agent_id] || DEFAULT_DURATION, DEFAULT_UNIT] if idle_conversation.step.zero?
+
+    [DEFAULT_END_STATE_DURATION, DEFAULT_END_STATE_UNIT]
+  end
+
+  def disabled_idle_schedule(idle_conversation)
+    base_duration = @duration_cache[idle_conversation.ai_agent_id] || DEFAULT_DURATION
+    [[base_duration, 30].max, 'minutes']
+  end
+
   def idle_since?(last_activity_at, duration, unit)
     last_activity_at <= duration.send(unit).ago
   end
@@ -57,7 +60,10 @@ class NotifyIdleConversationJob < ApplicationJob
 
     usage = find_usage(idle_conversation.account_id)
     if usage_limit_reached?(usage)
-      Rails.logger.warn "[NotifyIdleConversationJob] Subscription inactive for account #{idle_conversation.account_id} — marking idle_conversation #{idle_conversation.id} as completed"
+      Rails.logger.warn(
+        "[NotifyIdleConversationJob] Subscription inactive for account #{idle_conversation.account_id}; " \
+        "marking idle_conversation #{idle_conversation.id} as completed"
+      )
       return complete_and_resolve(idle_conversation)
     end
 
@@ -97,7 +103,7 @@ class NotifyIdleConversationJob < ApplicationJob
   end
 
   def generate_message(idle_conversation)
-    Captain::Llm::GenerateIdleMessage.new(
+    Captain::Llm::GenerateIdleMessageService.new(
       conversation: idle_conversation.conversation,
       step: idle_conversation.step
     ).perform

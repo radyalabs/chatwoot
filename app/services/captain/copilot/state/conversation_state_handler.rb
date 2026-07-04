@@ -1,5 +1,5 @@
-class Captain::Copilot::ConversationStateHandler
-  LOG_PREFIX = '[Captain::Copilot::ConversationStateHandler]'.freeze
+class Captain::Copilot::State::ConversationStateHandler
+  LOG_PREFIX = '[Captain::Copilot::State::ConversationStateHandler]'.freeze
 
   def initialize(context)
     @context = context

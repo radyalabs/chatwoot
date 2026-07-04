@@ -1,4 +1,4 @@
-class Captain::Llm::GenerateIdleMessage
+class Captain::Llm::GenerateIdleMessageService
   include ResponseFormatChatHelper
   include HTTParty
   base_uri ENV.fetch('JANGKAU_AGENT_API_URL', 'https://agent.jangkau.ai/')
@@ -44,7 +44,7 @@ class Captain::Llm::GenerateIdleMessage
     return nil if agent_bot_inbox.nil?
 
     @ai_agent ||= AiAgent.find_by(id: agent_bot_inbox.ai_agent_id)
-    Rails.logger.warn "[GenerateIdleMessage] ai_agent not found for ai_agent_id: #{agent_bot_inbox.ai_agent_id}" if @ai_agent.nil?
+    Rails.logger.warn "[GenerateIdleMessageService] ai_agent not found for ai_agent_id: #{agent_bot_inbox.ai_agent_id}" if @ai_agent.nil?
     @ai_agent
   end
 

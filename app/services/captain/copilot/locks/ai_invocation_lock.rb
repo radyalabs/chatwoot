@@ -1,4 +1,4 @@
-class Captain::Copilot::AiInvocationLock
+class Captain::Copilot::Locks::AiInvocationLock
   ADVISORY_LOCK_NAMESPACE = 10_203
 
   def initialize(conversation_id)

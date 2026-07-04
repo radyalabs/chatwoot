@@ -1,7 +1,7 @@
-class Captain::Copilot::WelcomeMessagePolicy
+class Captain::Copilot::Policies::WelcomeMessagePolicy
   def initialize(message)
     @message = message
-    @context = Captain::Copilot::MessageContext.new(message)
+    @context = Captain::Copilot::State::MessageContext.new(message)
   end
 
   def eligible?
@@ -32,6 +32,6 @@ class Captain::Copilot::WelcomeMessagePolicy
   end
 
   def conversation_ai_state
-    @conversation_ai_state ||= Captain::Copilot::ConversationAiState.new(@context.conversation)
+    @conversation_ai_state ||= Captain::Copilot::State::ConversationAiState.new(@context.conversation)
   end
 end

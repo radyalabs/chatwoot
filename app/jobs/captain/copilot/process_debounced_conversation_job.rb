@@ -8,7 +8,7 @@ class Captain::Copilot::ProcessDebouncedConversationJob < ApplicationJob
       conversation = Conversation.find_by(id: conversation_id)
       return unless conversation
 
-      state = Captain::Copilot::ConversationAiState.new(conversation)
+      state = Captain::Copilot::State::ConversationAiState.new(conversation)
       latest_message = state.latest_incoming_contact_message
       first_in_burst = state.first_unprocessed_incoming_message
       return unless latest_message && first_in_burst
@@ -116,7 +116,7 @@ class Captain::Copilot::ProcessDebouncedConversationJob < ApplicationJob
   end
 
   def max_wait_seconds(conversation)
-    Captain::Copilot::DebounceConfig.for_conversation(conversation).max_wait_seconds
+    Captain::Copilot::Config::DebounceConfig.for_conversation(conversation).max_wait_seconds
   end
 
   def burst_messages(conversation:, latest_message:, processing_boundary_id:)

@@ -11,11 +11,11 @@ class Captain::Llm::TranslateService < Captain::Llm::BaseAzureOpenAiService
     return @text if @text.blank?
 
     messages = [system_message, user_message]
-    
+
     # For Azure OpenAI, we don't specify model in parameters
     response = @client.chat(
       parameters: {
-        messages: messages,
+        messages: messages
       }
     )
 
@@ -33,8 +33,8 @@ class Captain::Llm::TranslateService < Captain::Llm::BaseAzureOpenAiService
     {
       role: 'system',
       content: "You are a professional translator. Translate the given text to #{language_name}. " \
-               "Only return the translated text without any explanation, additional text, or formatting. " \
-               "Preserve the original tone and meaning."
+               'Only return the translated text without any explanation, additional text, or formatting. ' \
+               'Preserve the original tone and meaning.'
     }
   end
 
@@ -47,8 +47,6 @@ class Captain::Llm::TranslateService < Captain::Llm::BaseAzureOpenAiService
 
   def language_name
     case @target_language
-    when 'en'
-      'English'
     when 'id'
       'Indonesian'
     else

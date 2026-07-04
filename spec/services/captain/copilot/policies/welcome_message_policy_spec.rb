@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe Captain::Copilot::WelcomeMessagePolicy do
+RSpec.describe Captain::Copilot::Policies::WelcomeMessagePolicy do
   subject(:policy) { described_class.new(message) }
 
   let(:account) { create(:account) }

@@ -6,7 +6,7 @@ class Captain::Copilot::WelcomeMessageService
 
   def initialize(message)
     @message = message
-    @context = Captain::Copilot::MessageContext.new(message)
+    @context = Captain::Copilot::State::MessageContext.new(message)
     @current_account = @context.account
   end
 
@@ -25,7 +25,7 @@ class Captain::Copilot::WelcomeMessageService
   private
 
   def eligibility_guard
-    Captain::Copilot::EligibilityGuard.new(
+    Captain::Copilot::Guards::EligibilityGuard.new(
       context: @context,
       question_payload: @message.content,
       ai_attachments: ai_attachments
@@ -33,7 +33,7 @@ class Captain::Copilot::WelcomeMessageService
   end
 
   def handle_ineligible_request(result)
-    Captain::Copilot::EligibilityGuardLogger
+    Captain::Copilot::Guards::EligibilityGuardLogger
       .new(@message, @context)
       .log(result)
 
@@ -110,7 +110,7 @@ class Captain::Copilot::WelcomeMessageService
   end
 
   def conversation_state_handler
-    @conversation_state_handler ||= Captain::Copilot::ConversationStateHandler.new(@context)
+    @conversation_state_handler ||= Captain::Copilot::State::ConversationStateHandler.new(@context)
   end
 
   def reply_sender

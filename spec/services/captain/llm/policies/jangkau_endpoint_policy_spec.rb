@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe Captain::Llm::JangkauEndpointPolicy do
+RSpec.describe Captain::Llm::Policies::JangkauEndpointPolicy do
   describe '#endpoint' do
     it 'defaults to completion endpoint' do
       expect(described_class.new.endpoint).to eq(described_class::COMPLETION_ENDPOINT)

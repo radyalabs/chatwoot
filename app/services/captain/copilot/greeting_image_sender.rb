@@ -6,7 +6,7 @@ class Captain::Copilot::GreetingImageSender
     @context = context
   end
 
-  def perform(caption: nil)
+  def perform(caption: nil, additional_attributes: {})
     images = greeting_images
     return false if images.empty?
 
@@ -20,7 +20,8 @@ class Captain::Copilot::GreetingImageSender
       status: 0,
       message_type: 1,
       sender_type: 'AiAgent',
-      sender_id: @context.ai_agent.id
+      sender_id: @context.ai_agent.id,
+      additional_attributes: additional_attributes
     }
 
     images.each_with_index do |image_ref, idx|

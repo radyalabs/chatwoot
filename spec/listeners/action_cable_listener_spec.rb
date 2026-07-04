@@ -67,11 +67,30 @@ describe ActionCableListener do
         )
       end
 
+      it 'routes welcome-eligible messages directly to WelcomeMessageJob' do
+        welcome_source_claimer = instance_double(Captain::Copilot::WelcomeSourceClaimer, claim?: true)
+        welcome_policy = instance_double(Captain::Copilot::WelcomeMessagePolicy, eligible?: true)
+        allow(ActionCableBroadcastJob).to receive(:perform_later)
+
+        expect(Captain::Copilot::WelcomeSourceClaimer).to receive(:new).with(message).and_return(welcome_source_claimer)
+        expect(Captain::Copilot::WelcomeMessagePolicy).to receive(:new).with(message).and_return(welcome_policy)
+        expect(Captain::Copilot::WelcomeMessageJob).to receive(:perform_later).with(message.id)
+        expect(Captain::Copilot::DebounceConfig).not_to receive(:for_message)
+        expect(Captain::Copilot::MessageDebouncer).not_to receive(:new)
+        expect(Captain::Copilot::ChatServiceJob).not_to receive(:perform_later)
+
+        listener.message_created(event)
+      end
+
       it 'routes message through debouncer when debounce is enabled' do
+        welcome_source_claimer = instance_double(Captain::Copilot::WelcomeSourceClaimer, claim?: false)
         debouncer = instance_double(Captain::Copilot::MessageDebouncer, schedule: true)
         debounce_config = instance_double(Captain::Copilot::DebounceConfig, enabled?: true)
         allow(ActionCableBroadcastJob).to receive(:perform_later)
 
+        expect(Captain::Copilot::WelcomeSourceClaimer).to receive(:new).with(message).and_return(welcome_source_claimer)
+        expect(Captain::Copilot::WelcomeMessagePolicy).not_to receive(:new)
+        expect(Captain::Copilot::WelcomeMessageJob).not_to receive(:perform_later)
         expect(Captain::Copilot::DebounceConfig).to receive(:for_message).with(message).and_return(debounce_config)
         expect(Captain::Copilot::MessageDebouncer).to receive(:new).with(message).and_return(debouncer)
         expect(Captain::Copilot::ChatServiceJob).not_to receive(:perform_later)
@@ -80,12 +99,33 @@ describe ActionCableListener do
       end
 
       it 'routes message directly to ChatServiceJob when debounce is disabled for the agent' do
+        welcome_source_claimer = instance_double(Captain::Copilot::WelcomeSourceClaimer, claim?: false)
         debounce_config = instance_double(Captain::Copilot::DebounceConfig, enabled?: false)
         allow(ActionCableBroadcastJob).to receive(:perform_later)
 
+        expect(Captain::Copilot::WelcomeSourceClaimer).to receive(:new).with(message).and_return(welcome_source_claimer)
+        expect(Captain::Copilot::WelcomeMessagePolicy).not_to receive(:new)
+        expect(Captain::Copilot::WelcomeMessageJob).not_to receive(:perform_later)
         expect(Captain::Copilot::DebounceConfig).to receive(:for_message).with(message).and_return(debounce_config)
         expect(Captain::Copilot::MessageDebouncer).not_to receive(:new)
         expect(Captain::Copilot::ChatServiceJob).to receive(:perform_later).with(message.id)
+
+        listener.message_created(event)
+      end
+
+      it 'routes message through debouncer when it claims source but welcome policy is ineligible' do
+        welcome_source_claimer = instance_double(Captain::Copilot::WelcomeSourceClaimer, claim?: true)
+        welcome_policy = instance_double(Captain::Copilot::WelcomeMessagePolicy, eligible?: false)
+        debouncer = instance_double(Captain::Copilot::MessageDebouncer, schedule: true)
+        debounce_config = instance_double(Captain::Copilot::DebounceConfig, enabled?: true)
+        allow(ActionCableBroadcastJob).to receive(:perform_later)
+
+        expect(Captain::Copilot::WelcomeSourceClaimer).to receive(:new).with(message).and_return(welcome_source_claimer)
+        expect(Captain::Copilot::WelcomeMessagePolicy).to receive(:new).with(message).and_return(welcome_policy)
+        expect(Captain::Copilot::WelcomeMessageJob).not_to receive(:perform_later)
+        expect(Captain::Copilot::DebounceConfig).to receive(:for_message).with(message).and_return(debounce_config)
+        expect(Captain::Copilot::MessageDebouncer).to receive(:new).with(message).and_return(debouncer)
+        expect(Captain::Copilot::ChatServiceJob).not_to receive(:perform_later)
 
         listener.message_created(event)
       end

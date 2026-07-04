@@ -1,25 +1,24 @@
 class Captain::Llm::JangkauEndpointPolicy
   WELCOME_ENDPOINT = '/v2/chat/welcome/'.freeze
   COMPLETION_ENDPOINT = '/v2/chat/completion/'.freeze
+  VALID_INTENTS = %i[completion welcome].freeze
 
-  def initialize(conversation:, ai_agent:)
-    @conversation = conversation
-    @ai_agent = ai_agent
+  def initialize(intent: :completion)
+    @intent = normalize_intent(intent)
   end
 
   def endpoint
-    return WELCOME_ENDPOINT if first_message? && welcome_enabled?
+    return WELCOME_ENDPOINT if @intent == :welcome
 
     COMPLETION_ENDPOINT
   end
 
   private
 
-  def first_message?
-    !Captain::Copilot::ConversationAiState.new(@conversation).ai_replied?
-  end
+  def normalize_intent(intent)
+    normalized = intent.to_sym
+    return normalized if VALID_INTENTS.include?(normalized)
 
-  def welcome_enabled?
-    @ai_agent.display_flow_data&.dig('greeting_config', 'enabled') == true
+    raise ArgumentError, "Unsupported Jangkau intent: #{intent}"
   end
 end

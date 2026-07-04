@@ -1,4 +1,4 @@
-class Captain::Copilot::DebounceConfig
+class Captain::Copilot::Config::DebounceConfig
   DEFAULT_DEBOUNCE_ENABLED = true
   DEFAULT_INTERVAL_SECONDS = 10
   DEFAULT_MAX_WAIT_SECONDS = 60
@@ -70,7 +70,7 @@ class Captain::Copilot::DebounceConfig
 
   def ai_agent
     @ai_agent ||= if @message
-                    Captain::Copilot::MessageContext.new(@message).ai_agent
+                    Captain::Copilot::State::MessageContext.new(@message).ai_agent
                   elsif @conversation
                     AgentBotInbox.where.not(ai_agent_id: nil).find_by(status: :inactive, inbox_id: @conversation.inbox_id)&.ai_agent
                   end
@@ -130,7 +130,7 @@ class Captain::Copilot::DebounceConfig
     return if @invalid_config_logged
 
     Rails.logger.warn(
-      '[Captain::Copilot::DebounceConfig] invalid per-agent debounce config, forcing direct dispatch | ' \
+      '[Captain::Copilot::Config::DebounceConfig] invalid per-agent debounce config, forcing direct dispatch | ' \
       "ai_agent_id=#{ai_agent&.id} | interval_seconds=#{agent_value('interval_seconds').inspect} | " \
       "max_wait_seconds=#{agent_value('max_wait_seconds').inspect}"
     )

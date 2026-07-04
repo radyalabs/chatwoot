@@ -1,4 +1,4 @@
-class Captain::Copilot::ConversationAiState
+class Captain::Copilot::State::ConversationAiState
   def initialize(conversation)
     @conversation = conversation
   end

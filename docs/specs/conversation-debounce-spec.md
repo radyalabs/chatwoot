@@ -206,9 +206,9 @@ end
 ## 10. Architecture — Runtime Components
 
 1. **Interception point** — `ActionCableListener#message_created` (§8). No debounce logic inside `ChatService` itself.
-2. **`Captain::Copilot::DebounceConfig`** — central precedence and validation resolver for global + per-agent debounce behavior.
+2. **`Captain::Copilot::Config::DebounceConfig`** — central precedence and validation resolver for global + per-agent debounce behavior.
 3. **`Captain::Copilot::MessageDebouncer`** — stateless scheduler wrapper that reads interval from `DebounceConfig` and enqueues `ProcessDebouncedConversationJob`.
-4. **`Captain::Copilot::ConversationAiState` + `ProcessDebouncedConversationJob`** — replay-safe boundary resolution, superseded/max-wait decision, burst payload build, single downstream enqueue, monotonic watermark update under advisory lock.
+4. **`Captain::Copilot::State::ConversationAiState` + `ProcessDebouncedConversationJob`** — replay-safe boundary resolution, superseded/max-wait decision, burst payload build, single downstream enqueue, monotonic watermark update under advisory lock.
 
 ## 11. Resolved Decisions
 

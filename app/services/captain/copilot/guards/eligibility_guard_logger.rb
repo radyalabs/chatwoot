@@ -1,5 +1,5 @@
-class Captain::Copilot::EligibilityGuardLogger
-  LOG_PREFIX = '[Captain::Copilot::EligibilityGuardLogger]'.freeze
+class Captain::Copilot::Guards::EligibilityGuardLogger
+  LOG_PREFIX = '[Captain::Copilot::Guards::EligibilityGuardLogger]'.freeze
 
   def initialize(message, context)
     @message = message

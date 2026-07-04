@@ -1,4 +1,4 @@
-class Captain::Copilot::MessageContext
+class Captain::Copilot::State::MessageContext
   attr_reader :message, :conversation, :account_id, :inbox_id
 
   def initialize(message)

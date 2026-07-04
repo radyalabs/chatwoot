@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe Captain::Copilot::AiInvocationLock do
+RSpec.describe Captain::Copilot::Locks::AiInvocationLock do
   describe '#with_lock' do
     let(:connection) { instance_double(ActiveRecord::ConnectionAdapters::AbstractAdapter) }
     let(:executed_sql) { [] }

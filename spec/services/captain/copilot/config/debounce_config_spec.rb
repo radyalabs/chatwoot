@@ -1,10 +1,10 @@
 require 'rails_helper'
 
-RSpec.describe Captain::Copilot::DebounceConfig do
+RSpec.describe Captain::Copilot::Config::DebounceConfig do
   def build_config(message:, debounce_config:)
     ai_agent = instance_double(AiAgent, id: 9, display_flow_data: { 'debounce_config' => debounce_config })
-    context = instance_double(Captain::Copilot::MessageContext, ai_agent: ai_agent)
-    allow(Captain::Copilot::MessageContext).to receive(:new).with(message).and_return(context)
+    context = instance_double(Captain::Copilot::State::MessageContext, ai_agent: ai_agent)
+    allow(Captain::Copilot::State::MessageContext).to receive(:new).with(message).and_return(context)
     described_class.for_message(message)
   end
 
@@ -24,8 +24,8 @@ RSpec.describe Captain::Copilot::DebounceConfig do
 
     it 'disables debounce when per-agent config is missing' do
       message = instance_double(Message, conversation: nil)
-      context = instance_double(Captain::Copilot::MessageContext, ai_agent: nil)
-      allow(Captain::Copilot::MessageContext).to receive(:new).with(message).and_return(context)
+      context = instance_double(Captain::Copilot::State::MessageContext, ai_agent: nil)
+      allow(Captain::Copilot::State::MessageContext).to receive(:new).with(message).and_return(context)
 
       with_modified_env CAPTAIN_DEBOUNCE_ENABLED: 'true' do
         expect(described_class.for_message(message).enabled?).to be(false)

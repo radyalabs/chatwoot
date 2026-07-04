@@ -188,10 +188,10 @@ class ActionCableListener < BaseListener
 
   def route_copilot_message(message)
     return Captain::Copilot::WelcomeMessageJob.perform_later(message.id) \
-      if Captain::Copilot::WelcomeSourceClaimer.new(message).claim? && Captain::Copilot::WelcomeMessagePolicy.new(message).eligible?
+      if Captain::Copilot::WelcomeSourceClaimer.new(message).claim? && Captain::Copilot::Policies::WelcomeMessagePolicy.new(message).eligible?
 
     return Captain::Copilot::MessageDebouncer.new(message).schedule \
-      if Captain::Copilot::DebounceConfig.for_message(message).enabled?
+      if Captain::Copilot::Config::DebounceConfig.for_message(message).enabled?
 
     Captain::Copilot::ChatServiceJob.perform_later(message.id)
   end

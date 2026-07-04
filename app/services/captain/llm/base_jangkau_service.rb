@@ -33,11 +33,11 @@ class Captain::Llm::BaseJangkauService
   end
 
   def endpoint_policy
-    @endpoint_policy ||= Captain::Llm::JangkauEndpointPolicy.new(intent: @intent)
+    @endpoint_policy ||= Captain::Llm::Policies::JangkauEndpointPolicy.new(intent: @intent)
   end
 
   def api_client
-    @api_client ||= Captain::Llm::JangkauApiClient.new
+    @api_client ||= Captain::Llm::Clients::JangkauApiClient.new
   end
 
   def request_body
@@ -45,7 +45,7 @@ class Captain::Llm::BaseJangkauService
   end
 
   def request_builder
-    @request_builder ||= Captain::Llm::JangkauRequestBuilder.new(
+    @request_builder ||= Captain::Llm::Builders::JangkauRequestBuilder.new(
       context: {
         account_id: @account_id,
         ai_agent: @ai_agent,

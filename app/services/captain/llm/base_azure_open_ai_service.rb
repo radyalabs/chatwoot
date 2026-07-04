@@ -18,7 +18,7 @@ class Captain::Llm::BaseAzureOpenAiService
     api_version = ENV.fetch('AZURE_OPENAI_API_VERSION', DEFAULT_API_VERSION).presence || DEFAULT_API_VERSION
     @deployment_name = ENV.fetch('AZURE_OPENAI_DEPLOYMENT_NAME', DEFAULT_DEPLOYMENT).presence || DEFAULT_DEPLOYMENT
 
-    raise 'AZURE_OPENAI_SUBSCRIPTION_KEY is missing' unless subscription_key.present?
+    raise 'AZURE_OPENAI_SUBSCRIPTION_KEY is missing' if subscription_key.blank?
 
     # For Azure OpenAI, the URI must include the deployment in the path
     # Expected format: https://{resource}.openai.azure.com/openai/deployments/{deployment}/

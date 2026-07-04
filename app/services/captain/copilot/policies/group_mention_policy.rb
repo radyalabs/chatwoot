@@ -1,4 +1,4 @@
-class Captain::Copilot::GroupMentionPolicy
+class Captain::Copilot::Policies::GroupMentionPolicy
   def initialize(message, inbox:)
     @message = message
     @inbox = inbox

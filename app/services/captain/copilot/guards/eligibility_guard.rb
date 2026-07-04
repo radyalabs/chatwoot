@@ -1,4 +1,4 @@
-class Captain::Copilot::EligibilityGuard
+class Captain::Copilot::Guards::EligibilityGuard
   Result = Struct.new(:code, :failure_reason, :metadata, keyword_init: true) do
     def ok?
       code.nil?

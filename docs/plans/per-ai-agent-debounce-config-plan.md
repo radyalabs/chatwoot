@@ -54,7 +54,7 @@ When a new `AiAgent` is created, initialize `display_flow_data.debounce_config` 
 
 ## Files To Change
 
-- `app/services/captain/copilot/debounce_config.rb` (new)
+- `app/services/captain/copilot/config/debounce_config.rb` (new)
 - `app/listeners/action_cable_listener.rb`
 - `app/services/captain/copilot/message_debouncer.rb`
 - `app/jobs/captain/copilot/process_debounced_conversation_job.rb`

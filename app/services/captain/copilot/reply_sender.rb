@@ -3,7 +3,7 @@ class Captain::Copilot::ReplySender
 
   def initialize(context, state_handler: nil)
     @context = context
-    @state_handler = state_handler || Captain::Copilot::ConversationStateHandler.new(context)
+    @state_handler = state_handler || Captain::Copilot::State::ConversationStateHandler.new(context)
   end
 
   def send_reply(response, additional_attributes: {})

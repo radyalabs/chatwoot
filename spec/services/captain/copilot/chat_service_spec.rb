@@ -12,7 +12,7 @@ RSpec.describe Captain::Copilot::ChatService do
     ai_agent = instance_double(AiAgent, custom_agent?: false)
     usage = instance_double(SubscriptionUsage, increment_ai_responses: true)
     context = instance_double(
-      Captain::Copilot::MessageContext,
+      Captain::Copilot::State::MessageContext,
       account: account,
       conversation: conversation,
       ai_agent: ai_agent,
@@ -20,11 +20,11 @@ RSpec.describe Captain::Copilot::ChatService do
       inbox: inbox
     )
     eligibility_guard = instance_double(
-      Captain::Copilot::EligibilityGuard,
-      check: Captain::Copilot::EligibilityGuard::Result.new(code: nil)
+      Captain::Copilot::Guards::EligibilityGuard,
+      check: Captain::Copilot::Guards::EligibilityGuard::Result.new(code: nil)
     )
-    group_policy = instance_double(Captain::Copilot::GroupMentionPolicy, skip_reason: nil)
-    state_handler = instance_double(Captain::Copilot::ConversationStateHandler, clear_pending_idle_conversation: true)
+    group_policy = instance_double(Captain::Copilot::Policies::GroupMentionPolicy, skip_reason: nil)
+    state_handler = instance_double(Captain::Copilot::State::ConversationStateHandler, clear_pending_idle_conversation: true)
     assistant_response = instance_double(
       HTTParty::Response,
       success?: true,
@@ -53,11 +53,11 @@ RSpec.describe Captain::Copilot::ChatService do
   before do
     allow(fixtures[:message]).to receive(:attachments).and_return(fixtures[:attachments])
     allow(fixtures[:attachments]).to receive(:includes).with(file_attachment: :blob).and_return([])
-    allow(Captain::Copilot::MessageContext).to receive(:new).with(fixtures[:message]).and_return(fixtures[:context])
-    allow(Captain::Copilot::EligibilityGuard).to receive(:new).and_return(fixtures[:eligibility_guard])
-    allow(Captain::Copilot::GroupMentionPolicy).to receive(:new)
+    allow(Captain::Copilot::State::MessageContext).to receive(:new).with(fixtures[:message]).and_return(fixtures[:context])
+    allow(Captain::Copilot::Guards::EligibilityGuard).to receive(:new).and_return(fixtures[:eligibility_guard])
+    allow(Captain::Copilot::Policies::GroupMentionPolicy).to receive(:new)
       .with(fixtures[:message], inbox: fixtures[:inbox]).and_return(fixtures[:group_policy])
-    allow(Captain::Copilot::ConversationStateHandler)
+    allow(Captain::Copilot::State::ConversationStateHandler)
       .to receive(:new).with(fixtures[:context]).and_return(fixtures[:state_handler])
     allow(Captain::Copilot::ReplySender)
       .to receive(:new).with(fixtures[:context], state_handler: fixtures[:state_handler]).and_return(fixtures[:reply_sender])

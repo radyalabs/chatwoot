@@ -61,11 +61,11 @@ RSpec.describe Captain::Copilot::ChatServiceJob do
 
     it 'routes welcome source messages to WelcomeMessageService instead of normal ChatService' do
       welcome_source_claimer = instance_double(Captain::Copilot::WelcomeSourceClaimer, claim?: true)
-      welcome_policy = instance_double(Captain::Copilot::WelcomeMessagePolicy, eligible?: true)
+      welcome_policy = instance_double(Captain::Copilot::Policies::WelcomeMessagePolicy, eligible?: true)
       welcome_service = instance_double(Captain::Copilot::WelcomeMessageService, perform: true)
 
       allow(Captain::Copilot::WelcomeSourceClaimer).to receive(:new).with(message).and_return(welcome_source_claimer)
-      allow(Captain::Copilot::WelcomeMessagePolicy).to receive(:new).with(message).and_return(welcome_policy)
+      allow(Captain::Copilot::Policies::WelcomeMessagePolicy).to receive(:new).with(message).and_return(welcome_policy)
       allow(Captain::Copilot::WelcomeMessageService).to receive(:new).with(message).and_return(welcome_service)
 
       expect(Captain::Copilot::ChatService).not_to receive(:new)

@@ -16,7 +16,6 @@
 # if there are no jobs in higher ranking queues.
 :queues:
   - critical
-  - send_reply_with_attachments
   - high
   - medium
   - default

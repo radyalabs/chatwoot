@@ -774,7 +774,8 @@
     },
     "DELAY": {
       "TITLE": "Delay Incoming Message",
-      "DESC": "Hold incoming messages so that the AI can read the entire customer chat before replying."
+      "DESC": "Hold incoming messages so that the AI can read the entire customer chat before replying.",
+      "INTERVAL": "Delay Interval"
     },
     "REMINDER": {
       "ENABLED": "Active",

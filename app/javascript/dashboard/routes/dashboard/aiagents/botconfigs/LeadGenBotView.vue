@@ -259,6 +259,23 @@
                     </div>
                   </label>
                 </div>
+                <div v-if="isDelayEnabled" class="border-t border-gray-200 dark:border-gray-700 p-6 space-y-4 transition-all duration-200 ease-in-out">
+                  <div>
+                    <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.DELAY.INTERVAL') }}</label>
+                    <div class="flex items-center gap-3">
+                      <select
+                        v-model="debounceInterval"
+                        :disabled="isSaving"
+                        class="text-center w-24 mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-slate-900 dark:border-slate-700 dark:text-white"
+                      >
+                        <option class="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                          v-for="opt in delayOptions" :key="opt.value" :value="opt.value">
+                          {{ opt.label }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
                 <div class="flex items-center justify-between p-6">
@@ -624,6 +641,16 @@ const creativityOptions = computed(() => [
 ]);
 
 const isDelayEnabled = ref(false);
+const debounceInterval = ref(10);
+
+const delayOptions = [
+  { value: 10, label: '10 detik' },
+  { value: 20, label: '20 detik' },
+  { value: 30, label: '30 detik' },
+  { value: 40, label: '40 detik' },
+  { value: 50, label: '50 detik' },
+  { value: 60, label: '60 detik' },
+];
 
 // idle time
 const idleConfig = reactive({
@@ -886,6 +913,7 @@ function loadSavedConfiguration() {
       const config = agentData.configurations;
 
       isDelayEnabled.value = flowData?.debounce_config?.enabled === true;
+      debounceInterval.value = flowData?.debounce_config?.interval_seconds || 10;
 
       if (agentData.temperature !== undefined) {
         creativityLevel.value = agentData.temperature;
@@ -920,9 +948,8 @@ async function saveSettings() {
       flowData.agents_config[agentIndex].configurations = {};
     }
 
-    flowData.agents_config[agentIndex].configurations.delay_enabled = isDelayEnabled.value;
-    flowData.debounce_config = { enabled: isDelayEnabled.value };
-    displayFlowData.debounce_config = { enabled: isDelayEnabled.value };
+    flowData.debounce_config = { enabled: isDelayEnabled.value, interval_seconds: debounceInterval.value };
+    displayFlowData.debounce_config = { enabled: isDelayEnabled.value, interval_seconds: debounceInterval.value };
 
     flowData.agents_config[agentIndex].temperature = creativityLevel.value;
     displayFlowData.agents_config[agentIndex].temperature = creativityLevel.value;

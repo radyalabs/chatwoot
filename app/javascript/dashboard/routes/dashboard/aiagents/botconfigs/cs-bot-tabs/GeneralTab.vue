@@ -48,6 +48,16 @@ const idleConfig = reactive({
 
 const reminderOfferEnabled = ref(false);
 const isDelayEnabled = ref(false);
+const debounceInterval = ref(10);
+
+const delayOptions = [
+  { value: 10, label: '10 detik' },
+  { value: 20, label: '20 detik' },
+  { value: 30, label: '30 detik' },
+  { value: 40, label: '40 detik' },
+  { value: 50, label: '50 detik' },
+  { value: 60, label: '60 detik' },
+];
 
 console.log('=== googleSheetsAuth in GeneralTab.vue', props.googleSheetsAuth);
 const { t } = useI18n();
@@ -102,6 +112,7 @@ watch(
 
     // Delay message toggle — baca dari debounce_config
     isDelayEnabled.value = flowData?.debounce_config?.enabled === true;
+    debounceInterval.value = flowData?.debounce_config?.interval_seconds || 10;
 
     // Load idle config from API
     loadIdleConfig();
@@ -350,9 +361,8 @@ async function save() {
     flowData.agents_config[agent_index].configurations.reminder_offer_enabled = reminderOfferEnabled.value;
     displayFlowData.agents_config[agent_index].configurations.reminder_offer_enabled = reminderOfferEnabled.value;
 
-    flowData.agents_config[agent_index].configurations.delay_enabled = isDelayEnabled.value;
-    flowData.debounce_config = { enabled: isDelayEnabled.value };
-    displayFlowData.debounce_config = { enabled: isDelayEnabled.value };
+    flowData.debounce_config = { enabled: isDelayEnabled.value, interval_seconds: debounceInterval.value };
+    displayFlowData.debounce_config = { enabled: isDelayEnabled.value, interval_seconds: debounceInterval.value };
 
     const payload = {
       flow_data: flowData,
@@ -709,6 +719,23 @@ console.log("is ticketAuthError value inside GeneralTab.vue:", !ticketAuthError.
               <div class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
               </div>
             </label>
+          </div>
+          <div v-if="isDelayEnabled" class="border-t border-gray-200 dark:border-gray-700 p-6 space-y-4 transition-all duration-200 ease-in-out">
+            <div>
+              <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.DELAY.INTERVAL') }}</label>
+              <div class="flex items-center gap-3">
+                <select
+                  v-model="debounceInterval"
+                  :disabled="isSaving"
+                  class="text-center w-24 mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-slate-900 dark:border-slate-700 dark:text-white"
+                >
+                  <option class="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                    v-for="opt in delayOptions" :key="opt.value" :value="opt.value">
+                    {{ opt.label }}
+                  </option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
 

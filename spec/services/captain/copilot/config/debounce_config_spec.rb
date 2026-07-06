@@ -60,6 +60,38 @@ RSpec.describe Captain::Copilot::Config::DebounceConfig do
       end
     end
 
+    it 'enables debounce and falls back to global values when interval/max wait are missing' do
+      message = instance_double(Message, conversation: nil)
+      config = build_config(message: message, debounce_config: {
+                              'enabled' => true
+                            })
+
+      with_modified_env CAPTAIN_DEBOUNCE_ENABLED: 'true',
+                        CAPTAIN_DEBOUNCE_INTERVAL_SECONDS: '12',
+                        CAPTAIN_DEBOUNCE_MAX_WAIT_SECONDS: '80' do
+        expect(config.enabled?).to be(true)
+        expect(config.interval_seconds).to eq(12)
+        expect(config.max_wait_seconds).to eq(80)
+      end
+    end
+
+    it 'enables debounce and falls back to global values when interval/max wait are blank' do
+      message = instance_double(Message, conversation: nil)
+      config = build_config(message: message, debounce_config: {
+                              'enabled' => true,
+                              'interval_seconds' => '',
+                              'max_wait_seconds' => ' '
+                            })
+
+      with_modified_env CAPTAIN_DEBOUNCE_ENABLED: 'true',
+                        CAPTAIN_DEBOUNCE_INTERVAL_SECONDS: '11',
+                        CAPTAIN_DEBOUNCE_MAX_WAIT_SECONDS: '70' do
+        expect(config.enabled?).to be(true)
+        expect(config.interval_seconds).to eq(11)
+        expect(config.max_wait_seconds).to eq(70)
+      end
+    end
+
     it 'forces direct dispatch when enabled true but interval is invalid' do
       message = instance_double(Message, conversation: nil)
       config = build_config(message: message, debounce_config: {

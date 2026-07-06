@@ -31,13 +31,13 @@ class Captain::Copilot::Config::DebounceConfig
   def interval_seconds
     return global_interval_seconds unless agent_enabled == true && valid_agent_config?
 
-    parsed_interval_seconds
+    effective_interval_seconds
   end
 
   def max_wait_seconds
     return global_max_wait_seconds unless agent_enabled == true && valid_agent_config?
 
-    parsed_max_wait_seconds
+    effective_max_wait_seconds
   end
 
   private
@@ -88,12 +88,24 @@ class Captain::Copilot::Config::DebounceConfig
     @parsed_max_wait_seconds ||= parse_integer(agent_value('max_wait_seconds'))
   end
 
-  def valid_agent_config?
-    return false if parsed_interval_seconds.nil? || parsed_max_wait_seconds.nil?
-    return false if parsed_interval_seconds < MIN_INTERVAL_SECONDS
-    return false if parsed_max_wait_seconds < MIN_MAX_WAIT_SECONDS
+  def effective_interval_seconds
+    return global_interval_seconds unless agent_value_present?('interval_seconds')
 
-    parsed_max_wait_seconds >= parsed_interval_seconds
+    parsed_interval_seconds
+  end
+
+  def effective_max_wait_seconds
+    return global_max_wait_seconds unless agent_value_present?('max_wait_seconds')
+
+    parsed_max_wait_seconds
+  end
+
+  def valid_agent_config?
+    return false if effective_interval_seconds.nil? || effective_max_wait_seconds.nil?
+    return false if effective_interval_seconds < MIN_INTERVAL_SECONDS
+    return false if effective_max_wait_seconds < MIN_MAX_WAIT_SECONDS
+
+    effective_max_wait_seconds >= effective_interval_seconds
   end
 
   def agent_value(key)
@@ -103,6 +115,14 @@ class Captain::Copilot::Config::DebounceConfig
     return agent_config[key.to_sym] if agent_config.key?(key.to_sym)
 
     nil
+  end
+
+  def agent_value_present?(key)
+    value = agent_value(key)
+    return false if value.nil?
+    return false if value.respond_to?(:blank?) && value.blank?
+
+    true
   end
 
   def parse_boolean(value)

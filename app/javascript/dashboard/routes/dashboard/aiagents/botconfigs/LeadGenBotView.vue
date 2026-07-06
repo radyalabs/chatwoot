@@ -885,7 +885,7 @@ function loadSavedConfiguration() {
       const agentData = flowData.agents_config[agentIndex];
       const config = agentData.configurations;
 
-      isDelayEnabled.value = config?.delay_enabled || false;
+      isDelayEnabled.value = flowData?.debounce_config?.enabled === true;
 
       if (agentData.temperature !== undefined) {
         creativityLevel.value = agentData.temperature;
@@ -921,7 +921,8 @@ async function saveSettings() {
     }
 
     flowData.agents_config[agentIndex].configurations.delay_enabled = isDelayEnabled.value;
-    displayFlowData.agents_config[agentIndex].configurations.delay_enabled = isDelayEnabled.value;
+    flowData.debounce_config = { enabled: isDelayEnabled.value };
+    displayFlowData.debounce_config = { enabled: isDelayEnabled.value };
 
     flowData.agents_config[agentIndex].temperature = creativityLevel.value;
     displayFlowData.agents_config[agentIndex].temperature = creativityLevel.value;

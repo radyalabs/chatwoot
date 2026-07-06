@@ -3387,6 +3387,10 @@ async function saveSettings() {
     flowData.agents_config[agentIndex].configurations.reminder_offer_enabled = reminderOfferEnabled.value;
     displayFlowData.agents_config[agentIndex].configurations.reminder_offer_enabled = reminderOfferEnabled.value;
 
+    flowData.agents_config[agentIndex].configurations.delay_enabled = isDelayEnabled.value;
+    flowData.debounce_config = { enabled: isDelayEnabled.value };
+    displayFlowData.debounce_config = { enabled: isDelayEnabled.value };
+
     const payload = {
       flow_data: flowData,
       display_flow_data: displayFlowData,
@@ -3438,6 +3442,7 @@ function loadSavedConfiguration() {
 
     const salesConfig = agentData?.configurations;
     reminderOfferEnabled.value = salesConfig?.reminder_offer_enabled === true;
+    isDelayEnabled.value = flowData?.debounce_config?.enabled === true;
 
     // Reset all shipping methods first
     shippingMethods.kurirToko = false;

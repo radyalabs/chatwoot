@@ -8,9 +8,8 @@ end
 
 Sidekiq.configure_server do |config|
   config.redis = Redis::Config.app
-  config[:average_scheduled_poll_interval] = ENV.fetch('SIDEKIQ_AVERAGE_SCHEDULED_POLL_INTERVAL', 5).to_i
 
-  config.average_scheduled_poll_interval = 5
+  config.average_scheduled_poll_interval = ENV.fetch('SIDEKIQ_AVERAGE_SCHEDULED_POLL_INTERVAL', 5).to_i
 
   # skip the default start stop logging
   if Rails.env.production?

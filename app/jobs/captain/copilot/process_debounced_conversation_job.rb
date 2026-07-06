@@ -1,5 +1,5 @@
 class Captain::Copilot::ProcessDebouncedConversationJob < ApplicationJob
-  queue_as :send_reply_with_attachments
+  queue_as :critical
 
   ADVISORY_LOCK_NAMESPACE = 10_202
 

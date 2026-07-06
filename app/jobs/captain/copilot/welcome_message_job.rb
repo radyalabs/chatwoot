@@ -1,5 +1,5 @@
 class Captain::Copilot::WelcomeMessageJob < ApplicationJob
-  queue_as :send_reply_with_attachments
+  queue_as :critical
 
   def perform(message_id)
     message = load_message_with_attachments(message_id)

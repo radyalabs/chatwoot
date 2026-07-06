@@ -1,5 +1,5 @@
 class SendReplyWithAttachmentsJob < ApplicationJob
-  queue_as :send_reply_with_attachments
+  queue_as :critical
 
   # Maximum time to wait for blob availability (in seconds)
   BLOB_WAIT_TIMEOUT = 120

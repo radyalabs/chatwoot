@@ -1,5 +1,5 @@
 class Captain::Copilot::ChatServiceJob < ApplicationJob
-  queue_as :send_reply_with_attachments
+  queue_as :critical
 
   BLOB_WAIT_TIMEOUT = 30
   BLOB_CHECK_INTERVAL = 1

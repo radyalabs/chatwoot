@@ -158,8 +158,8 @@ function loadSavedConfiguration() {
         creativityLevel.value = agentData.temperature;
       }
 
-      // Delay message toggle
-      isDelayEnabled.value = config?.delay_enabled === true || config?.delay_enabled === 'true';
+      // Delay message toggle — baca dari debounce_config
+      isDelayEnabled.value = flowData?.debounce_config?.enabled === true;
 
       // Load konfigurasi umum
       if (config?.minimum_duration) {
@@ -496,7 +496,8 @@ async function save() {
     displayFlowData.agents_config[agent_index].temperature = creativityLevel.value;
 
     flowData.agents_config[agent_index].configurations.delay_enabled = isDelayEnabled.value;
-    displayFlowData.agents_config[agent_index].configurations.delay_enabled = isDelayEnabled.value;
+    flowData.debounce_config = { enabled: isDelayEnabled.value };
+    displayFlowData.debounce_config = { enabled: isDelayEnabled.value };
 
     flowData.agents_config[agent_index].configurations.minimum_duration =
       configData.minDuration;

@@ -100,8 +100,8 @@ watch(
     const reminderOffer = config?.reminder_offer_enabled;
     reminderOfferEnabled.value = reminderOffer === true;
 
-    // Delay message toggle
-    isDelayEnabled.value = config?.delay_enabled === true || config?.delay_enabled === 'true';
+    // Delay message toggle — baca dari debounce_config
+    isDelayEnabled.value = flowData?.debounce_config?.enabled === true;
 
     // Load idle config from API
     loadIdleConfig();
@@ -351,7 +351,8 @@ async function save() {
     displayFlowData.agents_config[agent_index].configurations.reminder_offer_enabled = reminderOfferEnabled.value;
 
     flowData.agents_config[agent_index].configurations.delay_enabled = isDelayEnabled.value;
-    displayFlowData.agents_config[agent_index].configurations.delay_enabled = isDelayEnabled.value;
+    flowData.debounce_config = { enabled: isDelayEnabled.value };
+    displayFlowData.debounce_config = { enabled: isDelayEnabled.value };
 
     const payload = {
       flow_data: flowData,

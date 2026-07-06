@@ -244,6 +244,44 @@
                   <div class="flex items-center">
                     <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
+                        <path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="font-medium text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.DELAY.TITLE') }}</h3>
+                      <p class="text-sm text-gray-500 mt-1">{{ $t('AGENT_MGMT.DELAY.DESC') }}</p>
+                    </div>
+                  </div>
+                  
+                  <label class="inline-flex items-center cursor-pointer">
+                    <input type="checkbox" v-model="isDelayEnabled" class="sr-only peer" :disabled="isSaving">
+                    <div class="border solid w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
+                    </div>
+                  </label>
+                </div>
+                <div v-if="isDelayEnabled" class="border-t border-gray-200 dark:border-gray-700 p-6 space-y-4 transition-all duration-200 ease-in-out">
+                  <div>
+                    <label class="block text-sm font-medium mb-1 text-slate-900 dark:text-slate-25">{{ $t('AGENT_MGMT.DELAY.INTERVAL') }}</label>
+                    <div class="flex items-center gap-3">
+                      <select
+                        v-model="debounceInterval"
+                        :disabled="isSaving"
+                        class="text-center w-24 mb-0 p-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-slate-900 dark:border-slate-700 dark:text-white"
+                      >
+                        <option class="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                          v-for="opt in delayOptions" :key="opt.value" :value="opt.value">
+                          {{ opt.label }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-6 bg-white dark:bg-transparent">
+                <div class="flex items-center justify-between p-6">
+                  <div class="flex items-center">
+                    <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-green-600 dark:text-green-400">
                         <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
                         <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
                         <path d="M4 2C2.8 3.7 2 5.7 2 8" />
@@ -602,6 +640,18 @@ const creativityOptions = computed(() => [
   { label: t('AGENT_MGMT.CREATIVITY.VISIONARY'), value: 0.7 },
 ]);
 
+const isDelayEnabled = ref(false);
+const debounceInterval = ref(10);
+
+const delayOptions = [
+  { value: 10, label: '10 detik' },
+  { value: 20, label: '20 detik' },
+  { value: 30, label: '30 detik' },
+  { value: 40, label: '40 detik' },
+  { value: 50, label: '50 detik' },
+  { value: 60, label: '60 detik' },
+];
+
 // idle time
 const idleConfig = reactive({
   enabled: true,
@@ -863,6 +913,7 @@ function loadSavedConfiguration() {
       const config = agentData.configurations;
 
       isDelayEnabled.value = flowData?.debounce_config?.enabled === true;
+      debounceInterval.value = flowData?.debounce_config?.interval_seconds || 10;
 
       if (agentData.temperature !== undefined) {
         creativityLevel.value = agentData.temperature;
@@ -897,9 +948,8 @@ async function saveSettings() {
       flowData.agents_config[agentIndex].configurations = {};
     }
 
-    flowData.agents_config[agentIndex].configurations.delay_enabled = isDelayEnabled.value;
-    flowData.debounce_config = { enabled: isDelayEnabled.value };
-    displayFlowData.debounce_config = { enabled: isDelayEnabled.value };
+    flowData.debounce_config = { enabled: isDelayEnabled.value, interval_seconds: debounceInterval.value };
+    displayFlowData.debounce_config = { enabled: isDelayEnabled.value, interval_seconds: debounceInterval.value };
 
     flowData.agents_config[agentIndex].temperature = creativityLevel.value;
     displayFlowData.agents_config[agentIndex].temperature = creativityLevel.value;

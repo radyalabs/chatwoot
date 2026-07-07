@@ -32,23 +32,41 @@ class SendReplyWithAttachmentsJob < ApplicationJob
 
     elapsed = 0
     until blob_exists?(blob)
-      if elapsed >= BLOB_WAIT_TIMEOUT
-        Rails.logger.error(
-          "[SendReplyWithAttachmentsJob] Timeout waiting for blob #{blob.key} " \
-          "(attachment_id: #{attachment_id}) after #{BLOB_WAIT_TIMEOUT}s"
-        )
-        raise ActiveStorage::FileNotFoundError,
-              "Blob #{blob.key} not available after #{BLOB_WAIT_TIMEOUT}s"
-      end
+      raise_blob_timeout!(blob, attachment_id) if timed_out?(elapsed)
 
-      Rails.logger.info(
-        "[SendReplyWithAttachmentsJob] Waiting for blob #{blob.key} " \
-        "(attachment_id: #{attachment_id}), elapsed: #{elapsed}s"
-      )
-      sleep(BLOB_CHECK_INTERVAL)
-      elapsed += BLOB_CHECK_INTERVAL
+      log_blob_waiting(blob, attachment_id, elapsed)
+      elapsed = wait_next_check(elapsed)
     end
 
+    log_blob_available(blob, attachment_id, elapsed)
+  end
+
+  def timed_out?(elapsed)
+    elapsed >= BLOB_WAIT_TIMEOUT
+  end
+
+  def wait_next_check(elapsed)
+    sleep(BLOB_CHECK_INTERVAL)
+    elapsed + BLOB_CHECK_INTERVAL
+  end
+
+  def raise_blob_timeout!(blob, attachment_id)
+    Rails.logger.error(
+      "[SendReplyWithAttachmentsJob] Timeout waiting for blob #{blob.key} " \
+      "(attachment_id: #{attachment_id}) after #{BLOB_WAIT_TIMEOUT}s"
+    )
+    raise ActiveStorage::FileNotFoundError,
+          "Blob #{blob.key} not available after #{BLOB_WAIT_TIMEOUT}s"
+  end
+
+  def log_blob_waiting(blob, attachment_id, elapsed)
+    Rails.logger.info(
+      "[SendReplyWithAttachmentsJob] Waiting for blob #{blob.key} " \
+      "(attachment_id: #{attachment_id}), elapsed: #{elapsed}s"
+    )
+  end
+
+  def log_blob_available(blob, attachment_id, elapsed)
     Rails.logger.info(
       "[SendReplyWithAttachmentsJob] Blob #{blob.key} is now available " \
       "(attachment_id: #{attachment_id}) after #{elapsed}s"

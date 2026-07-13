@@ -21,6 +21,24 @@ class Captain::Copilot::ChatService
 
       return if group_message_without_mention?
 
+      if @context.conversation.additional_attributes['group_chat_id'].present?
+        
+        bot_reply_id = @context.conversation.messages.where(sender_type: 'AiAgent').maximum(:id) || 0
+
+        pending_messages = @context.conversation.messages
+                                   .incoming
+                                   .where(private: false)
+                                   .where('id > ?', bot_reply_id)
+                                   .order(created_at: :asc)
+
+        @combined_question = pending_messages.map do |msg|
+          sender_name = msg.additional_attributes&.dig('name') || 'Member'
+          "[#{sender_name}]: #{msg.content}"
+        end.join("\n")
+
+        Rails.logger.info "#{LOG_PREFIX} Group context gathered: #{pending_messages.size} messages combined."
+      end
+
       conversation_state_handler.clear_pending_idle_conversation
       send_messages
     end

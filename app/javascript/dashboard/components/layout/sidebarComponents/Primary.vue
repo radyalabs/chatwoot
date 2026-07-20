@@ -86,7 +86,7 @@ export default {
 
 <template>
   <div
-    class="flex flex-col justify-between max-h-screen overflow-y-auto bg-white border-r dark:bg-slate-900 border-slate-50 dark:border-slate-800/50 rtl:border-l rtl:border-r-0 w-16 hover:w-[210px]"
+    class="flex flex-col justify-between max-h-screen overflow-y-auto overflow-x-hidden bg-white border-r dark:bg-slate-900 border-slate-50 dark:border-slate-800/50 rtl:border-l rtl:border-r-0 w-16 hover:w-[210px]"
     :class="{
       'w-[210px]': pinSidebar,
     }"

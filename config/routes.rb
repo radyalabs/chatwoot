@@ -768,4 +768,6 @@ Rails.application.routes.draw do
   resources :widget_tests, only: [:index] unless Rails.env.production?
 
   mount Sidekiq::Web => '/monitoring/_sidekiq', :as => 'admin_sidekiq_web'
+
+  match '*unmatched', to: 'application#route_not_found', via: :all
 end

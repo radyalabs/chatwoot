@@ -10,6 +10,10 @@ class ApplicationController < ActionController::Base
   around_action :switch_locale
   around_action :handle_with_exception, unless: :devise_controller?
 
+  def route_not_found
+    render plain: '404 Not Found', status: :not_found
+  end
+
   private
 
   def set_current_user

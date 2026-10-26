@@ -768,4 +768,9 @@ Rails.application.routes.draw do
   resources :widget_tests, only: [:index] unless Rails.env.production?
 
   mount Sidekiq::Web => '/monitoring/_sidekiq', :as => 'admin_sidekiq_web'
+
+  # Engine routes (ActiveStorage, ActionMailbox) are appended after application routes,
+  # so the catch-all must not claim /rails/* paths or it will shadow them.
+  match '*unmatched', to: 'application#route_not_found', via: :all,
+                      constraints: ->(request) { !request.path.start_with?('/rails/') }
 end

@@ -769,5 +769,8 @@ Rails.application.routes.draw do
 
   mount Sidekiq::Web => '/monitoring/_sidekiq', :as => 'admin_sidekiq_web'
 
-  match '*unmatched', to: 'application#route_not_found', via: :all
+  # Engine routes (ActiveStorage, ActionMailbox) are appended after application routes,
+  # so the catch-all must not claim /rails/* paths or it will shadow them.
+  match '*unmatched', to: 'application#route_not_found', via: :all,
+                      constraints: ->(request) { !request.path.start_with?('/rails/') }
 end

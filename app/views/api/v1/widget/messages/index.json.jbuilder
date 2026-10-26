@@ -13,14 +13,19 @@ json.payload do
 end
 json.meta do
   json.contact_last_seen_at @conversation.contact_last_seen_at.to_i if @conversation.present?
-  json.website_channel_config do
-    # 1. Cari transaksi terakhir yang valid
-    tx = @conversation.account.transactions.where(status: ['paid', 'success', 'completed', 'Dibayar']).order(expiry_date: :desc).first
-    
-    # 2. Cek apakah paketnya Premium
-    is_premium = ['Pertamax', 'Pertamax Turbo', 'Custom'].include?(tx&.package_name)
 
-    # 3. Kirim hasilnya saja
-    json.disable_branding is_premium
+  json.website_channel_config do
+    is_premium = false
+
+    if @conversation&.account
+      tx = @conversation.account.transactions
+                        .where(status: %w[paid success completed Dibayar])
+                        .order(expiry_date: :desc)
+                        .first
+
+      is_premium = ['Pertamax', 'Pertamax Turbo', 'Custom'].include?(tx&.package_name)
+    end
+
+    json.is_premium is_premium
   end
 end
